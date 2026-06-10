@@ -271,10 +271,17 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   transition: transform .15s;
   user-select: none;
   -webkit-user-select: none;
+  pointer-events: auto !important;
 }
 .mapbox-marker:hover { transform: scale(1.1) translateY(-2px); }
-/* Ensure marker wrapper from mapbox doesn't block events */
-.mapboxgl-marker { cursor: pointer !important; }
+/* Force Mapbox wrapper to allow clicks */
+.mapboxgl-marker {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+.mapboxgl-marker > div {
+  pointer-events: auto !important;
+}
 .marker-pill {
   background:var(--surface);
   border:1.5px solid var(--accent);
@@ -467,13 +474,14 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   overflow: hidden;
   overflow-y: auto;
   max-height: 70vh;
-  /* HIDDEN BY DEFAULT */
+  display: none; /* HIDDEN BY DEFAULT */
   opacity: 0;
   pointer-events: none;
   transform: translateY(10px) scale(0.97);
   transition: opacity .2s ease, transform .2s ease;
 }
 .lb-popup.open {
+  display: block;
   opacity: 1;
   pointer-events: all;
   transform: translateY(0) scale(1);
@@ -830,7 +838,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
   <div id="searchbox">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input id="search-input-desktop" type="text" placeholder="Search quests, type, location…" oninput="handleSearch(this.value)" autocomplete="off">
+    <input id="search-input-desktop" type="text" placeholder="Søk på oppdrag, type, sted…" oninput="handleSearch(this.value)" autocomplete="off">
   </div>
 
   <div class="top-actions">
@@ -879,7 +887,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 <!-- MOBILE SEARCH BAR -->
 <div id="mobile-search">
-  <input id="search-input-desktop" type="text" placeholder="Search quests, type, location…" oninput="handleSearch(this.value)" autocomplete="off">
+  <input id="search-input-desktop" type="text" placeholder="Søk på oppdrag, type, sted…" oninput="handleSearch(this.value)" autocomplete="off">
 </div>
 
 <!-- FILTER BUTTON (both mobile + desktop) -->
@@ -1095,7 +1103,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 </button>
 
 <!-- LEADERBOARD POPUP -->
-<div id="leaderboard" class="lb-popup">
+<div id="leaderboard" class="lb-popup" style="display:none">
   <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0"></div>
   <div class="lb-header">
     <span class="lb-trophy">🏆</span>
@@ -2290,11 +2298,15 @@ function toggleLeaderboard() {
   if(isOpen) {
     closeLeaderboard();
   } else {
-    lb.classList.add('open');
+    lb.style.display = 'block';
+    setTimeout(() => lb.classList.add('open'), 10);
     closePanel();
-    document.getElementById('profile-panel').style.display = 'none';
-    document.getElementById('notif-panel').style.display = 'none';
-    document.getElementById('inbox-panel').style.display = 'none';
+    const pp = document.getElementById('profile-panel');
+    if(pp) pp.style.display = 'none';
+    const np = document.getElementById('notif-panel');
+    if(np) np.style.display = 'none';
+    const ip = document.getElementById('inbox-panel');
+    if(ip) ip.style.display = 'none';
   }
 }
 
@@ -2311,22 +2323,11 @@ function toggleProfile() {
 }
 function closeLeaderboard() {
   const lb = document.getElementById('leaderboard');
-  if(lb) {
-    lb.classList.remove('open');
-    // Force hide on desktop
-    if(window.innerWidth > 768) {
-      lb.style.opacity = '0';
-      lb.style.pointerEvents = 'none';
-      lb.style.transform = 'translateY(10px) scale(0.97)';
-      setTimeout(() => {
-        if(!lb.classList.contains('open')) {
-          lb.style.opacity = '';
-          lb.style.pointerEvents = '';
-          lb.style.transform = '';
-        }
-      }, 200);
-    }
-  }
+  if(!lb) return;
+  lb.classList.remove('open');
+  setTimeout(() => {
+    if(!lb.classList.contains('open')) lb.style.display = 'none';
+  }, 200);
 }
 
 // Quest mode toggle
