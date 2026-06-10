@@ -459,6 +459,23 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
 
+/* ── SEARCH RESULTS ── */
+.search-section-title { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:10px 14px 6px; }
+.search-empty { padding:20px;text-align:center;font-size:13px;color:var(--muted); }
+.search-result-item {
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;cursor:pointer;
+  border-bottom:1px solid var(--border);
+  transition:background .15s;
+}
+.search-result-item:last-child { border-bottom:none; }
+.search-result-item:hover { background:var(--surface2); }
+.search-result-thumb { width:40px;height:40px;border-radius:10px;flex-shrink:0;object-fit:cover; }
+.search-result-info { flex:1;min-width:0; }
+.search-result-title { font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.search-result-meta { font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.search-result-pay { font-size:13px;font-weight:700;color:var(--green);white-space:nowrap;flex-shrink:0; }
+
 /* ══════════════════════════════════════
    MOBILE RESPONSIVE
 ══════════════════════════════════════ */
@@ -1334,7 +1351,26 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">Quest reward</label>
+      <label class="form-label">📅 Når skal det gjøres?</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Dato</div>
+          <input id="quest-date-input" type="date" class="form-input" style="width:100%">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fra</div>
+          <input id="quest-time-from" type="time" class="form-input" style="width:100%">
+        </div>
+        <div style="display:flex;align-items:center;padding-top:20px;color:var(--muted);font-size:13px">–</div>
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til</div>
+          <input id="quest-time-to" type="time" class="form-input" style="width:100%">
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Valgfritt – hjelper utfører å planlegge</div>
+    </div>
       <div class="cost-display"><span id="modal-price">250</span> <small>kr</small></div>
       <input type="range" min="39" max="2000" value="250" oninput="document.getElementById('modal-price').textContent=this.value" style="margin-top:8px">
       <div class="cost-note">Higher reward = bigger marker on the map</div>
@@ -1949,6 +1985,9 @@ function questToJob(q) {
     rating: 5.0,
     applicants: 0,
     firstCome: q.is_first_come,
+    scheduledDate: q.scheduled_date || null,
+    scheduledTimeFrom: q.scheduled_time_from || null,
+    scheduledTimeTo: q.scheduled_time_to || null,
     coords: [q.lng, q.lat],
     people: [],
     raw: q
@@ -1978,10 +2017,51 @@ function createMarkerEl(type, label, imageUrl, onClick) {
 
 function addQuestMarker(q) {
   const job = questToJob(q);
-  const el = createMarkerEl(job.type, job.label, job.image || null, () => showPanel(job));
+  const expired = q.status === 'expired';
+  const label = expired ? `⏰ ${job.title}` : job.label;
+  const el = createMarkerEl(expired ? 'expired' : job.type, label, job.image || null, () => showPanel(job));
+  if(expired) {
+    const pill = el.querySelector('.marker-pill');
+    if(pill) {
+      pill.style.borderColor = 'var(--muted)';
+      pill.style.opacity = '0.6';
+      pill.style.filter = 'grayscale(0.6)';
+    }
+  }
   new mapboxgl.Marker({ element: el, anchor: 'bottom' })
     .setLngLat(job.coords)
     .addTo(window.map);
+}
+
+// ── EXPIRED QUEST LOGIC ──
+// Returns true if quest is expired (scheduled time has passed)
+function isQuestExpired(q) {
+  if(!q.scheduled_date) return false;
+  const timeStr = q.scheduled_time_to || q.scheduled_time_from || '23:59';
+  const expiry = new Date(`${q.scheduled_date}T${timeStr}`);
+  return Date.now() > expiry.getTime();
+}
+
+// Returns true if quest expired MORE than 24 hours ago (should be hidden)
+function isQuestHidden(q) {
+  if(!q.scheduled_date) return false;
+  const timeStr = q.scheduled_time_to || q.scheduled_time_from || '23:59';
+  const expiry = new Date(`${q.scheduled_date}T${timeStr}`);
+  return Date.now() > expiry.getTime() + 24 * 60 * 60 * 1000;
+}
+
+// Mark expired quests in Supabase (called on load)
+async function checkAndExpireQuests() {
+  const { data: quests } = await sb.from('quests')
+    .select('id, scheduled_date, scheduled_time_from, scheduled_time_to')
+    .eq('status', 'open')
+    .not('scheduled_date', 'is', null);
+
+  if(!quests) return;
+  const toExpire = quests.filter(q => isQuestExpired(q)).map(q => q.id);
+  if(toExpire.length > 0) {
+    await sb.from('quests').update({ status: 'expired' }).in('id', toExpire);
+  }
 }
 
 async function addMarkers() {
@@ -1991,17 +2071,22 @@ async function addMarkers() {
   // Always show demo markers as background
   loadDemoMarkers();
 
-  // Load real quests from Supabase on top
+  // Check and expire any overdue quests first
+  await checkAndExpireQuests();
+
+  // Load open + recently expired (within 24h) quests
   const { data: quests, error } = await sb.from('quests')
     .select('*')
-    .eq('status', 'open')
+    .in('status', ['open', 'expired'])
     .order('created_at', { ascending: false });
 
   if(!error && quests && quests.length > 0) {
-    quests.forEach(q => addQuestMarker(q));
+    quests
+      .filter(q => !isQuestHidden(q)) // hide if expired > 24h ago
+      .forEach(q => addQuestMarker(q));
   }
 
-  // Load real services, skip demo services if real ones exist
+  // Load real services
   const { data: services } = await sb.from('services')
     .select('*').eq('status', 'active');
   if(services && services.length > 0) {
@@ -2131,6 +2216,25 @@ function showPanel(job) {
     <div class="meta-item"><div class="meta-label" id="panel-reward-label">Reward</div><div class="meta-value green">${job.pay} kr</div></div>
     <div class="meta-item"><div class="meta-label" id="panel-rating-label">Rating</div><div class="meta-value yellow">★ ${job.rating}</div></div>
     <div class="meta-item"><div class="meta-label" id="panel-applicants-label">Applicants</div><div class="meta-value">${job.applicants}</div></div>`;
+
+  // Show scheduled time if set
+  const schedEl = document.getElementById('panel-schedule');
+  if(schedEl) schedEl.remove();
+  if(job.scheduledDate || job.scheduledTimeFrom) {
+    const dateStr = job.scheduledDate
+      ? new Date(job.scheduledDate).toLocaleDateString('nb-NO', { weekday:'long', day:'numeric', month:'long' })
+      : '';
+    const timeStr = job.scheduledTimeFrom
+      ? job.scheduledTimeTo
+        ? `${job.scheduledTimeFrom} – ${job.scheduledTimeTo}`
+        : `Fra ${job.scheduledTimeFrom}`
+      : '';
+    const schedDiv = document.createElement('div');
+    schedDiv.id = 'panel-schedule';
+    schedDiv.style.cssText = 'margin:0 0 12px;padding:10px 12px;background:rgba(59,111,245,0.07);border:1px solid rgba(59,111,245,0.15);border-radius:10px;display:flex;align-items:center;gap:8px;font-size:12px';
+    schedDiv.innerHTML = `<span style="font-size:16px">📅</span><div><div style="font-weight:600;color:var(--text)">${dateStr}</div>${timeStr ? `<div style="color:var(--muted);margin-top:1px">🕐 ${timeStr}</div>` : ''}</div>`;
+    document.getElementById('panel-meta').after(schedDiv);
+  }
   const appEl = document.getElementById('panel-applicants');
   if(job.people?.length) {
     const rank = q => getRank(q);
@@ -2147,7 +2251,7 @@ function showPanel(job) {
   } else {
     appEl.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0">No applicants yet — be the first!</div>`;
   }
-  // Quest type
+  // Quest type badge
   const badge = document.getElementById('quest-type-badge');
   if(job.firstCome) {
     badge.textContent = '⚡ First come, first served';
@@ -2157,6 +2261,22 @@ function showPanel(job) {
     badge.textContent = '✋ Approval required';
     badge.style.color = 'var(--muted)';
     badge.style.borderColor = 'var(--border)';
+  }
+
+  // Expired banner
+  const existingExpired = document.getElementById('panel-expired-banner');
+  if(existingExpired) existingExpired.remove();
+  const applyBtn = document.querySelector('.btn-apply');
+  const isExpired = job.raw?.status === 'expired';
+  if(isExpired) {
+    const banner = document.createElement('div');
+    banner.id = 'panel-expired-banner';
+    banner.style.cssText = 'margin:0 16px 12px;padding:10px 12px;background:rgba(107,114,128,0.1);border:1px solid rgba(107,114,128,0.25);border-radius:10px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)';
+    banner.innerHTML = `<span style="font-size:16px">⏰</span><div><div style="font-weight:600">Dette oppdraget er utløpt</div><div style="margin-top:1px">Forsvinner fra kartet om mindre enn 24 timer</div></div>`;
+    document.getElementById('panel-quest-type').after(banner);
+    if(applyBtn) { applyBtn.disabled = true; applyBtn.style.opacity = '0.4'; applyBtn.style.cursor = 'not-allowed'; }
+  } else {
+    if(applyBtn) { applyBtn.disabled = false; applyBtn.style.opacity = '1'; applyBtn.style.cursor = 'pointer'; }
   }
   const jobPanel = document.getElementById('job-panel');
   if(window.innerWidth > 768) {
@@ -2292,7 +2412,9 @@ async function postJob() {
   const description = document.getElementById('quest-desc-input')?.value?.trim() || '';
   const duration = document.getElementById('quest-duration-input')?.value || '';
   const isCharity = document.getElementById('charity-toggle')?.classList.contains('on') || false;
-  const isFirstCome = document.getElementById('mode-firstcome')?.classList.contains('active') || false;
+  const scheduledDate = document.getElementById('quest-date-input')?.value || null;
+  const scheduledTimeFrom = document.getElementById('quest-time-from')?.value || null;
+  const scheduledTimeTo = document.getElementById('quest-time-to')?.value || null;
 
   // Urgent toggle – first .toggle in the toggles section (index 0)
   const toggles = document.querySelectorAll('#modal .toggle');
@@ -2327,6 +2449,9 @@ async function postJob() {
     is_urgent: isUrgent,
     is_charity: isCharity,
     is_first_come: isFirstCome,
+    scheduled_date: scheduledDate,
+    scheduled_time_from: scheduledTimeFrom,
+    scheduled_time_to: scheduledTimeTo,
     status: 'open',
     lat,
     lng
@@ -2358,6 +2483,9 @@ async function postJob() {
   document.getElementById('quest-title-input').value = '';
   document.getElementById('quest-desc-input').value = '';
   document.getElementById('modal-price').textContent = '250';
+  document.getElementById('quest-date-input').value = '';
+  document.getElementById('quest-time-from').value = '';
+  document.getElementById('quest-time-to').value = '';
   document.getElementById('image-preview').style.display = 'none';
   document.getElementById('upload-placeholder').style.display = 'block';
   if(imgInput) imgInput.value = '';
@@ -2884,8 +3012,16 @@ async function loadMyQuests() {
 function questCard(q, type) {
   const applicants = q.conversations || [];
 
-  const statusLabel = q.status === 'completed' ? '🏆 Fullført' : q.status === 'taken' ? '🔒 Tildelt' : q.status === 'open' ? '🟢 Åpen' : '🗑️ Slettet';
-  const statusColor = q.status === 'completed' ? 'var(--accent)' : q.status === 'taken' ? '#f97316' : q.status === 'open' ? 'var(--green)' : 'var(--muted)';
+  const statusLabel = q.status === 'completed' ? '🏆 Fullført'
+    : q.status === 'taken' ? '🔒 Tildelt'
+    : q.status === 'open' ? '🟢 Åpen'
+    : q.status === 'expired' ? '⏰ Utløpt'
+    : '🗑️ Slettet';
+  const statusColor = q.status === 'completed' ? 'var(--accent)'
+    : q.status === 'taken' ? '#f97316'
+    : q.status === 'open' ? 'var(--green)'
+    : q.status === 'expired' ? 'var(--muted)'
+    : 'var(--muted)';
   return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden">
     <div style="padding:14px 16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
@@ -2918,6 +3054,7 @@ function questCard(q, type) {
         ${applicants.length > 0 ? `<button onclick="openChat('${applicants[0]?.id||''}','${q.title}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : ''}
         ${q.status==='taken' ? `<button onclick="completeQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✅ Merk fullført</button>` : ''}
         ${q.status==='open' ? `<button onclick="deleteQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">🗑️</button>` : ''}
+        ${q.status==='expired' ? `<button onclick="repostQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔄 Legg ut på nytt</button>` : ''}
       </div>
     </div>
   </div>`;
@@ -2955,6 +3092,25 @@ async function deleteQuest(questId) {
   showToast('🗑️ Oppdrag slettet');
   loadMyQuests();
   addMarkers();
+}
+
+async function repostQuest(questId) {
+  // Clear scheduled date/time and re-open so user can set new time
+  const { data: q } = await sb.from('quests').select('*').eq('id', questId).single();
+  if(!q) return;
+
+  // Reopen with cleared schedule – user sets new time via modal
+  await sb.from('quests').update({
+    status: 'open',
+    scheduled_date: null,
+    scheduled_time_from: null,
+    scheduled_time_to: null
+  }).eq('id', questId);
+
+  showToast('🔄 Oppdrag lagt ut på nytt!');
+  loadMyQuests();
+  addMarkers();
+  setTimeout(() => showAchievement('🔄', 'Lagt ut på nytt!', 'Oppdraget er aktivt igjen på kartet.'), 800);
 }
 
 async function completeQuest(questId) {
@@ -3733,6 +3889,10 @@ function showAchievement(icon, title, desc) {
 // ══════════════════════════════════════
 // Run in Supabase SQL editor:
 // alter table quests add column if not exists image_url text;
+// alter table quests add column if not exists scheduled_date date;
+// alter table quests add column if not exists scheduled_time_from time;
+// alter table quests add column if not exists scheduled_time_to time;
+// -- status can now also be 'expired' in addition to open/taken/completed/deleted
 // create table services (
 //   id uuid default gen_random_uuid() primary key,
 //   user_id uuid references auth.users not null,
