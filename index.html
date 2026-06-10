@@ -1991,7 +1991,7 @@ function setMode(mode) {
 }
 
 // Rating popup after quest completion
-function showRating(name) {
+function showRating(name, convId='') {
   const panel = document.getElementById('job-panel');
   const existing = document.getElementById('rating-panel');
   if(existing) existing.remove();
@@ -2024,9 +2024,11 @@ function rateStar(n) {
   document.querySelectorAll('.star').forEach((s,i) => s.classList.toggle('active', i < n));
   document.getElementById('rating-label').textContent = ratingLabels[n];
 }
-function submitRating() {
+async function submitRating() {
   document.getElementById('rating-panel')?.remove();
-  showToast('⭐ Rating submitted – thanks!');
+  showToast('⭐ Vurdering sendt – takk!');
+  // Trigger achievement for completing quest
+  setTimeout(() => showAchievement('🏆', 'Oppdrag fullført!', 'Du har fullført et oppdrag. XP er lagt til profilen din.'), 500);
 }
 
 // ── NOTIFICATIONS ──
@@ -2131,7 +2133,7 @@ async function registerPushNotifications() {
       applicationServerKey: urlBase64ToUint8Array(
         // VAPID public key - generate at: https://vapidkeys.com
         // Replace this with your own key after generating
-        'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBOYDjuDmUkJBn9e5g3E'
+        'BGd226N5pUfrpp73oGZyk-uoU5R55RXY7jH_yFFBlPaIFFukjTYW_Zydjncj9dFeKwq957Gjs_pVv_ctZQwROi0'
       )
     });
 
@@ -2239,7 +2241,7 @@ async function loadMyQuests() {
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
             <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">${q.category||'Annet'}</span>
             <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);font-weight:700">${q.pay} kr</span>
-            <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:${c.status==='accepted'?'rgba(15,169,104,0.1)':'rgba(249,115,22,0.1)'};color:${c.status==='accepted'?'var(--green)':'#f97316'};font-weight:700">${c.status==='accepted'?'✅ Godkjent':'⏳ Venter svar'}</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:${c.status==='completed'?'rgba(59,111,245,0.1)':c.status==='accepted'?'rgba(15,169,104,0.1)':'rgba(249,115,22,0.1)'};color:${c.status==='completed'?'var(--accent)':c.status==='accepted'?'var(--green)':'#f97316'};font-weight:700">${c.status==='completed'?'🏆 Fullført':c.status==='accepted'?'✅ Godkjent':'⏳ Venter svar'}</span>
           </div>
           <button onclick="openChat('${c.id}','${q.title}')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Åpne chat</button>
         </div>
@@ -2250,8 +2252,9 @@ async function loadMyQuests() {
 
 function questCard(q, type) {
   const applicants = q.conversations || [];
-  const statusColor = q.status === 'open' ? 'var(--green)' : 'var(--muted)';
-  const statusLabel = q.status === 'open' ? '🟢 Åpen' : '✅ Fullført';
+
+  const statusLabel = q.status === 'completed' ? '🏆 Fullført' : q.status === 'taken' ? '🔒 Tildelt' : q.status === 'open' ? '🟢 Åpen' : '🗑️ Slettet';
+  const statusColor = q.status === 'completed' ? 'var(--accent)' : q.status === 'taken' ? '#f97316' : q.status === 'open' ? 'var(--green)' : 'var(--muted)';
   return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden">
     <div style="padding:14px 16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
@@ -2282,6 +2285,7 @@ function questCard(q, type) {
       ` : ''}
       <div style="display:flex;gap:8px">
         ${applicants.length > 0 ? `<button onclick="openChat('${applicants[0]?.id||''}','${q.title}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : ''}
+        ${q.status==='taken' ? `<button onclick="completeQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✅ Merk fullført</button>` : ''}
         ${q.status==='open' ? `<button onclick="deleteQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">🗑️</button>` : ''}
       </div>
     </div>
@@ -2318,6 +2322,46 @@ async function deleteQuest(questId) {
   if(!confirm('Slette dette oppdraget?')) return;
   await sb.from('quests').update({ status: 'deleted' }).eq('id', questId);
   showToast('🗑️ Oppdrag slettet');
+  loadMyQuests();
+  addMarkers();
+}
+
+async function completeQuest(questId) {
+  if(!confirm('Marker oppdraget som fullført?')) return;
+
+  // Update quest status
+  await sb.from('quests').update({ status: 'completed' }).eq('id', questId);
+
+  // Find the accepted conversation to notify taker
+  const { data: conv } = await sb.from('conversations')
+    .select('id, taker_id, taker:taker_id(raw_user_meta_data)')
+    .eq('quest_id', questId)
+    .eq('status', 'accepted')
+    .single();
+
+  // Get quest title
+  const { data: quest } = await sb.from('quests').select('title').eq('id', questId).single();
+  const title = quest?.title || 'Oppdraget';
+  const takerName = conv?.taker?.raw_user_meta_data?.first_name || 'deg';
+
+  if(conv) {
+    // Update conversation
+    await sb.from('conversations').update({ status: 'completed' }).eq('id', conv.id);
+
+    // Notify taker
+    await sb.from('notifications').insert({
+      user_id: conv.taker_id,
+      type: 'completed',
+      title: '🎉 Oppdrag fullført!',
+      body: `${title} er markert som fullført. Takk for jobben! Du kan nå motta betaling.`,
+      link_id: conv.id
+    });
+
+    // Show rating prompt for giver
+    showRating(takerName, conv.id);
+  }
+
+  showToast('🎉 Oppdrag markert som fullført!');
   loadMyQuests();
   addMarkers();
 }
