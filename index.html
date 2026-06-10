@@ -511,12 +511,20 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
   /* LEADERBOARD – full bottom sheet on mobile */
   .lb-popup {
-    right: 0; left: 0; top: auto;
-    bottom: 0;
-    width: 100%;
-    border-radius: 20px 20px 0 0;
+    right: 0 !important; left: 0 !important; top: auto !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
     max-height: 80vh;
     overflow-y: auto;
+    /* Hidden: slide down */
+    transform: translateY(100%) !important;
+    opacity: 1 !important;
+    transition: transform .3s cubic-bezier(.32,.72,0,1) !important;
+  }
+  .lb-popup.open {
+    transform: translateY(0) !important;
+    pointer-events: all !important;
   }
   .lb-popup::before {
     content: '';
@@ -634,6 +642,109 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   padding: 8px 16px !important;
 }
 .nav-post .nav-label { color: #fff !important; }
+
+  /* ── FILTER BOTTOM SHEET ── */
+  #filter-sheet {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 400;
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform .35s cubic-bezier(.32,.72,0,1);
+    box-shadow: 0 -8px 40px rgba(0,0,0,.18);
+  }
+  #filter-sheet.open { transform: translateY(0); }
+
+  @media(min-width:769px) {
+    #filter-sheet {
+      left: 50%; right: auto;
+      transform: translateX(-50%) translateY(100%);
+      width: 520px;
+      bottom: 0;
+    }
+    #filter-sheet.open { transform: translateX(-50%) translateY(0); }
+  }
+
+  .fsheet-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 20px 10px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .fsheet-title { font-size: 16px; font-weight: 700; flex: 1; }
+  .fsheet-clear { background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: underline; }
+  .fsheet-close { background: var(--surface2); border: none; color: var(--text); width: 28px; height: 28px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+  .fsheet-body { overflow-y: auto; flex: 1; padding-bottom: 90px; }
+  .fsection { padding: 18px 20px; border-bottom: 1px solid var(--border); }
+  .fsection:last-child { border-bottom: none; }
+  .fsection-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .fsection-val { font-size: 13px; font-weight: 600; color: var(--accent); }
+
+  .fcat-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+  .fcat-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 10px 4px; border-radius: 12px;
+    border: 1.5px solid var(--border); background: var(--surface2);
+    cursor: pointer; transition: all .15s;
+  }
+  .fcat-item.active { border-color: var(--accent); background: var(--accent-glow); }
+  .fcat-icon { font-size: 22px; line-height: 1; }
+  .fcat-label { font-size: 10px; font-weight: 600; color: var(--muted); text-align: center; }
+  .fcat-item.active .fcat-label { color: var(--accent); }
+
+  .dual-range-wrap { position: relative; height: 36px; margin: 8px 0 4px; }
+  .dual-track { position: absolute; top: 50%; transform: translateY(-50%); left: 0; right: 0; height: 4px; background: var(--surface2); border-radius: 2px; }
+  .dual-fill { position: absolute; height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); border-radius: 2px; }
+  .dual-slider {
+    position: absolute; width: 100%; top: 50%; transform: translateY(-50%);
+    -webkit-appearance: none; background: none; outline: none; pointer-events: none; height: 4px;
+  }
+  .dual-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--surface); border: 2px solid var(--accent);
+    cursor: pointer; pointer-events: all;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  }
+
+  .fpill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fpill {
+    padding: 7px 13px; border-radius: 50px; font-size: 12px; font-weight: 500;
+    background: var(--surface2); border: 1.5px solid var(--border);
+    cursor: pointer; color: var(--muted); transition: all .15s;
+  }
+  .fpill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .fpill:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+
+  .ftoggle-list { display: flex; flex-direction: column; }
+  .ftoggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .ftoggle-row:last-child { border-bottom: none; }
+  .ftoggle-info { display: flex; flex-direction: column; gap: 2px; }
+  .ftoggle-label { font-size: 13px; font-weight: 500; }
+  .ftoggle-sub { font-size: 11px; color: var(--muted); }
+
+  .fsheet-footer {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 14px 20px 24px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .fsheet-apply {
+    width: 100%;
+    background: linear-gradient(135deg,#f97316,#a855f7);
+    color: #fff; border: none; border-radius: 14px;
+    padding: 15px; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── MAP fix for mobile ── */
+  @media(max-width:768px) {
+    #map { top: 108px; bottom: 60px; position: fixed; left: 0; right: 0; }
+  }
 </style>
 </head>
 <body>
@@ -669,7 +780,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       Post quest
     </button>
     <button class="btn btn-ghost" onclick="openAuth('login')"><span id="btn-login">Log in</span></button>
-    <div class="avatar-wrap" onclick="toggleLeaderboard()" title="View leaderboard & rank">
+    <div class="avatar-wrap" onclick="toggleProfile()" title="View your profile">
       <div class="avatar">You</div>
       <div class="avatar-lvl">LVL 3</div>
     </div>
@@ -903,6 +1014,61 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   </div>
 </div>
 
+<!-- LEADERBOARD POPUP -->
+<div id="leaderboard" class="lb-popup">
+  <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0"></div>
+  <div class="lb-header">
+    <span class="lb-trophy">🏆</span>
+    <div style="display:flex;flex-direction:column;gap:2px;flex:1">
+      <span class="lb-title" id="lb-title-text">Toppliste</span>
+      <span id="lb-tagline-text" style="font-size:9px;color:var(--gold);font-style:italic;font-weight:500">XP som faktisk betaler husleien.</span>
+    </div>
+    <button onclick="closeLeaderboard()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1">×</button>
+  </div>
+  <div class="lb-ranks-info">
+    <div id="lb-rank-ladder-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:10px 14px 6px">Rangstige</div>
+    <div class="rank-ladder">
+      <span class="lb-badge rank-wanderer">Wanderer</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-scout">Scout</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-rover">Rover</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-pathfinder">Pathfinder</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-champion">Champion</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-legend">Legend</span>
+    </div>
+  </div>
+  <div id="lb-top-questers-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:10px 14px 6px;border-top:1px solid var(--border)">Topp-utførere</div>
+  <div class="lb-row">
+    <div class="lb-rank gold">1</div>
+    <div class="lb-avatar" style="background:#f5c51820;color:#c9900a">JS</div>
+    <div class="lb-info"><div class="lb-name">Jonas S.</div><div class="lb-quests">47 oppdrag · ★ 4.97</div></div>
+    <span class="lb-badge rank-legend">Legend</span>
+  </div>
+  <div class="lb-row">
+    <div class="lb-rank silver">2</div>
+    <div class="lb-avatar" style="background:#4f8ef720;color:#3b6ff5">AK</div>
+    <div class="lb-info"><div class="lb-name">Anders K.</div><div class="lb-quests">31 oppdrag · ★ 4.9</div></div>
+    <span class="lb-badge rank-champion">Champion</span>
+  </div>
+  <div class="lb-row">
+    <div class="lb-rank bronze">3</div>
+    <div class="lb-avatar" style="background:#2de08a20;color:#0fa968">MR</div>
+    <div class="lb-info"><div class="lb-name">Maria R.</div><div class="lb-quests">18 oppdrag · ★ 4.8</div></div>
+    <span class="lb-badge rank-pathfinder">Pathfinder</span>
+  </div>
+  <div class="lb-row">
+    <div class="lb-rank">4</div>
+    <div class="lb-avatar" style="background:#7c5cfc20;color:#7c5cfc">TH</div>
+    <div class="lb-info"><div class="lb-name">Tone H.</div><div class="lb-quests">11 oppdrag · ★ 5.0</div></div>
+    <span class="lb-badge rank-rover">Rover</span>
+  </div>
+  <div class="lb-row">
+    <div class="lb-rank">5</div>
+    <div class="lb-avatar" style="background:#6b728020;color:#6b7280">PL</div>
+    <div class="lb-info"><div class="lb-name">Per L.</div><div class="lb-quests">4 oppdrag · ★ 4.7</div></div>
+    <span class="lb-badge rank-scout">Scout</span>
+  </div>
+</div>
+
 <!-- CORNER WIDGETS -->
 <div id="corner-widgets">
   <div id="week-worker">
@@ -915,9 +1081,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     </div>
   </div>
   <div class="zoom-controls">
-    <button class="zoom-btn" onclick="window.map && window.map.zoomIn()">+</button>
+    <button class="zoom-btn" onclick="if(window.map){window.map.setZoom(window.map.getZoom()+1)}">+</button>
     <div class="zoom-divider"></div>
-    <button class="zoom-btn" onclick="window.map && window.map.zoomOut()">−</button>
+    <button class="zoom-btn" onclick="if(window.map){window.map.setZoom(window.map.getZoom()-1)}">−</button>
     <div class="zoom-divider"></div>
     <button class="zoom-btn" onclick="addMarkers();showToast('🔄 Oppdatert!')" title="Refresh quests" style="font-size:14px">↺</button>
   </div>
@@ -1516,6 +1682,15 @@ function loadDemoMarkers() {
 // Close lang dropdown on outside click
 document.addEventListener('click', e => {
   if(!document.getElementById('lang-selector')?.contains(e.target)) closeLangDropdown();
+  // Close leaderboard on outside click
+  const lb = document.getElementById('leaderboard');
+  const avatarWrap = document.querySelector('.avatar-wrap');
+  const ranksBtn = document.querySelector('[onclick="toggleLeaderboard()"]');
+  if(lb && lb.classList.contains('open')) {
+    if(!lb.contains(e.target) && !avatarWrap?.contains(e.target) && !ranksBtn?.contains(e.target)) {
+      closeLeaderboard();
+    }
+  }
 });
 
 // Lang option hover style
@@ -1526,15 +1701,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-map.on('load', () => {
-  addMarkers();
-  requestLocation();
-  applyLanguage();
-  // Set correct flag on load
-  const L = LANGUAGES[currentLang];
-  document.getElementById('lang-current').textContent = L.flag + ' ' + L.code.toUpperCase();
-});
-  map.on('click', closePanel);
+  window.map.on('load', () => {
+    addMarkers();
+    requestLocation();
+    applyLanguage();
+    const L = LANGUAGES[currentLang];
+    const lc = document.getElementById('lang-current');
+    if(lc) lc.textContent = L.flag + ' ' + L.code.toUpperCase();
+  });
+
+  window.map.on('click', closePanel);
 } // end initMap
 
 window.addEventListener('load', initMap);
@@ -1612,8 +1788,7 @@ function postJob() { closeModal(); showToast('✅ Quest posted on the map!'); }
 function toggleTheme() {
   const dark = document.body.classList.toggle('dark');
   document.getElementById('theme-toggle').textContent = dark ? '☀️' : '🌙';
-  if(window.map) window.map.setStyle(dark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11');
-  if(window.map) window.map.once('style.load', addMarkers);
+  if(window.map) { window.map.setStyle(dark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'); window.map.once('style.load', addMarkers); }
 }
 
 // Leaderboard toggle
@@ -1650,6 +1825,9 @@ function updateFilterCount() {
     const el = document.getElementById(id);
     if(el) { el.textContent=count; el.style.display=count>0?'flex':'none'; }
   });
+  // Update result count
+  const rc = document.getElementById('result-count');
+  if(rc) rc.textContent = 8 - count;
 }
 function toggleCat(el) {
   const isAll = el.dataset.cat === 'all';
@@ -1688,18 +1866,36 @@ setTimeout(updateRange, 100);
 
 function toggleLeaderboard() {
   const lb = document.getElementById('leaderboard');
+  if(!lb) return;
   lb.classList.toggle('open');
-  // close job panel if open
   closePanel();
+  // close profile panel too
+  const pp = document.getElementById('profile-panel');
+  if(pp) pp.style.display = 'none';
+}
+
+function toggleProfile() {
+  if(currentUser) {
+    const pp = document.getElementById('profile-panel');
+    if(!pp) return;
+    const isOpen = pp.style.display === 'block';
+    pp.style.display = isOpen ? 'none' : 'block';
+    closeLeaderboard();
+  } else {
+    openAuth('login');
+  }
 }
 function closeLeaderboard() {
-  document.getElementById('leaderboard').classList.remove('open');
+  const lb = document.getElementById('leaderboard');
+  if(lb) lb.classList.remove('open');
 }
 
 // Quest mode toggle
 function setMode(mode) {
-  document.getElementById('mode-approve').classList.toggle('active', mode==='approve');
-  document.getElementById('mode-firstcome').classList.toggle('active', mode==='firstcome');
+  const ma = document.getElementById('mode-approve');
+  const mf = document.getElementById('mode-firstcome');
+  if(ma) ma.classList.toggle('active', mode==='approve');
+  if(mf) mf.classList.toggle('active', mode==='firstcome');
   document.getElementById('mode-note').textContent = mode === 'firstcome'
     ? '⚡ First applicant is automatically assigned. Great for small quick tasks.'
     : '✋ You will review applicants and choose who gets the quest.';
