@@ -918,6 +918,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <button class="zoom-btn" onclick="window.map && window.map.zoomIn()">+</button>
     <div class="zoom-divider"></div>
     <button class="zoom-btn" onclick="window.map && window.map.zoomOut()">−</button>
+    <div class="zoom-divider"></div>
+    <button class="zoom-btn" onclick="addMarkers();showToast('🔄 Oppdatert!')" title="Refresh quests" style="font-size:14px">↺</button>
   </div>
 </div>
 
@@ -938,11 +940,11 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     </div>
     <div class="form-group">
       <label class="form-label">Quest title</label>
-      <input class="form-input" type="text" placeholder="E.g. «Mow the lawn in my garden»">
+      <input id="quest-title-input" class="form-input" type="text" placeholder="E.g. «Mow the lawn in my garden»">
     </div>
     <div class="form-group">
       <label class="form-label">Category</label>
-      <select class="form-select">
+      <select id="quest-category-input" class="form-select">
         <option>🏠 Home & garden</option>
         <option>🚗 Driving & transport</option>
         <option>🛒 Shopping & errands</option>
@@ -1435,19 +1437,79 @@ const JOBS = [
   }
 ];
 
-function addMarkers() {
-  // Remove old HTML markers
+function questToJob(q) {
+  // Convert Supabase quest row to job display object
+  const type = q.is_urgent ? 'haste' : (q.pay >= 400 ? 'high' : q.is_charity ? 'charity' : 'normal');
+  const prefix = q.is_urgent ? '🔴 ' : q.is_charity ? '💚 ' : '';
+  return {
+    id: q.id,
+    type,
+    title: q.title,
+    label: prefix + q.title + ' · ' + q.pay + ' kr',
+    tags: [
+      { t: q.category || 'Annet' },
+      { t: q.duration || '' },
+      ...(q.is_urgent ? [{ t: '🔴 Haste', cls: 'haste-tag' }] : []),
+      ...(q.is_charity ? [{ t: '💚 Veldedighet', cls: 'charity-tag' }] : [])
+    ].filter(t => t.t),
+    desc: q.description || '',
+    pay: q.pay,
+    rating: 5.0,
+    applicants: 0,
+    firstCome: q.is_first_come,
+    coords: [q.lng, q.lat],
+    people: [],
+    raw: q
+  };
+}
+
+function addQuestMarker(q) {
+  const job = questToJob(q);
+  const el = document.createElement('div');
+  el.className = 'mapbox-marker';
+  el.innerHTML = `<div class="marker-pill ${job.type}"><div class="marker-dot"></div>${job.label}</div>`;
+  el.addEventListener('click', e => { e.stopPropagation(); showPanel(job); });
+  new mapboxgl.Marker({ element: el, anchor: 'bottom', pitchAlignment:'map', rotationAlignment:'map' })
+    .setLngLat(job.coords)
+    .addTo(window.map);
+}
+
+async function addMarkers() {
+  // Remove old markers
   document.querySelectorAll('.mapbox-marker').forEach(m => m.remove());
+
+  // Load from Supabase
+  const { data: quests, error } = await sb.from('quests')
+    .select('*')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false });
+
+  if(error) {
+    console.error('Error loading quests:', error);
+    // Fall back to demo data if DB empty
+    loadDemoMarkers();
+    return;
+  }
+
+  if(!quests || quests.length === 0) {
+    // Show demo markers when DB is empty
+    loadDemoMarkers();
+    return;
+  }
+
+  quests.forEach(q => addQuestMarker(q));
+}
+
+function loadDemoMarkers() {
   JOBS.forEach(job => {
     const el = document.createElement('div');
     el.className = 'mapbox-marker';
     el.innerHTML = `<div class="marker-pill ${job.type}"><div class="marker-dot"></div>${job.label}</div>`;
     el.addEventListener('click', e => { e.stopPropagation(); showPanel(job); });
-    // Use mapboxgl.Marker with willReadFrequently hint for performance
-    const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom', pitchAlignment:'map', rotationAlignment:'map' })
+    new mapboxgl.Marker({ element: el, anchor: 'bottom', pitchAlignment:'map', rotationAlignment:'map' })
       .setLngLat(job.coords)
-      .addTo(map);
-    job._marker = marker;
+      .addTo(window.map);
+    job._marker = { getLngLat: () => ({ lng: job.coords[0], lat: job.coords[1] }) };
   });
 }
 
@@ -1535,11 +1597,11 @@ function requestLocation() {
   });
 }
 
-function applyJob() {
+async function applyJob() {
+  if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å søke på oppdrag'); return; }
   closePanel();
   showToast(t('toastApplied'));
-  setTimeout(() => showAchievement('✦','First Quest','You applied for your first quest. The adventure begins!'), 1800);
-  setTimeout(() => showRating('Anders K.'), 4000);
+  setTimeout(() => showAchievement('✦', t('firstQuestTitle'), t('firstQuestDesc')), 1800);
 }
 
 function openModal() { if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å legge ut oppdrag'); return; } document.getElementById('modal-overlay').classList.add('open'); }
