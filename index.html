@@ -266,8 +266,15 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .rank-legend { background:linear-gradient(135deg,rgba(201,144,10,0.2),rgba(124,92,252,0.2)); color:var(--gold); border-color:var(--gold); }
 
 /* ── MARKERS ── */
-.mapbox-marker { cursor:pointer; transition:transform .15s; }
-.mapbox-marker:hover { transform:scale(1.1) translateY(-2px); }
+.mapbox-marker {
+  cursor: pointer !important;
+  transition: transform .15s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.mapbox-marker:hover { transform: scale(1.1) translateY(-2px); }
+/* Ensure marker wrapper from mapbox doesn't block events */
+.mapboxgl-marker { cursor: pointer !important; }
 .marker-pill {
   background:var(--surface);
   border:1.5px solid var(--accent);
@@ -446,6 +453,32 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 /* ══════════════════════════════════════
    MOBILE RESPONSIVE
 ══════════════════════════════════════ */
+/* ── LEADERBOARD DESKTOP ── */
+.lb-popup {
+  position: fixed;
+  left: 18px;
+  bottom: 70px;
+  z-index: 300;
+  width: 290px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  overflow-y: auto;
+  max-height: 70vh;
+  /* HIDDEN BY DEFAULT */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px) scale(0.97);
+  transition: opacity .2s ease, transform .2s ease;
+}
+.lb-popup.open {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0) scale(1);
+}
+
 @media (max-width: 768px) {
 
   /* TOPBAR – compact */
@@ -519,17 +552,16 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     margin: 10px auto 0;
   }
 
-  /* LEADERBOARD – full bottom sheet on mobile */
+  /* LEADERBOARD – bottom sheet on mobile */
   .lb-popup {
-    right: 0 !important; left: 0 !important; top: auto !important;
-    bottom: 0 !important;
+    position: fixed !important;
+    right: 0 !important; left: 0 !important;
+    top: auto !important; bottom: 0 !important;
     width: 100% !important;
     border-radius: 20px 20px 0 0 !important;
     max-height: 80vh;
     overflow-y: auto;
-    /* Hidden: slide down */
     transform: translateY(100%) !important;
-    opacity: 1 !important;
     transition: transform .3s cubic-bezier(.32,.72,0,1) !important;
   }
   .lb-popup.open {
@@ -855,6 +887,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   <span>⚙️</span>
   <span id="filter-count-badge" style="display:none;background:var(--accent);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;align-items:center;justify-content:center">0</span>
 </button>
+
+<!-- SEARCH RESULTS DROPDOWN -->
+<div id="search-results" style="display:none;position:fixed;top:108px;left:50%;transform:translateX(-50%);width:min(500px,90vw);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);z-index:200;overflow:hidden;max-height:400px;overflow-y:auto;animation:popIn .15s ease"></div>
 
 <!-- FILTER OVERLAY -->
 <div id="filter-overlay" onclick="closeFilters()"></div>
@@ -2251,11 +2286,16 @@ setTimeout(updateRange, 100);
 function toggleLeaderboard() {
   const lb = document.getElementById('leaderboard');
   if(!lb) return;
-  lb.classList.toggle('open');
-  closePanel();
-  // close profile panel too
-  const pp = document.getElementById('profile-panel');
-  if(pp) pp.style.display = 'none';
+  const isOpen = lb.classList.contains('open');
+  if(isOpen) {
+    closeLeaderboard();
+  } else {
+    lb.classList.add('open');
+    closePanel();
+    document.getElementById('profile-panel').style.display = 'none';
+    document.getElementById('notif-panel').style.display = 'none';
+    document.getElementById('inbox-panel').style.display = 'none';
+  }
 }
 
 function toggleProfile() {
@@ -2271,7 +2311,22 @@ function toggleProfile() {
 }
 function closeLeaderboard() {
   const lb = document.getElementById('leaderboard');
-  if(lb) lb.classList.remove('open');
+  if(lb) {
+    lb.classList.remove('open');
+    // Force hide on desktop
+    if(window.innerWidth > 768) {
+      lb.style.opacity = '0';
+      lb.style.pointerEvents = 'none';
+      lb.style.transform = 'translateY(10px) scale(0.97)';
+      setTimeout(() => {
+        if(!lb.classList.contains('open')) {
+          lb.style.opacity = '';
+          lb.style.pointerEvents = '';
+          lb.style.transform = '';
+        }
+      }, 200);
+    }
+  }
 }
 
 // Quest mode toggle
@@ -3242,7 +3297,8 @@ async function doLogin() {
 async function doRegister() {
   const firstName = document.getElementById('reg-firstname').value.trim();
   const lastName = document.getElementById('reg-lastname').value.trim();
-  const phone = document.getElementById('reg-phone').value.trim();
+  const rawPhone = document.getElementById('reg-phone').value.replace(/\s/g, '').trim();
+  const phone = rawPhone ? '+47' + rawPhone.replace(/^\+47/, '') : null;
   const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
   const btn = document.getElementById('register-btn');
@@ -3251,7 +3307,15 @@ async function doRegister() {
   btn.textContent = 'Oppretter konto…'; btn.disabled = true;
   const { data, error } = await sb.auth.signUp({ email, password, options: { data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName, phone: phone } } });
   btn.textContent = 'Opprett konto'; btn.disabled = false;
-  if(error) { showAuthError('reg', error.message); return; }
+  if(error) {
+    let msg = error.message;
+    if(msg.includes('already registered') || msg.includes('already exists')) msg = 'Denne e-posten er allerede registrert. Prøv å logge inn i stedet.';
+    else if(msg.includes('invalid')) msg = 'Ugyldig e-postadresse. Sjekk at du har skrevet riktig.';
+    else if(msg.includes('weak')) msg = 'Passordet er for svakt. Bruk minst 6 tegn.';
+    else msg = 'Noe gikk galt. Prøv igjen om litt.';
+    showAuthError('reg', msg);
+    return;
+  }
   closeAuth();
   showToast('✅ Konto opprettet! Sjekk e-posten din for bekreftelse.');
   if(data.user) await loadUserProfile(data.user);
@@ -3421,8 +3485,12 @@ sb.auth.onAuthStateChange(async (event, session) => {
         </div>
       </div>
       <div style="margin-bottom:12px">
-        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Mobilnummer</label>
-        <input id="reg-phone" type="tel" placeholder="+47 000 00 000" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Mobilnummer <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(valgfritt)</span></label>
+        <div style="display:flex;gap:8px">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--muted);white-space:nowrap;flex-shrink:0">🇳🇴 +47</div>
+          <input id="reg-phone" type="tel" placeholder="92 89 16 18" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" maxlength="8">
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">Skriv bare 8 siffer – ingen mellomrom nødvendig</div>
       </div>
       <div style="margin-bottom:12px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">E-post</label>
