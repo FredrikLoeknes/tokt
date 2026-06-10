@@ -1164,6 +1164,23 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       <textarea class="form-textarea" placeholder="Describe what needs to be done, what tools are available, any details…"></textarea>
     </div>
     <div class="form-group">
+      <label class="form-label">Bilde (valgfritt)</label>
+      <div id="image-upload-area" onclick="document.getElementById('quest-image-input').click()"
+        style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)"
+        onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div id="image-preview" style="display:none;margin-bottom:10px">
+          <img id="preview-img" style="max-width:100%;max-height:160px;border-radius:8px;object-fit:cover">
+        </div>
+        <div id="upload-placeholder">
+          <div style="font-size:28px;margin-bottom:6px">📷</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Trykk for å legge til bilde</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">JPG, PNG – maks 5MB</div>
+        </div>
+      </div>
+      <input id="quest-image-input" type="file" accept="image/*" style="display:none" onchange="previewImage(this)">
+    </div>
+
+    <div class="form-group">
       <label class="form-label">Estimated duration</label>
       <select class="form-select">
         <option>Under 30 minutes</option>
@@ -1663,6 +1680,7 @@ function questToJob(q) {
       ...(q.is_charity ? [{ t: '💚 Veldedighet', cls: 'charity-tag' }] : [])
     ].filter(t => t.t),
     desc: q.description || '',
+    image: q.image_url || null,
     pay: q.pay,
     rating: 5.0,
     applicants: 0,
@@ -1767,6 +1785,17 @@ function showPanel(job) {
   document.getElementById('panel-title').textContent = job.title;
   document.getElementById('panel-tags').innerHTML = job.tags.map(t=>`<span class="tag ${t.cls||''}">${t.t}</span>`).join('');
   document.getElementById('panel-desc').textContent = job.desc;
+
+  // Show image if available
+  const existingImg = document.getElementById('panel-image');
+  if(existingImg) existingImg.remove();
+  if(job.image) {
+    const imgEl = document.createElement('div');
+    imgEl.id = 'panel-image';
+    imgEl.style.cssText = 'margin:0 0 12px;border-radius:10px;overflow:hidden;max-height:160px';
+    imgEl.innerHTML = `<img src="${job.image}" style="width:100%;height:160px;object-fit:cover" onerror="this.parentElement.remove()">`;
+    document.getElementById('panel-desc').before(imgEl);
+  }
   document.getElementById('panel-meta').innerHTML = `
     <div class="meta-item"><div class="meta-label" id="panel-reward-label">Reward</div><div class="meta-value green">${job.pay} kr</div></div>
     <div class="meta-item"><div class="meta-label" id="panel-rating-label">Rating</div><div class="meta-value yellow">★ ${job.rating}</div></div>
@@ -1991,44 +2020,80 @@ function setMode(mode) {
 }
 
 // Rating popup after quest completion
-function showRating(name, convId='') {
-  const panel = document.getElementById('job-panel');
+// Active rating context
+let ratingContext = { convId: '', ratedId: '', questId: '', name: '' };
+let selectedRating = 0;
+const ratingLabels = ['','😕 Dårlig','😐 OK','🙂 Bra','😊 Veldig bra','🤩 Fantastisk!'];
+
+function showRating(name, convId='', ratedId='', questId='') {
+  ratingContext = { convId, ratedId, questId, name };
+  selectedRating = 0;
+
   const existing = document.getElementById('rating-panel');
   if(existing) existing.remove();
+
   const div = document.createElement('div');
   div.id = 'rating-panel';
-  div.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:400;background:var(--surface);border-top:1px solid var(--border);border-radius:20px 20px 0 0;padding:24px 20px;box-shadow:0 -8px 32px rgba(0,0,0,0.15);animation:slideUp .3s ease';
+  div.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--surface);border-top:1px solid var(--border);border-radius:20px 20px 0 0;padding:24px 20px 36px;box-shadow:0 -8px 32px rgba(0,0,0,0.2)';
   div.innerHTML = `
-    <style>@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>
+    <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px"></div>
     <div style="text-align:center">
-      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px">Quest complete!</div>
-      <div style="font-size:18px;font-weight:700;margin-bottom:4px">Rate ${name}</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Your rating helps the community stay trustworthy</div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--gold);margin-bottom:6px">⭐ Vurder utfører</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">Hvordan var ${name}?</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Din vurdering hjelper andre brukere å ta trygge valg</div>
       <div class="star-row" id="star-row">
-        ${[1,2,3,4,5].map(i=>`<span class="star" onclick="rateStar(${i})">★</span>`).join('')}
+        ${[1,2,3,4,5].map(i=>`<span class="star" onclick="rateStar(${i})" style="cursor:pointer;font-size:38px;opacity:.25;transition:all .15s;filter:grayscale(1)">★</span>`).join('')}
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px" id="rating-label">Tap a star to rate</div>
-      <textarea style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13px;color:var(--text);font-family:inherit;outline:none;resize:none;height:70px" placeholder="Optional: Leave a comment…"></textarea>
+      <div style="font-size:14px;font-weight:600;color:var(--gold);margin:10px 0 16px;min-height:20px" id="rating-label">Trykk en stjerne</div>
+      <textarea id="rating-comment" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;resize:none;height:80px;transition:border-color .15s" placeholder="Valgfritt: Legg igjen en kommentar…" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
       <div style="display:flex;gap:8px;margin-top:12px">
-        <button onclick="submitRating()" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Submit rating</button>
-        <button onclick="this.closest('#rating-panel').remove()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 16px;font-size:14px;cursor:pointer">Skip</button>
+        <button onclick="submitRating()" id="submit-rating-btn" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">Send vurdering</button>
+        <button onclick="document.getElementById('rating-panel').remove()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px 16px;font-size:14px;cursor:pointer;font-family:inherit">Hopp over</button>
       </div>
     </div>`;
   document.body.appendChild(div);
 }
 
-let selectedRating = 0;
-const ratingLabels = ['','😕 Poor','😐 OK','🙂 Good','😊 Great','🤩 Amazing!'];
 function rateStar(n) {
   selectedRating = n;
-  document.querySelectorAll('.star').forEach((s,i) => s.classList.toggle('active', i < n));
+  document.querySelectorAll('#star-row .star').forEach((s,i) => {
+    s.style.opacity = i < n ? '1' : '0.25';
+    s.style.filter = i < n ? 'none' : 'grayscale(1)';
+    s.style.transform = i < n ? 'scale(1.1)' : 'scale(1)';
+  });
   document.getElementById('rating-label').textContent = ratingLabels[n];
 }
+
 async function submitRating() {
+  if(!selectedRating) { showToast('⭐ Velg antall stjerner først'); return; }
+  if(!currentUser) return;
+
+  const btn = document.getElementById('submit-rating-btn');
+  if(btn) { btn.textContent = 'Sender…'; btn.disabled = true; }
+
+  const comment = document.getElementById('rating-comment')?.value?.trim() || '';
+
+  const { error } = await sb.from('ratings').insert({
+    conversation_id: ratingContext.convId || null,
+    quest_id: ratingContext.questId || null,
+    rater_id: currentUser.id,
+    rated_id: ratingContext.ratedId || null,
+    score: selectedRating,
+    comment: comment || null
+  });
+
   document.getElementById('rating-panel')?.remove();
+
+  if(error && !error.message.includes('unique')) {
+    showToast('❌ Kunne ikke lagre vurdering: ' + error.message);
+    return;
+  }
+
   showToast('⭐ Vurdering sendt – takk!');
-  // Trigger achievement for completing quest
-  setTimeout(() => showAchievement('🏆', 'Oppdrag fullført!', 'Du har fullført et oppdrag. XP er lagt til profilen din.'), 500);
+  setTimeout(() => showAchievement('🏆', 'Oppdrag fullført!', 'Du har fullført et oppdrag. XP er lagt til profilen din!'), 600);
+
+  // Reload profile to show updated rating
+  if(currentUser) await loadUserProfile(currentUser);
 }
 
 // ── NOTIFICATIONS ──
@@ -2078,6 +2143,19 @@ async function handleNotifClick(notifId, type, linkId) {
   closeNotifications();
   if(type === 'message' && linkId) openChat(linkId, 'Melding');
   else if(type === 'application') openMyQuests();
+  else if(type === 'completed' && linkId) {
+    // Taker can rate the giver
+    openMyQuests();
+    setTimeout(async () => {
+      const { data: conv } = await sb.from('conversations')
+        .select('*, quest:quest_id(title,user_id), giver:giver_id(raw_user_meta_data)')
+        .eq('id', linkId).single();
+      if(conv) {
+        const giverName = conv.giver?.raw_user_meta_data?.first_name || 'Oppdragsgiver';
+        showRating(giverName, conv.id, conv.quest?.user_id, conv.quest_id);
+      }
+    }, 800);
+  }
   loadNotifications();
 }
 
@@ -2358,7 +2436,8 @@ async function completeQuest(questId) {
     });
 
     // Show rating prompt for giver
-    showRating(takerName, conv.id);
+    const takerId = conv.taker_id;
+    showRating(takerName, conv.id, takerId, questId);
   }
 
   showToast('🎉 Oppdrag markert som fullført!');
@@ -2556,6 +2635,7 @@ function showAchievement(icon, title, desc) {
 // ══════════════════════════════════════
 // SUPABASE INIT
 // ══════════════════════════════════════
+// Run in Supabase SQL editor: alter table quests add column if not exists image_url text;
 const SUPABASE_URL = 'https://notbntypwtorecnynkfr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vdGJudHlwd3RvcmVjbnlua2ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNDYxNzksImV4cCI6MjA5NjYyMjE3OX0.BqDLMfSHFf1TfaOcFLT4hKA2AfJevEQL472Is3IfT0E';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
