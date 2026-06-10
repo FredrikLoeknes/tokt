@@ -3194,39 +3194,48 @@ async function runSearch(query) {
 
   const q = query.toLowerCase();
 
-  // Search in Supabase
-  const { data: quests } = await sb.from('quests')
+  // Always search demo data
+  const demoJobResults = JOBS.filter(j =>
+    j.title.toLowerCase().includes(q) ||
+    j.desc.toLowerCase().includes(q) ||
+    (j.tags||[]).some(t => t.t?.toLowerCase().includes(q))
+  ).map(j => ({ id:j.id, title:j.title, category:j.tags[0]?.t||'', pay:j.pay, image_url:null, coords:j.coords, _type:'quest' }));
+
+  const demoSvcResults = DEMO_SERVICES.filter(s =>
+    s.title.toLowerCase().includes(q) ||
+    s.desc.toLowerCase().includes(q) ||
+    s.category?.toLowerCase().includes(q)
+  ).map(s => ({ id:s.id, title:s.title, category:s.category||'', pay:s.price, image_url:null, coords:s.coords, _type:'service' }));
+
+  // Also search Supabase
+  const { data: dbQuests } = await sb.from('quests')
     .select('*')
     .eq('status', 'open')
     .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
     .limit(8);
 
-  if(!quests || quests.length === 0) {
-    // Search demo jobs AND services
-    const demoJobResults = JOBS.filter(j =>
-      j.title.toLowerCase().includes(q) ||
-      j.desc.toLowerCase().includes(q) ||
-      (j.tags||[]).some(t => t.t?.toLowerCase().includes(q))
-    );
-    const demoSvcResults = DEMO_SERVICES.filter(s =>
-      s.title.toLowerCase().includes(q) ||
-      s.desc.toLowerCase().includes(q) ||
-      s.category?.toLowerCase().includes(q)
-    );
-    const allDemo = [
-      ...demoJobResults.map(j => ({ id:j.id, title:j.title, category:j.tags[0]?.t||'', pay:j.pay, image_url:null, coords:j.coords, _type:'quest' })),
-      ...demoSvcResults.map(s => ({ id:s.id, title:s.title, category:s.category||'', pay:s.price, image_url:null, coords:s.coords, _type:'service' }))
-    ];
+  const dbResults = (dbQuests || []).map(q => ({ ...q, _type: 'quest' }));
 
-    if(allDemo.length === 0) {
-      results.innerHTML = `<div class="search-empty">Ingen treff for "<strong>${query}</strong>"</div>`;
-      return;
-    }
-    renderSearchResults(allDemo);
+  const { data: dbServices } = await sb.from('services')
+    .select('*')
+    .eq('status', 'active')
+    .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
+    .limit(4);
+
+  const dbSvcResults = (dbServices || []).map(s => ({
+    id: s.id, title: s.title, category: s.category||'',
+    pay: s.price, image_url: s.image_url,
+    coords: [s.lng, s.lat], _type: 'service'
+  }));
+
+  const all = [...dbResults, ...dbSvcResults, ...demoJobResults, ...demoSvcResults];
+
+  if(all.length === 0) {
+    results.innerHTML = `<div class="search-empty">Ingen treff for "<strong>${query}</strong>"</div>`;
     return;
   }
 
-  renderSearchResults(quests);
+  renderSearchResults(all);
 }
 
 function renderSearchResults(quests) {
