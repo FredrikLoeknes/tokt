@@ -952,7 +952,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 <!-- MOBILE SEARCH BAR -->
 <div id="mobile-search">
-  <input id="search-input-desktop" type="text" placeholder="Søk på oppdrag, type, sted…" oninput="handleSearch(this.value)" autocomplete="off" style="caret-color:var(--accent)">
+  <input id="search-input-mobile" type="text" placeholder="Søk på oppdrag, type, sted…" oninput="handleSearch(this.value)" autocomplete="off" style="caret-color:var(--accent)">
 </div>
 
 <!-- FILTER BUTTON (both mobile + desktop) -->
@@ -1126,11 +1126,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   <span id="desktop-filter-count" style="display:none;background:var(--accent);color:#fff;border-radius:50px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:2px">0</span>
 </button>
 
-<!-- SEARCH DESKTOP -->
-<div id="desktop-search">
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-  <input id="search-input-desktop" type="text" placeholder="Søk på oppdrag, type, sted…" oninput="handleSearch(this.value)" autocomplete="off">
-</div>
+<!-- SEARCH DESKTOP (handled by topbar searchbox) -->
 
 <!-- JOB PANEL -->
 <div id="job-panel">
@@ -1789,6 +1785,21 @@ manifestLink.rel = 'manifest';
 manifestLink.href = manifestUrl;
 document.head.appendChild(manifestLink);
 
+// Rank system – global so all functions can access it
+const RANKS = [
+  { name:'Wanderer', cls:'rank-wanderer', min:0 },
+  { name:'Scout',    cls:'rank-scout',    min:1 },
+  { name:'Rover',    cls:'rank-rover',    min:4 },
+  { name:'Pathfinder',cls:'rank-pathfinder',min:8 },
+  { name:'Champion', cls:'rank-champion', min:16 },
+  { name:'Legend',   cls:'rank-legend',   min:31 }
+];
+function getRank(quests) {
+  let r = RANKS[0];
+  for(const rank of RANKS) { if(quests >= rank.min) r = rank; }
+  return r;
+}
+
 // Ensure mapbox loads before init
 function initMap() {
   if (typeof mapboxgl === 'undefined') {
@@ -1804,21 +1815,6 @@ function initMap() {
     zoom: 13,
     attributionControl: false
   });
-
-// Rank system
-const RANKS = [
-  { name:'Wanderer', cls:'rank-wanderer', min:0 },
-  { name:'Scout',    cls:'rank-scout',    min:1 },
-  { name:'Rover',    cls:'rank-rover',    min:4 },
-  { name:'Pathfinder',cls:'rank-pathfinder',min:8 },
-  { name:'Champion', cls:'rank-champion', min:16 },
-  { name:'Legend',   cls:'rank-legend',   min:31 }
-];
-function getRank(quests) {
-  let r = RANKS[0];
-  for(const rank of RANKS) { if(quests >= rank.min) r = rank; }
-  return r;
-}
 
 const JOBS = [
   { id:'j1', type:'normal', title:'Klipp gresset 🌿', label:'Klipp gresset · 150 kr',
@@ -1959,6 +1955,27 @@ function questToJob(q) {
   };
 }
 
+function createMarkerEl(type, label, imageUrl, onClick) {
+  const el = document.createElement('div');
+  el.className = 'mapbox-marker';
+
+  const pillClass = type === 'haste' ? 'haste'
+    : type === 'high' ? 'high'
+    : type === 'charity' ? 'charity'
+    : '';
+
+  el.innerHTML = `
+    <div class="marker-pill ${pillClass}">
+      <div class="marker-dot"></div>
+      ${imageUrl ? `<img src="${imageUrl}" style="width:18px;height:18px;border-radius:4px;object-fit:cover;flex-shrink:0" onerror="this.remove()">` : ''}
+      <span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${label}</span>
+    </div>`;
+
+  el.addEventListener('click', e => { e.stopPropagation(); onClick(); });
+  el.style.cursor = 'pointer';
+  return el;
+}
+
 function addQuestMarker(q) {
   const job = questToJob(q);
   const el = createMarkerEl(job.type, job.label, job.image || null, () => showPanel(job));
@@ -1971,34 +1988,24 @@ async function addMarkers() {
   // Remove old markers
   document.querySelectorAll('.mapbox-marker').forEach(m => m.remove());
 
-  // Load from Supabase
+  // Always show demo markers as background
+  loadDemoMarkers();
+
+  // Load real quests from Supabase on top
   const { data: quests, error } = await sb.from('quests')
     .select('*')
     .eq('status', 'open')
     .order('created_at', { ascending: false });
 
-  if(error) {
-    console.error('Error loading quests:', error);
-    // Fall back to demo data if DB empty
-    loadDemoMarkers();
-    return;
+  if(!error && quests && quests.length > 0) {
+    quests.forEach(q => addQuestMarker(q));
   }
 
-  if(!quests || quests.length === 0) {
-    // Show demo markers when DB is empty
-    loadDemoMarkers();
-    return;
-  }
-
-  quests.forEach(q => addQuestMarker(q));
-
-  // Also load real services
+  // Load real services, skip demo services if real ones exist
   const { data: services } = await sb.from('services')
     .select('*').eq('status', 'active');
   if(services && services.length > 0) {
     services.forEach(s => addServiceMarker(serviceToSvc(s)));
-  } else {
-    DEMO_SERVICES.forEach(svc => addServiceMarker(svc));
   }
 }
 
@@ -3167,8 +3174,10 @@ let searchDebounce = null;
 
 function handleSearch(query) {
   // Sync both inputs
-  document.getElementById('search-input-desktop').value = query;
-  document.getElementById('search-input-mobile').value = query;
+  const desktop = document.getElementById('search-input-desktop');
+  const mobile = document.getElementById('search-input-mobile');
+  if(desktop && desktop.value !== query) desktop.value = query;
+  if(mobile && mobile.value !== query) mobile.value = query;
 
   clearTimeout(searchDebounce);
   if(!query.trim()) {
