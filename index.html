@@ -484,6 +484,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   #filter-btn { display: flex !important; }
   #desktop-filter-btn { display: none !important; }
   #desktop-search { display: none !important; }
+  #notif-btn { width:34px; height:34px; font-size:14px; }
+  #inbox-btn { width:34px; height:34px; font-size:14px; }
   .btn-tilby-desktop { display: none !important; }
 
   /* JOB PANEL – slide up from bottom like a native app */
@@ -547,7 +549,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
   /* CORNER WIDGETS */
   #corner-widgets { bottom: 16px; right: 12px; gap: 8px; }
-  #week-worker { display: none; } /* too cramped on mobile */
+  #week-worker { display: none !important; }
   .zoom-controls { border-radius: 12px; }
   .zoom-btn { width: 44px; height: 44px; font-size: 22px; } /* bigger touch targets */
 
@@ -1840,7 +1842,7 @@ function addQuestMarker(q) {
   const imgThumb = job.image ? `<div style="width:100%;height:80px;border-radius:8px 8px 0 0;overflow:hidden;margin-bottom:6px"><img src="${job.image}" style="width:100%;height:100%;object-fit:cover"></div>` : '';
   el.innerHTML = `<div class="marker-pill ${job.type}"><div class="marker-dot"></div>${job.label}${job.image ? `<div class="marker-hover-preview">${imgThumb}<div style="font-size:10px;color:var(--muted);text-align:center">Trykk for mer info</div></div>` : ''}</div>`;
   el.addEventListener('click', e => { e.stopPropagation(); showPanel(job); });
-  el.addEventListener('touchend', e => { e.stopPropagation(); showPanel(job); });
+  el.addEventListener('touchend', e => { e.preventDefault(); e.stopPropagation(); showPanel(job); });
   new mapboxgl.Marker({ element: el, anchor: 'bottom', pitchAlignment:'map', rotationAlignment:'map' })
     .setLngLat(job.coords)
     .addTo(window.map);
@@ -1905,7 +1907,7 @@ function loadDemoMarkers() {
     const imgThumb = job.image ? `<div style="width:100%;height:80px;border-radius:8px 8px 0 0;overflow:hidden;margin-bottom:6px"><img src="${job.image}" style="width:100%;height:100%;object-fit:cover"></div>` : '';
     el.innerHTML = `<div class="marker-pill ${job.type}"><div class="marker-dot"></div>${job.label}${job.image ? `<div class="marker-hover-preview">${imgThumb}<div style="font-size:10px;color:var(--muted);text-align:center">Trykk for mer info</div></div>` : ''}</div>`;
     el.addEventListener('click', e => { e.stopPropagation(); showPanel(job); });
-    el.addEventListener('touchend', e => { e.stopPropagation(); showPanel(job); });
+    el.addEventListener('touchend', e => { e.preventDefault(); e.stopPropagation(); showPanel(job); });
     new mapboxgl.Marker({ element: el, anchor: 'bottom', pitchAlignment:'map', rotationAlignment:'map' })
       .setLngLat(job.coords)
       .addTo(window.map);
@@ -1923,7 +1925,7 @@ function addServiceMarker(svc) {
     ${svc.recurring ? '<span class="recurring-badge">🔄</span>' : ''}
   </div>`;
   el.addEventListener('click', e => { e.stopPropagation(); showServicePanel(svc); });
-  el.addEventListener('touchend', e => { e.stopPropagation(); showServicePanel(svc); });
+  el.addEventListener('touchend', e => { e.preventDefault(); e.stopPropagation(); showServicePanel(svc); });
   new mapboxgl.Marker({ element: el, anchor: 'bottom', pitchAlignment:'map', rotationAlignment:'map' })
     .setLngLat(svc.coords)
     .addTo(window.map);
@@ -1978,6 +1980,13 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('load', initMap);
 
 function showPanel(job) {
+  // Close all other panels first
+  closeServicePanel();
+  closeLeaderboard();
+  document.getElementById('profile-panel').style.display = 'none';
+  document.getElementById('notif-panel').style.display = 'none';
+  document.getElementById('inbox-panel').style.display = 'none';
+
   const jobPanelEl = document.getElementById('job-panel');
   jobPanelEl.dataset.questId = job.id || '';
   jobPanelEl.dataset.giverId = job.raw?.user_id || '';
@@ -3006,6 +3015,12 @@ document.addEventListener('click', e => {
 let activeService = null;
 
 function showServicePanel(svc) {
+  // Close all other panels first
+  closePanel();
+  closeLeaderboard();
+  document.getElementById('profile-panel').style.display = 'none';
+  document.getElementById('notif-panel').style.display = 'none';
+  document.getElementById('inbox-panel').style.display = 'none';
   activeService = svc;
   document.getElementById('service-title').textContent = svc.title;
   document.getElementById('service-desc').textContent = svc.desc;
