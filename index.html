@@ -3345,44 +3345,62 @@ function handleSearch(query) {
 
 async function runSearch(query) {
   const results = document.getElementById('search-results');
+  if(!results) return;
   results.style.display = 'block';
   results.innerHTML = '<div class="search-empty">🔍 Søker…</div>';
 
-  const q = query.toLowerCase();
+  const q = query.toLowerCase().trim();
 
-  // Always search demo data
-  const demoJobResults = JOBS.filter(j =>
-    j.title.toLowerCase().includes(q) ||
-    j.desc.toLowerCase().includes(q) ||
-    (j.tags||[]).some(t => t.t?.toLowerCase().includes(q))
-  ).map(j => ({ id:j.id, title:j.title, category:j.tags[0]?.t||'', pay:j.pay, image_url:null, coords:j.coords, _type:'quest' }));
+  // Helper: strip emoji and normalize for matching
+  const norm = str => (str || '').toLowerCase().replace(/[^\w\s\-æøå]/gu, '').trim();
+  const matches = str => norm(str).includes(q) || (str||'').toLowerCase().includes(q);
 
-  const demoSvcResults = DEMO_SERVICES.filter(s =>
-    s.title.toLowerCase().includes(q) ||
-    s.desc.toLowerCase().includes(q) ||
-    s.category?.toLowerCase().includes(q)
-  ).map(s => ({ id:s.id, title:s.title, category:s.category||'', pay:s.price, image_url:null, coords:s.coords, _type:'service' }));
+  // Search demo jobs
+  const demoJobResults = JOBS
+    .filter(j => matches(j.title) || matches(j.desc) || matches(j.label) || (j.tags||[]).some(t => matches(t.t)))
+    .map(j => ({
+      id: j.id, title: j.title,
+      category: (j.tags||[]).find(t => !t.cls && !t.t?.startsWith('~') && !t.t?.startsWith('🔴'))?.t || '',
+      pay: j.pay, image_url: null, coords: j.coords, _type: 'quest'
+    }));
 
-  // Also search Supabase
-  const { data: dbQuests } = await sb.from('quests')
-    .select('*')
-    .eq('status', 'open')
-    .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
-    .limit(8);
+  // Search demo services
+  const demoSvcResults = DEMO_SERVICES
+    .filter(s => matches(s.title) || matches(s.desc) || matches(s.category) || matches(s.label))
+    .map(s => ({
+      id: s.id, title: s.title, category: s.category || '',
+      pay: s.price, image_url: null, coords: s.coords, _type: 'service'
+    }));
 
-  const dbResults = (dbQuests || []).map(q => ({ ...q, _type: 'quest' }));
+  // Search Supabase quests
+  let dbResults = [];
+  try {
+    const { data: dbQuests } = await sb.from('quests')
+      .select('id, title, category, pay, image_url, lat, lng')
+      .in('status', ['open', 'expired'])
+      .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
+      .limit(8);
+    dbResults = (dbQuests || []).map(q => ({
+      id: q.id, title: q.title, category: q.category || '',
+      pay: q.pay, image_url: q.image_url,
+      coords: [q.lng, q.lat], _type: 'quest'
+    }));
+  } catch(e) {}
 
-  const { data: dbServices } = await sb.from('services')
-    .select('*')
-    .eq('status', 'active')
-    .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
-    .limit(4);
-
-  const dbSvcResults = (dbServices || []).map(s => ({
-    id: s.id, title: s.title, category: s.category||'',
-    pay: s.price, image_url: s.image_url,
-    coords: [s.lng, s.lat], _type: 'service'
-  }));
+  // Search Supabase services
+  let dbSvcResults = [];
+  try {
+    const { data: dbServices } = await sb.from('services')
+      .select('id, title, category, price, image_url, lat, lng')
+      .eq('status', 'active')
+      .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
+      .limit(4);
+    dbSvcResults = (dbServices || []).map(s => ({
+      id: s.id, title: s.title, category: s.category || '',
+      pay: s.price, image_url: s.image_url,
+      coords: [s.lng, s.lat], _type: 'service'
+    }));
+  } catch(e) {}
 
   const all = [...dbResults, ...dbSvcResults, ...demoJobResults, ...demoSvcResults];
 
