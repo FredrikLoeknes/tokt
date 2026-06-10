@@ -1284,11 +1284,11 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
     <div class="form-group">
-      <label class="form-label">Quest title</label>
+      <label class="form-label">Tittel på oppdraget</label>
       <input id="quest-title-input" class="form-input" type="text" placeholder="E.g. «Mow the lawn in my garden»">
     </div>
     <div class="form-group">
-      <label class="form-label">Category</label>
+      <label class="form-label">Kategori</label>
       <select id="quest-category-input" class="form-select" onchange="checkCategoryWarning(this.value)">
         <option>🏠 Hjem og hage</option>
         <option>🚗 Kjøring og transport</option>
@@ -1322,8 +1322,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     </div>
 
     <div class="form-group">
-      <label class="form-label">Description</label>
-      <textarea id="quest-desc-input" class="form-textarea" placeholder="Describe what needs to be done, what tools are available, any details…"></textarea>
+      <label class="form-label">Beskrivelse</label>
+      <textarea id="quest-desc-input" class="form-textarea" placeholder="Beskriv hva som skal gjøres, hva som er tilgjengelig og andre detaljer…"></textarea>
     </div>
     <div class="form-group">
       <label class="form-label">Bilde (valgfritt)</label>
@@ -1332,6 +1332,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <div id="image-preview" style="display:none;margin-bottom:10px">
           <img id="preview-img" style="max-width:100%;max-height:160px;border-radius:8px;object-fit:cover">
+          <div id="image-confirmed" style="margin-top:8px;padding:7px 12px;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);border-radius:8px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#0fa968">
+            <span>✅</span><span id="image-confirmed-name">Bilde valgt</span>
+            <span style="margin-left:auto;font-weight:400;color:var(--muted);cursor:pointer" onclick="clearImage(event)">✕ Fjern</span>
+          </div>
         </div>
         <div id="upload-placeholder">
           <div style="font-size:28px;margin-bottom:6px">📷</div>
@@ -1343,14 +1347,14 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     </div>
 
     <div class="form-group">
-      <label class="form-label">Estimated duration</label>
+      <label class="form-label">Estimert varighet</label>
       <select id="quest-duration-input" class="form-select">
-        <option>Under 30 minutes</option>
-        <option>30–60 minutes</option>
-        <option>1–2 hours</option>
-        <option>2–4 hours</option>
-        <option>Half day</option>
-        <option>Full day</option>
+        <option>Under 30 minutter</option>
+        <option>30–60 minutter</option>
+        <option>1–2 timer</option>
+        <option>2–4 timer</option>
+        <option>Halv dag</option>
+        <option>Hel dag</option>
       </select>
     </div>
     <div class="form-group">
@@ -1374,29 +1378,33 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:6px">Valgfritt – hjelper utfører å planlegge</div>
     </div>
-      <div class="cost-display"><span id="modal-price">250</span> <small>kr</small></div>
-      <input type="range" min="39" max="2000" value="250" oninput="document.getElementById('modal-price').textContent=this.value" style="margin-top:8px">
-      <div class="cost-note">Higher reward = bigger marker on the map</div>
+      <div class="cost-display"><span id="modal-price-display">250</span> <small>kr</small></div>
+      <input id="modal-price" type="number" min="0" max="50000" value="250"
+        oninput="document.getElementById('modal-price-display').textContent=this.value||0"
+        style="width:100%;margin-top:8px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text);font-size:15px;font-weight:600;font-family:inherit;outline:none"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+        placeholder="Skriv inn beløp…">
+      <div class="cost-note">Høyere betaling = større markør på kartet</div>
     </div>
     <div class="form-group">
-      <label class="form-label">Quest mode</label>
+      <label class="form-label">Oppdragsmodus</label>
       <div class="quest-mode-toggle">
         <div class="mode-btn active" id="mode-approve" onclick="setMode('approve')">
-          ✋ I choose<br><span style="font-size:10px;font-weight:400">Pick from applicants</span>
+          ✋ Jeg velger<br><span style="font-size:10px;font-weight:400">Velg blant søkere</span>
         </div>
         <div class="mode-btn" id="mode-firstcome" onclick="setMode('firstcome')">
-          ⚡ First come<br><span style="font-size:10px;font-weight:400">Auto-assign instantly</span>
+          ⚡ Førstemann<br><span style="font-size:10px;font-weight:400">Tildeles automatisk</span>
         </div>
       </div>
-      <div id="mode-note" style="font-size:11px;color:var(--muted);margin-top:4px">You'll review applicants and choose who gets the quest.</div>
+      <div id="mode-note" style="font-size:11px;color:var(--muted);margin-top:4px">Du velger hvem som får oppdraget blant søkerne.</div>
     </div>
     <div class="form-group">
       <div class="toggle-row">
-        <div class="toggle-info"><div class="toggle-label">🔴 Urgent quest (+100 kr)</div><div class="toggle-sub">Red pulsing marker with priority</div></div>
+        <div class="toggle-info"><div class="toggle-label">🔴 Haste-oppdrag (+100 kr)</div><div class="toggle-sub">Rød pulserende markør med prioritet</div></div>
         <div class="toggle" onclick="this.classList.toggle('on')"></div>
       </div>
       <div class="toggle-row">
-        <div class="toggle-info"><div class="toggle-label">📍 Live location sharing</div><div class="toggle-sub">Track quest taker in real time</div></div>
+        <div class="toggle-info"><div class="toggle-label">📍 Del posisjon i sanntid</div><div class="toggle-sub">Følg utfører på kartet</div></div>
         <div class="toggle on" onclick="this.classList.toggle('on')"></div>
       </div>
       <div class="toggle-row">
@@ -1408,11 +1416,11 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       💚 <strong>Veldedighetsoppdrag:</strong> Betaling settes til 0 kr. Utfører gjør dette frivillig og får et spesielt achievement. Perfekt for å hjelpe eldre, naboer eller andre som trenger det.
     </div>
     <div class="disclaimer">
-      <strong>Important:</strong> Tokt is a platform-only service. All payments are made directly between quest giver and taker via Vipps, Bitcoin or Cardano. Tokt is not party to any agreement and accepts no responsibility for quality, damages or disputes. By publishing you agree to our <u>terms of service</u>. Never pay strangers in advance. Quests over 10,000 NOK require a signed contract.
+      <strong>Viktig:</strong> Tokt er kun en formidlingsplattform. All betaling skjer direkte mellom oppdragsgiver og utfører via Vipps. Tokt er ikke part i noen avtale og tar ikke ansvar for kvalitet, skader eller tvister. Ved å publisere godtar du våre <u>brukervilkår</u>. Betal aldri fremmede på forhånd. Oppdrag over 10 000 kr krever skriftlig avtale.
     </div>
     <button class="publish-btn" onclick="postJob()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-      Publish quest
+      Publiser oppdrag
     </button>
     <div class="crypto-row">
       <button class="crypto-btn" style="background:#f7931a18;color:#f7931a" onclick="postJob()">₿ Bitcoin <span style="font-size:9px;opacity:.7">soon</span></button>
@@ -1625,7 +1633,7 @@ const LANGUAGES = {
     locationToggle: '📍 Live location sharing', locationToggleSub: 'Taker shares live position',
     charityToggle: '💚 Charity quest', charityToggleSub: 'Earns taker a special achievement',
     disclaimer: '<strong>Important:</strong> Tokt is a platform-only service. All payments are made directly between quest giver and taker via Vipps, Bitcoin or Cardano. Tokt is not party to any agreement and accepts no responsibility for quality, damages or disputes. By publishing you agree to our <u>terms of service</u>. Never pay strangers in advance. Quests over 10,000 NOK require a signed contract.',
-    publishQuest: 'Publish quest',
+    publishQuest: 'Publiser oppdrag',
     cryptoSoon: 'soon',
     lbTitle: 'Leaderboard',
     lbTagline: 'Finally, XP that pays the rent.',
@@ -2405,6 +2413,44 @@ async function applyJob() {
 function openModal() { if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å legge ut oppdrag'); return; } document.getElementById('modal-overlay').classList.add('open'); }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 function overlayClick(e) { if(e.target===document.getElementById('modal-overlay')) closeModal(); }
+async function previewImage(input) {
+  const file = input.files[0];
+  if(!file) return;
+
+  // Size check – 5MB
+  if(file.size > 5 * 1024 * 1024) {
+    showToast('⚠️ Bildet er for stort. Maks 5MB.');
+    input.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('preview-img').src = e.target.result;
+    document.getElementById('image-preview').style.display = 'block';
+    document.getElementById('upload-placeholder').style.display = 'none';
+
+    // Show file name shortened
+    const name = file.name.length > 28 ? file.name.slice(0,25) + '…' : file.name;
+    const kb = (file.size / 1024).toFixed(0);
+    document.getElementById('image-confirmed-name').textContent = `${name} (${kb} KB)`;
+
+    // Pulse the upload area green briefly
+    const area = document.getElementById('image-upload-area');
+    area.style.borderColor = '#0fa968';
+    setTimeout(() => area.style.borderColor = 'var(--border)', 1500);
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage(e) {
+  e.stopPropagation();
+  document.getElementById('quest-image-input').value = '';
+  document.getElementById('image-preview').style.display = 'none';
+  document.getElementById('upload-placeholder').style.display = 'block';
+  document.getElementById('image-upload-area').style.borderColor = 'var(--border)';
+}
+
 async function postJob() {
   if(!currentUser) { openAuth('login'); return; }
 
@@ -2423,7 +2469,7 @@ async function postJob() {
   const toggles = document.querySelectorAll('#modal .toggle');
   const isUrgent = toggles[0]?.classList.contains('on') || false;
 
-  let pay = parseInt(document.getElementById('modal-price')?.textContent) || 250;
+  let pay = parseInt(document.getElementById('modal-price')?.value) || 250;
   if(isCharity) pay = 0;
   if(isUrgent && !isCharity) pay = Math.min(2000, pay + 100);
 
@@ -2461,7 +2507,7 @@ async function postJob() {
   }).select().single();
 
   if(error) {
-    if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publish quest'; }
+    if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publiser oppdrag'; }
     showToast('❌ ' + error.message);
     return;
   }
@@ -2485,23 +2531,27 @@ async function postJob() {
   // Reset form
   document.getElementById('quest-title-input').value = '';
   document.getElementById('quest-desc-input').value = '';
-  document.getElementById('modal-price').textContent = '250';
+  document.getElementById('modal-price').value = '250';
+  document.getElementById('modal-price-display').textContent = '250';
   document.getElementById('quest-date-input').value = '';
   document.getElementById('quest-time-from').value = '';
   document.getElementById('quest-time-to').value = '';
   document.getElementById('image-preview').style.display = 'none';
   document.getElementById('upload-placeholder').style.display = 'block';
   if(imgInput) imgInput.value = '';
-  if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publish quest'; }
+  if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publiser oppdrag'; }
 
   closeModal();
   showToast('✦ Oppdrag publisert på kartet!');
 
-  // Add marker immediately
-  addQuestMarker(quest);
+  // Reload all markers so the new quest shows up correctly
+  await addMarkers();
 
   // Fly to quest location
   if(window.map) window.map.flyTo({ center: [lng, lat], zoom: 14, speed: 1.4 });
+
+  // Reload profile so "Mine oppdrag" is updated
+  if(currentUser) await loadUserProfile(currentUser);
 
   // Award XP
   setTimeout(() => showAchievement('📋', 'Oppdrag lagt ut!', 'Du la ut ditt første oppdrag. +10 XP'), 1500);
@@ -4119,11 +4169,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Check existing session on load
-sb.auth.onAuthStateChange(async (event, session) => {
+// Restore session on page load
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
   if(session?.user) {
     await loadUserProfile(session.user);
-  } else {
+  }
+})();
+
+// Keep session in sync (login, logout, token refresh)
+sb.auth.onAuthStateChange(async (event, session) => {
+  if(event === 'SIGNED_IN' && session?.user) {
+    await loadUserProfile(session.user);
+  } else if(event === 'SIGNED_OUT') {
     currentUser = null;
     updateUIForAuth(null);
   }
