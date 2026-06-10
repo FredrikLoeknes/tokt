@@ -864,8 +864,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0"></div>
 
   <div class="fsheet-header">
-    <div class="fsheet-title" id="fsheet-title-text">Filters</div>
-    <button class="fsheet-clear" id="fsheet-clear-btn" onclick="clearFilters()">Clear all</button>
+    <div class="fsheet-title" id="fsheet-title-text">Filtre</div>
+    <button class="fsheet-clear" id="fsheet-clear-btn" onclick="clearFilters()">Nullstill</button>
     <button class="fsheet-close" onclick="closeFilters()">×</button>
   </div>
 
@@ -919,12 +919,12 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <div class="fsection">
       <div class="fsection-title"><span id="fsec-duration">Duration</span></div>
       <div class="fpill-row">
-        <div class="fpill dur-pill" onclick="togglePill(this)">⚡ &lt;30 min</div>
+        <div class="fpill dur-pill" onclick="togglePill(this)">⚡ Under 30 min</div>
         <div class="fpill dur-pill" onclick="togglePill(this)">🕐 30–60 min</div>
-        <div class="fpill dur-pill" onclick="togglePill(this)">🕑 1–2 hours</div>
-        <div class="fpill dur-pill" onclick="togglePill(this)">🕓 2–4 hours</div>
-        <div class="fpill dur-pill" onclick="togglePill(this)">☀️ Half day</div>
-        <div class="fpill dur-pill" onclick="togglePill(this)">🌅 Full day</div>
+        <div class="fpill dur-pill" onclick="togglePill(this)">🕑 1–2 timer</div>
+        <div class="fpill dur-pill" onclick="togglePill(this)">🕓 2–4 timer</div>
+        <div class="fpill dur-pill" onclick="togglePill(this)">☀️ Halvdag</div>
+        <div class="fpill dur-pill" onclick="togglePill(this)">🌅 Heldags</div>
       </div>
     </div>
 
@@ -945,29 +945,29 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       <div class="ftoggle-list">
         <div class="ftoggle-row">
           <div class="ftoggle-info">
-            <div class="ftoggle-label" id="tog-urgent-label">🔴 Urgent quests</div>
-            <div class="ftoggle-sub" id="tog-urgent-sub">Only show red priority quests</div>
+            <div class="ftoggle-label" id="tog-urgent-label">🔴 Hasteoppdragt</div>
+            <div class="ftoggle-sub" id="tog-urgent-sub">Vis kun røde prioritetsoppdrag</div>
           </div>
           <div class="toggle" id="tog-urgent" onclick="this.classList.toggle('on');updateFilterCount()"></div>
         </div>
         <div class="ftoggle-row">
           <div class="ftoggle-info">
-            <div class="ftoggle-label" id="tog-charity-label">💚 Charity quests</div>
-            <div class="ftoggle-sub" id="tog-charity-sub">Earn achievements for free</div>
+            <div class="ftoggle-label" id="tog-charity-label">💚 Veldedighetsoppdrag</div>
+            <div class="ftoggle-sub" id="tog-charity-sub">Tjen achievements gratis</div>
           </div>
           <div class="toggle" id="tog-charity" onclick="this.classList.toggle('on');updateFilterCount()"></div>
         </div>
         <div class="ftoggle-row">
           <div class="ftoggle-info">
-            <div class="ftoggle-label" id="tog-firstcome-label">⚡ First come only</div>
-            <div class="ftoggle-sub" id="tog-firstcome-sub">No approval needed</div>
+            <div class="ftoggle-label" id="tog-firstcome-label">⚡ Kun førstemann til mølla</div>
+            <div class="ftoggle-sub" id="tog-firstcome-sub">Ingen godkjenning nødvendig</div>
           </div>
           <div class="toggle" id="tog-firstcome" onclick="this.classList.toggle('on');updateFilterCount()"></div>
         </div>
         <div class="ftoggle-row">
           <div class="ftoggle-info">
-            <div class="ftoggle-label" id="tog-open-label">🟢 Open quests only</div>
-            <div class="ftoggle-sub" id="tog-open-sub">Hide quests already taken</div>
+            <div class="ftoggle-label" id="tog-open-label">🟢 Kun ledige oppdrag</div>
+            <div class="ftoggle-sub" id="tog-open-sub">Skjul oppdrag som er tatt</div>
           </div>
           <div class="toggle on" id="tog-open" onclick="this.classList.toggle('on');updateFilterCount()"></div>
         </div>
@@ -978,10 +978,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <div class="fsection">
       <div class="fsection-title"><span id="fsec-sortby">Sort by</span></div>
       <div class="fpill-row">
-        <div class="fpill sort-pill active" onclick="togglePillSingle(this,'sort')">📍 Nearest</div>
-        <div class="fpill sort-pill" onclick="togglePillSingle(this,'sort')">💰 Highest pay</div>
-        <div class="fpill sort-pill" onclick="togglePillSingle(this,'sort')">🆕 Newest</div>
-        <div class="fpill sort-pill" onclick="togglePillSingle(this,'sort')">⭐ Top rated</div>
+        <div class="fpill sort-pill active" onclick="togglePillSingle(this,'sort')">📍 Nærmest</div>
+        <div class="fpill sort-pill" onclick="togglePillSingle(this,'sort')">💰 Høyest betalt</div>
+        <div class="fpill sort-pill" onclick="togglePillSingle(this,'sort')">🆕 Nyeste</div>
+        <div class="fpill sort-pill" onclick="togglePillSingle(this,'sort')">⭐ Best vurdert</div>
       </div>
     </div>
 
@@ -990,7 +990,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   <!-- STICKY BOTTOM BUTTON -->
   <div class="fsheet-footer">
     <button class="fsheet-apply" id="fsheet-apply-btn" onclick="applyFilters()">
-      Show <span id="result-count">8</span> quests
+      Vis <span id="result-count">8</span> oppdrag
     </button>
   </div>
 </div>
@@ -1296,8 +1296,22 @@ const LANGUAGES = {
     catPhoto: 'Foto', catHair: 'Hår', catGarden: 'Hage',
     catKeys: 'Nøkler', catFix: 'Småfiks', catTeaching: 'Læring', catDate: '💘 Blind date', catOther: 'Annet',
     // Duration pills
-    dur1: '⚡ <30 min', dur2: '🕐 30–60 min', dur3: '🕑 1–2 timer',
+    dur1: '⚡ Under 30 min', dur2: '🕐 30–60 min', dur3: '🕑 1–2 timer',
     dur4: '🕓 2–4 timer', dur5: '☀️ Halvdag', dur6: '🌅 Heldags',
+    // Sort
+    sortNearest: '📍 Nærmest', sortPay: '💰 Høyest betalt',
+    sortNewest: '🆕 Nyeste', sortRated: '⭐ Best vurdert',
+    // Show only toggles
+    urgentLabel: '🔴 Hasteoppdragt', urgentSub: 'Vis kun røde prioritetsoppdrag',
+    charityLabel: '💚 Veldedighetsoppdrag', charitySub: 'Tjen achievements gratis',
+    firstComeLabel: '⚡ Kun førstemann til mølla', firstComeSub: 'Ingen godkjenning nødvendig',
+    openLabel: '🟢 Kun ledige oppdrag', openSub: 'Skjul oppdrag som er tatt',
+    // Filter sheet titles
+    filterTitle: 'Filtre', clearAll: 'Nullstill',
+    categoryTitle: 'Kategori', rewardTitle: 'Betaling',
+    durationTitle: 'Varighet', distanceTitle: 'Avstand',
+    showOnlyTitle: 'Vis kun', sortByTitle: 'Sorter etter',
+    showQuests: 'Vis', questsLabel: 'oppdrag',
     // Toggles
     urgentLabel: '🔴 Haste-oppdrag', urgentSub: 'Vis kun røde prioritetsoppdrag',
     charityLabel: '💚 Veldedighetsoppdrag', charitySub: 'Tjen achievements gratis',
@@ -1387,8 +1401,22 @@ const LANGUAGES = {
     catCar: 'Car', catKids: 'Kids', catParty: 'Events', catFood: 'Food',
     catPhoto: 'Photo', catHair: 'Beauty', catGarden: 'Garden',
     catKeys: 'Keys', catFix: 'Quick fix', catTeaching: 'Tutoring', catDate: '💘 Blind date', catOther: 'Other',
-    dur1: '⚡ <30 min', dur2: '🕐 30–60 min', dur3: '🕑 1–2 hours',
+    dur1: '⚡ Under 30 min', dur2: '🕐 30–60 min', dur3: '🕑 1–2 hours',
     dur4: '🕓 2–4 hours', dur5: '☀️ Half day', dur6: '🌅 Full day',
+    // Sort
+    sortNearest: '📍 Nearest', sortPay: '💰 Highest pay',
+    sortNewest: '🆕 Newest', sortRated: '⭐ Top rated',
+    // Show only toggles
+    urgentLabel: '🔴 Urgent quests', urgentSub: 'Only show red priority quests',
+    charityLabel: '💚 Charity quests', charitySub: 'Earn achievements for free',
+    firstComeLabel: '⚡ First come only', firstComeSub: 'No approval needed',
+    openLabel: '🟢 Open quests only', openSub: 'Hide quests already taken',
+    // Filter sheet titles
+    filterTitle: 'Filters', clearAll: 'Clear all',
+    categoryTitle: 'Category', rewardTitle: 'Reward',
+    durationTitle: 'Duration', distanceTitle: 'Distance',
+    showOnlyTitle: 'Show only', sortByTitle: 'Sort by',
+    showQuests: 'Show', questsLabel: 'quests',
     urgentLabel: '🔴 Urgent quests', urgentSub: 'Only show red priority quests',
     charityLabel: '💚 Charity quests', charitySub: 'Earn achievements for free',
     firstComeLabel: '⚡ First come only', firstComeSub: 'No approval needed',
@@ -1509,10 +1537,30 @@ function applyLanguage() {
   const sortKeys = ['sortNearest','sortPay','sortNewest','sortRated'];
   document.querySelectorAll('.sort-pill').forEach((el,i) => { if(sortKeys[i]) el.textContent = L[sortKeys[i]]; });
 
+  // Filter sheet titles
+  safeText('fsheet-title-text', L.filterTitle || L.filtersTitle);
+  safeText('fsheet-clear-btn', L.clearAll);
+  safeText('fsec-category', L.categoryTitle);
+  safeText('fsec-reward', L.rewardTitle);
+  safeText('fsec-duration', L.durationTitle);
+  safeText('fsec-distance', L.distanceTitle);
+  safeText('fsec-showonly', L.showOnlyTitle);
+  safeText('fsec-sortby', L.sortByTitle);
+
+  // Toggle labels in filter
+  safeText('tog-urgent-label', L.urgentLabel);
+  safeText('tog-urgent-sub', L.urgentSub);
+  safeText('tog-charity-label', L.charityLabel);
+  safeText('tog-charity-sub', L.charitySub);
+  safeText('tog-firstcome-label', L.firstComeLabel);
+  safeText('tog-firstcome-sub', L.firstComeSub);
+  safeText('tog-open-label', L.openLabel);
+  safeText('tog-open-sub', L.openSub);
+
   // Apply button
-  const rc = document.getElementById('result-count');
-  const cnt = rc ? rc.textContent : '8';
-  safeHTML('fsheet-apply-btn', `${L.showQuests} <span id="result-count">${cnt}</span> ${L.questsLabel}`);
+  const rcBtn = document.getElementById('result-count');
+  const cntBtn = rcBtn ? rcBtn.textContent : '8';
+  safeHTML('fsheet-apply-btn', `${L.showQuests} <span id="result-count">${cntBtn}</span> ${L.questsLabel}`);
 
   // Modal
   safeHTML('modal-title-text', L.postQuestTitle);
@@ -2062,8 +2110,8 @@ function updateFilterCount() {
     if(el) { el.textContent=count; el.style.display=count>0?'flex':'none'; }
   });
   // Update result count
-  const rc = document.getElementById('result-count');
-  if(rc) rc.textContent = 8 - count;
+  const rcEl = document.getElementById('result-count');
+  if(rcEl) rcEl.textContent = Math.max(0, 8 - count);
 }
 function toggleCat(el) {
   const isAll = el.dataset.cat === 'all';
