@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -669,7 +670,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Post quest
     </button>
-    <button class="btn btn-ghost" onclick="showToast(t('toastLogin'))"><span id="btn-login">Log in</span></button>
+    <button class="btn btn-ghost" onclick="openAuth('login')"><span id="btn-login">Log in</span></button>
     <div class="avatar-wrap" onclick="toggleLeaderboard()" title="View leaderboard & rank">
       <div class="avatar">You</div>
       <div class="avatar-lvl">LVL 3</div>
@@ -1333,6 +1334,172 @@ function closeLangDropdown() {
   document.getElementById('lang-dropdown').classList.remove('open');
 }
 
+// ══════════════════════════════════════
+// SUPABASE INIT
+// ══════════════════════════════════════
+const SUPABASE_URL = 'https://notbntypwtorecnynkfr.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vdGJudHlwd3RvcmVjbnlua2ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNDYxNzksImV4cCI6MjA5NjYyMjE3OX0.BqDLMfSHFf1TfaOcFLT4hKA2AfJevEQL472Is3IfT0E';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+
+// ── AUTH FUNCTIONS ──
+function openAuth(tab='login') {
+  document.getElementById('auth-overlay').style.display = 'flex';
+  switchTab(tab);
+}
+function closeAuth() {
+  document.getElementById('auth-overlay').style.display = 'none';
+}
+function switchTab(tab) {
+  document.getElementById('form-login').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('form-register').style.display = tab==='register' ? 'block' : 'none';
+  const active = 'background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)';
+  const inactive = 'background:transparent;color:var(--muted);box-shadow:none';
+  document.getElementById('tab-login').style.cssText += tab==='login' ? active : inactive;
+  document.getElementById('tab-register').style.cssText += tab==='register' ? active : inactive;
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  if(!email || !password) { showAuthError('login','Fyll inn e-post og passord'); return; }
+  btn.textContent = 'Logger inn…'; btn.disabled = true;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.textContent = 'Logg inn'; btn.disabled = false;
+  if(error) { showAuthError('login', error.message === 'Invalid login credentials' ? 'Feil e-post eller passord' : error.message); return; }
+  closeAuth();
+  showToast('👋 Velkommen tilbake!');
+  await loadUserProfile(data.user);
+}
+
+async function doRegister() {
+  const firstName = document.getElementById('reg-firstname').value.trim();
+  const lastName = document.getElementById('reg-lastname').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const btn = document.getElementById('register-btn');
+  if(!firstName || !email || !password) { showAuthError('reg','Fyll inn alle feltene'); return; }
+  if(password.length < 6) { showAuthError('reg','Passordet må være minst 6 tegn'); return; }
+  btn.textContent = 'Oppretter konto…'; btn.disabled = true;
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName } } });
+  btn.textContent = 'Opprett konto'; btn.disabled = false;
+  if(error) { showAuthError('reg', error.message); return; }
+  closeAuth();
+  showToast('✅ Konto opprettet! Sjekk e-posten din for bekreftelse.');
+  if(data.user) await loadUserProfile(data.user);
+}
+
+async function doResetPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if(!email) { showAuthError('login','Skriv inn e-posten din først'); return; }
+  await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://tokt.app' });
+  showToast('📧 Nullstillingslenke sendt til ' + email);
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  updateUIForAuth(null);
+  document.getElementById('profile-panel').style.display = 'none';
+  showToast('👋 Du er nå logget ut');
+}
+
+function showAuthError(form, msg) {
+  const id = form==='login' ? 'login-error' : 'reg-error';
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+async function loadUserProfile(user) {
+  currentUser = user;
+  const meta = user.user_metadata || {};
+  const name = meta.full_name || meta.first_name || user.email.split('@')[0];
+  const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+
+  // Update topbar avatar
+  const avatar = document.querySelector('.avatar');
+  if(avatar) avatar.textContent = initials;
+
+  // Update profile panel
+  document.getElementById('profile-avatar-big').textContent = initials;
+  document.getElementById('profile-name').textContent = name;
+
+  // Try load profile from DB
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  if(profile) {
+    const quests = profile.quests_completed || 0;
+    const rank = getRank(quests);
+    document.getElementById('profile-quests').textContent = quests;
+    document.getElementById('profile-rating').textContent = profile.rating ? profile.rating.toFixed(1) : '–';
+    document.getElementById('profile-level').textContent = profile.level || 1;
+    document.getElementById('profile-rank-badge').textContent = rank.name;
+    // XP bar
+    const xpNeeded = [1,2,4,8,16];
+    const lvl = (profile.level || 1) - 1;
+    const xpMax = xpNeeded[Math.min(lvl, xpNeeded.length-1)] || 1;
+    const xpCur = profile.xp_current || 0;
+    document.getElementById('profile-xp').textContent = xpCur + ' / ' + xpMax + ' XP';
+    document.getElementById('profile-xp-bar').style.width = Math.min(100,(xpCur/xpMax)*100) + '%';
+    // Topbar XP
+    const xpFill = document.getElementById('xp-fill');
+    if(xpFill) xpFill.style.width = Math.min(100,(xpCur/xpMax)*100) + '%';
+    document.querySelector('.xp-rank') && (document.querySelector('.xp-rank').textContent = '⚡ ' + rank.name + ' · LVL ' + (profile.level||1));
+  }
+  updateUIForAuth(user);
+}
+
+function updateUIForAuth(user) {
+  const loginBtn = document.getElementById('btn-login');
+  if(loginBtn) loginBtn.textContent = user ? (currentUser?.user_metadata?.first_name || 'Profil') : t('logIn');
+  // Update bottom nav profile
+  const navProfile = document.getElementById('nav-profile-label');
+  if(navProfile) navProfile.textContent = user ? '👤' : t('navProfile');
+}
+
+// Avatar click – show profile if logged in, else open auth
+document.addEventListener('DOMContentLoaded', () => {
+  const avatarWrap = document.querySelector('.avatar-wrap');
+  if(avatarWrap) {
+    avatarWrap.onclick = () => {
+      if(currentUser) {
+        const pp = document.getElementById('profile-panel');
+        pp.style.display = pp.style.display === 'none' ? 'block' : 'none';
+        document.getElementById('leaderboard').classList.remove('open');
+      } else {
+        openAuth('login');
+      }
+    };
+  }
+  // Login button
+  const loginBtn = document.querySelector('#btn-login')?.parentElement;
+  if(loginBtn) loginBtn.onclick = () => openAuth('login');
+  // Close auth on overlay click
+  document.getElementById('auth-overlay').addEventListener('click', e => {
+    if(e.target === document.getElementById('auth-overlay')) closeAuth();
+  });
+  // Close profile on outside click
+  document.addEventListener('click', e => {
+    const pp = document.getElementById('profile-panel');
+    if(pp && !pp.contains(e.target) && !document.querySelector('.avatar-wrap')?.contains(e.target)) {
+      pp.style.display = 'none';
+    }
+  });
+});
+
+// Check existing session on load
+sb.auth.onAuthStateChange(async (event, session) => {
+  if(session?.user) {
+    await loadUserProfile(session.user);
+  } else {
+    currentUser = null;
+    updateUIForAuth(null);
+  }
+});
+
 // PWA manifest (injected dynamically)
 const manifestData = {
   name: "Tokt – Go on a quest",
@@ -1532,7 +1699,7 @@ function applyJob() {
   setTimeout(() => showRating('Anders K.'), 4000);
 }
 
-function openModal() { document.getElementById('modal-overlay').classList.add('open'); }
+function openModal() { if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å legge ut oppdrag'); return; } document.getElementById('modal-overlay').classList.add('open'); }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 function overlayClick(e) { if(e.target===document.getElementById('modal-overlay')) closeModal(); }
 function postJob() { closeModal(); showToast('✅ Quest posted on the map!'); }
@@ -1689,6 +1856,116 @@ function showAchievement(icon, title, desc) {
   el._t = setTimeout(() => el.style.display = 'none', 4000);
 }
 </script>
+<!-- AUTH MODAL -->
+<div id="auth-overlay" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div id="auth-modal" style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;width:400px;max-width:95vw;box-shadow:var(--shadow-lg);animation:popIn .2s ease;position:relative">
+    
+    <!-- Close -->
+    <button onclick="closeAuth()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">×</button>
+
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-family:'Skranji',cursive;font-size:28px;font-weight:700;letter-spacing:2px">Tokt<span style="background:linear-gradient(135deg,#f97316,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent">.app</span></div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px" id="auth-subtitle">Logg inn for å ta oppdrag</div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:20px">
+      <button id="tab-login" onclick="switchTab('login')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">Logg inn</button>
+      <button id="tab-register" onclick="switchTab('register')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s">Registrer</button>
+    </div>
+
+    <!-- Login form -->
+    <div id="form-login">
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">E-post</label>
+        <input id="login-email" type="email" placeholder="din@epost.no" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Passord</label>
+        <input id="login-password" type="password" placeholder="••••••••" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div id="login-error" style="display:none;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--red);margin-bottom:12px"></div>
+      <button onclick="doLogin()" id="login-btn" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">Logg inn</button>
+      <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--muted)">Glemt passord? <span onclick="doResetPassword()" style="color:var(--accent);cursor:pointer;text-decoration:underline">Nullstill her</span></div>
+    </div>
+
+    <!-- Register form -->
+    <div id="form-register" style="display:none">
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <div style="flex:1">
+          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Fornavn</label>
+          <input id="reg-firstname" type="text" placeholder="Ola" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div style="flex:1">
+          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Etternavn</label>
+          <input id="reg-lastname" type="text" placeholder="Nordmann" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">E-post</label>
+        <input id="reg-email" type="email" placeholder="din@epost.no" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Passord</label>
+        <input id="reg-password" type="password" placeholder="Minimum 6 tegn" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <div id="reg-error" style="display:none;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--red);margin-bottom:12px"></div>
+      <button onclick="doRegister()" id="register-btn" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">Opprett konto</button>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5">Ved å registrere deg godtar du våre <u style="cursor:pointer">brukervilkår</u> og <u style="cursor:pointer">personvernregler</u></div>
+    </div>
+
+    <!-- Divider -->
+    <div style="display:flex;align-items:center;gap:10px;margin:16px 0">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <div style="font-size:11px;color:var(--muted)">eller</div>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+
+    <!-- Vipps (coming soon) -->
+    <button style="width:100%;background:#FF5B24;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;opacity:.6;display:flex;align-items:center;justify-content:center;gap:8px" onclick="showToast('👋 Vipps-innlogging kommer snart!')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      Fortsett med Vipps <span style="font-size:10px;opacity:.8">(snart)</span>
+    </button>
+
+  </div>
+</div>
+
+<!-- USER PROFILE PANEL -->
+<div id="profile-panel" style="display:none;position:fixed;right:18px;top:74px;z-index:200;width:280px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;animation:slideIn .2s ease">
+  <div style="background:linear-gradient(135deg,#f97316,#a855f7);padding:20px;text-align:center">
+    <div id="profile-avatar-big" style="width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,0.2);border:3px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;margin:0 auto 10px">?</div>
+    <div id="profile-name" style="font-size:16px;font-weight:700;color:#fff">Laster...</div>
+    <div id="profile-rank-badge" style="display:inline-block;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:50px;margin-top:4px">Wanderer</div>
+  </div>
+  <div style="padding:14px">
+    <div style="display:flex;gap:0;background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:14px">
+      <div style="flex:1;padding:10px;text-align:center;border-right:1px solid var(--border)">
+        <div id="profile-quests" style="font-size:18px;font-weight:800;color:var(--accent)">0</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Oppdrag</div>
+      </div>
+      <div style="flex:1;padding:10px;text-align:center;border-right:1px solid var(--border)">
+        <div id="profile-rating" style="font-size:18px;font-weight:800;color:var(--gold)">–</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Rating</div>
+      </div>
+      <div style="flex:1;padding:10px;text-align:center">
+        <div id="profile-level" style="font-size:18px;font-weight:800;color:var(--green)">1</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Level</div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+        <span style="color:var(--muted)">XP fremgang</span>
+        <span id="profile-xp" style="color:var(--accent);font-weight:600">0 / 1 XP</span>
+      </div>
+      <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden">
+        <div id="profile-xp-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#f97316,#a855f7);border-radius:3px;transition:width .5s ease"></div>
+      </div>
+    </div>
+    <button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">Logg ut</button>
+  </div>
+</div>
+
 <!-- BOTTOM NAV (mobile only) -->
 <div id="bottom-nav">
   <div class="nav-item active" onclick="showToast('🗺️ Map view')">
