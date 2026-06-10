@@ -452,7 +452,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .achieve-desc { font-size:11px; color:var(--muted); }
 
 /* ── TOAST ── */
-#toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); z-index:1000; background:var(--surface); border:1px solid var(--green); color:var(--green); padding:11px 20px; border-radius:50px; font-size:13px; font-weight:600; display:none; white-space:nowrap; box-shadow:var(--shadow); }
+#toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); z-index:99999; background:var(--surface); border:1px solid var(--green); color:var(--green); padding:11px 20px; border-radius:50px; font-size:13px; font-weight:600; display:none; white-space:nowrap; box-shadow:var(--shadow); }
 
 /* mapbox */
 .mapboxgl-ctrl-logo,.mapboxgl-ctrl-attrib,.mapboxgl-ctrl-group { display:none!important; }
@@ -3936,7 +3936,13 @@ function openAuth(tab='login') {
   switchTab(tab);
 }
 function closeAuth() {
-  document.getElementById('auth-overlay').style.display = 'none';
+  const overlay = document.getElementById('auth-overlay');
+  overlay.style.opacity = '0';
+  overlay.style.transition = 'opacity 0.2s ease';
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    overlay.style.opacity = '1';
+  }, 200);
 }
 function switchTab(tab) {
   document.getElementById('form-login').style.display = tab==='login' ? 'block' : 'none';
