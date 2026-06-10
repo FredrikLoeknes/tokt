@@ -1334,172 +1334,6 @@ function closeLangDropdown() {
   document.getElementById('lang-dropdown').classList.remove('open');
 }
 
-// ══════════════════════════════════════
-// SUPABASE INIT
-// ══════════════════════════════════════
-const SUPABASE_URL = 'https://notbntypwtorecnynkfr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vdGJudHlwd3RvcmVjbnlua2ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNDYxNzksImV4cCI6MjA5NjYyMjE3OX0.BqDLMfSHFf1TfaOcFLT4hKA2AfJevEQL472Is3IfT0E';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-let currentUser = null;
-
-// ── AUTH FUNCTIONS ──
-function openAuth(tab='login') {
-  document.getElementById('auth-overlay').style.display = 'flex';
-  switchTab(tab);
-}
-function closeAuth() {
-  document.getElementById('auth-overlay').style.display = 'none';
-}
-function switchTab(tab) {
-  document.getElementById('form-login').style.display = tab==='login' ? 'block' : 'none';
-  document.getElementById('form-register').style.display = tab==='register' ? 'block' : 'none';
-  const active = 'background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)';
-  const inactive = 'background:transparent;color:var(--muted);box-shadow:none';
-  document.getElementById('tab-login').style.cssText += tab==='login' ? active : inactive;
-  document.getElementById('tab-register').style.cssText += tab==='register' ? active : inactive;
-}
-
-async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  const errEl = document.getElementById('login-error');
-  const btn = document.getElementById('login-btn');
-  if(!email || !password) { showAuthError('login','Fyll inn e-post og passord'); return; }
-  btn.textContent = 'Logger inn…'; btn.disabled = true;
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
-  btn.textContent = 'Logg inn'; btn.disabled = false;
-  if(error) { showAuthError('login', error.message === 'Invalid login credentials' ? 'Feil e-post eller passord' : error.message); return; }
-  closeAuth();
-  showToast('👋 Velkommen tilbake!');
-  await loadUserProfile(data.user);
-}
-
-async function doRegister() {
-  const firstName = document.getElementById('reg-firstname').value.trim();
-  const lastName = document.getElementById('reg-lastname').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const password = document.getElementById('reg-password').value;
-  const btn = document.getElementById('register-btn');
-  if(!firstName || !email || !password) { showAuthError('reg','Fyll inn alle feltene'); return; }
-  if(password.length < 6) { showAuthError('reg','Passordet må være minst 6 tegn'); return; }
-  btn.textContent = 'Oppretter konto…'; btn.disabled = true;
-  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName } } });
-  btn.textContent = 'Opprett konto'; btn.disabled = false;
-  if(error) { showAuthError('reg', error.message); return; }
-  closeAuth();
-  showToast('✅ Konto opprettet! Sjekk e-posten din for bekreftelse.');
-  if(data.user) await loadUserProfile(data.user);
-}
-
-async function doResetPassword() {
-  const email = document.getElementById('login-email').value.trim();
-  if(!email) { showAuthError('login','Skriv inn e-posten din først'); return; }
-  await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://tokt.app' });
-  showToast('📧 Nullstillingslenke sendt til ' + email);
-}
-
-async function doLogout() {
-  await sb.auth.signOut();
-  currentUser = null;
-  updateUIForAuth(null);
-  document.getElementById('profile-panel').style.display = 'none';
-  showToast('👋 Du er nå logget ut');
-}
-
-function showAuthError(form, msg) {
-  const id = form==='login' ? 'login-error' : 'reg-error';
-  const el = document.getElementById(id);
-  el.textContent = msg; el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 4000);
-}
-
-async function loadUserProfile(user) {
-  currentUser = user;
-  const meta = user.user_metadata || {};
-  const name = meta.full_name || meta.first_name || user.email.split('@')[0];
-  const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-
-  // Update topbar avatar
-  const avatar = document.querySelector('.avatar');
-  if(avatar) avatar.textContent = initials;
-
-  // Update profile panel
-  document.getElementById('profile-avatar-big').textContent = initials;
-  document.getElementById('profile-name').textContent = name;
-
-  // Try load profile from DB
-  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
-  if(profile) {
-    const quests = profile.quests_completed || 0;
-    const rank = getRank(quests);
-    document.getElementById('profile-quests').textContent = quests;
-    document.getElementById('profile-rating').textContent = profile.rating ? profile.rating.toFixed(1) : '–';
-    document.getElementById('profile-level').textContent = profile.level || 1;
-    document.getElementById('profile-rank-badge').textContent = rank.name;
-    // XP bar
-    const xpNeeded = [1,2,4,8,16];
-    const lvl = (profile.level || 1) - 1;
-    const xpMax = xpNeeded[Math.min(lvl, xpNeeded.length-1)] || 1;
-    const xpCur = profile.xp_current || 0;
-    document.getElementById('profile-xp').textContent = xpCur + ' / ' + xpMax + ' XP';
-    document.getElementById('profile-xp-bar').style.width = Math.min(100,(xpCur/xpMax)*100) + '%';
-    // Topbar XP
-    const xpFill = document.getElementById('xp-fill');
-    if(xpFill) xpFill.style.width = Math.min(100,(xpCur/xpMax)*100) + '%';
-    document.querySelector('.xp-rank') && (document.querySelector('.xp-rank').textContent = '⚡ ' + rank.name + ' · LVL ' + (profile.level||1));
-  }
-  updateUIForAuth(user);
-}
-
-function updateUIForAuth(user) {
-  const loginBtn = document.getElementById('btn-login');
-  if(loginBtn) loginBtn.textContent = user ? (currentUser?.user_metadata?.first_name || 'Profil') : t('logIn');
-  // Update bottom nav profile
-  const navProfile = document.getElementById('nav-profile-label');
-  if(navProfile) navProfile.textContent = user ? '👤' : t('navProfile');
-}
-
-// Avatar click – show profile if logged in, else open auth
-document.addEventListener('DOMContentLoaded', () => {
-  const avatarWrap = document.querySelector('.avatar-wrap');
-  if(avatarWrap) {
-    avatarWrap.onclick = () => {
-      if(currentUser) {
-        const pp = document.getElementById('profile-panel');
-        pp.style.display = pp.style.display === 'none' ? 'block' : 'none';
-        document.getElementById('leaderboard').classList.remove('open');
-      } else {
-        openAuth('login');
-      }
-    };
-  }
-  // Login button
-  const loginBtn = document.querySelector('#btn-login')?.parentElement;
-  if(loginBtn) loginBtn.onclick = () => openAuth('login');
-  // Close auth on overlay click
-  document.getElementById('auth-overlay').addEventListener('click', e => {
-    if(e.target === document.getElementById('auth-overlay')) closeAuth();
-  });
-  // Close profile on outside click
-  document.addEventListener('click', e => {
-    const pp = document.getElementById('profile-panel');
-    if(pp && !pp.contains(e.target) && !document.querySelector('.avatar-wrap')?.contains(e.target)) {
-      pp.style.display = 'none';
-    }
-  });
-});
-
-// Check existing session on load
-sb.auth.onAuthStateChange(async (event, session) => {
-  if(session?.user) {
-    await loadUserProfile(session.user);
-  } else {
-    currentUser = null;
-    updateUIForAuth(null);
-  }
-});
-
 // PWA manifest (injected dynamically)
 const manifestData = {
   name: "Tokt – Go on a quest",
@@ -1855,6 +1689,174 @@ function showAchievement(icon, title, desc) {
   clearTimeout(el._t);
   el._t = setTimeout(() => el.style.display = 'none', 4000);
 }
+
+// ══════════════════════════════════════
+// SUPABASE INIT
+// ══════════════════════════════════════
+const SUPABASE_URL = 'https://notbntypwtorecnynkfr.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vdGJudHlwd3RvcmVjbnlua2ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNDYxNzksImV4cCI6MjA5NjYyMjE3OX0.BqDLMfSHFf1TfaOcFLT4hKA2AfJevEQL472Is3IfT0E';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+
+// ── AUTH FUNCTIONS ──
+function openAuth(tab='login') {
+  document.getElementById('auth-overlay').style.display = 'flex';
+  switchTab(tab);
+}
+function closeAuth() {
+  document.getElementById('auth-overlay').style.display = 'none';
+}
+function switchTab(tab) {
+  document.getElementById('form-login').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('form-register').style.display = tab==='register' ? 'block' : 'none';
+  const active = 'background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)';
+  const inactive = 'background:transparent;color:var(--muted);box-shadow:none';
+  document.getElementById('tab-login').style.cssText += tab==='login' ? active : inactive;
+  document.getElementById('tab-register').style.cssText += tab==='register' ? active : inactive;
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  if(!email || !password) { showAuthError('login','Fyll inn e-post og passord'); return; }
+  btn.textContent = 'Logger inn…'; btn.disabled = true;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.textContent = 'Logg inn'; btn.disabled = false;
+  if(error) { showAuthError('login', error.message === 'Invalid login credentials' ? 'Feil e-post eller passord' : error.message); return; }
+  closeAuth();
+  showToast('👋 Velkommen tilbake!');
+  await loadUserProfile(data.user);
+}
+
+async function doRegister() {
+  const firstName = document.getElementById('reg-firstname').value.trim();
+  const lastName = document.getElementById('reg-lastname').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const btn = document.getElementById('register-btn');
+  if(!firstName || !email || !password) { showAuthError('reg','Fyll inn alle feltene'); return; }
+  if(password.length < 6) { showAuthError('reg','Passordet må være minst 6 tegn'); return; }
+  btn.textContent = 'Oppretter konto…'; btn.disabled = true;
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName } } });
+  btn.textContent = 'Opprett konto'; btn.disabled = false;
+  if(error) { showAuthError('reg', error.message); return; }
+  closeAuth();
+  showToast('✅ Konto opprettet! Sjekk e-posten din for bekreftelse.');
+  if(data.user) await loadUserProfile(data.user);
+}
+
+async function doResetPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if(!email) { showAuthError('login','Skriv inn e-posten din først'); return; }
+  await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://tokt.app' });
+  showToast('📧 Nullstillingslenke sendt til ' + email);
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  updateUIForAuth(null);
+  document.getElementById('profile-panel').style.display = 'none';
+  showToast('👋 Du er nå logget ut');
+}
+
+function showAuthError(form, msg) {
+  const id = form==='login' ? 'login-error' : 'reg-error';
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+async function loadUserProfile(user) {
+  currentUser = user;
+  const meta = user.user_metadata || {};
+  const name = meta.full_name || meta.first_name || user.email.split('@')[0];
+  const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+
+  // Update topbar avatar
+  const avatar = document.querySelector('.avatar');
+  if(avatar) avatar.textContent = initials;
+
+  // Update profile panel
+  document.getElementById('profile-avatar-big').textContent = initials;
+  document.getElementById('profile-name').textContent = name;
+
+  // Try load profile from DB
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  if(profile) {
+    const quests = profile.quests_completed || 0;
+    const rank = getRank(quests);
+    document.getElementById('profile-quests').textContent = quests;
+    document.getElementById('profile-rating').textContent = profile.rating ? profile.rating.toFixed(1) : '–';
+    document.getElementById('profile-level').textContent = profile.level || 1;
+    document.getElementById('profile-rank-badge').textContent = rank.name;
+    // XP bar
+    const xpNeeded = [1,2,4,8,16];
+    const lvl = (profile.level || 1) - 1;
+    const xpMax = xpNeeded[Math.min(lvl, xpNeeded.length-1)] || 1;
+    const xpCur = profile.xp_current || 0;
+    document.getElementById('profile-xp').textContent = xpCur + ' / ' + xpMax + ' XP';
+    document.getElementById('profile-xp-bar').style.width = Math.min(100,(xpCur/xpMax)*100) + '%';
+    // Topbar XP
+    const xpFill = document.getElementById('xp-fill');
+    if(xpFill) xpFill.style.width = Math.min(100,(xpCur/xpMax)*100) + '%';
+    document.querySelector('.xp-rank') && (document.querySelector('.xp-rank').textContent = '⚡ ' + rank.name + ' · LVL ' + (profile.level||1));
+  }
+  updateUIForAuth(user);
+}
+
+function updateUIForAuth(user) {
+  const loginBtn = document.getElementById('btn-login');
+  if(loginBtn) loginBtn.textContent = user ? (currentUser?.user_metadata?.first_name || 'Profil') : t('logIn');
+  // Update bottom nav profile
+  const navProfile = document.getElementById('nav-profile-label');
+  if(navProfile) navProfile.textContent = user ? '👤' : t('navProfile');
+}
+
+// Avatar click – show profile if logged in, else open auth
+document.addEventListener('DOMContentLoaded', () => {
+  const avatarWrap = document.querySelector('.avatar-wrap');
+  if(avatarWrap) {
+    avatarWrap.onclick = () => {
+      if(currentUser) {
+        const pp = document.getElementById('profile-panel');
+        pp.style.display = pp.style.display === 'none' ? 'block' : 'none';
+        document.getElementById('leaderboard').classList.remove('open');
+      } else {
+        openAuth('login');
+      }
+    };
+  }
+  // Login button
+  const loginBtn = document.querySelector('#btn-login')?.parentElement;
+  if(loginBtn) loginBtn.onclick = () => openAuth('login');
+  // Close auth on overlay click
+  document.getElementById('auth-overlay').addEventListener('click', e => {
+    if(e.target === document.getElementById('auth-overlay')) closeAuth();
+  });
+  // Close profile on outside click
+  document.addEventListener('click', e => {
+    const pp = document.getElementById('profile-panel');
+    if(pp && !pp.contains(e.target) && !document.querySelector('.avatar-wrap')?.contains(e.target)) {
+      pp.style.display = 'none';
+    }
+  });
+});
+
+// Check existing session on load
+sb.auth.onAuthStateChange(async (event, session) => {
+  if(session?.user) {
+    await loadUserProfile(session.user);
+  } else {
+    currentUser = null;
+    updateUIForAuth(null);
+  }
+});
+
+
 </script>
 <!-- AUTH MODAL -->
 <div id="auth-overlay" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);align-items:center;justify-content:center">
