@@ -2092,6 +2092,20 @@ async function checkUnreadNotifs() {
   if(count > 0) updateNotifBadge(count);
 }
 
+// ── SMS NOTIFICATIONS ──
+// SMS sending requires a backend service (Twilio/46elks)
+// This function shows how it would be called from a Supabase Edge Function
+// Setup guide: https://supabase.com/docs/guides/functions
+// 
+// In Supabase Dashboard → Edge Functions → Create function called 'send-sms'
+// The function will be triggered automatically by the notification triggers we set up
+// 
+// To enable SMS:
+// 1. Sign up at 46elks.com (Norwegian SMS provider, ~0.40 kr/SMS)
+// 2. Get API key
+// 3. Create Edge Function in Supabase with the 46elks API
+// 4. Set FORTYSIXELKS_API_KEY in Supabase secrets
+
 // Subscribe to realtime notifications
 function subscribeToNotifications() {
   if(!currentUser) return;
@@ -2472,13 +2486,14 @@ async function doLogin() {
 async function doRegister() {
   const firstName = document.getElementById('reg-firstname').value.trim();
   const lastName = document.getElementById('reg-lastname').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim();
   const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
   const btn = document.getElementById('register-btn');
   if(!firstName || !email || !password) { showAuthError('reg','Fyll inn alle feltene'); return; }
   if(password.length < 6) { showAuthError('reg','Passordet må være minst 6 tegn'); return; }
   btn.textContent = 'Oppretter konto…'; btn.disabled = true;
-  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName } } });
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName, phone: phone } } });
   btn.textContent = 'Opprett konto'; btn.disabled = false;
   if(error) { showAuthError('reg', error.message); return; }
   closeAuth();
@@ -2646,6 +2661,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
         </div>
       </div>
       <div style="margin-bottom:12px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Mobilnummer</label>
+        <input id="reg-phone" type="tel" placeholder="+47 000 00 000" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="margin-bottom:12px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">E-post</label>
         <input id="reg-email" type="email" placeholder="din@epost.no" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
       </div>
@@ -2655,7 +2674,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       </div>
       <div id="reg-error" style="display:none;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--red);margin-bottom:12px"></div>
       <button onclick="doRegister()" id="register-btn" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">Opprett konto</button>
-      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5">Ved å registrere deg godtar du våre <u style="cursor:pointer">brukervilkår</u> og <u style="cursor:pointer">personvernregler</u></div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5">Ved å registrere deg godtar du våre <a href="https://tokt.app/Tokt-Brukervilkaar-og-Personvern.docx" target="_blank" style="color:var(--accent)">brukervilkår</a> og <a href="https://tokt.app/Tokt-Brukervilkaar-og-Personvern.docx" target="_blank" style="color:var(--accent)">personvernregler</a></div>
     </div>
 
     <!-- Divider -->
