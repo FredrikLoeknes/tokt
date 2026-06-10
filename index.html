@@ -3977,10 +3977,12 @@ async function doRegister() {
   btn.textContent = 'Opprett konto'; btn.disabled = false;
   if(error) {
     let msg = error.message;
-    if(msg.includes('already registered') || msg.includes('already exists')) msg = 'Denne e-posten er allerede registrert. Prøv å logge inn i stedet.';
-    else if(msg.includes('invalid')) msg = 'Ugyldig e-postadresse. Sjekk at du har skrevet riktig.';
-    else if(msg.includes('weak')) msg = 'Passordet er for svakt. Bruk minst 6 tegn.';
-    else msg = 'Noe gikk galt. Prøv igjen om litt.';
+    if(msg.includes('already registered') || msg.includes('already exists') || msg.includes('User already registered')) msg = 'Denne e-posten er allerede registrert. Prøv å logge inn i stedet.';
+    else if(msg.includes('invalid') && msg.includes('email')) msg = 'Ugyldig e-postadresse. Sjekk at du har skrevet riktig.';
+    else if(msg.includes('weak') || msg.includes('password')) msg = 'Passordet er for svakt. Bruk minst 6 tegn.';
+    else if(msg.includes('rate limit') || msg.includes('too many') || msg.includes('over_email_send_rate_limit')) msg = 'For mange forsøk. Vent noen minutter og prøv igjen.';
+    else if(msg.includes('email') && msg.includes('confirm')) msg = 'Konto opprettet! Sjekk e-posten din for bekreftelseslenke.';
+    else msg = 'Feil: ' + msg; // Show real error for debugging
     showAuthError('reg', msg);
     return;
   }
@@ -4168,7 +4170,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Mobilnummer <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(valgfritt)</span></label>
         <div style="display:flex;gap:8px">
           <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--muted);white-space:nowrap;flex-shrink:0">🇳🇴 +47</div>
-          <input id="reg-phone" type="tel" placeholder="92 89 16 18" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" maxlength="8">
+          <input id="reg-phone" type="tel" placeholder="12 34 56 78" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" maxlength="8">
         </div>
         <div style="font-size:10px;color:var(--muted);margin-top:4px">Skriv bare 8 siffer – ingen mellomrom nødvendig</div>
       </div>
