@@ -3987,10 +3987,10 @@ async function doRegister() {
     return;
   }
   closeAuth();
-  showToast('✅ Konto opprettet! Sjekk e-posten din for bekreftelse.');
+  showToast('✅ Konto opprettet! Du er nå logget inn.');
   if(data.user) {
-    // Create profile row immediately
-    await sb.from('profiles').upsert({
+    // Create profile row – non-blocking, don't let this break auth
+    sb.from('profiles').upsert({
       id: data.user.id,
       full_name: firstName + ' ' + lastName,
       phone: phone || null,
@@ -3998,7 +3998,9 @@ async function doRegister() {
       xp_current: 0,
       quests_completed: 0,
       rating: null
-    }, { onConflict: 'id' });
+    }, { onConflict: 'id' }).then(({ error }) => {
+      if(error) console.warn('Profile upsert failed:', error.message);
+    });
     await loadUserProfile(data.user);
   }
 }
