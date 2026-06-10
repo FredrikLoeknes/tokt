@@ -1539,6 +1539,13 @@ function closeLangDropdown() {
   document.getElementById('lang-dropdown').classList.remove('open');
 }
 
+// Register service worker early
+if('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
 // PWA manifest (injected dynamically)
 const manifestData = {
   name: "Tokt – Go on a quest",
@@ -2106,6 +2113,62 @@ async function checkUnreadNotifs() {
 // 3. Create Edge Function in Supabase with the 46elks API
 // 4. Set FORTYSIXELKS_API_KEY in Supabase secrets
 
+// ── PUSH NOTIFICATIONS ──
+async function registerPushNotifications() {
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    // Register service worker
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    console.log('SW registered');
+
+    // Ask permission
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted') return;
+
+    // Get push subscription
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(
+        // VAPID public key - generate at: https://vapidkeys.com
+        // Replace this with your own key after generating
+        'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBOYDjuDmUkJBn9e5g3E'
+      )
+    });
+
+    // Save subscription to Supabase
+    await sb.from('push_subscriptions').upsert({
+      user_id: currentUser.id,
+      subscription: JSON.stringify(sub)
+    }, { onConflict: 'user_id' });
+
+    console.log('Push subscription saved');
+  } catch(err) {
+    console.log('Push setup failed:', err);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return new Uint8Array([...rawData].map(c => c.charCodeAt(0)));
+}
+
+// Show browser notification directly (fallback when SW not available)
+function showBrowserNotification(title, body, url='/') {
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'granted') {
+    const n = new Notification(title, {
+      body,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: 'tokt-' + Date.now()
+    });
+    n.onclick = () => { window.focus(); n.close(); };
+    setTimeout(() => n.close(), 6000);
+  }
+}
+
 // Subscribe to realtime notifications
 function subscribeToNotifications() {
   if(!currentUser) return;
@@ -2113,9 +2176,13 @@ function subscribeToNotifications() {
     .on('postgres_changes', {
       event: 'INSERT', schema: 'public', table: 'notifications',
       filter: `user_id=eq.${currentUser.id}`
-    }, () => {
+    }, async (payload) => {
       checkUnreadNotifs();
-      showToast('🔔 Du har et nytt varsel!');
+      const n = payload.new;
+      if(n) {
+        showBrowserNotification(n.title, n.body);
+        showToast('🔔 ' + n.title);
+      }
     })
     .subscribe();
 }
@@ -2562,6 +2629,7 @@ async function loadUserProfile(user) {
   checkUnread();
   checkUnreadNotifs();
   subscribeToNotifications();
+  registerPushNotifications();
 }
 
 function updateUIForAuth(user) {
