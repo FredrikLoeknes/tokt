@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brukervilkår og Personvern – Tokt.app</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#f4f5f9; --surface:#fff; --border:rgba(0,0,0,0.07);
+    --text:#0f1523; --muted:#6b7280; --accent:#3b6ff5; --radius:14px;
+  }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); line-height:1.7; }
+
+  header {
+    background:#fff; border-bottom:1px solid var(--border);
+    padding:16px 24px; display:flex; align-items:center; gap:16px;
+    position:sticky; top:0; z-index:10; box-shadow:0 2px 12px rgba(0,0,0,0.06);
+  }
+  .logo { font-family:'Skranji',cursive; font-size:22px; font-weight:700; text-decoration:none; color:var(--text); }
+  .logo span { background:linear-gradient(135deg,#f97316,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .back-btn { margin-left:auto; background:var(--bg); border:1px solid var(--border); border-radius:50px; padding:8px 16px; font-size:13px; font-weight:600; color:var(--text); text-decoration:none; cursor:pointer; }
+  .back-btn:hover { background:#e8e9f0; }
+
+  .hero {
+    background:linear-gradient(135deg,#f97316,#a855f7);
+    color:#fff; padding:48px 24px; text-align:center;
+  }
+  .hero h1 { font-family:'Skranji',cursive; font-size:clamp(28px,5vw,48px); margin-bottom:10px; letter-spacing:2px; }
+  .hero p { font-size:15px; opacity:0.85; }
+  .beta-badge { display:inline-block; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); border-radius:50px; padding:4px 14px; font-size:12px; font-weight:700; margin-top:12px; letter-spacing:1px; }
+
+  .container { max-width:760px; margin:0 auto; padding:40px 24px 80px; }
+
+  /* Table of contents */
+  .toc { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:40px; }
+  .toc h3 { font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:14px; }
+  .toc a { display:block; font-size:14px; color:var(--accent); text-decoration:none; padding:4px 0; border-bottom:1px solid var(--border); }
+  .toc a:last-child { border-bottom:none; }
+  .toc a:hover { text-decoration:underline; }
+
+  .section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:28px; margin-bottom:20px; }
+  .section h2 { font-size:20px; font-weight:700; margin-bottom:16px; color:var(--text); display:flex; align-items:center; gap:10px; }
+  .section h2 .num { background:linear-gradient(135deg,#f97316,#a855f7); color:#fff; width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0; }
+  .section p { font-size:14px; color:#374151; margin-bottom:12px; }
+  .section p:last-child { margin-bottom:0; }
+  .section ul { list-style:none; margin:10px 0; }
+  .section ul li { font-size:14px; color:#374151; padding:5px 0 5px 20px; position:relative; border-bottom:1px solid var(--bg); }
+  .section ul li:last-child { border-bottom:none; }
+  .section ul li::before { content:'→'; position:absolute; left:0; color:var(--accent); font-weight:700; }
+
+  .important-box { background:rgba(249,115,22,0.07); border:1px solid rgba(249,115,22,0.25); border-radius:10px; padding:14px 16px; margin:14px 0; }
+  .important-box p { color:#c2540a !important; font-weight:500; margin:0 !important; }
+
+  .gdpr-section { border-left:3px solid var(--accent); }
+
+  .part-header { text-align:center; margin:40px 0 24px; }
+  .part-header h2 { font-family:'Skranji',cursive; font-size:26px; letter-spacing:2px; color:var(--text); }
+  .part-header p { font-size:13px; color:var(--muted); margin-top:6px; }
+
+  .version-bar { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 20px; text-align:center; font-size:12px; color:var(--muted); margin-bottom:32px; }
+  .version-bar strong { color:var(--text); }
+
+  footer { text-align:center; padding:32px 24px; font-size:13px; color:var(--muted); border-top:1px solid var(--border); }
+  footer a { color:var(--accent); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">Tokt<span>.app</span></a>
+  <a href="/" class="back-btn">← Tilbake til kartet</a>
+</header>
+
+<div class="hero">
+  <h1>Vilkår & Personvern</h1>
+  <p>Tokt.app – Formidlingsplattform for småoppdrag</p>
+  <div class="beta-badge">🚀 BETA – Versjon 1.0</div>
+</div>
+
+<div class="container">
+
+  <div class="version-bar">
+    Sist oppdatert: <strong>Juni 2026</strong> &nbsp;·&nbsp;
+    Versjon: <strong>1.0 Beta</strong> &nbsp;·&nbsp;
+    Kontakt: <strong>personvern@tokt.app</strong>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <h3>Innhold</h3>
+    <a href="#del1">DEL 1 – Brukervilkår</a>
+    <a href="#p1">1. Om Tokt og disse vilkårene</a>
+    <a href="#p2">2. Tokt er kun en formidlingsplattform</a>
+    <a href="#p3">3. Registrering og brukerkonto</a>
+    <a href="#p4">4. Regler for bruk</a>
+    <a href="#p5">5. Betaling og avgifter</a>
+    <a href="#p6">6. Vurderinger og rangsystem</a>
+    <a href="#p7">7. Ansvarsbegrensning</a>
+    <a href="#p8">8. Endringer og norsk lov</a>
+    <a href="#del2">DEL 2 – Personvernerklæring (GDPR)</a>
+    <a href="#p9">9. Hva vi samler inn</a>
+    <a href="#p10">10. Dine rettigheter</a>
+    <a href="#p11">11. Informasjonskapsler og sikkerhet</a>
+  </div>
+
+  <!-- DEL 1 -->
+  <div class="part-header" id="del1">
+    <h2>DEL 1 – BRUKERVILKÅR</h2>
+    <p>Gjeldende for alle brukere av Tokt.app</p>
+  </div>
+
+  <div class="section" id="p1">
+    <h2><span class="num">1</span>Om Tokt og disse vilkårene</h2>
+    <p>Tokt.app ("Tokt", "vi", "oss") er en nettbasert formidlingsplattform som kobler privatpersoner som ønsker å få utført oppdrag ("Oppdragsgiver") med privatpersoner som ønsker å utføre oppdrag mot betaling ("Utfører").</p>
+    <p>Ved å opprette en konto eller bruke Tokt aksepterer du disse brukervilkårene i sin helhet. Tokt er for tiden i <strong>beta</strong> – vi forbeholder oss retten til å endre funksjonalitet og vilkår med varsel.</p>
+  </div>
+
+  <div class="section" id="p2">
+    <h2><span class="num">2</span>Tokt er kun en formidlingsplattform</h2>
+    <div class="important-box">
+      <p>⚠️ Tokt er IKKE part i avtalen mellom Oppdragsgiver og Utfører. Alt ansvar for oppdragets gjennomføring ligger hos partene selv.</p>
+    </div>
+    <p>Tokt er ikke ansvarlig for:</p>
+    <ul>
+      <li>Kvaliteten, sikkerheten eller lovligheten av utførte oppdrag</li>
+      <li>Betalingsgjennomføring mellom brukere</li>
+      <li>Skader på person eller eiendom under oppdrag</li>
+      <li>Tvister mellom Oppdragsgiver og Utfører</li>
+      <li>Manglende oppfyllelse av avtaler mellom brukere</li>
+    </ul>
+    <p>Tokt anbefaler brukere å lese hverandres profiler, vurderinger og rangering nøye før man inngår avtale.</p>
+  </div>
+
+  <div class="section" id="p3">
+    <h2><span class="num">3</span>Registrering og brukerkonto</h2>
+    <p>For å bruke Tokt må du:</p>
+    <ul>
+      <li>Være minst 18 år gammel</li>
+      <li>Oppgi korrekte og fullstendige opplysninger</li>
+      <li>Holde passord konfidensielt</li>
+      <li>Varsle oss umiddelbart ved mistanke om uautorisert bruk</li>
+    </ul>
+    <p>Du er ansvarlig for all aktivitet på din konto. Tokt kan suspendere eller slette kontoer som bryter vilkårene.</p>
+  </div>
+
+  <div class="section" id="p4">
+    <h2><span class="num">4</span>Regler for bruk av plattformen</h2>
+    <p>Det er forbudt å:</p>
+    <ul>
+      <li>Legge ut falske, villedende eller ulovlige oppdrag</li>
+      <li>Trakassere, true eller diskriminere andre brukere</li>
+      <li>Bruke plattformen til ulovlig virksomhet</li>
+      <li>Opprette falske profiler eller misrepresentere deg selv</li>
+      <li>Manipulere vurderinger eller rangsystemet</li>
+      <li>Publisere andres personopplysninger uten samtykke</li>
+    </ul>
+  </div>
+
+  <div class="section" id="p5">
+    <h2><span class="num">5</span>Betaling og avgifter</h2>
+    <p>All betaling skjer direkte mellom Oppdragsgiver og Utfører via Vipps, Bitcoin, Cardano eller annen avtalt metode. Tokt er ikke part i transaksjoner.</p>
+    <div class="important-box">
+      <p>💡 Tokt anbefaler aldri å betale forskudd til ukjente. Bruk alltid Tokts innebygde chat for å dokumentere avtaler.</p>
+    </div>
+    <p>Oppdrag over 10 000 kr anbefales å dokumenteres med skriftlig kontrakt.</p>
+  </div>
+
+  <div class="section" id="p6">
+    <h2><span class="num">6</span>Vurderinger og rangsystem</h2>
+    <p>Brukere kan gi hverandre vurderinger etter fullførte oppdrag. Vurderinger skal være ærlige og basert på faktiske erfaringer. Det er forbudt å manipulere, kjøpe eller true frem positive vurderinger. Tokt kan fjerne vurderinger som bryter disse reglene.</p>
+    <p>Rangsystemet (Wanderer → Scout → Rover → Pathfinder → Champion → Legend) baseres på antall fullførte oppdrag og vurderinger.</p>
+  </div>
+
+  <div class="section" id="p7">
+    <h2><span class="num">7</span>Ansvarsbegrensning</h2>
+    <p>Tokt er ikke ansvarlig for direkte eller indirekte tap som følge av bruk av plattformen, tekniske feil, nedetid eller datatap. Totalt erstatningsansvar er begrenset til NOK 0 da Tokt er en gratis formidlingstjeneste i nåværende versjon.</p>
+  </div>
+
+  <div class="section" id="p8">
+    <h2><span class="num">8</span>Endringer og gjeldende lov</h2>
+    <p>Tokt kan endre vilkårene med 14 dagers varsel via e-post. Fortsatt bruk etter ikrafttredelse anses som aksept.</p>
+    <p>Disse vilkårene er underlagt norsk rett med Oslo tingrett som verneting.</p>
+  </div>
+
+  <!-- DEL 2 -->
+  <div class="part-header" id="del2">
+    <h2>DEL 2 – PERSONVERNERKLÆRING</h2>
+    <p>I henhold til GDPR og norsk personopplysningslov</p>
+  </div>
+
+  <div class="section gdpr-section" id="p9">
+    <h2><span class="num">9</span>Hva vi samler inn og hvorfor</h2>
+    <p><strong>Vi samler inn:</strong></p>
+    <ul>
+      <li>Navn og e-postadresse (nødvendig for konto)</li>
+      <li>Telefonnummer (valgfritt, for varsler)</li>
+      <li>GPS-posisjon (kun med ditt samtykke, for å vise nærliggende oppdrag)</li>
+      <li>Oppdragshistorikk, vurderinger og chatmeldinger</li>
+      <li>Tekniske data: IP-adresse, enhetstype, nettleser</li>
+    </ul>
+    <p><strong>Vi samler IKKE inn:</strong> Betalingsinformasjon (håndteres av Vipps/krypto).</p>
+    <p><strong>Vi selger ALDRI</strong> personopplysninger til tredjeparter.</p>
+    <p>Leverandører vi bruker: Supabase (EU-basert database), Mapbox (kart).</p>
+  </div>
+
+  <div class="section gdpr-section" id="p10">
+    <h2><span class="num">10</span>Dine rettigheter (GDPR)</h2>
+    <p>Du har rett til:</p>
+    <ul>
+      <li>Innsyn – be om kopi av dine data</li>
+      <li>Retting – korrigere uriktige opplysninger</li>
+      <li>Sletting – "retten til å bli glemt"</li>
+      <li>Dataportabilitet – motta data i maskinlesbart format</li>
+      <li>Innsigelse – protestere mot behandling</li>
+      <li>Trekke samtykke – når som helst</li>
+    </ul>
+    <p>Send forespørsler til: <a href="mailto:personvern@tokt.app">personvern@tokt.app</a>. Vi svarer innen 30 dager.</p>
+    <p>Du kan klage til <a href="https://datatilsynet.no" target="_blank">Datatilsynet</a> hvis du mener vi behandler data i strid med GDPR.</p>
+  </div>
+
+  <div class="section gdpr-section" id="p11">
+    <h2><span class="num">11</span>Cookies og sikkerhet</h2>
+    <p>Vi bruker kun nødvendige informasjonskapsler for innlogging og preferanser (språk, mørk/lys modus). Ingen tredjeparts sporingscookies.</p>
+    <p>Sikkerhetstiltak: HTTPS/TLS-kryptering, kryptert lagring via Supabase, og tilgangskontroll med Row Level Security. Vi varsler Datatilsynet innen 72 timer ved databrudd.</p>
+    <p>Data slettes innen 30 dager etter kontosletting.</p>
+  </div>
+
+</div>
+
+<footer>
+  <p>Tokt.app &nbsp;·&nbsp; <a href="mailto:personvern@tokt.app">personvern@tokt.app</a> &nbsp;·&nbsp; Versjon 1.0 Beta &nbsp;·&nbsp; Juni 2026</p>
+  <p style="margin-top:8px"><a href="/">← Tilbake til kartet</a></p>
+</footer>
+
+</body>
+</html>
