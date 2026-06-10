@@ -685,7 +685,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   .fsection-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
   .fsection-val { font-size: 13px; font-weight: 600; color: var(--accent); }
 
-  .fcat-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+  .fcat-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; }
   .fcat-item {
     display: flex; flex-direction: column; align-items: center; gap: 4px;
     padding: 10px 4px; border-radius: 12px;
@@ -796,7 +796,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
   <div id="searchbox">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input id="search-input-desktop" type="text" placeholder="Search quests, type, location…">
+    <input id="search-input-desktop" type="text" placeholder="Search quests, type, location…" oninput="handleSearch(this.value)" autocomplete="off">
   </div>
 
   <div class="top-actions">
@@ -844,7 +844,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 <!-- MOBILE SEARCH BAR -->
 <div id="mobile-search">
-  <input id="search-input-desktop" type="text" placeholder="Search quests, type, location…">
+  <input id="search-input-desktop" type="text" placeholder="Search quests, type, location…" oninput="handleSearch(this.value)" autocomplete="off">
 </div>
 
 <!-- FILTER BUTTON (both mobile + desktop) -->
@@ -873,46 +873,29 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <div class="fsection">
       <div class="fsection-title"><span id="fsec-category">Category</span></div>
       <div class="fcat-grid">
-        <div class="fcat-item active" onclick="toggleCat(this)" data-cat="all">
-          <div class="fcat-icon">🗺️</div>
-          <div class="fcat-label">All</div>
-        </div>
-        <div class="fcat-item" onclick="toggleCat(this)" data-cat="home">
-          <div class="fcat-icon">🏠</div>
-          <div class="fcat-label">Home</div>
-        </div>
-        <div class="fcat-item" onclick="toggleCat(this)" data-cat="drive">
-          <div class="fcat-icon">🚗</div>
-          <div class="fcat-label">Driving</div>
-        </div>
-        <div class="fcat-item" onclick="toggleCat(this)" data-cat="pets">
-          <div class="fcat-icon">🐕</div>
-          <div class="fcat-label">Pets</div>
-        </div>
-        <div class="fcat-item" onclick="toggleCat(this)" data-cat="errands">
-          <div class="fcat-icon">🛒</div>
-          <div class="fcat-label">Errands</div>
-        </div>
-        <div class="fcat-item" onclick="toggleCat(this)" data-cat="crafts">
-          <div class="fcat-icon">🔧</div>
-          <div class="fcat-label">Crafts</div>
-        </div>
-        <div class="fcat-item" onclick="toggleCat(this)" data-cat="elderly">
-          <div class="fcat-icon">👴</div>
-          <div class="fcat-label">Elderly</div>
-        </div>
-        <div class="fcat-item" onclick="toggleCat(this)" data-cat="moving">
-          <div class="fcat-icon">📦</div>
-          <div class="fcat-label">Moving</div>
-        </div>
-        <div class="fcat-item" onclick="toggleCat(this)" data-cat="cleaning">
-          <div class="fcat-icon">🧹</div>
-          <div class="fcat-label">Cleaning</div>
-        </div>
-        <div class="fcat-item" onclick="toggleCat(this)" data-cat="other">
-          <div class="fcat-icon">✨</div>
-          <div class="fcat-label">Other</div>
-        </div>
+        <div class="fcat-item active" onclick="toggleCat(this)" data-cat="all"><div class="fcat-icon">🗺️</div><div class="fcat-label">Alle</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="hjem"><div class="fcat-icon">🏠</div><div class="fcat-label">Hjem</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="kjøring"><div class="fcat-icon">🚗</div><div class="fcat-label">Kjøring</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="handel"><div class="fcat-icon">🛒</div><div class="fcat-label">Handel</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="dyr"><div class="fcat-icon">🐕</div><div class="fcat-label">Dyr</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="håndverk"><div class="fcat-icon">🔧</div><div class="fcat-label">Håndverk</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="eldre"><div class="fcat-icon">👴</div><div class="fcat-label">Eldre</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="bære"><div class="fcat-icon">📦</div><div class="fcat-label">Bære</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="rengjøring"><div class="fcat-icon">🧹</div><div class="fcat-label">Rengjøring</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="teknologi"><div class="fcat-icon">💻</div><div class="fcat-label">Teknologi</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="bil"><div class="fcat-icon">🚘</div><div class="fcat-label">Bil</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="barn"><div class="fcat-icon">👶</div><div class="fcat-label">Barn</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="fest"><div class="fcat-icon">🎉</div><div class="fcat-label">Fest</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="mat"><div class="fcat-icon">🍕</div><div class="fcat-label">Mat</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="foto"><div class="fcat-icon">📸</div><div class="fcat-label">Foto</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="hår"><div class="fcat-icon">💇</div><div class="fcat-label">Hår</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="hagearbeid"><div class="fcat-icon">🌿</div><div class="fcat-label">Hage</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="nøkler"><div class="fcat-icon">🔑</div><div class="fcat-label">Nøkler</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="småfiks"><div class="fcat-icon">🛠️</div><div class="fcat-label">Småfiks</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="undervisning"><div class="fcat-icon">🎓</div><div class="fcat-label">Læring</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="blinddate"><div class="fcat-icon">💘</div><div class="fcat-label">Blind date</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="undervisning"><div class="fcat-icon">📚</div><div class="fcat-label">Læring</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="annet"><div class="fcat-icon">✨</div><div class="fcat-label">Annet</div></div>
       </div>
     </div>
 
@@ -1147,18 +1130,38 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     </div>
     <div class="form-group">
       <label class="form-label">Category</label>
-      <select id="quest-category-input" class="form-select">
-        <option>🏠 Home & garden</option>
-        <option>🚗 Driving & transport</option>
-        <option>🛒 Shopping & errands</option>
-        <option>🐕 Pets</option>
-        <option>🔧 Crafts & assembly</option>
-        <option>👴 Elderly & company</option>
-        <option>📦 Moving & carrying</option>
-        <option>🧹 Cleaning</option>
-        <option>Other</option>
+      <select id="quest-category-input" class="form-select" onchange="checkCategoryWarning(this.value)">
+        <option>🏠 Hjem og hage</option>
+        <option>🚗 Kjøring og transport</option>
+        <option>🛒 Handel og ærend</option>
+        <option>🐕 Dyr</option>
+        <option>🔧 Håndverk og montering</option>
+        <option>👴 Eldre og selskap</option>
+        <option>📦 Bære og flytte</option>
+        <option>🧹 Rengjøring</option>
+        <option>💻 Teknologi og IT</option>
+        <option>🚘 Bil og kjøretøy</option>
+        <option>👶 Barn og familie</option>
+        <option>🎉 Fest og arrangement</option>
+        <option>🍕 Mat og matlaging</option>
+        <option>📸 Foto og video</option>
+        <option>💇 Hår og skjønnhet</option>
+        <option>🐾 Dyrepass</option>
+        <option>🌿 Hagearbeid</option>
+        <option>🔑 Nøkler og ærend</option>
+        <option>🛠️ Småfiks</option>
+        <option>🎓 Undervisning og leksehjelp</option>
+        <option>💘 Blind date</option>
+        <option>📚 Undervisning og hjelp</option>
+        <option>✨ Annet</option>
       </select>
     </div>
+    <div id="blinddate-warning" style="display:none;background:rgba(233,30,140,0.08);border:1px solid rgba(233,30,140,0.25);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;color:#c2185b;line-height:1.6">
+      <strong>💘 Blind date</strong><br>
+      Kun for sosiale møter – kaffe, samtale og selskap. Seksuelle tjenester mot betaling er <strong>ulovlig i Norge</strong> og vil resultere i umiddelbar utestengelse og anmeldelse. Ved å fortsette bekrefter du at oppdraget er av sosial karakter.
+      <div style="margin-top:8px"><a href="/terms.html#p4b" target="_blank" style="color:#e91e8c;font-weight:600">Les våre regler for blind date →</a></div>
+    </div>
+
     <div class="form-group">
       <label class="form-label">Description</label>
       <textarea class="form-textarea" placeholder="Describe what needs to be done, what tools are available, any details…"></textarea>
@@ -1283,9 +1286,12 @@ const LANGUAGES = {
     showQuests: 'Vis',
     questsLabel: 'oppdrag',
     // Categories
-    catAll: 'Alle', catHome: 'Hjem', catDrive: 'Kjøring', catPets: 'Dyr',
-    catErrands: 'Handel', catCrafts: 'Håndverk', catElderly: 'Eldre',
-    catMoving: 'Bære', catCleaning: 'Rengjøring', catOther: 'Annet',
+    catAll: 'Alle', catHome: 'Hjem', catDrive: 'Kjøring', catErrands: 'Handel',
+    catPets: 'Dyr', catCrafts: 'Håndverk', catElderly: 'Eldre',
+    catMoving: 'Bære', catCleaning: 'Rengjøring', catTech: 'Teknologi',
+    catCar: 'Bil', catKids: 'Barn', catParty: 'Fest', catFood: 'Mat',
+    catPhoto: 'Foto', catHair: 'Hår', catGarden: 'Hage',
+    catKeys: 'Nøkler', catFix: 'Småfiks', catTeaching: 'Læring', catDate: '💘 Blind date', catOther: 'Annet',
     // Duration pills
     dur1: '⚡ <30 min', dur2: '🕐 30–60 min', dur3: '🕑 1–2 timer',
     dur4: '🕓 2–4 timer', dur5: '☀️ Halvdag', dur6: '🌅 Heldags',
@@ -1372,9 +1378,12 @@ const LANGUAGES = {
     sortByTitle: 'Sort by',
     showQuests: 'Show',
     questsLabel: 'quests',
-    catAll: 'All', catHome: 'Home', catDrive: 'Driving', catPets: 'Pets',
-    catErrands: 'Errands', catCrafts: 'Crafts', catElderly: 'Elderly',
-    catMoving: 'Moving', catCleaning: 'Cleaning', catOther: 'Other',
+    catAll: 'All', catHome: 'Home', catDrive: 'Driving', catErrands: 'Errands',
+    catPets: 'Pets', catCrafts: 'Crafts', catElderly: 'Elderly',
+    catMoving: 'Moving', catCleaning: 'Cleaning', catTech: 'Tech',
+    catCar: 'Car', catKids: 'Kids', catParty: 'Events', catFood: 'Food',
+    catPhoto: 'Photo', catHair: 'Beauty', catGarden: 'Garden',
+    catKeys: 'Keys', catFix: 'Quick fix', catTeaching: 'Tutoring', catDate: '💘 Blind date', catOther: 'Other',
     dur1: '⚡ <30 min', dur2: '🕐 30–60 min', dur3: '🕑 1–2 hours',
     dur4: '🕓 2–4 hours', dur5: '☀️ Half day', dur6: '🌅 Full day',
     urgentLabel: '🔴 Urgent quests', urgentSub: 'Only show red priority quests',
@@ -1480,7 +1489,7 @@ function applyLanguage() {
   safeText('fsec-sortby', L.sortByTitle);
 
   // Categories
-  const catKeys = ['catAll','catHome','catDrive','catPets','catErrands','catCrafts','catElderly','catMoving','catCleaning','catOther'];
+  const catKeys = ['catAll','catHome','catDrive','catErrands','catPets','catCrafts','catElderly','catMoving','catCleaning','catTech','catCar','catKids','catParty','catFood','catPhoto','catHair','catGarden','catKeys','catFix','catTeaching','catDate','catOther'];
   document.querySelectorAll('.fcat-label').forEach((el,i) => { if(catKeys[i]) el.textContent = L[catKeys[i]]; });
 
   // Duration pills
@@ -2614,6 +2623,124 @@ async function checkUnread() {
     .neq('sender_id', currentUser.id);
   if(count > 0) updateInboxBadge(count);
 }
+
+// ── SEARCH ──
+let allQuests = []; // cache of loaded quests
+let searchDebounce = null;
+
+function handleSearch(query) {
+  // Sync both inputs
+  document.getElementById('search-input-desktop').value = query;
+  document.getElementById('search-input-mobile').value = query;
+
+  clearTimeout(searchDebounce);
+  if(!query.trim()) {
+    closeSearch();
+    return;
+  }
+  searchDebounce = setTimeout(() => runSearch(query.trim()), 250);
+}
+
+async function runSearch(query) {
+  const results = document.getElementById('search-results');
+  results.style.display = 'block';
+  results.innerHTML = '<div class="search-empty">🔍 Søker…</div>';
+
+  const q = query.toLowerCase();
+
+  // Search in Supabase
+  const { data: quests } = await sb.from('quests')
+    .select('*')
+    .eq('status', 'open')
+    .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
+    .limit(8);
+
+  if(!quests || quests.length === 0) {
+    // Also search demo jobs
+    const demoResults = JOBS.filter(j =>
+      j.title.toLowerCase().includes(q) ||
+      j.desc.toLowerCase().includes(q) ||
+      j.label.toLowerCase().includes(q)
+    );
+
+    if(demoResults.length === 0) {
+      results.innerHTML = `<div class="search-empty">Ingen treff for "<strong>${query}</strong>"</div>`;
+      return;
+    }
+
+    renderSearchResults(demoResults.map(j => ({
+      id: j.id, title: j.title, category: j.tags[0]?.t || '',
+      pay: j.pay, image_url: null, coords: j.coords, _demo: j
+    })));
+    return;
+  }
+
+  renderSearchResults(quests);
+}
+
+function renderSearchResults(quests) {
+  const results = document.getElementById('search-results');
+  const catIcons = {
+    'Hjem og hage': '🏠', 'Kjøring og transport': '🚗',
+    'Handel og ærend': '🛒', 'Dyr': '🐕', 'Dyrepass': '🐾',
+    'Håndverk og montering': '🔧', 'Eldre og selskap': '👴',
+    'Bære og flytte': '📦', 'Rengjøring': '🧹',
+    'Teknologi og IT': '💻', 'Bil og kjøretøy': '🚘',
+    'Barn og familie': '👶', 'Fest og arrangement': '🎉',
+    'Mat og matlaging': '🍕', 'Foto og video': '📸',
+    'Hår og skjønnhet': '💇', 'Hagearbeid': '🌿',
+    'Nøkler og ærend': '🔑', 'Småfiks': '🛠️', 'Undervisning og leksehjelp': '🎓', 'Blind date': '💘', 'Undervisning og hjelp': '📚',
+    'Annet': '✨'
+  };
+
+  results.innerHTML = `<div class="search-section-title">${quests.length} treff</div>` +
+    quests.map(q => {
+      const icon = catIcons[q.category] || '✨';
+      const thumb = q.image_url
+        ? `<img src="${q.image_url}" class="search-result-thumb" style="border-radius:10px">`
+        : `<div class="search-result-thumb">${icon}</div>`;
+      return `<div class="search-result-item" onclick="selectSearchResult('${q.id}', ${JSON.stringify(q.coords || [0,0]).replace(/"/g,'&quot;')})">
+        ${thumb}
+        <div class="search-result-info">
+          <div class="search-result-title">${q.title}</div>
+          <div class="search-result-meta">${q.category || ''}</div>
+        </div>
+        <div class="search-result-pay">${q.pay} kr</div>
+      </div>`;
+    }).join('');
+}
+
+function selectSearchResult(questId, coords) {
+  closeSearch();
+  // Fly to quest location
+  if(window.map && coords && coords[0]) {
+    window.map.flyTo({ center: coords, zoom: 15, speed: 1.6 });
+  }
+  // Find and show the quest panel
+  setTimeout(async () => {
+    // Try find in DB
+    const { data: q } = await sb.from('quests').select('*').eq('id', questId).single();
+    if(q) { showPanel(questToJob(q)); return; }
+    // Try demo
+    const demo = JOBS.find(j => j.id === questId);
+    if(demo) showPanel(demo);
+  }, 600);
+}
+
+function closeSearch() {
+  const results = document.getElementById('search-results');
+  if(results) results.style.display = 'none';
+}
+
+// Close search on outside click
+document.addEventListener('click', e => {
+  const searchEl = document.getElementById('search-results');
+  const desktopSearch = document.getElementById('desktop-search');
+  const mobileSearch = document.getElementById('mobile-search');
+  if(searchEl && !desktopSearch?.contains(e.target) && !mobileSearch?.contains(e.target) && !searchEl.contains(e.target)) {
+    closeSearch();
+  }
+});
 
 function showToast(msg) {
   const t = document.getElementById('toast');
