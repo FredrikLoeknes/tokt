@@ -1307,7 +1307,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
     <div class="form-group">
       <label class="form-label">Description</label>
-      <textarea class="form-textarea" placeholder="Describe what needs to be done, what tools are available, any details…"></textarea>
+      <textarea id="quest-desc-input" class="form-textarea" placeholder="Describe what needs to be done, what tools are available, any details…"></textarea>
     </div>
     <div class="form-group">
       <label class="form-label">Bilde (valgfritt)</label>
@@ -1328,7 +1328,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
     <div class="form-group">
       <label class="form-label">Estimated duration</label>
-      <select class="form-select">
+      <select id="quest-duration-input" class="form-select">
         <option>Under 30 minutes</option>
         <option>30–60 minutes</option>
         <option>1–2 hours</option>
@@ -2275,7 +2275,99 @@ async function applyJob() {
 function openModal() { if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å legge ut oppdrag'); return; } document.getElementById('modal-overlay').classList.add('open'); }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 function overlayClick(e) { if(e.target===document.getElementById('modal-overlay')) closeModal(); }
-function postJob() { closeModal(); showToast('✅ Quest posted on the map!'); }
+async function postJob() {
+  if(!currentUser) { openAuth('login'); return; }
+
+  const title = document.getElementById('quest-title-input')?.value?.trim();
+  if(!title) { showToast('⚠️ Legg til en tittel på oppdraget'); return; }
+
+  const category = document.getElementById('quest-category-input')?.value || 'Annet';
+  const description = document.getElementById('quest-desc-input')?.value?.trim() || '';
+  const duration = document.getElementById('quest-duration-input')?.value || '';
+  const isCharity = document.getElementById('charity-toggle')?.classList.contains('on') || false;
+  const isFirstCome = document.getElementById('mode-firstcome')?.classList.contains('active') || false;
+
+  // Urgent toggle – first .toggle in the toggles section (index 0)
+  const toggles = document.querySelectorAll('#modal .toggle');
+  const isUrgent = toggles[0]?.classList.contains('on') || false;
+
+  let pay = parseInt(document.getElementById('modal-price')?.textContent) || 250;
+  if(isCharity) pay = 0;
+  if(isUrgent && !isCharity) pay = Math.min(2000, pay + 100);
+
+  const btn = document.querySelector('.publish-btn');
+  if(btn) { btn.disabled = true; btn.innerHTML = '<span>⏳ Publiserer…</span>'; }
+
+  // Get location
+  let lat = 59.911491, lng = 10.757933;
+  try {
+    await new Promise(resolve => {
+      navigator.geolocation.getCurrentPosition(
+        p => { lat = p.coords.latitude; lng = p.coords.longitude; resolve(); },
+        resolve, { timeout: 4000 }
+      );
+    });
+  } catch(e) {}
+
+  // Insert quest
+  const { data: quest, error } = await sb.from('quests').insert({
+    user_id: currentUser.id,
+    title,
+    description,
+    category,
+    duration,
+    pay,
+    is_urgent: isUrgent,
+    is_charity: isCharity,
+    is_first_come: isFirstCome,
+    status: 'open',
+    lat,
+    lng
+  }).select().single();
+
+  if(error) {
+    if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publish quest'; }
+    showToast('❌ ' + error.message);
+    return;
+  }
+
+  // Upload image if selected
+  const imgInput = document.getElementById('quest-image-input');
+  if(imgInput?.files[0] && quest) {
+    const file = imgInput.files[0];
+    const ext = file.name.split('.').pop();
+    const path = `${currentUser.id}/${quest.id}.${ext}`;
+    const { data: imgData } = await sb.storage.from('quest-images').upload(path, file, { upsert: true });
+    if(imgData) {
+      const { data: urlData } = sb.storage.from('quest-images').getPublicUrl(path);
+      if(urlData?.publicUrl) {
+        await sb.from('quests').update({ image_url: urlData.publicUrl }).eq('id', quest.id);
+        quest.image_url = urlData.publicUrl;
+      }
+    }
+  }
+
+  // Reset form
+  document.getElementById('quest-title-input').value = '';
+  document.getElementById('quest-desc-input').value = '';
+  document.getElementById('modal-price').textContent = '250';
+  document.getElementById('image-preview').style.display = 'none';
+  document.getElementById('upload-placeholder').style.display = 'block';
+  if(imgInput) imgInput.value = '';
+  if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publish quest'; }
+
+  closeModal();
+  showToast('✦ Oppdrag publisert på kartet!');
+
+  // Add marker immediately
+  addQuestMarker(quest);
+
+  // Fly to quest location
+  if(window.map) window.map.flyTo({ center: [lng, lat], zoom: 14, speed: 1.4 });
+
+  // Award XP
+  setTimeout(() => showAchievement('📋', 'Oppdrag lagt ut!', 'Du la ut ditt første oppdrag. +10 XP'), 1500);
+}
 
 function toggleTheme() {
   const dark = document.body.classList.toggle('dark');
@@ -2381,6 +2473,64 @@ function toggleLeaderboard() {
     if(np) np.style.display = 'none';
     const ip = document.getElementById('inbox-panel');
     if(ip) ip.style.display = 'none';
+    loadLeaderboard();
+  }
+}
+
+async function loadLeaderboard() {
+  const { data: profiles } = await sb.from('profiles')
+    .select('id, full_name, quests_completed, rating, level')
+    .order('quests_completed', { ascending: false })
+    .limit(10);
+
+  if(!profiles || profiles.length === 0) return; // Keep demo data
+
+  // Find the lb-rows container (after the "Topp-utførere" header)
+  const lb = document.getElementById('leaderboard');
+  if(!lb) return;
+
+  // Remove existing lb-rows (keep header sections above)
+  lb.querySelectorAll('.lb-row').forEach(r => r.remove());
+
+  const rankColors = ['#f5c518','#9aa0b0','#c87533'];
+  const rankCls = ['gold','silver','bronze'];
+
+  profiles.forEach((p, i) => {
+    const name = p.full_name || 'Bruker';
+    const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    const quests = p.quests_completed || 0;
+    const rating = p.rating ? p.rating.toFixed(1) : '–';
+    const rank = getRank(quests);
+    const col = rankColors[i] || 'var(--muted)';
+    const rankCl = rankCls[i] || '';
+    const row = document.createElement('div');
+    row.className = 'lb-row';
+    row.innerHTML = `
+      <div class="lb-rank ${rankCl}">${i+1}</div>
+      <div class="lb-avatar" style="background:${col}20;color:${col}">${initials}</div>
+      <div class="lb-info"><div class="lb-name">${name}</div><div class="lb-quests">${quests} oppdrag · ★ ${rating}</div></div>
+      <span class="lb-badge ${rank.cls}">${rank.name}</span>`;
+    lb.appendChild(row);
+  });
+
+  // Also update week-worker widget with #1
+  if(profiles[0]) {
+    const top = profiles[0];
+    const topName = top.full_name || 'Bruker';
+    const topInit = topName.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    const topQuests = top.quests_completed || 0;
+    const topRating = top.rating ? top.rating.toFixed(2) : '–';
+    const topRank = getRank(topQuests);
+    const ww = document.getElementById('week-worker');
+    if(ww) {
+      ww.onclick = () => showUserProfile(topName, topInit, '#f5c518', topQuests, top.rating || 0, topRank.name);
+      const wwAvatar = ww.querySelector('.ww-avatar');
+      if(wwAvatar) wwAvatar.textContent = topInit;
+      const wwName = ww.querySelector('.ww-name');
+      if(wwName) wwName.textContent = topName;
+      const wwStat = ww.querySelector('.ww-stat');
+      if(wwStat) wwStat.textContent = `${topQuests} oppdrag · ★ ${topRating}`;
+    }
   }
 }
 
@@ -3085,7 +3235,11 @@ function renderSearchResults(quests) {
     'Annet': '✨'
   };
 
-  results.innerHTML = `<div class="search-section-title">${quests.length} treff</div>` +
+  // Deduplicate by id
+  const seen = new Set();
+  const deduped = quests.filter(q => { if(seen.has(q.id)) return false; seen.add(q.id); return true; });
+
+  results.innerHTML = `<div class="search-section-title">${deduped.length} treff</div>` +
     deduped.map(q => {
       const icon = catIcons[q.category] || (q._type==='service' ? '🏪' : '✨');
       const imgUrl = q.image_url || q.image || null;
@@ -3636,7 +3790,19 @@ async function doRegister() {
   }
   closeAuth();
   showToast('✅ Konto opprettet! Sjekk e-posten din for bekreftelse.');
-  if(data.user) await loadUserProfile(data.user);
+  if(data.user) {
+    // Create profile row immediately
+    await sb.from('profiles').upsert({
+      id: data.user.id,
+      full_name: firstName + ' ' + lastName,
+      phone: phone || null,
+      level: 1,
+      xp_current: 0,
+      quests_completed: 0,
+      rating: null
+    }, { onConflict: 'id' });
+    await loadUserProfile(data.user);
+  }
 }
 
 async function doResetPassword() {
