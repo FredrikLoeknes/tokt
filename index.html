@@ -1115,6 +1115,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   <div class="legend-item"><div class="legend-dot" style="background:var(--red);animation:pulse 1.4s infinite"></div>Urgent</div>
   <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>High reward</div>
   <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Charity</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Tjeneste</div>
 </div>
 
 <!-- CREATE MODAL -->
@@ -1673,6 +1674,70 @@ const JOBS = [
   }
 ];
 
+// ── DEMO SERVICES (shown when DB empty) ──
+const DEMO_SERVICES = [
+  {
+    id: 's1', type: 'service',
+    title: 'Hjemmefrisør – hårklipp 💇',
+    label: '💇 Hårklipp – 350 kr',
+    category: '💇 Hår og skjønnhet',
+    desc: 'Profesjonell hårklipp hjemme hos deg eller hos meg på Grünerløkka. Damer og herrer. Farging på forespørsel. Bestill i god tid!',
+    price: 350, priceType: 'per_visit',
+    recurring: true, recurringInfo: 'Fast klipp hver 6. uke tilbys',
+    rating: 4.9, reviews: 12,
+    coords: [10.7580, 59.9220],
+    provider: { name: 'Sara L.', initials: 'SL', color: '#e91e8c' }
+  },
+  {
+    id: 's2', type: 'service',
+    title: 'Traktor og snømåking ❄️',
+    label: '❄️ Snømåking – fra 500 kr',
+    category: '🌿 Hagearbeid',
+    desc: 'Har traktor med skuffe og salter. Rydder innkjørsler, parkeringsplasser og gårdsplasser raskt og effektivt. Fast abonnement gjennom vinteren tilbys!',
+    price: 500, priceType: 'per_visit',
+    recurring: true, recurringInfo: 'Vinter-abonnement: 2500 kr/mnd',
+    rating: 5.0, reviews: 8,
+    coords: [10.7900, 59.9050],
+    provider: { name: 'Erik L.', initials: 'EL', color: '#3b6ff5' }
+  },
+  {
+    id: 's3', type: 'service',
+    title: 'Daglig hundetur 🐕',
+    label: '🐕 Hundetur – 150 kr',
+    category: '🐾 Dyrepass',
+    desc: 'Lufter hunden din hver dag mens du er på jobb. 45 minutter tur i nærområdet. Sender bilde underveis. Har erfaring med alle raser.',
+    price: 150, priceType: 'per_tur',
+    recurring: true, recurringInfo: 'Fast daglig tur tilbys – 2500 kr/mnd',
+    rating: 4.8, reviews: 24,
+    coords: [10.7200, 59.9150],
+    provider: { name: 'Tone H.', initials: 'TH', color: '#0fa968' }
+  },
+  {
+    id: 's4', type: 'service',
+    title: 'Pianotimer for barn og voksne 🎹',
+    label: '🎹 Pianotimer – 400 kr',
+    category: '📚 Undervisning og leksehjelp',
+    desc: 'Utdannet pianist tilbyr timer hjemme hos deg. Alle nivåer fra nybegynnere til viderekomne. 60 min per time. Fast ukentlig time tilbys.',
+    price: 400, priceType: 'per_time',
+    recurring: true, recurringInfo: 'Fast ukentlig time anbefales',
+    rating: 4.9, reviews: 31,
+    coords: [10.7400, 59.9300],
+    provider: { name: 'Mia K.', initials: 'MK', color: '#a855f7' }
+  },
+  {
+    id: 's5', type: 'service',
+    title: 'Gressklipp og hagepleie 🌿',
+    label: '🌿 Gressklipp – 400 kr',
+    category: '🌿 Hagearbeid',
+    desc: 'Klipper gress, steller hekker og rydder hagen. Har eget utstyr. Fast sesongavtale tilbys fra mai til september.',
+    price: 400, priceType: 'per_visit',
+    recurring: true, recurringInfo: 'Sesongavtale: 1500 kr/mnd (mai–sept)',
+    rating: 4.7, reviews: 15,
+    coords: [10.7650, 59.9180],
+    provider: { name: 'Lars B.', initials: 'LB', color: '#f97316' }
+  }
+];
+
 function questToJob(q) {
   // Convert Supabase quest row to job display object
   const type = q.is_urgent ? 'haste' : (q.pay >= 400 ? 'high' : q.is_charity ? 'charity' : 'normal');
@@ -1735,19 +1800,61 @@ async function addMarkers() {
   }
 
   quests.forEach(q => addQuestMarker(q));
+
+  // Also load real services
+  const { data: services } = await sb.from('services')
+    .select('*').eq('status', 'active');
+  if(services && services.length > 0) {
+    services.forEach(s => addServiceMarker(serviceToSvc(s)));
+  } else {
+    DEMO_SERVICES.forEach(svc => addServiceMarker(svc));
+  }
+}
+
+function serviceToSvc(s) {
+  const catIcons = {'💇 Hår og skjønnhet':'💇','🌿 Hagearbeid':'🌿','🐾 Dyrepass':'🐕','📚 Undervisning og leksehjelp':'🎓','🎉 Fest og arrangement':'🎉'};
+  const icon = Object.entries(catIcons).find(([k]) => s.category?.includes(k.split(' ')[1]))?.[1] || '✨';
+  return {
+    id: s.id, type: 'service',
+    title: s.title, label: `${icon} ${s.title} – ${s.price} kr`,
+    category: s.category, desc: s.description || '',
+    price: s.price, priceType: s.price_type,
+    recurring: s.is_recurring, recurringInfo: s.recurring_info,
+    rating: 5.0, reviews: 0,
+    coords: [s.lng, s.lat],
+    image: s.image_url,
+    provider: { name: 'Bruker', initials: '?', color: '#a855f7' },
+    raw: s
+  };
 }
 
 function loadDemoMarkers() {
   JOBS.forEach(job => {
     const el = document.createElement('div');
     el.className = 'mapbox-marker';
-    el.innerHTML = `<div class="marker-pill ${job.type}"><div class="marker-dot"></div>${job.label}</div>`;
+    const imgThumb = job.image ? `<div style="width:100%;height:80px;border-radius:8px 8px 0 0;overflow:hidden;margin-bottom:6px"><img src="${job.image}" style="width:100%;height:100%;object-fit:cover"></div>` : '';
+    el.innerHTML = `<div class="marker-pill ${job.type}"><div class="marker-dot"></div>${job.label}${job.image ? `<div class="marker-hover-preview">${imgThumb}<div style="font-size:10px;color:var(--muted);text-align:center">Trykk for mer info</div></div>` : ''}</div>`;
     el.addEventListener('click', e => { e.stopPropagation(); showPanel(job); });
     new mapboxgl.Marker({ element: el, anchor: 'bottom', pitchAlignment:'map', rotationAlignment:'map' })
       .setLngLat(job.coords)
       .addTo(window.map);
-    job._marker = { getLngLat: () => ({ lng: job.coords[0], lat: job.coords[1] }) };
   });
+  // Also load demo services
+  DEMO_SERVICES.forEach(svc => addServiceMarker(svc));
+}
+
+function addServiceMarker(svc) {
+  const el = document.createElement('div');
+  el.className = 'mapbox-marker service-marker';
+  el.innerHTML = `<div class="marker-pill service-pill">
+    <div class="service-dot"></div>
+    ${svc.label}
+    ${svc.recurring ? '<span class="recurring-badge">🔄</span>' : ''}
+  </div>`;
+  el.addEventListener('click', e => { e.stopPropagation(); showServicePanel(svc); });
+  new mapboxgl.Marker({ element: el, anchor: 'bottom', pitchAlignment:'map', rotationAlignment:'map' })
+    .setLngLat(svc.coords)
+    .addTo(window.map);
 }
 
 // Close lang dropdown on outside click
@@ -2742,6 +2849,125 @@ document.addEventListener('click', e => {
   }
 });
 
+// ── SERVICE FUNCTIONS ──
+let activeService = null;
+
+function showServicePanel(svc) {
+  activeService = svc;
+  document.getElementById('service-title').textContent = svc.title;
+  document.getElementById('service-desc').textContent = svc.desc;
+  document.getElementById('service-price').textContent = svc.price + ' kr';
+  const priceTypes = { per_visit:'per besøk', per_time:'per time', per_tur:'per tur', per_mnd:'per mnd', per_stk:'per stk' };
+  document.getElementById('service-price-type').textContent = priceTypes[svc.priceType] || svc.priceType || '';
+  document.getElementById('service-provider-name').textContent = svc.provider?.name || 'Tilbyder';
+  document.getElementById('service-rating').textContent = svc.reviews > 0 ? `★ ${svc.rating} (${svc.reviews} vurderinger)` : 'Ny tilbyder';
+  const av = document.getElementById('service-provider-avatar');
+  av.textContent = svc.provider?.initials || '?';
+  av.style.background = svc.provider?.color || 'var(--accent2)';
+
+  // Image
+  if(svc.image) {
+    document.getElementById('service-img').src = svc.image;
+    document.getElementById('service-panel-img').style.display = 'block';
+  } else {
+    document.getElementById('service-panel-img').style.display = 'none';
+  }
+
+  // Recurring
+  const recEl = document.getElementById('service-recurring');
+  if(svc.recurring && svc.recurringInfo) {
+    recEl.style.display = 'block';
+    document.getElementById('service-recurring-text').textContent = svc.recurringInfo;
+  } else { recEl.style.display = 'none'; }
+
+  // Tags
+  document.getElementById('service-tags').innerHTML = [
+    svc.category,
+    svc.recurring ? '🔄 Fast avtale tilbys' : null
+  ].filter(Boolean).map(t => `<span style="font-size:10px;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">${t}</span>`).join('');
+
+  document.getElementById('service-panel').style.display = 'block';
+  document.getElementById('hero-tag').classList.add('hidden');
+  closePanel();
+}
+
+function closeServicePanel() {
+  document.getElementById('service-panel').style.display = 'none';
+  document.getElementById('hero-tag').classList.remove('hidden');
+  activeService = null;
+}
+
+function contactService() {
+  if(!currentUser) { openAuth('login'); return; }
+  closeServicePanel();
+  showToast('💬 Åpner chat med tilbyder…');
+  // In real version: create conversation with service provider
+}
+
+function openServiceModal() {
+  if(!currentUser) { openAuth('login'); return; }
+  document.getElementById('service-modal-overlay').style.display = 'flex';
+}
+function closeServiceModal() {
+  document.getElementById('service-modal-overlay').style.display = 'none';
+}
+
+function previewServiceImage(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('svc-preview-img').src = e.target.result;
+    document.getElementById('svc-image-preview').style.display = 'block';
+    document.getElementById('svc-upload-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function postService() {
+  if(!currentUser) { openAuth('login'); return; }
+  const title = document.getElementById('svc-title').value.trim();
+  if(!title) { showToast('⚠️ Legg til en tittel'); return; }
+  const price = parseInt(document.getElementById('svc-price-display').textContent);
+  const category = document.getElementById('svc-category').value;
+  const desc = document.getElementById('svc-desc').value.trim();
+  const priceType = document.getElementById('svc-price-type').value;
+  const isRecurring = document.getElementById('svc-recurring-toggle').classList.contains('on');
+  const recurringInfo = document.getElementById('svc-recurring-info').value.trim();
+
+  let lat = 59.911491, lng = 10.757933;
+  if(navigator.geolocation) {
+    await new Promise(resolve => {
+      navigator.geolocation.getCurrentPosition(p => { lat=p.coords.latitude; lng=p.coords.longitude; resolve(); }, resolve, {timeout:3000});
+    });
+  }
+
+  const { data, error } = await sb.from('services').insert({
+    user_id: currentUser.id, title, description: desc, category,
+    price, price_type: priceType, is_recurring: isRecurring,
+    recurring_info: recurringInfo || null, lat, lng
+  }).select().single();
+
+  if(error) { showToast('❌ ' + error.message); return; }
+
+  // Upload image
+  const imgInput = document.getElementById('svc-image-input');
+  if(imgInput.files[0] && data) {
+    const file = imgInput.files[0];
+    const ext = file.name.split('.').pop();
+    const { error: upErr } = await sb.storage.from('quest-images').upload(`svc-${data.id}.${ext}`, file, {upsert:true});
+    if(!upErr) {
+      const { data: urlData } = sb.storage.from('quest-images').getPublicUrl(`svc-${data.id}.${ext}`);
+      await sb.from('services').update({ image_url: urlData.publicUrl }).eq('id', data.id);
+      data.image_url = urlData.publicUrl;
+    }
+  }
+
+  closeServiceModal();
+  showToast('🏪 Tjeneste publisert på kartet!');
+  addServiceMarker(serviceToSvc(data));
+}
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.style.display = 'block';
@@ -2762,7 +2988,21 @@ function showAchievement(icon, title, desc) {
 // ══════════════════════════════════════
 // SUPABASE INIT
 // ══════════════════════════════════════
-// Run in Supabase SQL editor: alter table quests add column if not exists image_url text;
+// Run in Supabase SQL editor:
+// alter table quests add column if not exists image_url text;
+// create table services (
+//   id uuid default gen_random_uuid() primary key,
+//   user_id uuid references auth.users not null,
+//   title text not null, description text, category text,
+//   price integer not null, price_type text default 'per_time',
+//   is_recurring boolean default false, recurring_info text,
+//   lat float not null, lng float not null,
+//   image_url text, status text default 'active',
+//   created_at timestamp default now()
+// );
+// alter table services enable row level security;
+// create policy "Anyone can view services" on services for select using (true);
+// create policy "Users manage own services" on services for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 const SUPABASE_URL = 'https://notbntypwtorecnynkfr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vdGJudHlwd3RvcmVjbnlua2ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNDYxNzksImV4cCI6MjA5NjYyMjE3OX0.BqDLMfSHFf1TfaOcFLT4hKA2AfJevEQL472Is3IfT0E';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -3079,6 +3319,46 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
 </div>
 
+<!-- SERVICE PANEL -->
+<div id="service-panel" style="display:none;position:fixed;right:18px;top:74px;z-index:200;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-lg);animation:slideIn .2s ease">
+  <div id="service-panel-img" style="display:none;height:140px;overflow:hidden">
+    <img id="service-img" style="width:100%;height:100%;object-fit:cover">
+  </div>
+  <div style="padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+      <div id="service-title" style="font-size:16px;font-weight:700;flex:1;margin-right:8px"></div>
+      <button onclick="closeServicePanel()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1">×</button>
+    </div>
+
+    <!-- Provider -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:10px">
+      <div id="service-provider-avatar" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0"></div>
+      <div>
+        <div id="service-provider-name" style="font-size:13px;font-weight:600"></div>
+        <div id="service-rating" style="font-size:11px;color:var(--gold)"></div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div id="service-price" style="font-size:18px;font-weight:800;color:var(--green)"></div>
+        <div id="service-price-type" style="font-size:10px;color:var(--muted)"></div>
+      </div>
+    </div>
+
+    <div id="service-desc" style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px"></div>
+
+    <!-- Recurring badge -->
+    <div id="service-recurring" style="display:none;background:rgba(59,111,245,0.08);border:1px solid rgba(59,111,245,0.2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--accent);margin-bottom:12px">
+      🔄 <span id="service-recurring-text"></span>
+    </div>
+
+    <!-- Tags -->
+    <div id="service-tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
+
+    <button onclick="contactService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#3b6ff5);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">
+      💬 Kontakt tilbyder
+    </button>
+  </div>
+</div>
+
 <!-- CHAT PANEL -->
 <div id="chat-panel" style="display:none;position:fixed;right:18px;bottom:80px;z-index:300;width:340px;height:480px;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);display:none;flex-direction:column;overflow:hidden;animation:slideIn .2s ease">
 
@@ -3119,15 +3399,96 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
 </div>
 
+<!-- SERVICE MODAL -->
+<div id="service-modal-overlay" onclick="if(event.target===this)closeServiceModal()" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;width:440px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:popIn .2s ease">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+      <div style="font-size:18px;font-weight:700">🏪 Tilby en tjeneste</div>
+      <button onclick="closeServiceModal()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">×</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Hva tilbyr du?</label>
+      <input id="svc-title" class="form-input" type="text" placeholder="F.eks. «Hårklipp hjemme hos deg»">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kategori</label>
+      <select id="svc-category" class="form-select">
+        <option>💇 Hår og skjønnhet</option>
+        <option>🌿 Hagearbeid</option>
+        <option>🐾 Dyrepass</option>
+        <option>📚 Undervisning og leksehjelp</option>
+        <option>🔧 Håndverk og montering</option>
+        <option>🧹 Rengjøring</option>
+        <option>🍕 Mat og matlaging</option>
+        <option>📸 Foto og video</option>
+        <option>💻 Teknologi og IT</option>
+        <option>🚗 Kjøring og transport</option>
+        <option>✨ Annet</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Beskrivelse</label>
+      <textarea id="svc-desc" class="form-textarea" placeholder="Beskriv tjenesten din, din erfaring og hva som er inkludert…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Pris</label>
+      <div class="cost-display"><span id="svc-price-display">350</span> <small>kr</small></div>
+      <input type="range" min="50" max="5000" value="350" oninput="document.getElementById('svc-price-display').textContent=this.value" style="margin-top:8px">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Pristype</label>
+      <select id="svc-price-type" class="form-select">
+        <option value="per_visit">Per besøk / oppdrag</option>
+        <option value="per_time">Per time</option>
+        <option value="per_tur">Per tur</option>
+        <option value="per_mnd">Per måned</option>
+        <option value="per_stk">Per stk</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-label">🔄 Tilbyr fast / gjentakende</div>
+          <div class="toggle-sub">F.eks. ukentlig, månedlig eller sesong</div>
+        </div>
+        <div class="toggle" id="svc-recurring-toggle" onclick="this.classList.toggle('on');document.getElementById('svc-recurring-info-group').style.display=this.classList.contains('on')?'block':'none'"></div>
+      </div>
+    </div>
+    <div id="svc-recurring-info-group" style="display:none" class="form-group">
+      <label class="form-label">Fast avtale info</label>
+      <input id="svc-recurring-info" class="form-input" type="text" placeholder="F.eks. «Fast ukentlig hundetur – 2500 kr/mnd»">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Bilde (valgfritt)</label>
+      <div onclick="document.getElementById('svc-image-input').click()" style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:var(--surface2)">
+        <div id="svc-image-preview" style="display:none;margin-bottom:8px"><img id="svc-preview-img" style="max-width:100%;max-height:120px;border-radius:8px;object-fit:cover"></div>
+        <div id="svc-upload-placeholder"><div style="font-size:24px">📷</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Trykk for å legge til bilde</div></div>
+      </div>
+      <input id="svc-image-input" type="file" accept="image/*" style="display:none" onchange="previewServiceImage(this)">
+    </div>
+    <div class="disclaimer">
+      <strong>Viktig:</strong> Som tilbyder er du selv ansvarlig for kvaliteten på tjenesten. All betaling skjer direkte via Vipps mellom deg og kunden.
+    </div>
+    <button onclick="postService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#3b6ff5);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">
+      🏪 Publiser tjeneste
+    </button>
+  </div>
+</div>
+
 <!-- BOTTOM NAV (mobile only) -->
 <div id="bottom-nav">
   <div class="nav-item active" onclick="showToast('🗺️ Map view')">
     <div class="nav-icon">🗺️</div>
     <div class="nav-label" id="nav-map-label">Map</div>
   </div>
-  <div class="nav-item nav-post" onclick="openModal()">
-    <div class="nav-icon">＋</div>
-    <div class="nav-label" id="nav-post-label" style="color:#fff;font-weight:700">Post</div>
+  <div class="nav-item" onclick="openModal()" style="flex:1">
+    <div class="nav-icon">📋</div>
+    <div class="nav-label" id="nav-post-label">Oppdrag</div>
+  </div>
+  <div class="nav-item nav-post" onclick="openServiceModal()" style="flex:1.2">
+    <div class="nav-icon">🏪</div>
+    <div class="nav-label" style="color:#fff;font-weight:700">Tilby</div>
   </div>
   <div class="nav-item" onclick="toggleInbox()">
     <div class="nav-icon" style="position:relative">💬<span id="mobile-inbox-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:8px;font-weight:800;width:14px;height:14px;border-radius:50%;align-items:center;justify-content:center">0</span></div>
