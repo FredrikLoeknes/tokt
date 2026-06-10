@@ -757,6 +757,15 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     }
   }
 
+  /* ── MY QUESTS mobile ── */
+  @media(max-width:768px) {
+    #notif-panel {
+      right: 0; left: 0; top: 108px;
+      width: 100%; border-radius: 0;
+      max-height: calc(100vh - 168px);
+    }
+  }
+
   /* ── MAP fix for mobile ── */
   @media(max-width:768px) {
     #map { top: 108px; bottom: 60px; position: fixed; left: 0; right: 0; }
@@ -800,7 +809,13 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       <div class="avatar">You</div>
       <div class="avatar-lvl">LVL 3</div>
     </div>
-    <!-- INBOX BUTTON -->
+    <!-- NOTIFICATIONS BELL -->
+<button id="notif-btn" onclick="toggleNotifications()" style="position:relative;width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0" title="Varsler">
+  🔔
+  <span id="notif-badge" style="display:none;position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center;border:2px solid var(--surface)">0</span>
+</button>
+
+<!-- INBOX BUTTON -->
 <button id="inbox-btn" onclick="toggleInbox()" style="position:relative;width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;flex-shrink:0" title="Innboks">
   💬
   <span id="inbox-badge" style="display:none;position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center;border:2px solid var(--surface)">0</span>
@@ -2007,6 +2022,234 @@ function submitRating() {
   showToast('⭐ Rating submitted – thanks!');
 }
 
+// ── NOTIFICATIONS ──
+async function toggleNotifications() {
+  if(!currentUser) { openAuth('login'); return; }
+  const panel = document.getElementById('notif-panel');
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen) await loadNotifications();
+}
+function closeNotifications() {
+  document.getElementById('notif-panel').style.display = 'none';
+}
+
+async function loadNotifications() {
+  const list = document.getElementById('notif-list');
+  const { data: notifs } = await sb.from('notifications')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if(!notifs || notifs.length === 0) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;font-size:13px;color:var(--muted)">Ingen varsler ennå 🔔</div>';
+    return;
+  }
+
+  list.innerHTML = notifs.map(n => {
+    const time = timeAgo(n.created_at);
+    const unread = !n.read ? 'background:var(--accent-glow);' : '';
+    return `<div onclick="handleNotifClick('${n.id}','${n.type}','${n.link_id||''}')"
+      style="${unread}padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s"
+      onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='${unread?'var(--accent-glow)':''}'">
+      <div style="font-size:13px;font-weight:${n.read?'500':'700'}">${n.title}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4">${n.body}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px">${time}</div>
+    </div>`;
+  }).join('');
+
+  const unreadCount = notifs.filter(n => !n.read).length;
+  updateNotifBadge(unreadCount);
+}
+
+async function handleNotifClick(notifId, type, linkId) {
+  // Mark as read
+  await sb.from('notifications').update({ read: true }).eq('id', notifId);
+  closeNotifications();
+  if(type === 'message' && linkId) openChat(linkId, 'Melding');
+  else if(type === 'application') openMyQuests();
+  loadNotifications();
+}
+
+async function markAllRead() {
+  await sb.from('notifications').update({ read: true }).eq('user_id', currentUser.id);
+  loadNotifications();
+  updateNotifBadge(0);
+}
+
+function updateNotifBadge(count) {
+  const el = document.getElementById('notif-badge');
+  if(el) { el.textContent = count; el.style.display = count > 0 ? 'flex' : 'none'; }
+}
+
+async function checkUnreadNotifs() {
+  if(!currentUser) return;
+  const { count } = await sb.from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', currentUser.id)
+    .eq('read', false);
+  if(count > 0) updateNotifBadge(count);
+}
+
+// Subscribe to realtime notifications
+function subscribeToNotifications() {
+  if(!currentUser) return;
+  sb.channel('notifs:' + currentUser.id)
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'notifications',
+      filter: `user_id=eq.${currentUser.id}`
+    }, () => {
+      checkUnreadNotifs();
+      showToast('🔔 Du har et nytt varsel!');
+    })
+    .subscribe();
+}
+
+// ── MY QUESTS ──
+function openMyQuests() {
+  if(!currentUser) { openAuth('login'); return; }
+  document.getElementById('myquests-panel').style.display = 'block';
+  document.getElementById('profile-panel').style.display = 'none';
+  loadMyQuests();
+}
+function closeMyQuests() {
+  document.getElementById('myquests-panel').style.display = 'none';
+}
+function switchMqTab(tab) {
+  document.getElementById('mq-posted').style.display = tab==='posted' ? 'flex' : 'none';
+  document.getElementById('mq-applied').style.display = tab==='applied' ? 'flex' : 'none';
+  const activeStyle = 'background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)';
+  const inactiveStyle = 'background:transparent;color:var(--muted);box-shadow:none';
+  document.getElementById('mq-tab-posted').style.cssText += tab==='posted' ? activeStyle : inactiveStyle;
+  document.getElementById('mq-tab-applied').style.cssText += tab==='applied' ? activeStyle : inactiveStyle;
+}
+
+async function loadMyQuests() {
+  // Load quests I posted
+  const { data: posted } = await sb.from('quests')
+    .select('*, conversations(id,status,taker:taker_id(raw_user_meta_data))')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+  const postedEl = document.getElementById('mq-posted');
+  if(!posted || posted.length === 0) {
+    postedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke lagt ut noen oppdrag ennå.<br><br><button onclick="closeMyQuests();openModal()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Legg ut ditt første oppdrag</button></div>';
+  } else {
+    postedEl.innerHTML = posted.map(q => questCard(q, 'posted')).join('');
+  }
+
+  // Load quests I applied to
+  const { data: applied } = await sb.from('conversations')
+    .select('*, quest:quest_id(*, user_id)')
+    .eq('taker_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+  const appliedEl = document.getElementById('mq-applied');
+  if(!applied || applied.length === 0) {
+    appliedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke søkt på noen oppdrag ennå.<br><br><button onclick="closeMyQuests()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Finn oppdrag på kartet</button></div>';
+  } else {
+    appliedEl.innerHTML = applied.map(c => {
+      const q = c.quest;
+      if(!q) return '';
+      return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+        <div style="padding:14px 16px">
+          <div style="font-size:15px;font-weight:700;margin-bottom:6px">${q.title}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">${q.category||'Annet'}</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);font-weight:700">${q.pay} kr</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:${c.status==='accepted'?'rgba(15,169,104,0.1)':'rgba(249,115,22,0.1)'};color:${c.status==='accepted'?'var(--green)':'#f97316'};font-weight:700">${c.status==='accepted'?'✅ Godkjent':'⏳ Venter svar'}</span>
+          </div>
+          <button onclick="openChat('${c.id}','${q.title}')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Åpne chat</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function questCard(q, type) {
+  const applicants = q.conversations || [];
+  const statusColor = q.status === 'open' ? 'var(--green)' : 'var(--muted)';
+  const statusLabel = q.status === 'open' ? '🟢 Åpen' : '✅ Fullført';
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+    <div style="padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div style="font-size:15px;font-weight:700;flex:1;margin-right:8px">${q.title}</div>
+        <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:${statusColor};border:1px solid ${statusColor};white-space:nowrap">${statusLabel}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">${q.category||'Annet'}</span>
+        <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);font-weight:700">${q.pay} kr</span>
+        <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">👤 ${applicants.length} søker${applicants.length!==1?'e':''}</span>
+      </div>
+      ${applicants.length > 0 ? `
+        <div style="border-top:1px solid var(--border);padding-top:10px;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px">Søkere</div>
+          ${applicants.map(c => {
+            const name = c.taker?.raw_user_meta_data?.first_name || 'Bruker';
+            const init = name[0].toUpperCase();
+            return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+              <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">${init}</div>
+              <div style="flex:1;font-size:13px;font-weight:500">${name}</div>
+              ${c.status==='pending' ? `
+                <button onclick="acceptApplicant('${c.id}','${q.id}')" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✓ Godkjenn</button>
+                <button onclick="rejectApplicant('${c.id}')" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">✕</button>
+              ` : `<span style="font-size:11px;font-weight:700;color:var(--green)">✅ Godkjent</span>`}
+            </div>`;
+          }).join('')}
+        </div>
+      ` : ''}
+      <div style="display:flex;gap:8px">
+        ${applicants.length > 0 ? `<button onclick="openChat('${applicants[0]?.id||''}','${q.title}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : ''}
+        ${q.status==='open' ? `<button onclick="deleteQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">🗑️</button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function acceptApplicant(convId, questId) {
+  // Update conversation status
+  await sb.from('conversations').update({ status: 'accepted' }).eq('id', convId);
+  // Close quest to new applicants
+  await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
+  // Notify taker
+  const { data: conv } = await sb.from('conversations').select('taker_id').eq('id', convId).single();
+  if(conv) {
+    await sb.from('notifications').insert({
+      user_id: conv.taker_id,
+      type: 'accepted',
+      title: '🎉 Søknaden din ble godkjent!',
+      body: 'Du har fått oppdraget. Ta kontakt med oppdragsgiver.',
+      link_id: convId
+    });
+  }
+  showToast('✅ Søker godkjent!');
+  loadMyQuests();
+}
+
+async function rejectApplicant(convId) {
+  await sb.from('conversations').update({ status: 'rejected' }).eq('id', convId);
+  showToast('❌ Søker avvist');
+  loadMyQuests();
+}
+
+async function deleteQuest(questId) {
+  if(!confirm('Slette dette oppdraget?')) return;
+  await sb.from('quests').update({ status: 'deleted' }).eq('id', questId);
+  showToast('🗑️ Oppdrag slettet');
+  loadMyQuests();
+  addMarkers();
+}
+
+// Time ago helper
+function timeAgo(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if(diff < 60) return 'Akkurat nå';
+  if(diff < 3600) return Math.floor(diff/60) + ' min siden';
+  if(diff < 86400) return Math.floor(diff/3600) + ' t siden';
+  return Math.floor(diff/86400) + ' dager siden';
+}
+
 // ── CHAT FUNCTIONS ──
 let activeChatId = null;
 
@@ -2302,6 +2545,8 @@ async function loadUserProfile(user) {
   }
   updateUIForAuth(user);
   checkUnread();
+  checkUnreadNotifs();
+  subscribeToNotifications();
 }
 
 function updateUIForAuth(user) {
@@ -2460,7 +2705,39 @@ sb.auth.onAuthStateChange(async (event, session) => {
         <div id="profile-xp-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#f97316,#a855f7);border-radius:3px;transition:width .5s ease"></div>
       </div>
     </div>
-    <button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">Logg ut</button>
+    <button onclick="openMyQuests()" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">📋 Mine oppdrag</button>
+<button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">Logg ut</button>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS PANEL -->
+<div id="notif-panel" style="display:none;position:fixed;right:18px;top:74px;z-index:250;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;max-height:70vh;animation:slideIn .2s ease">
+  <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+    <div style="font-size:15px;font-weight:700;flex:1">🔔 Varsler</div>
+    <button onclick="markAllRead()" style="background:none;border:none;font-size:11px;color:var(--accent);cursor:pointer;font-family:inherit">Merk alle lest</button>
+    <button onclick="closeNotifications()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer">×</button>
+  </div>
+  <div id="notif-list" style="overflow-y:auto;max-height:calc(70vh - 54px)">
+    <div style="padding:20px;text-align:center;font-size:13px;color:var(--muted)">Laster varsler…</div>
+  </div>
+</div>
+
+<!-- MY QUESTS PANEL -->
+<div id="myquests-panel" style="display:none;position:fixed;left:0;right:0;top:0;bottom:0;z-index:450;background:var(--bg);overflow-y:auto;animation:slideIn .2s ease">
+  <div style="max-width:600px;margin:0 auto;padding:20px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-top:10px">
+      <button onclick="closeMyQuests()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">←</button>
+      <div style="font-size:20px;font-weight:700">Mine oppdrag</div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:20px;border:1px solid var(--border)">
+      <button id="mq-tab-posted" onclick="switchMqTab('posted')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">📋 Lagt ut</button>
+      <button id="mq-tab-applied" onclick="switchMqTab('applied')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s">🙋 Søkt på</button>
+    </div>
+
+    <div id="mq-posted" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div id="mq-applied" style="display:none;flex-direction:column;gap:12px"></div>
   </div>
 </div>
 
