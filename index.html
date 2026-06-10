@@ -390,7 +390,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .zoom-divider { height:1px; background:var(--border); }
 
 /* ── LEGEND ── */
-#legend { position:fixed; bottom:24px; left:228px; z-index:90; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:9px 14px; display:flex; gap:14px; align-items:center; box-shadow:var(--shadow); }
+#legend { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:90; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:9px 14px; display:flex; gap:14px; align-items:center; box-shadow:var(--shadow); white-space:nowrap; }
 .legend-item { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--muted); font-weight:500; }
 .legend-dot { width:7px; height:7px; border-radius:50%; }
 
@@ -465,7 +465,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 /* ── DESKTOP FILTER + SEARCH ── */
 #desktop-filter-btn {
   position: fixed;
-  top: 74px;
+  top: 106px;
   left: 18px;
   z-index: 95;
   display: flex;
@@ -490,7 +490,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 }
 #desktop-search {
   position: fixed;
-  top: 74px;
+  top: 106px;
   left: 148px;
   z-index: 95;
   display: flex;
@@ -1122,14 +1122,14 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 <!-- DESKTOP FILTER BUTTON (top left) -->
 <button id="desktop-filter-btn" onclick="openFilters()" title="Filters">
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-  Filters
+  <span id="desktop-filter-label">Filtre</span>
   <span id="desktop-filter-count" style="display:none;background:var(--accent);color:#fff;border-radius:50px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:2px">0</span>
 </button>
 
 <!-- SEARCH DESKTOP -->
 <div id="desktop-search">
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-  <input type="text" placeholder="Search quests…">
+  <input id="search-input-desktop" type="text" placeholder="Søk på oppdrag, type, sted…" oninput="handleSearch(this.value)" autocomplete="off">
 </div>
 
 <!-- JOB PANEL -->
@@ -1161,10 +1161,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 </div>
 
 <!-- LEADERBOARD TRIGGER BUTTON -->
-<button id="lb-trigger-btn" onclick="toggleLeaderboard()" style="position:fixed;bottom:24px;left:18px;z-index:90;background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:0 16px;height:38px;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:var(--shadow);font-family:inherit;font-size:13px;font-weight:600;color:var(--text);transition:all .2s">
+<button id="lb-trigger-btn" onclick="toggleLeaderboard()" style="position:fixed;bottom:24px;left:18px;z-index:90;max-width:180px;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:0 16px;height:38px;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:var(--shadow);font-family:inherit;font-size:13px;font-weight:600;color:var(--text);transition:all .2s">
   <span>🏆</span>
   <span id="lb-btn-text">Toppliste</span>
-  <span id="lb-tagline-text" style="font-size:11px;color:var(--gold);font-style:italic">XP som faktisk betaler husleien.</span>
+  <span id="lb-tagline-text" style="font-size:10px;color:var(--gold);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px">XP som betaler!</span>
 </button>
 
 <!-- LEADERBOARD POPUP -->
@@ -2021,17 +2021,11 @@ function serviceToSvc(s) {
 
 function loadDemoMarkers() {
   JOBS.forEach(job => {
-    const el = document.createElement('div');
-    el.className = 'mapbox-marker';
-    const imgThumb = job.image ? `<div style="width:100%;height:80px;border-radius:8px 8px 0 0;overflow:hidden;margin-bottom:6px"><img src="${job.image}" style="width:100%;height:100%;object-fit:cover"></div>` : '';
-    el.innerHTML = `<div class="marker-pill ${job.type}"><div class="marker-dot"></div>${job.label}${job.image ? `<div class="marker-hover-preview">${imgThumb}<div style="font-size:10px;color:var(--muted);text-align:center">Trykk for mer info</div></div>` : ''}</div>`;
-    el.addEventListener('click', e => { e.stopPropagation(); showPanel(job); });
-    el.addEventListener('touchend', e => { e.preventDefault(); e.stopPropagation(); showPanel(job); });
-    new mapboxgl.Marker({ element: el, anchor: 'bottom', pitchAlignment:'map', rotationAlignment:'map' })
+    const el = createMarkerEl(job.type, job.label, job.image || null, () => showPanel(job));
+    new mapboxgl.Marker({ element: el, anchor: 'bottom' })
       .setLngLat(job.coords)
       .addTo(window.map);
   });
-  // Also load demo services
   DEMO_SERVICES.forEach(svc => addServiceMarker(svc));
 }
 
@@ -3484,6 +3478,11 @@ function initTipsBar() {
   const seen = localStorage.getItem('tokt-tips-closed');
   if(seen) {
     document.getElementById('tips-bar').style.display = 'none';
+    // Tips already closed - move filter to normal position
+    const fb = document.getElementById('desktop-filter-btn');
+    const ds = document.getElementById('desktop-search');
+    if(fb) fb.style.top = '74px';
+    if(ds) ds.style.top = '74px';
     return;
   }
   showTip(Math.floor(Math.random() * TIPS.length));
@@ -3529,7 +3528,14 @@ function closeTipsBar(e) {
   clearInterval(tipInterval);
   const bar = document.getElementById('tips-bar');
   bar.style.opacity = '0';
-  setTimeout(() => bar.style.display = 'none', 300);
+  setTimeout(() => {
+    bar.style.display = 'none';
+    // Move filter back up when tips hidden
+    const fb = document.getElementById('desktop-filter-btn');
+    const ds = document.getElementById('desktop-search');
+    if(fb) fb.style.top = '74px';
+    if(ds) ds.style.top = '74px';
+  }, 300);
   localStorage.setItem('tokt-tips-closed', '1');
 }
 
