@@ -274,12 +274,14 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   pointer-events: auto !important;
 }
 .mapbox-marker:hover { transform: scale(1.1) translateY(-2px); }
-/* Force Mapbox wrapper to allow clicks */
-.mapboxgl-marker {
+/* Force ALL Mapbox markers to allow clicks */
+.mapboxgl-marker,
+.mapboxgl-marker *,
+.mapboxgl-canvas-container,
+.mapboxgl-interactive {
   cursor: pointer !important;
-  pointer-events: auto !important;
 }
-.mapboxgl-marker > div {
+.mapboxgl-marker {
   pointer-events: auto !important;
 }
 .marker-pill {
@@ -460,6 +462,60 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 /* ══════════════════════════════════════
    MOBILE RESPONSIVE
 ══════════════════════════════════════ */
+/* ── DESKTOP FILTER + SEARCH ── */
+#desktop-filter-btn {
+  position: fixed;
+  top: 74px;
+  left: 18px;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 38px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: all .15s;
+  font-family: inherit;
+}
+#desktop-filter-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+#desktop-search {
+  position: fixed;
+  top: 74px;
+  left: 148px;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 0 14px;
+  height: 38px;
+  width: 220px;
+  box-shadow: var(--shadow);
+}
+#desktop-search input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 13px;
+  width: 100%;
+  font-family: inherit;
+}
+#desktop-search input::placeholder { color: var(--muted); }
+#desktop-search svg { color: var(--muted); flex-shrink: 0; }
+
 /* ── LEADERBOARD DESKTOP ── */
 .lb-popup {
   position: fixed;
@@ -838,7 +894,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
   <div id="searchbox">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input id="search-input-desktop" type="text" placeholder="Søk på oppdrag, type, sted…" oninput="handleSearch(this.value)" autocomplete="off">
+    <input id="search-input-desktop" type="text" placeholder="Søk på oppdrag, type, sted…" oninput="handleSearch(this.value)" autocomplete="off" style="caret-color:var(--accent)">
   </div>
 
   <div class="top-actions">
@@ -866,18 +922,19 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 <!-- LANGUAGE SELECTOR -->
 <div id="lang-selector" style="position:relative;flex-shrink:0">
-  <button id="lang-btn" onclick="toggleLangDropdown()" style="display:flex;align-items:center;gap:5px;padding:0 10px;height:38px;background:var(--surface);border:1px solid var(--border);border-radius:50px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text);font-family:inherit;transition:all .15s">
-    <span id="lang-current">🇳🇴 NO</span>
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+  <button id="lang-btn" onclick="toggleLangDropdown()" style="display:flex;align-items:center;gap:6px;padding:0 12px;height:38px;background:var(--surface);border:1px solid var(--border);border-radius:50px;cursor:pointer;font-size:18px;color:var(--text);font-family:inherit;transition:all .15s;min-width:80px;justify-content:center">
+    <span id="lang-current" style="display:flex;align-items:center;gap:4px">🇳🇴 <span style="font-size:11px;font-weight:700">NO</span></span>
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
   </button>
   <div id="lang-dropdown" style="display:none;position:absolute;top:44px;right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);overflow:hidden;min-width:130px;z-index:500">
-    <div class="lang-option active" data-lang="no" onclick="setLanguage('no')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;font-size:13px;font-weight:500;transition:background .15s">
-      <span>🇳🇴</span> Norsk
+    <div class="lang-option active" data-lang="no" onclick="setLanguage('no')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:13px;font-weight:500;transition:background .15s">
+      <span style="font-size:22px">🇳🇴</span> <div><div style="font-weight:600">Norsk</div><div style="font-size:10px;color:var(--muted)">Bokmål</div></div>
     </div>
     <div style="height:1px;background:var(--border)"></div>
-    <div class="lang-option" data-lang="en" onclick="setLanguage('en')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;font-size:13px;font-weight:500;transition:background .15s">
-      <span>🇬🇧</span> English
+    <div class="lang-option" data-lang="en" onclick="setLanguage('en')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:13px;font-weight:500;transition:background .15s">
+      <span style="font-size:22px">🇬🇧</span> <div><div style="font-weight:600">English</div><div style="font-size:10px;color:var(--muted)">UK / International</div></div>
     </div>
+    <!-- ADD NEW LANGUAGES HERE – copy block above, change data-lang, flag and name -->
     <!-- ADD NEW LANGUAGES HERE – copy the block above and change data-lang, flag and name -->
   </div>
 </div>
@@ -887,7 +944,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 <!-- MOBILE SEARCH BAR -->
 <div id="mobile-search">
-  <input id="search-input-desktop" type="text" placeholder="Søk på oppdrag, type, sted…" oninput="handleSearch(this.value)" autocomplete="off">
+  <input id="search-input-desktop" type="text" placeholder="Søk på oppdrag, type, sted…" oninput="handleSearch(this.value)" autocomplete="off" style="caret-color:var(--accent)">
 </div>
 
 <!-- FILTER BUTTON (both mobile + desktop) -->
@@ -1557,7 +1614,8 @@ function setLanguage(code) {
   document.querySelectorAll('.lang-option').forEach(el => {
     el.classList.toggle('active', el.dataset.lang === code);
   });
-  document.getElementById('lang-current').textContent = LANGUAGES[code].flag + ' ' + LANGUAGES[code].code.toUpperCase();
+  const L2 = LANGUAGES[code];
+  document.getElementById('lang-current').innerHTML = L2.flag + ' <span style="font-size:11px;font-weight:700">' + L2.code.toUpperCase() + '</span>';
   closeLangDropdown();
 }
 
@@ -2000,7 +2058,7 @@ document.addEventListener('DOMContentLoaded', () => {
     applyLanguage();
     const L = LANGUAGES[currentLang];
     const lc = document.getElementById('lang-current');
-    if(lc) lc.textContent = L.flag + ' ' + L.code.toUpperCase();
+    if(lc) lc.innerHTML = L.flag + ' <span style="font-size:11px;font-weight:700">' + L.code.toUpperCase() + '</span>';
     // Show welcome popup after short delay
     setTimeout(showWelcomeIfNew, 800);
   });
