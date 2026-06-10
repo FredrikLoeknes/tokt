@@ -483,6 +483,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   #filter-btn { display: flex !important; }
   #desktop-filter-btn { display: none !important; }
   #desktop-search { display: none !important; }
+  .btn-tilby-desktop { display: none !important; }
 
   /* JOB PANEL – slide up from bottom like a native app */
   #job-panel {
@@ -802,9 +803,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   <div class="top-actions">
     <button class="btn btn-primary" onclick="openModal()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Post quest
+      <span id="btn-post-quest">Legg ut oppdrag</span>
     </button>
-    <button class="btn btn-ghost" onclick="openAuth('login')"><span id="btn-login">Log in</span></button>
+    <button class="btn btn-ghost btn-tilby-desktop" onclick="openServiceModal()" style="border-color:var(--accent2);color:var(--accent2)">🏪 Tilby</button>
+    <button class="btn btn-ghost" onclick="openAuth('login')"><span id="btn-login">Logg inn</span></button>
     <div class="avatar-wrap" onclick="toggleProfile()" title="View your profile">
       <div class="avatar">You</div>
       <div class="avatar-lvl">LVL 3</div>
@@ -1029,7 +1031,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <div id="quest-type-badge" style="font-size:11px;font-weight:600;padding:5px 12px;border-radius:50px;background:var(--surface2);border:1px solid var(--border);color:var(--muted)"></div>
   </div>
   <div class="panel-actions">
-    <button class="btn-apply" onclick="applyJob()"><span id="panel-accept-btn">✦ Accept quest</span></button>
+    <button class="btn-apply" onclick="applyJob()"><span id="panel-accept-btn">✦ Ta oppdraget</span></button>
     <button class="btn-save">🔖</button>
   </div>
 </div>
@@ -1398,7 +1400,7 @@ const LANGUAGES = {
     paymentNote: '<span id="panel-payment-note">Payment via <strong style="color:#ff5b24">&nbsp;Vipps&nbsp;</strong> directly between parties</span>',
     approvalRequired: '✋ Approval required',
     firstComeServed: '⚡ First come, first served',
-    noApplicants: 'No applicants yet — be the first!',
+    noApplicants: 'Ingen søkere ennå – vær den første!',
     postQuestTitle: '✦ Post a quest',
     questTitleLabel: 'Quest title',
     questTitlePlaceholder: 'E.g. «Mow the lawn in my garden»',
@@ -1627,49 +1629,49 @@ function getRank(quests) {
 }
 
 const JOBS = [
-  { id:'j1', type:'normal', title:'Mow the lawn 🌿', label:'Mow lawn · 150 kr',
-    tags:[{t:'🏠 Home'},{t:'~45 min'},{t:'Grünerløkka'}],
-    desc:'Need someone to mow a medium-sized garden. Lawnmower available. Please take a photo after.',
+  { id:'j1', type:'normal', title:'Klipp gresset 🌿', label:'Klipp gresset · 150 kr',
+    tags:[{t:'🏠 Hjem'},{t:'~45 min'},{t:'Grünerløkka'}],
+    desc:'Trenger noen til å klippe en middels stor hage. Gressklipper tilgjengelig. Ta gjerne bilde etter.',
     pay:150, rating:4.8, applicants:2, coords:[10.7603,59.9228],
     people:[{init:'AK',col:'#3b6ff5',name:'Anders K.',rating:'4.9',quests:31},{init:'MR',col:'#0fa968',name:'Maria R.',rating:'4.6',quests:18}]
   },
-  { id:'j2', type:'haste', title:'Grocery shopping 🛒', label:'🔴 Groceries · 300 kr',
-    tags:[{t:'🔴 Urgent',cls:'haste-tag'},{t:'🛒 Errands'},{t:'~30 min'},{t:'Majorstua'}],
-    desc:'Need 10–12 items from Kiwi. Take a photo of the receipt. I cover extra expenses on top.',
+  { id:'j2', type:'haste', title:'Handle dagligvarer 🛒', label:'🔴 Handle · 300 kr',
+    tags:[{t:'🔴 Haste',cls:'haste-tag'},{t:'🛒 Handel'},{t:'~30 min'},{t:'Majorstua'}],
+    desc:'Trenger hjelp med 10–12 varer fra Kiwi. Ta bilde av kvitteringen. Dekker utlegg i tillegg.',
     pay:300, rating:4.5, applicants:0, firstCome:true, coords:[10.7158,59.9248], people:[]
   },
-  { id:'j3', type:'normal', title:'Dog sitting 🐕', label:'Dog sitting · 200 kr',
-    tags:[{t:'🐕 Pets'},{t:'~2 hours'},{t:'Frogner'}],
-    desc:'Friendly labrador needs a walk and some company on Tuesday afternoon. His name is Bamsefot.',
+  { id:'j3', type:'normal', title:'Passe hunden 🐕', label:'Passe hunden · 200 kr',
+    tags:[{t:'🐕 Dyr'},{t:'~2 timer'},{t:'Frogner'}],
+    desc:'Snill labrador trenger en tur og litt selskap tirsdag ettermiddag. Han heter Bamsefot og er snill.',
     pay:200, rating:5.0, applicants:3, coords:[10.7083,59.9180],
     people:[{init:'TH',col:'#7c5cfc',name:'Tone H.',rating:'5.0',quests:11}]
   },
-  { id:'j4', type:'high', title:'Assemble IKEA furniture 🔧', label:'IKEA assembly · 500 kr',
-    tags:[{t:'🔧 Crafts'},{t:'~3 hours'},{t:'Sagene'}],
-    desc:'3 items: KALLAX shelf, MALM bed and BILLY bookcase. All unboxed and ready. Bring tools.',
+  { id:'j4', type:'high', title:'Sette opp IKEA-møbler 🔧', label:'IKEA-montering · 500 kr',
+    tags:[{t:'🔧 Håndverk'},{t:'~3 timer'},{t:'Sagene'}],
+    desc:'3 møbler: KALLAX hylle, MALM seng og BILLY bokhylle. Alt er unboxet og klart. Ta med verktøy.',
     pay:500, rating:4.7, applicants:1, coords:[10.7712,59.9285],
     people:[{init:'PL',col:'#e07050',name:'Per L.',rating:'4.7',quests:4}]
   },
-  { id:'j5', type:'normal', title:'Window cleaning 🪣', label:'Windows · 180 kr',
-    tags:[{t:'🏠 Home'},{t:'~1 hour'},{t:'St. Hanshaugen'}],
-    desc:'6 windows need cleaning inside and out. Equipment provided. 2nd floor apartment.',
+  { id:'j5', type:'normal', title:'Vaske vinduer 🪣', label:'Vaske vinduer · 180 kr',
+    tags:[{t:'🏠 Hjem'},{t:'~1 time'},{t:'St. Hanshaugen'}],
+    desc:'6 vinduer trenger vask innvendig og utvendig. Utstyr finnes. Leilighet i 2. etasje.',
     pay:180, rating:4.3, applicants:0, firstCome:true, coords:[10.7350,59.9260], people:[]
   },
-  { id:'j6', type:'haste', title:'Ride to Gardermoen 🚗', label:'🔴 Airport · 450 kr',
-    tags:[{t:'🔴 Urgent',cls:'haste-tag'},{t:'🚗 Drive'},{t:'~45 min'},{t:'Tøyen'}],
-    desc:'Flight at 07:30. Need pickup at 05:45 from Tøyen. Two suitcases. Fuel costs covered.',
+  { id:'j6', type:'haste', title:'Kjøre til Gardermoen 🚗', label:'🔴 Gardermoen · 450 kr',
+    tags:[{t:'🔴 Haste',cls:'haste-tag'},{t:'🚗 Kjøring'},{t:'~45 min'},{t:'Tøyen'}],
+    desc:'Flyet går 07:30. Trenger henting kl 05:45 fra Tøyen. To kofferter. Drivstoffkostnader dekkes.',
     pay:450, rating:4.9, applicants:1, coords:[10.7750,59.9100],
     people:[{init:'KN',col:'#e53935',name:'Kari N.',rating:'4.9',quests:31}]
   },
-  { id:'j7', type:'charity', title:'Visit elderly lady 💙', label:'💚 Elderly · 100 kr',
-    tags:[{t:'👴 Elderly'},{t:'~2 hours'},{t:'Nordstrand'},{t:'💚 Charity',cls:'charity-tag'}],
-    desc:'My grandmother is 82 and lives alone. Would love someone to visit, drink coffee and play cards. Earns charity achievement!',
+  { id:'j7', type:'charity', title:'Besøke eldre dame 💙', label:'💚 Eldre · 100 kr',
+    tags:[{t:'👴 Eldre'},{t:'~2 timer'},{t:'Nordstrand'},{t:'💚 Veldedighet',cls:'charity-tag'}],
+    desc:'Bestemoren min er 82 år og bor alene. Ønsker at noen besøker henne, drikker kaffe og spiller kort. Gir achievement!',
     pay:100, rating:4.9, applicants:4, coords:[10.8020,59.8760],
     people:[{init:'LB',col:'#0fa968',name:'Lars B.',rating:'5.0',quests:47},{init:'SH',col:'#3b6ff5',name:'Silje H.',rating:'4.8',quests:18}]
   },
-  { id:'j8', type:'high', title:'Paint door trim 🎨', label:'Paint trim · 250 kr',
-    tags:[{t:'🔧 Crafts'},{t:'~1–2 hours'},{t:'Bislett'}],
-    desc:'Need indoor door threshold and some trim painted. White paint provided. Some experience needed.',
+  { id:'j8', type:'high', title:'Male dørterskel 🎨', label:'Male terskel · 250 kr',
+    tags:[{t:'🔧 Håndverk'},{t:'~1–2 timer'},{t:'Bislett'}],
+    desc:'Trenger maling av innvendig dørterskel og listverk. Maling finnes. Litt erfaring nødvendig.',
     pay:250, rating:4.6, applicants:0, coords:[10.7290,59.9215], people:[]
   }
 ];
@@ -2763,22 +2765,27 @@ async function runSearch(query) {
     .limit(8);
 
   if(!quests || quests.length === 0) {
-    // Also search demo jobs
-    const demoResults = JOBS.filter(j =>
+    // Search demo jobs AND services
+    const demoJobResults = JOBS.filter(j =>
       j.title.toLowerCase().includes(q) ||
       j.desc.toLowerCase().includes(q) ||
-      j.label.toLowerCase().includes(q)
+      (j.tags||[]).some(t => t.t?.toLowerCase().includes(q))
     );
+    const demoSvcResults = DEMO_SERVICES.filter(s =>
+      s.title.toLowerCase().includes(q) ||
+      s.desc.toLowerCase().includes(q) ||
+      s.category?.toLowerCase().includes(q)
+    );
+    const allDemo = [
+      ...demoJobResults.map(j => ({ id:j.id, title:j.title, category:j.tags[0]?.t||'', pay:j.pay, image_url:null, coords:j.coords, _type:'quest' })),
+      ...demoSvcResults.map(s => ({ id:s.id, title:s.title, category:s.category||'', pay:s.price, image_url:null, coords:s.coords, _type:'service' }))
+    ];
 
-    if(demoResults.length === 0) {
+    if(allDemo.length === 0) {
       results.innerHTML = `<div class="search-empty">Ingen treff for "<strong>${query}</strong>"</div>`;
       return;
     }
-
-    renderSearchResults(demoResults.map(j => ({
-      id: j.id, title: j.title, category: j.tags[0]?.t || '',
-      pay: j.pay, image_url: null, coords: j.coords, _demo: j
-    })));
+    renderSearchResults(allDemo);
     return;
   }
 
@@ -2802,14 +2809,15 @@ function renderSearchResults(quests) {
 
   results.innerHTML = `<div class="search-section-title">${quests.length} treff</div>` +
     quests.map(q => {
-      const icon = catIcons[q.category] || '✨';
+      const icon = catIcons[q.category] || (q._type==='service' ? '🏪' : '✨');
       const thumb = q.image_url
         ? `<img src="${q.image_url}" class="search-result-thumb" style="border-radius:10px">`
-        : `<div class="search-result-thumb">${icon}</div>`;
+        : `<div class="search-result-thumb" style="background:${q._type==='service'?'rgba(168,85,247,0.1)':'var(--surface2)'}">${icon}</div>`;
+      const typeLabel = q._type==='service' ? '<span style="font-size:9px;background:rgba(168,85,247,0.1);color:var(--accent2);padding:1px 5px;border-radius:4px;font-weight:700;margin-left:4px">TJENESTE</span>' : '';
       return `<div class="search-result-item" onclick="selectSearchResult('${q.id}', ${JSON.stringify(q.coords || [0,0]).replace(/"/g,'&quot;')})">
         ${thumb}
         <div class="search-result-info">
-          <div class="search-result-title">${q.title}</div>
+          <div class="search-result-title">${q.title}${typeLabel}</div>
           <div class="search-result-meta">${q.category || ''}</div>
         </div>
         <div class="search-result-pay">${q.pay} kr</div>
@@ -2819,19 +2827,23 @@ function renderSearchResults(quests) {
 
 function selectSearchResult(questId, coords) {
   closeSearch();
-  // Fly to quest location
   if(window.map && coords && coords[0]) {
     window.map.flyTo({ center: coords, zoom: 15, speed: 1.6 });
   }
-  // Find and show the quest panel
   setTimeout(async () => {
-    // Try find in DB
+    // Try demo jobs first
+    const demoJob = JOBS.find(j => j.id === questId);
+    if(demoJob) { showPanel(demoJob); return; }
+    // Try demo services
+    const demoSvc = DEMO_SERVICES.find(s => s.id === questId);
+    if(demoSvc) { showServicePanel(demoSvc); return; }
+    // Try DB quests
     const { data: q } = await sb.from('quests').select('*').eq('id', questId).single();
     if(q) { showPanel(questToJob(q)); return; }
-    // Try demo
-    const demo = JOBS.find(j => j.id === questId);
-    if(demo) showPanel(demo);
-  }, 600);
+    // Try DB services
+    const { data: s } = await sb.from('services').select('*').eq('id', questId).single();
+    if(s) { showServicePanel(serviceToSvc(s)); return; }
+  }, 500);
 }
 
 function closeSearch() {
