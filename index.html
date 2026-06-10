@@ -741,6 +741,22 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     cursor: pointer; font-family: inherit;
   }
 
+  /* ── CHAT PANEL mobile ── */
+  @media(max-width:768px) {
+    #chat-panel {
+      right: 0 !important; left: 0 !important;
+      bottom: 60px !important; top: 0 !important;
+      width: 100% !important; height: auto !important;
+      border-radius: 0 !important;
+    }
+    #inbox-panel {
+      right: 0; left: 0; top: 62px;
+      width: 100%;
+      max-height: calc(100vh - 122px);
+      border-radius: 0;
+    }
+  }
+
   /* ── MAP fix for mobile ── */
   @media(max-width:768px) {
     #map { top: 108px; bottom: 60px; position: fixed; left: 0; right: 0; }
@@ -784,7 +800,13 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       <div class="avatar">You</div>
       <div class="avatar-lvl">LVL 3</div>
     </div>
-    <!-- LANGUAGE SELECTOR -->
+    <!-- INBOX BUTTON -->
+<button id="inbox-btn" onclick="toggleInbox()" style="position:relative;width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;flex-shrink:0" title="Innboks">
+  💬
+  <span id="inbox-badge" style="display:none;position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center;border:2px solid var(--surface)">0</span>
+</button>
+
+<!-- LANGUAGE SELECTOR -->
 <div id="lang-selector" style="position:relative;flex-shrink:0">
   <button id="lang-btn" onclick="toggleLangDropdown()" style="display:flex;align-items:center;gap:5px;padding:0 10px;height:38px;background:var(--surface);border:1px solid var(--border);border-radius:50px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text);font-family:inherit;transition:all .15s">
     <span id="lang-current">🇳🇴 NO</span>
@@ -1716,6 +1738,10 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('load', initMap);
 
 function showPanel(job) {
+  const panel = document.getElementById('job-panel');
+  panel.dataset.questId = job.id || '';
+  panel.dataset.giverId = job.raw?.user_id || '';
+  panel.dataset.questTitle = job.title;
   document.getElementById('panel-title').textContent = job.title;
   document.getElementById('panel-tags').innerHTML = job.tags.map(t=>`<span class="tag ${t.cls||''}">${t.t}</span>`).join('');
   document.getElementById('panel-desc').textContent = job.desc;
@@ -1775,8 +1801,49 @@ function requestLocation() {
 
 async function applyJob() {
   if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å søke på oppdrag'); return; }
+  
+  const panel = document.getElementById('job-panel');
+  const questId = panel?.dataset?.questId;
+  const giverId = panel?.dataset?.giverId;
+
+  if(!questId || !giverId) {
+    // Demo quest - just show toast
+    closePanel();
+    showToast(t('toastApplied'));
+    setTimeout(() => showAchievement('✦', t('firstQuestTitle'), t('firstQuestDesc')), 1800);
+    return;
+  }
+
+  if(giverId === currentUser.id) {
+    showToast('⚠️ Du kan ikke søke på ditt eget oppdrag');
+    return;
+  }
+
+  // Check if conversation already exists
+  const { data: existing } = await sb.from('conversations')
+    .select('id')
+    .eq('quest_id', questId)
+    .eq('taker_id', currentUser.id)
+    .single();
+
+  if(existing) {
+    closePanel();
+    openChat(existing.id, panel?.dataset?.questTitle || 'Oppdrag');
+    return;
+  }
+
+  // Create new conversation
+  const { data: conv, error } = await sb.from('conversations').insert({
+    quest_id: questId,
+    giver_id: giverId,
+    taker_id: currentUser.id
+  }).select().single();
+
+  if(error) { showToast('❌ Feil: ' + error.message); return; }
+
   closePanel();
-  showToast(t('toastApplied'));
+  showToast('✦ Søknad sendt! Chat med oppdragsgiver');
+  openChat(conv.id, panel?.dataset?.questTitle || 'Oppdrag');
   setTimeout(() => showAchievement('✦', t('firstQuestTitle'), t('firstQuestDesc')), 1800);
 }
 
@@ -1940,6 +2007,167 @@ function submitRating() {
   showToast('⭐ Rating submitted – thanks!');
 }
 
+// ── CHAT FUNCTIONS ──
+let activeChatId = null;
+
+async function openChat(convId, title) {
+  activeChatId = convId;
+  const chatPanel = document.getElementById('chat-panel');
+  document.getElementById('chat-title').textContent = title;
+  chatPanel.style.display = 'flex';
+  closeInbox();
+
+  // On mobile - full screen
+  if(window.innerWidth < 769) {
+    chatPanel.style.cssText += ';position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;border-radius:0;z-index:600';
+  }
+
+  await loadMessages(convId);
+  subscribeToMessages(convId);
+}
+
+function closeChat() {
+  document.getElementById('chat-panel').style.display = 'none';
+  activeChatId = null;
+  // Unsubscribe
+  if(window._chatSub) { window._chatSub.unsubscribe(); window._chatSub = null; }
+}
+
+async function loadMessages(convId) {
+  const { data: msgs } = await sb.from('messages')
+    .select('*, sender:sender_id(email, raw_user_meta_data)')
+    .eq('conversation_id', convId)
+    .order('created_at', { ascending: true });
+
+  const container = document.getElementById('chat-messages');
+  if(!msgs || msgs.length === 0) {
+    container.innerHTML = '<div style="text-align:center;font-size:11px;color:var(--muted);padding:20px">Start samtalen! Si hei og spør om oppdraget 👋</div>';
+    return;
+  }
+  renderMessages(msgs);
+
+  // Mark as read
+  await sb.from('messages')
+    .update({ read: true })
+    .eq('conversation_id', convId)
+    .neq('sender_id', currentUser.id);
+}
+
+function renderMessages(msgs) {
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = '';
+  msgs.forEach(msg => {
+    const isMe = msg.sender_id === currentUser.id;
+    const name = msg.sender?.raw_user_meta_data?.first_name || 'Ukjent';
+    const time = new Date(msg.created_at).toLocaleTimeString('no', { hour:'2-digit', minute:'2-digit' });
+    const div = document.createElement('div');
+    div.style.cssText = `display:flex;flex-direction:column;align-items:${isMe?'flex-end':'flex-start'};gap:2px`;
+    div.innerHTML = `
+      ${!isMe ? `<div style="font-size:10px;color:var(--muted);margin-left:4px">${name}</div>` : ''}
+      <div style="max-width:80%;padding:9px 13px;border-radius:${isMe?'16px 16px 4px 16px':'16px 16px 16px 4px'};background:${isMe?'linear-gradient(135deg,#f97316,#a855f7)':'var(--surface2)'};color:${isMe?'#fff':'var(--text)'};font-size:13px;line-height:1.5">${msg.content}</div>
+      <div style="font-size:10px;color:var(--muted);margin:0 4px">${time}</div>
+    `;
+    container.appendChild(div);
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+function subscribeToMessages(convId) {
+  if(window._chatSub) window._chatSub.unsubscribe();
+  window._chatSub = sb.channel('messages:' + convId)
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'messages',
+      filter: `conversation_id=eq.${convId}`
+    }, async () => {
+      await loadMessages(convId);
+    })
+    .subscribe();
+}
+
+async function sendMessage() {
+  if(!activeChatId || !currentUser) return;
+  const input = document.getElementById('chat-input');
+  const content = input.value.trim();
+  if(!content) return;
+  input.value = '';
+
+  const { error } = await sb.from('messages').insert({
+    conversation_id: activeChatId,
+    sender_id: currentUser.id,
+    content
+  });
+
+  if(error) { showToast('❌ Kunne ikke sende melding'); input.value = content; }
+}
+
+// ── INBOX ──
+async function toggleInbox() {
+  if(!currentUser) { openAuth('login'); return; }
+  const panel = document.getElementById('inbox-panel');
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen) await loadInbox();
+}
+
+function closeInbox() {
+  const panel = document.getElementById('inbox-panel');
+  if(panel) panel.style.display = 'none';
+}
+
+async function loadInbox() {
+  const list = document.getElementById('inbox-list');
+  list.innerHTML = '<div style="padding:20px;text-align:center;font-size:13px;color:var(--muted)">Laster…</div>';
+
+  const { data: convs, error } = await sb.from('conversations')
+    .select(`*, quest:quest_id(title), giver:giver_id(raw_user_meta_data), taker:taker_id(raw_user_meta_data)`)
+    .or(`giver_id.eq.${currentUser.id},taker_id.eq.${currentUser.id}`)
+    .order('created_at', { ascending: false });
+
+  if(error || !convs || convs.length === 0) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;font-size:13px;color:var(--muted)">Ingen samtaler ennå.<br>Søk på et oppdrag for å starte!</div>';
+    return;
+  }
+
+  list.innerHTML = convs.map(conv => {
+    const isGiver = conv.giver_id === currentUser.id;
+    const other = isGiver ? conv.taker : conv.giver;
+    const otherName = other?.raw_user_meta_data?.first_name || 'Bruker';
+    const questTitle = conv.quest?.title || 'Oppdrag';
+    const role = isGiver ? '👤 Søker' : '📋 Ditt oppdrag';
+    return `
+      <div onclick="openChat('${conv.id}','${questTitle}')" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;display:flex;gap:10px;align-items:center" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${otherName[0].toUpperCase()}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${otherName}</div>
+          <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${questTitle}</div>
+          <div style="font-size:10px;color:var(--accent);margin-top:2px">${role}</div>
+        </div>
+        <div style="font-size:18px">💬</div>
+      </div>
+    `;
+  }).join('');
+
+  // Update badge
+  updateInboxBadge(convs.length);
+}
+
+function updateInboxBadge(count) {
+  ['inbox-badge','mobile-inbox-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) { el.textContent = count; el.style.display = count > 0 ? 'flex' : 'none'; }
+  });
+}
+
+// Check unread on load
+async function checkUnread() {
+  if(!currentUser) return;
+  const { count } = await sb.from('messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('read', false)
+    .neq('sender_id', currentUser.id);
+  if(count > 0) updateInboxBadge(count);
+}
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.style.display = 'block';
@@ -2073,6 +2301,7 @@ async function loadUserProfile(user) {
     document.querySelector('.xp-rank') && (document.querySelector('.xp-rank').textContent = '⚡ ' + rank.name + ' · LVL ' + (profile.level||1));
   }
   updateUIForAuth(user);
+  checkUnread();
 }
 
 function updateUIForAuth(user) {
@@ -2235,6 +2464,46 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
 </div>
 
+<!-- CHAT PANEL -->
+<div id="chat-panel" style="display:none;position:fixed;right:18px;bottom:80px;z-index:300;width:340px;height:480px;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);display:none;flex-direction:column;overflow:hidden;animation:slideIn .2s ease">
+
+  <!-- Chat header -->
+  <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <button onclick="closeChat()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1">←</button>
+    <div style="flex:1;min-width:0">
+      <div id="chat-title" style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Chat</div>
+      <div id="chat-status" style="font-size:11px;color:var(--muted)">Aktiv</div>
+    </div>
+    <div id="chat-status-badge" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);border:1px solid var(--green)">Åpen</div>
+  </div>
+
+  <!-- Messages -->
+  <div id="chat-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px">
+    <div style="text-align:center;font-size:11px;color:var(--muted);padding:8px">Starten på samtalen</div>
+  </div>
+
+  <!-- Input -->
+  <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0">
+    <input id="chat-input" type="text" placeholder="Skriv en melding…" 
+      style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:50px;padding:9px 14px;font-size:13px;color:var(--text);font-family:inherit;outline:none"
+      onkeydown="if(event.key==='Enter')sendMessage()"
+      onfocus="this.style.borderColor='var(--accent)'"
+      onblur="this.style.borderColor='var(--border)'">
+    <button onclick="sendMessage()" style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">↑</button>
+  </div>
+</div>
+
+<!-- INBOX PANEL -->
+<div id="inbox-panel" style="display:none;position:fixed;right:18px;top:74px;z-index:200;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;max-height:70vh;animation:slideIn .2s ease">
+  <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+    <div style="font-size:15px;font-weight:700;flex:1">💬 Innboks</div>
+    <button onclick="closeInbox()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer">×</button>
+  </div>
+  <div id="inbox-list" style="overflow-y:auto;max-height:calc(70vh - 54px)">
+    <div style="padding:20px;text-align:center;font-size:13px;color:var(--muted)">Laster meldinger…</div>
+  </div>
+</div>
+
 <!-- BOTTOM NAV (mobile only) -->
 <div id="bottom-nav">
   <div class="nav-item active" onclick="showToast('🗺️ Map view')">
@@ -2244,6 +2513,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <div class="nav-item nav-post" onclick="openModal()">
     <div class="nav-icon">＋</div>
     <div class="nav-label" id="nav-post-label" style="color:#fff;font-weight:700">Post</div>
+  </div>
+  <div class="nav-item" onclick="toggleInbox()">
+    <div class="nav-icon" style="position:relative">💬<span id="mobile-inbox-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:8px;font-weight:800;width:14px;height:14px;border-radius:50%;align-items:center;justify-content:center">0</span></div>
+    <div class="nav-label">Innboks</div>
   </div>
   <div class="nav-item" onclick="toggleLeaderboard()">
     <div class="nav-icon">🏆</div>
