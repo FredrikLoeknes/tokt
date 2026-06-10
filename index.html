@@ -12,8 +12,6 @@
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -893,7 +891,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   </div>
   <div class="payment-note">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    <span id='panel-payment-note'>Payment via <strong style='color:#ff5b24'>&nbsp;Vipps&nbsp;</strong> directly between parties</span>
+    <span id="panel-payment-note">Payment via <strong style="color:#ff5b24">&nbsp;Vipps&nbsp;</strong> directly between parties</span>
   </div>
   <!-- Quest type badge -->
   <div id="panel-quest-type" style="padding:0 16px 12px;display:flex;gap:8px;align-items:center">
@@ -917,9 +915,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     </div>
   </div>
   <div class="zoom-controls">
-    <button class="zoom-btn" onclick="map.zoomIn()">+</button>
+    <button class="zoom-btn" onclick="window.map && window.map.zoomIn()">+</button>
     <div class="zoom-divider"></div>
-    <button class="zoom-btn" onclick="map.zoomOut()">−</button>
+    <button class="zoom-btn" onclick="window.map && window.map.zoomOut()">−</button>
   </div>
 </div>
 
@@ -1031,6 +1029,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 <div id="toast"></div>
 
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ══════════════════════════════════════
 // LANGUAGE SYSTEM
@@ -1163,7 +1163,7 @@ const LANGUAGES = {
     sortNewest: '🆕 Newest', sortRated: '⭐ Top rated',
     rewardLabel: 'Reward', ratingLabel: 'Rating', applicantsLabel: 'Applicants',
     acceptQuest: '✦ Accept quest',
-    paymentNote: '<span id='panel-payment-note'>Payment via <strong style='color:#ff5b24'>&nbsp;Vipps&nbsp;</strong> directly between parties</span>',
+    paymentNote: '<span id="panel-payment-note">Payment via <strong style="color:#ff5b24">&nbsp;Vipps&nbsp;</strong> directly between parties</span>',
     approvalRequired: '✋ Approval required',
     firstComeServed: '⚡ First come, first served',
     noApplicants: 'No applicants yet — be the first!',
@@ -1356,15 +1356,21 @@ manifestLink.rel = 'manifest';
 manifestLink.href = manifestUrl;
 document.head.appendChild(manifestLink);
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiZnJlZHJpa2xvZWtuZXMiLCJhIjoiY21xNjl6c25kMDFodjJxcXprcXc0NHYzMyJ9.e3IAYTrRQ6053w-zO-4fvw';
+// Ensure mapbox loads before init
+function initMap() {
+  if (typeof mapboxgl === 'undefined') {
+    setTimeout(initMap, 100);
+    return;
+  }
+  mapboxgl.accessToken = 'pk.eyJ1IjoiZnJlZHJpa2xvZWtuZXMiLCJhIjoiY21xNjl6c25kMDFodjJxcXprcXc0NHYzMyJ9.e3IAYTrRQ6053w-zO-4fvw';
 
-const map = new mapboxgl.Map({
-  container: 'map',
-  style: 'mapbox://styles/mapbox/light-v11',
-  center: [10.757933, 59.911491],
-  zoom: 13,
-  attributionControl: false
-});
+  window.map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/light-v11',
+    center: [10.757933, 59.911491],
+    zoom: 13,
+    attributionControl: false
+  });
 
 // Rank system
 const RANKS = [
@@ -1466,7 +1472,10 @@ map.on('load', () => {
   const L = LANGUAGES[currentLang];
   document.getElementById('lang-current').textContent = L.flag + ' ' + L.code.toUpperCase();
 });
-map.on('click', closePanel);
+  map.on('click', closePanel);
+} // end initMap
+
+window.addEventListener('load', initMap);
 
 function showPanel(job) {
   document.getElementById('panel-title').textContent = job.title;
@@ -1541,8 +1550,8 @@ function postJob() { closeModal(); showToast('✅ Quest posted on the map!'); }
 function toggleTheme() {
   const dark = document.body.classList.toggle('dark');
   document.getElementById('theme-toggle').textContent = dark ? '☀️' : '🌙';
-  map.setStyle(dark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11');
-  map.once('style.load', addMarkers);
+  if(window.map) window.map.setStyle(dark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11');
+  if(window.map) window.map.once('style.load', addMarkers);
 }
 
 // Leaderboard toggle
