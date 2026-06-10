@@ -454,7 +454,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   .logo-name { font-size: 20px; letter-spacing: 2px; }
   #searchbox { display: none; } /* hidden on mobile, tap search icon instead */
   .logo-xp { display: none; } /* hidden on mobile */
-  .btn-ghost { display: none; } /* hide login text btn */
+  .btn-login-only { display: none; } /* hide login btn on mobile */
+  .btn-tilby-desktop { display: none !important; } /* Tilby is in bottom nav on mobile */
   .btn-primary { padding: 0 12px; height: 36px; font-size: 12px; }
   .btn-primary svg { display: none; }
   #theme-toggle { width: 36px; height: 36px; font-size: 14px; }
@@ -806,7 +807,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       <span id="btn-post-quest">Legg ut oppdrag</span>
     </button>
     <button class="btn btn-ghost btn-tilby-desktop" onclick="openServiceModal()" style="border-color:var(--accent2);color:var(--accent2)">🏪 Tilby</button>
-    <button class="btn btn-ghost" onclick="openAuth('login')"><span id="btn-login">Logg inn</span></button>
+    <button class="btn btn-ghost btn-login-only" onclick="openAuth('login')"><span id="btn-login">Logg inn</span></button>
     <div class="avatar-wrap" onclick="toggleProfile()" title="View your profile">
       <div class="avatar">You</div>
       <div class="avatar-lvl">LVL 3</div>
