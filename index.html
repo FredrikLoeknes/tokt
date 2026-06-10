@@ -867,12 +867,20 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   /* ── MAP fix for mobile ── */
   @media(max-width:768px) {
     #map { top: 108px; bottom: 60px; position: fixed; left: 0; right: 0; }
+    #tips-bar { top: 108px; }
   }
 </style>
 </head>
 <body>
 
 <div id="map"></div>
+
+<!-- TIPS BAR -->
+<div id="tips-bar" style="position:fixed;top:62px;left:0;right:0;z-index:89;background:linear-gradient(135deg,rgba(249,115,22,0.92),rgba(168,85,247,0.92));backdrop-filter:blur(4px);padding:8px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:opacity .3s" onclick="nextTip()">
+  <span style="font-size:16px;flex-shrink:0" id="tip-icon">💡</span>
+  <span id="tip-text" style="font-size:12px;color:#fff;font-weight:500;flex:1;line-height:1.4"></span>
+  <button onclick="closeTipsBar(event)" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
+</div>
 
 <!-- HERO TAGLINE on map -->
 <div id="hero-tag">
@@ -1216,13 +1224,23 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 <!-- CORNER WIDGETS -->
 <div id="corner-widgets">
-  <div id="week-worker">
-    <span class="ww-crown">👑</span>
-    <div class="ww-avatar">JS</div>
-    <div class="ww-info">
-      <div class="ww-label" id="ww-label-text">Quest of the week</div>
-      <div class="ww-name">Jonas S.</div>
-      <div class="ww-stat">47 quests · ★ 4.97</div>
+  <div id="week-worker" onclick="showUserProfile('Jonas S.','JS','#f5c518',47,4.97,'Legend')" title="Se profil">
+    <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
+      <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold)">👑 Ukens utfører</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+        <div style="position:relative">
+          <div class="ww-avatar">JS</div>
+          <div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);background:var(--gold);color:#000;font-size:8px;font-weight:800;padding:1px 5px;border-radius:4px;white-space:nowrap">Legend</div>
+        </div>
+        <div class="ww-info">
+          <div class="ww-name">Jonas S.</div>
+          <div class="ww-stat">47 oppdrag · ★ 4.97</div>
+          <div style="margin-top:3px;display:flex;gap:3px">
+            <span style="font-size:9px;background:rgba(201,144,10,0.15);color:var(--gold);padding:1px 5px;border-radius:4px">🏆 Top</span>
+            <span style="font-size:9px;background:rgba(15,169,104,0.1);color:var(--green);padding:1px 5px;border-radius:4px">💚 5 veldedighet</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <div class="zoom-controls">
@@ -2061,6 +2079,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if(lc) lc.innerHTML = L.flag + ' <span style="font-size:11px;font-weight:700">' + L.code.toUpperCase() + '</span>';
     // Show welcome popup after short delay
     setTimeout(showWelcomeIfNew, 800);
+    // Init tips bar after welcome check
+    setTimeout(() => {
+      if(localStorage.getItem('tokt-welcome-seen')) initTipsBar();
+    }, 1200);
   });
 
   window.map.on('click', closePanel);
@@ -3070,11 +3092,12 @@ function renderSearchResults(quests) {
   };
 
   results.innerHTML = `<div class="search-section-title">${quests.length} treff</div>` +
-    quests.map(q => {
+    deduped.map(q => {
       const icon = catIcons[q.category] || (q._type==='service' ? '🏪' : '✨');
-      const thumb = q.image_url
-        ? `<img src="${q.image_url}" class="search-result-thumb" style="border-radius:10px">`
-        : `<div class="search-result-thumb" style="background:${q._type==='service'?'rgba(168,85,247,0.1)':'var(--surface2)'}">${icon}</div>`;
+      const imgUrl = q.image_url || q.image || null;
+      const thumb = imgUrl
+        ? `<img src="${imgUrl}" class="search-result-thumb" style="border-radius:10px;object-fit:cover">`
+        : `<div class="search-result-thumb" style="background:${q._type==='service'?'rgba(168,85,247,0.1)':'var(--surface2)'};display:flex;align-items:center;justify-content:center;font-size:20px">${icon}</div>`;
       const typeLabel = q._type==='service' ? '<span style="font-size:9px;background:rgba(168,85,247,0.1);color:var(--accent2);padding:1px 5px;border-radius:4px;font-weight:700;margin-left:4px">TJENESTE</span>' : '';
       return `<div class="search-result-item" onclick="selectSearchResult('${q.id}', ${JSON.stringify(q.coords || [0,0]).replace(/"/g,'&quot;')})">
         ${thumb}
@@ -3277,7 +3300,237 @@ function dismissWelcome(action) {
   document.getElementById('welcome-overlay').style.display = 'none';
   if(action === 'register') openAuth('register');
   else if(action === 'login') openAuth('login');
-  // 'explore' just closes the popup
+  // Start tips after welcome
+  setTimeout(initTipsBar, 500);
+}
+
+// ── REFERRAL ──
+function copyReferral() {
+  const input = document.getElementById('referral-link');
+  if(!input) return;
+  if(currentUser) {
+    input.value = 'tokt.app?ref=' + currentUser.id.slice(0,8);
+  }
+  navigator.clipboard?.writeText(input.value).catch(() => {
+    input.select();
+    document.execCommand('copy');
+  });
+  showToast('🔗 Invitasjonslenke kopiert!');
+}
+
+// ── SHARE QUEST ──
+function shareQuest() {
+  const title = document.getElementById('panel-title')?.textContent || 'Sjekk ut dette oppdraget på Tokt!';
+  const url = 'https://tokt.app';
+  const text = title + ' – Finn oppdrag nær deg på Tokt!';
+
+  // Mobile: use native share sheet (shows FB, Instagram, WhatsApp etc automatically)
+  if(navigator.share) {
+    navigator.share({ title: 'Tokt – ' + title, text, url });
+    return;
+  }
+
+  // Desktop: show share dropdown
+  const existing = document.getElementById('share-dropdown');
+  if(existing) { existing.remove(); return; }
+
+  const dropdown = document.createElement('div');
+  dropdown.id = 'share-dropdown';
+  dropdown.style.cssText = 'position:fixed;right:18px;bottom:140px;z-index:500;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:8px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:4px;min-width:200px;animation:popIn .15s ease';
+  dropdown.innerHTML = `
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:4px 8px 6px">Del oppdraget</div>
+    <button onclick="shareToFacebook()" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;background:none;cursor:pointer;border-radius:8px;font-size:13px;font-weight:500;color:var(--text);font-family:inherit;width:100%;text-align:left" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+      <span style="font-size:20px">📘</span> Facebook
+    </button>
+    <button onclick="shareToWhatsApp()" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;background:none;cursor:pointer;border-radius:8px;font-size:13px;font-weight:500;color:var(--text);font-family:inherit;width:100%;text-align:left" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+      <span style="font-size:20px">💬</span> WhatsApp
+    </button>
+    <button onclick="shareToTwitter()" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;background:none;cursor:pointer;border-radius:8px;font-size:13px;font-weight:500;color:var(--text);font-family:inherit;width:100%;text-align:left" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+      <span style="font-size:20px">🐦</span> X / Twitter
+    </button>
+    <button onclick="copyShareLink()" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;background:none;cursor:pointer;border-radius:8px;font-size:13px;font-weight:500;color:var(--text);font-family:inherit;width:100%;text-align:left" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
+      <span style="font-size:20px">🔗</span> Kopier lenke
+    </button>
+  `;
+  document.body.appendChild(dropdown);
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', function closeShare(e) {
+      if(!dropdown.contains(e.target)) { dropdown.remove(); document.removeEventListener('click', closeShare); }
+    });
+  }, 100);
+}
+
+function getShareData() {
+  const title = document.getElementById('panel-title')?.textContent || 'Sjekk ut dette oppdraget på Tokt!';
+  const url = 'https://tokt.app';
+  const text = encodeURIComponent(title + ' – Finn oppdrag nær deg på Tokt! 🗺️');
+  const encodedUrl = encodeURIComponent(url);
+  return { title, url, text, encodedUrl };
+}
+
+function shareToFacebook() {
+  const { encodedUrl } = getShareData();
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank', 'width=600,height=400');
+  document.getElementById('share-dropdown')?.remove();
+}
+function shareToWhatsApp() {
+  const { text, encodedUrl } = getShareData();
+  window.open(`https://wa.me/?text=${text}%20${encodedUrl}`, '_blank');
+  document.getElementById('share-dropdown')?.remove();
+}
+function shareToTwitter() {
+  const { text, encodedUrl } = getShareData();
+  window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodedUrl}`, '_blank', 'width=600,height=400');
+  document.getElementById('share-dropdown')?.remove();
+}
+function copyShareLink() {
+  const { url, title } = getShareData();
+  navigator.clipboard?.writeText(url).then(() => showToast('🔗 Lenke kopiert!'));
+  document.getElementById('share-dropdown')?.remove();
+}
+
+function saveQuest() {
+  showToast('🔖 Oppdrag lagret!');
+}
+
+// ── OTHER USER PROFILE ──
+let activeUserProfile = null;
+function showUserProfile(name, initials, color, quests, rating, rank) {
+  activeUserProfile = { name, initials, color, quests, rating, rank };
+  document.getElementById('upp-avatar').textContent = initials;
+  document.getElementById('upp-avatar').style.background = color + '40';
+  document.getElementById('upp-name').textContent = name;
+  document.getElementById('upp-rating').textContent = rating ? '★ ' + rating : '–';
+  document.getElementById('upp-quests').textContent = quests || 0;
+  const rankObj = getRank(quests || 0);
+  document.getElementById('upp-rank').textContent = rankObj.name;
+
+  // Badges based on quests
+  const badges = [];
+  if(quests >= 1) badges.push('🎯 Første oppdrag');
+  if(quests >= 10) badges.push('⚡ 10 oppdrag');
+  if(quests >= 31) badges.push('🏆 Veteran');
+  if(rating >= 4.8) badges.push('⭐ Topp-rated');
+  document.getElementById('upp-badges').innerHTML = badges.length
+    ? badges.map(b => `<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)">${b}</span>`).join('')
+    : '<span style="font-size:11px;color:var(--muted)">Ingen badges ennå</span>';
+
+  // Position popup near week worker
+  const popup = document.getElementById('user-profile-popup');
+  popup.style.bottom = '100px';
+  popup.style.right = '18px';
+  popup.style.top = 'auto';
+  popup.style.display = 'block';
+}
+
+function startChatWithUser() {
+  document.getElementById('user-profile-popup').style.display = 'none';
+  if(!currentUser) { openAuth('login'); return; }
+  showToast('💬 Åpner chat...');
+}
+
+// ── UPDATE PROFILE WITH ACHIEVEMENTS ──
+function updateProfileAchievements(quests, rating) {
+  const achievements = [];
+  if(quests >= 1) achievements.push({ icon:'🎯', name:'Første oppdrag', desc:'Fullførte ditt første oppdrag' });
+  if(quests >= 5) achievements.push({ icon:'⚡', name:'5 oppdrag', desc:'Fullfør 5 oppdrag' });
+  if(quests >= 10) achievements.push({ icon:'🔥', name:'10 oppdrag', desc:'Fullfør 10 oppdrag' });
+  if(quests >= 31) achievements.push({ icon:'🏆', name:'Veteran', desc:'Fullfør 31 oppdrag' });
+  if(rating >= 4.5) achievements.push({ icon:'⭐', name:'Høy rating', desc:'Rating over 4.5' });
+  if(rating >= 5.0) achievements.push({ icon:'🌟', name:'Perfekt rating', desc:'5.0 i snittrating' });
+
+  const el = document.getElementById('profile-achievements');
+  if(el) {
+    el.innerHTML = achievements.length
+      ? achievements.map(a => `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:6px;font-size:11px" title="${a.desc}"><span style="font-size:16px">${a.icon}</span><span style="font-weight:600">${a.name}</span></div>`).join('')
+      : '<div style="font-size:11px;color:var(--muted);font-style:italic">Fullfør ditt første oppdrag!</div>';
+  }
+
+  const badgesEl = document.getElementById('profile-badges');
+  if(badgesEl) {
+    const badges = [];
+    if(quests >= 1) badges.push('🎯 Aktiv');
+    if(quests >= 10) badges.push('⚡ Erfaren');
+    if(rating >= 4.8) badges.push('⭐ Topp-rated');
+    badgesEl.innerHTML = badges.length
+      ? badges.map(b => `<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(59,111,245,0.1);color:var(--accent);border:1px solid var(--accent);font-weight:600">${b}</span>`).join('')
+      : '<span style="font-size:11px;color:var(--muted)">Ingen badges ennå</span>';
+  }
+}
+
+// ── SEARCH RESULT IMAGES ──
+// ── TIPS BAR ──
+const TIPS = [
+  { icon:'📘', text:'Alle lokale steder har en Facebook-gruppe! Del oppdraget ditt der for rask og effektiv hjelp fra naboer.' },
+  { icon:'⚡', text:'Haste-oppdrag med rød markør får mer oppmerksomhet – bruk det når du trenger hjelp raskt!' },
+  { icon:'💇', text:'Visste du at du kan tilby egne tjenester? Trykk "🏪 Tilby" og nå kunder i nabolaget ditt.' },
+  { icon:'⭐', text:'Jo høyere rating, jo mer synlig blir profilen din. Gjør en god jobb og be om en vurdering!' },
+  { icon:'🎁', text:'Inviter en venn via profilen din – dere får begge 50 XP når de registrerer seg!' },
+  { icon:'🔗', text:'Del oppdraget på WhatsApp eller Facebook for å nå enda flere som kan hjelpe deg.' },
+  { icon:'💚', text:'Veldedighetsoppdrag er gratis å legge ut og gir utfører et spesielt achievement – perfekt for å hjelpe eldre!' },
+  { icon:'🏆', text:'Fullfør 31 oppdrag og bli Legend – den høyeste rangen på Tokt!' },
+  { icon:'📍', text:'Tips: Aktiver posisjon så ser du oppdrag og tjenester rett i nabolaget ditt.' },
+  { icon:'🗺️', text:'Kartet oppdateres i sanntid – nye oppdrag dukker opp med én gang noen legger dem ut!' },
+  { icon:'🔄', text:'Trenger du fast hjelp? Be en tilbyder om fast ukentlig eller månedlig avtale direkte i chatten.' },
+  { icon:'📸', text:'Legg til bilde på oppdraget – utfører vet hva jobben innebærer og du får flere søkere.' },
+];
+
+let currentTip = 0;
+let tipInterval = null;
+
+function initTipsBar() {
+  const seen = localStorage.getItem('tokt-tips-closed');
+  if(seen) {
+    document.getElementById('tips-bar').style.display = 'none';
+    return;
+  }
+  showTip(Math.floor(Math.random() * TIPS.length));
+  // Rotate tips every 8 seconds
+  tipInterval = setInterval(() => {
+    currentTip = (currentTip + 1) % TIPS.length;
+    showTip(currentTip);
+  }, 8000);
+}
+
+function showTip(index) {
+  currentTip = index;
+  const tip = TIPS[index];
+  const iconEl = document.getElementById('tip-icon');
+  const textEl = document.getElementById('tip-text');
+  if(!iconEl || !textEl) return;
+  // Fade out
+  iconEl.style.opacity = '0';
+  textEl.style.opacity = '0';
+  setTimeout(() => {
+    iconEl.textContent = tip.icon;
+    textEl.textContent = tip.text;
+    iconEl.style.transition = 'opacity .4s';
+    textEl.style.transition = 'opacity .4s';
+    iconEl.style.opacity = '1';
+    textEl.style.opacity = '1';
+  }, 200);
+}
+
+function nextTip() {
+  currentTip = (currentTip + 1) % TIPS.length;
+  showTip(currentTip);
+  // Reset interval
+  clearInterval(tipInterval);
+  tipInterval = setInterval(() => {
+    currentTip = (currentTip + 1) % TIPS.length;
+    showTip(currentTip);
+  }, 8000);
+}
+
+function closeTipsBar(e) {
+  e.stopPropagation();
+  clearInterval(tipInterval);
+  const bar = document.getElementById('tips-bar');
+  bar.style.opacity = '0';
+  setTimeout(() => bar.style.display = 'none', 300);
+  localStorage.setItem('tokt-tips-closed', '1');
 }
 
 function showToast(msg) {
@@ -3684,6 +3937,30 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <button onclick="contactService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#3b6ff5);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">
       💬 Kontakt tilbyder
     </button>
+  </div>
+</div>
+
+<!-- OTHER USER PROFILE POPUP -->
+<div id="user-profile-popup" style="display:none;position:fixed;z-index:400;width:280px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;animation:popIn .2s ease">
+  <div style="background:linear-gradient(135deg,#f97316,#a855f7);padding:16px;text-align:center;position:relative">
+    <button onclick="document.getElementById('user-profile-popup').style.display='none'" style="position:absolute;top:8px;right:10px;background:rgba(255,255,255,0.2);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:13px">×</button>
+    <div id="upp-avatar" style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;margin:0 auto 6px"></div>
+    <div id="upp-name" style="font-size:15px;font-weight:700;color:#fff"></div>
+    <div id="upp-rank" style="display:inline-block;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:50px;margin-top:3px"></div>
+  </div>
+  <div style="padding:12px 14px">
+    <div style="display:flex;gap:0;background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:12px">
+      <div style="flex:1;padding:8px;text-align:center;border-right:1px solid var(--border)">
+        <div id="upp-quests" style="font-size:16px;font-weight:800;color:var(--accent)">0</div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Oppdrag</div>
+      </div>
+      <div style="flex:1;padding:8px;text-align:center">
+        <div id="upp-rating" style="font-size:16px;font-weight:800;color:var(--gold)">–</div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Rating</div>
+      </div>
+    </div>
+    <div id="upp-badges" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px"></div>
+    <button onclick="startChatWithUser()" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💬 Send melding</button>
   </div>
 </div>
 
