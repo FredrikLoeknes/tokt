@@ -434,6 +434,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .quest-mode-toggle { display:flex; gap:8px; margin-bottom:8px; }
 .mode-btn { flex:1; padding:10px 8px; border:2px solid var(--border); border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; color:var(--muted); background:var(--surface2); text-align:center; transition:all .15s; }
 .mode-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(59,111,245,0.08); }
+.day-btn { padding:6px 10px; border:2px solid var(--border); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); background:var(--surface2); transition:all .15s; user-select:none; }
+.day-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(59,111,245,0.1); }
 .publish-btn { width:100%; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; transition:all .15s; box-shadow:0 3px 14px var(--accent-glow); }
 .publish-btn:hover { transform:translateY(-1px); box-shadow:0 5px 20px var(--accent-glow); }
 .crypto-row { display:flex; gap:8px; margin-top:8px; }
@@ -688,10 +690,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
-    height: 90svh !important;
-    max-height: 90svh !important;
+    height: 95svh !important;
+    max-height: 95svh !important;
     border-radius: 20px 20px 0 0 !important;
-    padding: 20px 16px 60px !important;
+    padding: 20px 16px 120px !important;
     margin: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -1374,23 +1376,73 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     </div>
     <div class="form-group">
       <label class="form-label">📅 Når skal det gjøres?</label>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <div style="flex:1">
+
+      <!-- Type velger -->
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div class="mode-btn active" id="schedule-once" onclick="setScheduleType('once')" style="font-size:12px;padding:8px">
+          📌 Én gang
+        </div>
+        <div class="mode-btn" id="schedule-recurring" onclick="setScheduleType('recurring')" style="font-size:12px;padding:8px">
+          🔁 Gjentakende
+        </div>
+      </div>
+
+      <!-- Én gang -->
+      <div id="schedule-once-fields">
+        <div style="margin-bottom:8px">
           <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Dato</div>
           <input id="quest-date-input" type="date" class="form-input" style="width:100%">
         </div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <div style="flex:1">
-          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fra</div>
-          <input id="quest-time-from" type="time" class="form-input" style="width:100%">
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fra</div>
+            <input id="quest-time-from" type="time" class="form-input" style="width:100%">
+          </div>
+          <div style="display:flex;align-items:center;padding-top:20px;color:var(--muted);font-size:13px">–</div>
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til</div>
+            <input id="quest-time-to" type="time" class="form-input" style="width:100%">
+          </div>
         </div>
-        <div style="display:flex;align-items:center;padding-top:20px;color:var(--muted);font-size:13px">–</div>
-        <div style="flex:1">
-          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til</div>
-          <input id="quest-time-to" type="time" class="form-input" style="width:100%">
+      </div>
+
+      <!-- Gjentakende -->
+      <div id="schedule-recurring-fields" style="display:none">
+        <div style="margin-bottom:10px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Hvilke dager?</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <div class="day-btn" data-day="1" onclick="toggleDay(this)">Man</div>
+            <div class="day-btn" data-day="2" onclick="toggleDay(this)">Tir</div>
+            <div class="day-btn" data-day="3" onclick="toggleDay(this)">Ons</div>
+            <div class="day-btn" data-day="4" onclick="toggleDay(this)">Tor</div>
+            <div class="day-btn" data-day="5" onclick="toggleDay(this)">Fre</div>
+            <div class="day-btn" data-day="6" onclick="toggleDay(this)">Lør</div>
+            <div class="day-btn" data-day="0" onclick="toggleDay(this)">Søn</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Klokkeslett fra</div>
+            <input id="quest-recurring-time-from" type="time" class="form-input" style="width:100%" value="08:00">
+          </div>
+          <div style="display:flex;align-items:center;padding-top:20px;color:var(--muted);font-size:13px">–</div>
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til</div>
+            <input id="quest-recurring-time-to" type="time" class="form-input" style="width:100%" value="16:00">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fra dato</div>
+            <input id="quest-date-input" type="date" class="form-input" style="width:100%">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til dato</div>
+            <input id="quest-date-end-input" type="date" class="form-input" style="width:100%">
+          </div>
         </div>
       </div>
+
       <div style="font-size:11px;color:var(--muted);margin-top:6px">Valgfritt – hjelper utfører å planlegge</div>
     </div>
       <div class="cost-display"><span id="modal-price-display">250</span> <small>kr</small></div>
@@ -2454,9 +2506,16 @@ async function postJob() {
   const description = document.getElementById('quest-desc-input')?.value?.trim() || '';
   const duration = document.getElementById('quest-duration-input')?.value || '';
   const isCharity = document.getElementById('charity-toggle')?.classList.contains('on') || false;
+  const scheduleType = document.getElementById('schedule-recurring')?.classList.contains('active') ? 'recurring' : 'once';
   const scheduledDate = document.getElementById('quest-date-input')?.value || null;
-  const scheduledTimeFrom = document.getElementById('quest-time-from')?.value || null;
-  const scheduledTimeTo = document.getElementById('quest-time-to')?.value || null;
+  const scheduledTimeFrom = scheduleType === 'recurring'
+    ? document.getElementById('quest-recurring-time-from')?.value || null
+    : document.getElementById('quest-time-from')?.value || null;
+  const scheduledTimeTo = scheduleType === 'recurring'
+    ? document.getElementById('quest-recurring-time-to')?.value || null
+    : document.getElementById('quest-time-to')?.value || null;
+  const recurringDays = scheduleType === 'recurring' ? getSelectedDays() : null;
+  const scheduledDateEnd = scheduleType === 'recurring' ? document.getElementById('quest-date-end-input')?.value || null : null;
 
   const isFirstCome = document.getElementById('mode-firstcome')?.classList.contains('active') || false;
   const isUrgent = toggles[0]?.classList.contains('on') || false;
@@ -2761,6 +2820,21 @@ function closeLeaderboard() {
 }
 
 // Quest mode toggle
+function setScheduleType(type) {
+  document.getElementById('schedule-once').classList.toggle('active', type === 'once');
+  document.getElementById('schedule-recurring').classList.toggle('active', type === 'recurring');
+  document.getElementById('schedule-once-fields').style.display = type === 'once' ? 'block' : 'none';
+  document.getElementById('schedule-recurring-fields').style.display = type === 'recurring' ? 'block' : 'none';
+}
+
+function toggleDay(el) {
+  el.classList.toggle('active');
+}
+
+function getSelectedDays() {
+  return [...document.querySelectorAll('.day-btn.active')].map(el => el.dataset.day).join(',');
+}
+
 function setMode(mode) {
   const ma = document.getElementById('mode-approve');
   const mf = document.getElementById('mode-firstcome');
