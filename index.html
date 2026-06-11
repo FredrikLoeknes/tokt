@@ -675,21 +675,24 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   .zoom-controls { border-radius: 12px; }
   .zoom-btn { width: 44px; height: 44px; font-size: 22px; } /* bigger touch targets */
 
-  /* MODAL – full screen on mobile */
-  #modal-overlay { align-items: flex-end !important; }
-  #modal {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    max-height: 85vh !important;
-    border-radius: 20px 20px 0 0 !important;
-    padding: 20px 16px 40px !important;
-    margin: 0 !important;
-    overflow-y: scroll !important;
-    -webkit-overflow-scrolling: touch !important;
-    position: relative !important;
+  /* MODAL – bottom sheet på mobil */
+  #modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
   }
-  .disclaimer { display: none !important; }
+  #modal {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 90vh !important;
+    max-height: 90vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 20px 16px 80px !important;
+    margin: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    display: block !important;
+  }
   .crypto-row { display: none !important; }
 
   /* BOTTOM NAV BAR */
