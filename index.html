@@ -3437,11 +3437,12 @@ async function runSearch(query) {
   // Search Supabase quests
   let dbResults = [];
   try {
-    const { data: dbQuests } = await sb.from('quests')
-      .select('id, title, category, pay, image_url, lat, lng')
+    const { data: dbQuests, error: qErr } = await sb.from('quests')
+      .select('id, title, description, category, pay, image_url, lat, lng')
       .in('status', ['open', 'expired'])
       .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
       .limit(8);
+    if(qErr) console.warn('Quest search error:', qErr.message);
     dbResults = (dbQuests || []).map(q => ({
       id: q.id, title: q.title, category: q.category || '',
       pay: q.pay, image_url: q.image_url,
@@ -3453,7 +3454,7 @@ async function runSearch(query) {
   let dbSvcResults = [];
   try {
     const { data: dbServices } = await sb.from('services')
-      .select('id, title, category, price, image_url, lat, lng')
+      .select('id, title, description, category, price, image_url, lat, lng')
       .eq('status', 'active')
       .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
       .limit(4);
@@ -3465,6 +3466,7 @@ async function runSearch(query) {
   } catch(e) {}
 
   const all = [...dbResults, ...dbSvcResults, ...demoJobResults, ...demoSvcResults];
+  console.log('Søk etter:', query, '→ DB:', dbResults.length, 'Demo:', demoJobResults.length, 'Tjenester:', dbSvcResults.length + demoSvcResults.length);
 
   if(all.length === 0) {
     results.innerHTML = `<div class="search-empty">Ingen treff for "<strong>${query}</strong>"</div>`;
