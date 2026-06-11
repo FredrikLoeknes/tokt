@@ -2535,7 +2535,7 @@ async function postJob() {
   const scheduledDateEnd = scheduleType === 'recurring' ? document.getElementById('quest-date-end-input')?.value || null : null;
 
   const isFirstCome = document.getElementById('mode-firstcome')?.classList.contains('active') || false;
-  const isUrgent = toggles[0]?.classList.contains('on') || false;
+  const isUrgent = document.querySelector('#modal .toggle')?.classList.contains('on') || false;
 
   let pay = parseInt(document.getElementById('modal-price')?.value) || 250;
   if(isCharity) pay = 0;
@@ -2597,15 +2597,24 @@ async function postJob() {
   }
 
   // Reset form
-  document.getElementById('quest-title-input').value = '';
-  document.getElementById('quest-desc-input').value = '';
-  document.getElementById('modal-price').value = '250';
-  document.getElementById('modal-price-display').textContent = '250';
-  document.getElementById('quest-date-input').value = '';
-  document.getElementById('quest-time-from').value = '';
-  document.getElementById('quest-time-to').value = '';
-  document.getElementById('image-preview').style.display = 'none';
-  document.getElementById('upload-placeholder').style.display = 'block';
+  const safeReset = id => { const el = document.getElementById(id); if(el) el.value = ''; };
+  safeReset('quest-title-input');
+  safeReset('quest-desc-input');
+  safeReset('quest-date-input');
+  safeReset('quest-time-from');
+  safeReset('quest-time-to');
+  safeReset('quest-recurring-time-from');
+  safeReset('quest-recurring-time-to');
+  safeReset('quest-date-end-input');
+  const priceEl = document.getElementById('modal-price');
+  if(priceEl) priceEl.value = '250';
+  const priceDisplay = document.getElementById('modal-price-display');
+  if(priceDisplay) priceDisplay.textContent = '250';
+  const imgPreview = document.getElementById('image-preview');
+  if(imgPreview) imgPreview.style.display = 'none';
+  const uploadPlaceholder = document.getElementById('upload-placeholder');
+  if(uploadPlaceholder) uploadPlaceholder.style.display = 'block';
+  document.querySelectorAll('.day-btn').forEach(d => d.classList.remove('active'));
   if(imgInput) imgInput.value = '';
   if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publiser oppdrag'; }
 
