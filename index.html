@@ -2996,6 +2996,26 @@ function closeLeaderboard() {
 }
 
 // Quest mode toggle
+function toggleCharity(el) {
+  el.classList.toggle('on');
+  const isOn = el.classList.contains('on');
+
+  // Show/hide charity note
+  const note = document.getElementById('charity-note');
+  if(note) note.style.display = isOn ? 'block' : 'none';
+
+  // Lock/unlock price field
+  const priceInput = document.getElementById('modal-price');
+  const priceDisplay = document.getElementById('modal-price-display');
+  if(isOn) {
+    if(priceInput) { priceInput.value = '0'; priceInput.disabled = true; priceInput.style.opacity = '0.4'; priceInput.style.cursor = 'not-allowed'; }
+    if(priceDisplay) priceDisplay.textContent = '0';
+  } else {
+    if(priceInput) { priceInput.value = '250'; priceInput.disabled = false; priceInput.style.opacity = '1'; priceInput.style.cursor = 'text'; }
+    if(priceDisplay) priceDisplay.textContent = '250';
+  }
+}
+
 function toggleKeepOpen(el) {
   const check = document.getElementById('keep-open-check');
   const isOn = check.textContent === '✓';
@@ -4433,10 +4453,11 @@ function closeAuth() {
   const overlay = document.getElementById('auth-overlay');
   overlay.style.opacity = '0';
   overlay.style.transition = 'opacity 0.2s ease';
+  showAuthSuccess('reg', 'Konto opprettet! Sjekk e-posten din for bekreftelseslenke.');
   setTimeout(() => {
     overlay.style.display = 'none';
     overlay.style.opacity = '1';
-  }, 200);
+  }, 3000);
 }
 function switchTab(tab) {
   document.getElementById('form-login').style.display = tab==='login' ? 'block' : 'none';
@@ -4527,8 +4548,22 @@ async function doLogout() {
 function showAuthError(form, msg) {
   const id = form==='login' ? 'login-error' : 'reg-error';
   const el = document.getElementById(id);
-  el.textContent = msg; el.style.display = 'block';
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = 'rgba(229,57,53,0.1)';
+  el.style.borderColor = 'rgba(229,57,53,0.3)';
+  el.style.color = 'var(--red)';
   setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function showAuthSuccess(form, msg) {
+  const id = form==='login' ? 'login-error' : 'reg-error';
+  const el = document.getElementById(id);
+  el.textContent = '✅ ' + msg;
+  el.style.display = 'block';
+  el.style.background = 'rgba(15,169,104,0.1)';
+  el.style.borderColor = 'rgba(15,169,104,0.3)';
+  el.style.color = 'var(--green)';
 }
 
 async function loadUserProfile(user) {
