@@ -2612,10 +2612,16 @@ async function postJob() {
   const imgInput = document.getElementById('quest-image-input');
   if(imgInput?.files[0] && quest) {
     const file = imgInput.files[0];
-    const ext = file.name.split('.').pop();
+    const ext = file.name.split('.').pop().toLowerCase();
     const path = `${currentUser.id}/${quest.id}.${ext}`;
-    const { data: imgData } = await sb.storage.from('quest-images').upload(path, file, { upsert: true });
-    if(imgData) {
+    const { data: imgData, error: imgError } = await sb.storage
+      .from('quest-images')
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if(imgError) {
+      console.warn('Image upload failed:', imgError.message);
+      showToast('⚠️ Oppdrag lagt ut, men bilde feilet: ' + imgError.message);
+    } else if(imgData) {
       const { data: urlData } = sb.storage.from('quest-images').getPublicUrl(path);
       if(urlData?.publicUrl) {
         await sb.from('quests').update({ image_url: urlData.publicUrl }).eq('id', quest.id);
