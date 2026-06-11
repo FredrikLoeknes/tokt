@@ -436,6 +436,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .mode-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(59,111,245,0.08); }
 .day-btn { padding:6px 10px; border:2px solid var(--border); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); background:var(--surface2); transition:all .15s; user-select:none; }
 .day-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(59,111,245,0.1); }
+.rating-tag { display:inline-block; padding:6px 12px; border:1.5px solid var(--border); border-radius:50px; cursor:pointer; font-size:12px; font-weight:500; color:var(--muted); background:var(--surface2); transition:all .15s; user-select:none; }
+.rating-tag.active { border-color:var(--gold); color:var(--gold); background:rgba(201,144,10,0.1); }
 .publish-btn { width:100%; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; transition:all .15s; box-shadow:0 3px 14px var(--accent-glow); }
 .publish-btn:hover { transform:translateY(-1px); box-shadow:0 5px 20px var(--accent-glow); }
 .crypto-row { display:flex; gap:8px; margin-top:8px; }
@@ -1396,6 +1398,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         <div class="mode-btn" id="schedule-recurring" onclick="setScheduleType('recurring')" style="font-size:12px;padding:8px">
           🔁 Gjentakende
         </div>
+        <div class="mode-btn" id="schedule-flexible" onclick="setScheduleType('flexible')" style="font-size:12px;padding:8px">
+          🕐 Fleksibel
+        </div>
       </div>
 
       <!-- Én gang -->
@@ -1452,6 +1457,24 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
             <input id="quest-date-end-input" type="date" class="form-input" style="width:100%">
           </div>
         </div>
+      </div>
+
+      <!-- Fleksibel -->
+      <div id="schedule-flexible-fields" style="display:none;background:rgba(59,111,245,0.06);border:1px solid rgba(59,111,245,0.15);border-radius:10px;padding:12px">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">🕐 Fleksibelt tidsrom</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Oppdraget kan gjøres når som helst – men mellom disse klokkeslettene</div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fra kl.</div>
+            <input id="quest-flexible-time-from" type="time" class="form-input" style="width:100%">
+          </div>
+          <div style="display:flex;align-items:center;padding-top:20px;color:var(--muted);font-size:13px">–</div>
+          <div style="flex:1">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til kl.</div>
+            <input id="quest-flexible-time-to" type="time" class="form-input" style="width:100%">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">💡 Oppdraget ligger ute til noen tar det – ingen utløpsdato</div>
       </div>
 
       <div style="font-size:11px;color:var(--muted);margin-top:6px">Valgfritt – hjelper utfører å planlegge</div>
@@ -2083,9 +2106,7 @@ function questToJob(q) {
     desc: q.description || '',
     image: q.image_url || null,
     pay: q.pay,
-    rating: 5.0,
-    applicants: 0,
-    firstCome: q.is_first_come,
+    rating: null,
     scheduledDate: q.scheduled_date || null,
     scheduledTimeFrom: q.scheduled_time_from || null,
     scheduledTimeTo: q.scheduled_time_to || null,
@@ -2287,7 +2308,7 @@ function showPanel(job) {
   }
   document.getElementById('panel-meta').innerHTML = `
     <div class="meta-item"><div class="meta-label" id="panel-reward-label">Reward</div><div class="meta-value green">${job.pay} kr</div></div>
-    <div class="meta-item"><div class="meta-label" id="panel-rating-label">Rating</div><div class="meta-value yellow">★ ${job.rating}</div></div>
+    <div class="meta-item"><div class="meta-label" id="panel-rating-label">Rating</div><div class="meta-value yellow">${job.rating ? '★ ' + job.rating : '–'}</div></div>
     <div class="meta-item"><div class="meta-label" id="panel-applicants-label">Applicants</div><div class="meta-value">${job.applicants}</div></div>`;
 
   // Show scheduled time if set
@@ -2297,10 +2318,11 @@ function showPanel(job) {
     const dateStr = job.scheduledDate
       ? new Date(job.scheduledDate).toLocaleDateString('nb-NO', { weekday:'long', day:'numeric', month:'long' })
       : '';
+    const trimTime = t => t ? t.slice(0,5) : '';
     const timeStr = job.scheduledTimeFrom
       ? job.scheduledTimeTo
-        ? `${job.scheduledTimeFrom} – ${job.scheduledTimeTo}`
-        : `Fra ${job.scheduledTimeFrom}`
+        ? `${trimTime(job.scheduledTimeFrom)} – ${trimTime(job.scheduledTimeTo)}`
+        : `Fra ${trimTime(job.scheduledTimeFrom)}`
       : '';
     const schedDiv = document.createElement('div');
     schedDiv.id = 'panel-schedule';
@@ -2523,13 +2545,19 @@ async function postJob() {
   const description = document.getElementById('quest-desc-input')?.value?.trim() || '';
   const duration = document.getElementById('quest-duration-input')?.value || '';
   const isCharity = document.getElementById('charity-toggle')?.classList.contains('on') || false;
-  const scheduleType = document.getElementById('schedule-recurring')?.classList.contains('active') ? 'recurring' : 'once';
-  const scheduledDate = document.getElementById('quest-date-input')?.value || null;
+  const scheduleType = document.getElementById('schedule-recurring')?.classList.contains('active') ? 'recurring'
+    : document.getElementById('schedule-flexible')?.classList.contains('active') ? 'flexible'
+    : 'once';
+  const scheduledDate = scheduleType === 'once' ? document.getElementById('quest-date-input')?.value || null : null;
   const scheduledTimeFrom = scheduleType === 'recurring'
     ? document.getElementById('quest-recurring-time-from')?.value || null
+    : scheduleType === 'flexible'
+    ? document.getElementById('quest-flexible-time-from')?.value || null
     : document.getElementById('quest-time-from')?.value || null;
   const scheduledTimeTo = scheduleType === 'recurring'
     ? document.getElementById('quest-recurring-time-to')?.value || null
+    : scheduleType === 'flexible'
+    ? document.getElementById('quest-flexible-time-to')?.value || null
     : document.getElementById('quest-time-to')?.value || null;
   const recurringDays = scheduleType === 'recurring' ? getSelectedDays() : null;
   const scheduledDateEnd = scheduleType === 'recurring' ? document.getElementById('quest-date-end-input')?.value || null : null;
@@ -2849,8 +2877,10 @@ function closeLeaderboard() {
 function setScheduleType(type) {
   document.getElementById('schedule-once').classList.toggle('active', type === 'once');
   document.getElementById('schedule-recurring').classList.toggle('active', type === 'recurring');
+  document.getElementById('schedule-flexible').classList.toggle('active', type === 'flexible');
   document.getElementById('schedule-once-fields').style.display = type === 'once' ? 'block' : 'none';
   document.getElementById('schedule-recurring-fields').style.display = type === 'recurring' ? 'block' : 'none';
+  document.getElementById('schedule-flexible-fields').style.display = type === 'flexible' ? 'block' : 'none';
 }
 
 function toggleDay(el) {
@@ -2897,11 +2927,25 @@ function showRating(name, convId='', ratedId='', questId='') {
         ${[1,2,3,4,5].map(i=>`<span class="star" onclick="rateStar(${i})" style="cursor:pointer;font-size:38px;opacity:.25;transition:all .15s;filter:grayscale(1)">★</span>`).join('')}
       </div>
       <div style="font-size:14px;font-weight:600;color:var(--gold);margin:10px 0 16px;min-height:20px" id="rating-label">Trykk en stjerne</div>
-      <textarea id="rating-comment" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;resize:none;height:80px;transition:border-color .15s" placeholder="Valgfritt: Legg igjen en kommentar…" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button onclick="submitRating()" id="submit-rating-btn" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">Send vurdering</button>
-        <button onclick="document.getElementById('rating-panel').remove()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px 16px;font-size:14px;cursor:pointer;font-family:inherit">Hopp over</button>
+    </div>
+    <div id="rating-tags" style="display:none;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Hva var bra?</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px" id="tag-list">
+        <span class="rating-tag" onclick="toggleRatingTag(this)">⚡ Rask</span>
+        <span class="rating-tag" onclick="toggleRatingTag(this)">💬 God kommunikasjon</span>
+        <span class="rating-tag" onclick="toggleRatingTag(this)">🤝 Pålitelig</span>
+        <span class="rating-tag" onclick="toggleRatingTag(this)">✨ Over forventning</span>
+        <span class="rating-tag" onclick="toggleRatingTag(this)">🔄 Ville brukt igjen</span>
+        <span class="rating-tag" onclick="toggleRatingTag(this)">💪 Grundig</span>
       </div>
+    </div>
+    <div id="rating-comment-wrap" style="display:none;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Kommentar</div>
+      <textarea id="rating-comment" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;resize:none;height:100px;transition:border-color .15s;line-height:1.5" placeholder="Del din opplevelse med andre brukere…" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button onclick="submitRating()" id="submit-rating-btn" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">Send vurdering</button>
+      <button onclick="document.getElementById('rating-panel').remove()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px 16px;font-size:14px;cursor:pointer;font-family:inherit">Hopp over</button>
     </div>`;
   document.body.appendChild(div);
 }
@@ -2914,6 +2958,37 @@ function rateStar(n) {
     s.style.transform = i < n ? 'scale(1.1)' : 'scale(1)';
   });
   document.getElementById('rating-label').textContent = ratingLabels[n];
+
+  // Show tags and comment after star selection
+  const tags = document.getElementById('rating-tags');
+  const commentWrap = document.getElementById('rating-comment-wrap');
+  if(tags) tags.style.display = 'block';
+  if(commentWrap) commentWrap.style.display = 'block';
+
+  // Change tag labels based on rating
+  if(n <= 2) {
+    document.getElementById('tag-list').innerHTML = `
+      <span class="rating-tag" onclick="toggleRatingTag(this)">🐢 Treg</span>
+      <span class="rating-tag" onclick="toggleRatingTag(this)">💬 Dårlig kommunikasjon</span>
+      <span class="rating-tag" onclick="toggleRatingTag(this)">❌ Upålitelig</span>
+      <span class="rating-tag" onclick="toggleRatingTag(this)">😐 Under forventning</span>
+    `;
+    document.getElementById('rating-comment').placeholder = 'Fortell hva som kunne vært bedre…';
+  } else {
+    document.getElementById('tag-list').innerHTML = `
+      <span class="rating-tag" onclick="toggleRatingTag(this)">⚡ Rask</span>
+      <span class="rating-tag" onclick="toggleRatingTag(this)">💬 God kommunikasjon</span>
+      <span class="rating-tag" onclick="toggleRatingTag(this)">🤝 Pålitelig</span>
+      <span class="rating-tag" onclick="toggleRatingTag(this)">✨ Over forventning</span>
+      <span class="rating-tag" onclick="toggleRatingTag(this)">🔄 Ville brukt igjen</span>
+      <span class="rating-tag" onclick="toggleRatingTag(this)">💪 Grundig</span>
+    `;
+    document.getElementById('rating-comment').placeholder = 'Del din opplevelse med andre brukere…';
+  }
+}
+
+function toggleRatingTag(el) {
+  el.classList.toggle('active');
 }
 
 async function submitRating() {
@@ -2924,6 +2999,8 @@ async function submitRating() {
   if(btn) { btn.textContent = 'Sender…'; btn.disabled = true; }
 
   const comment = document.getElementById('rating-comment')?.value?.trim() || '';
+  const tags = [...document.querySelectorAll('.rating-tag.active')].map(t => t.textContent).join(', ');
+  const fullComment = [tags, comment].filter(Boolean).join('\n') || null;
 
   const { error } = await sb.from('ratings').insert({
     conversation_id: ratingContext.convId || null,
@@ -2931,7 +3008,7 @@ async function submitRating() {
     rater_id: currentUser.id,
     rated_id: ratingContext.ratedId || null,
     score: selectedRating,
-    comment: comment || null
+    comment: fullComment
   });
 
   document.getElementById('rating-panel')?.remove();
@@ -3186,18 +3263,23 @@ function questCard(q, type) {
   const statusLabel = q.status === 'completed' ? '🏆 Fullført'
     : q.status === 'taken' ? '🔒 Tildelt'
     : q.status === 'open' ? '🟢 Åpen'
+    : q.status === 'paused' ? '⏸️ På pause'
     : q.status === 'expired' ? '⏰ Utløpt'
+    : q.status === 'closed' ? '🔴 Avsluttet'
     : '🗑️ Slettet';
   const statusColor = q.status === 'completed' ? 'var(--accent)'
     : q.status === 'taken' ? '#f97316'
     : q.status === 'open' ? 'var(--green)'
+    : q.status === 'paused' ? '#f59e0b'
     : q.status === 'expired' ? 'var(--muted)'
+    : q.status === 'closed' ? 'var(--red)'
     : 'var(--muted)';
-  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px">
     <div style="padding:14px 16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div style="font-size:15px;font-weight:700;flex:1;margin-right:8px">${q.title}</div>
-        <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:${statusColor};border:1px solid ${statusColor};white-space:nowrap">${statusLabel}</span>
+        <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px;background:${statusColor}18;color:${statusColor};border:1px solid ${statusColor}44;white-space:nowrap">${statusLabel}</span>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">${q.category||'Annet'}</span>
@@ -3221,10 +3303,12 @@ function questCard(q, type) {
           }).join('')}
         </div>
       ` : ''}
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${applicants.length > 0 ? `<button onclick="openChat('${applicants[0]?.id||''}','${q.title}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : ''}
         ${q.status==='taken' ? `<button onclick="completeQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✅ Merk fullført</button>` : ''}
-        ${q.status==='open' ? `<button onclick="deleteQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">🗑️</button>` : ''}
+        ${q.status==='open' ? `<button onclick="pauseQuest('${q.id}')" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⏸️ Pause</button>` : ''}
+        ${q.status==='paused' ? `<button onclick="resumeQuest('${q.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">▶️ Gjenåpne</button>` : ''}
+        ${(q.status==='open'||q.status==='paused') ? `<button onclick="closeQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button>` : ''}
         ${q.status==='expired' ? `<button onclick="repostQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔄 Legg ut på nytt</button>` : ''}
       </div>
     </div>
@@ -3255,6 +3339,28 @@ async function rejectApplicant(convId) {
   await sb.from('conversations').update({ status: 'rejected' }).eq('id', convId);
   showToast('❌ Søker avvist');
   loadMyQuests();
+}
+
+async function pauseQuest(questId) {
+  await sb.from('quests').update({ status: 'paused' }).eq('id', questId);
+  showToast('⏸️ Oppdrag satt på pause');
+  loadMyQuests();
+  addMarkers();
+}
+
+async function resumeQuest(questId) {
+  await sb.from('quests').update({ status: 'open' }).eq('id', questId);
+  showToast('▶️ Oppdrag gjenåpnet!');
+  loadMyQuests();
+  addMarkers();
+}
+
+async function closeQuest(questId) {
+  if(!confirm('Avslutte oppdraget? Det vil ikke lenger vises på kartet.')) return;
+  await sb.from('quests').update({ status: 'closed' }).eq('id', questId);
+  showToast('🔴 Oppdrag avsluttet');
+  loadMyQuests();
+  addMarkers();
 }
 
 async function deleteQuest(questId) {
