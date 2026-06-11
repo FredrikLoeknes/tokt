@@ -1667,6 +1667,10 @@ const LANGUAGES = {
 // ── Active language (default: Norwegian) ──
 let currentLang = localStorage.getItem('tokt-lang') || 'no';
 
+document.addEventListener('DOMContentLoaded', () => {
+  try { applyLanguage(); } catch(e) {}
+});
+
 function t(key) {
   return LANGUAGES[currentLang]?.[key] ?? LANGUAGES['en']?.[key] ?? key;
 }
@@ -1686,6 +1690,7 @@ function setLanguage(code) {
 
 function applyLanguage() {
   const L = LANGUAGES[currentLang];
+  if(!L) return;
 
   // Topbar
   safeText('btn-post-quest', L.postQuest);
@@ -4022,15 +4027,19 @@ function switchTab(tab) {
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
-  const errEl = document.getElementById('login-error');
   const btn = document.getElementById('login-btn');
   if(!email || !password) { showAuthError('login','Fyll inn e-post og passord'); return; }
   btn.textContent = 'Logger inn…'; btn.disabled = true;
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
   btn.textContent = 'Logg inn'; btn.disabled = false;
-  if(error) { showAuthError('login', error.message === 'Invalid login credentials' ? 'Feil e-post eller passord' : error.message); return; }
-  closeAuth();
-  showToast('👋 Velkommen tilbake!');
+  if(error) {
+    showAuthError('login', error.message === 'Invalid login credentials' ? 'Feil e-post eller passord' : error.message);
+    return;
+  }
+  // Close first, then show toast so it's visible
+  const overlay = document.getElementById('auth-overlay');
+  overlay.style.display = 'none';
+  showToast('👋 Velkommen tilbake, ' + (data.user?.email?.split('@')[0] || '') + '!');
   await loadUserProfile(data.user);
 }
 
