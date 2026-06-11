@@ -676,23 +676,27 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   .zoom-btn { width: 44px; height: 44px; font-size: 22px; } /* bigger touch targets */
 
   /* MODAL – bottom sheet på mobil */
-  #modal-overlay {
+  #modal-overlay.open {
+    display: flex !important;
     align-items: flex-end !important;
-    padding: 0 !important;
+    justify-content: center !important;
   }
   #modal {
     width: 100vw !important;
     max-width: 100vw !important;
-    height: 90vh !important;
-    max-height: 90vh !important;
+    height: 90svh !important;
+    max-height: 90svh !important;
     border-radius: 20px 20px 0 0 !important;
-    padding: 20px 16px 80px !important;
+    padding: 20px 16px 60px !important;
     margin: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
-    display: block !important;
+    box-sizing: border-box !important;
+    float: none !important;
+    flex-direction: column !important;
   }
+  #modal * { max-width: 100% !important; box-sizing: border-box !important; }
   .crypto-row { display: none !important; }
 
   /* BOTTOM NAV BAR */
