@@ -1856,22 +1856,7 @@ function getRank(quests) {
   return r;
 }
 
-// Ensure mapbox loads before init
-function initMap() {
-  if (typeof mapboxgl === 'undefined') {
-    setTimeout(initMap, 100);
-    return;
-  }
-  mapboxgl.accessToken = 'pk.eyJ1IjoiZnJlZHJpa2xvZWtuZXMiLCJhIjoiY21xNjl6c25kMDFodjJxcXprcXc0NHYzMyJ9.e3IAYTrRQ6053w-zO-4fvw';
-
-  window.map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/light-v11',
-    center: [10.757933, 59.911491],
-    zoom: 13,
-    attributionControl: false
-  });
-
+// ── DEMO DATA – global so search and markers can access them ──
 const JOBS = [
   { id:'j1', type:'normal', title:'Klipp gresset 🌿', label:'Klipp gresset · 150 kr',
     tags:[{t:'🏠 Hjem'},{t:'~45 min'},{t:'Grünerløkka'}],
@@ -1919,6 +1904,22 @@ const JOBS = [
     pay:250, rating:4.6, applicants:0, coords:[10.7290,59.9215], people:[]
   }
 ];
+
+// Ensure mapbox loads before init
+function initMap() {
+  if (typeof mapboxgl === 'undefined') {
+    setTimeout(initMap, 100);
+    return;
+  }
+  mapboxgl.accessToken = 'pk.eyJ1IjoiZnJlZHJpa2xvZWtuZXMiLCJhIjoiY21xNjl6c25kMDFodjJxcXprcXc0NHYzMyJ9.e3IAYTrRQ6053w-zO-4fvw';
+
+  window.map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/light-v11',
+    center: [10.757933, 59.911491],
+    zoom: 13,
+    attributionControl: false
+  });
 
 // ── DEMO SERVICES (shown when DB empty) ──
 const DEMO_SERVICES = [
