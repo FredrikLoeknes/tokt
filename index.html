@@ -702,7 +702,18 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     flex-shrink: 0 !important;
     align-self: flex-end !important;
   }
-  .crypto-row { display: none !important; }
+  /* Publiser-knapp alltid synlig nederst */
+  .publish-btn-wrap {
+    position: sticky !important;
+    bottom: 0 !important;
+    background: var(--surface) !important;
+    padding: 12px 0 8px !important;
+    margin: 0 -16px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    border-top: 1px solid var(--border) !important;
+    z-index: 10 !important;
+  }
 
   /* BOTTOM NAV BAR */
   #bottom-nav { display: flex !important; }
@@ -1445,6 +1456,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
       <div style="font-size:11px;color:var(--muted);margin-top:6px">Valgfritt – hjelper utfører å planlegge</div>
     </div>
+
+    <div class="form-group">
+      <label class="form-label">Betaling</label>
       <div class="cost-display"><span id="modal-price-display">250</span> <small>kr</small></div>
       <input id="modal-price" type="number" min="0" max="50000" value="250"
         oninput="document.getElementById('modal-price-display').textContent=this.value||0"
@@ -1453,6 +1467,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         placeholder="Skriv inn beløp…">
       <div class="cost-note">Høyere betaling = større markør på kartet</div>
     </div>
+
     <div class="form-group">
       <label class="form-label">Oppdragsmodus</label>
       <div class="quest-mode-toggle">
@@ -1485,10 +1500,12 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <div style="text-align:center;margin:8px 0 4px;font-size:11px;color:var(--muted)">
       Ved å publisere godtar du <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">brukervilkårene</a>. Betal aldri forskudd.
     </div>
-    <button class="publish-btn" onclick="postJob()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-      Publiser oppdrag
-    </button>
+    <div class="publish-btn-wrap">
+      <button class="publish-btn" onclick="postJob()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Publiser oppdrag
+      </button>
+    </div>
     <div class="crypto-row">
       <button class="crypto-btn" style="background:#f7931a18;color:#f7931a" onclick="postJob()">₿ Bitcoin <span style="font-size:9px;opacity:.7">soon</span></button>
       <button class="crypto-btn" style="background:#0033ad18;color:#4a7de8" onclick="postJob()">₳ Cardano <span style="font-size:9px;opacity:.7">soon</span></button>
