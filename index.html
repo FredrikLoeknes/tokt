@@ -1193,9 +1193,16 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <div class="popup-meta" id="panel-meta"></div>
     <div id="panel-applicants"></div>
   </div>
-  <div class="payment-note">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    <span id="panel-payment-note">Payment via <strong style="color:#ff5b24">&nbsp;Vipps&nbsp;</strong> directly between parties</span>
+  <div class="payment-note" style="margin:0 16px 12px;padding:10px 12px;background:rgba(255,91,36,0.07);border:1px solid rgba(255,91,36,0.2);border-radius:10px;font-size:11px;color:#e07050">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="panel-payment-note">Betaling via <strong style="color:#ff5b24">Vipps</strong> direkte mellom partene</span>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <span style="background:rgba(255,91,36,0.1);border-radius:50px;padding:2px 8px">📱 Vipps-nr kreves</span>
+      <span style="background:rgba(255,91,36,0.1);border-radius:50px;padding:2px 8px">🔒 Utfører bekrefter mottak</span>
+      <span style="background:rgba(255,91,36,0.1);border-radius:50px;padding:2px 8px;cursor:pointer;text-decoration:underline" onclick="showHowItWorks()">❓ Slik fungerer det</span>
+    </div>
   </div>
   <!-- Quest type badge -->
   <div id="panel-quest-type" style="padding:0 16px 12px;display:flex;gap:8px;align-items:center">
@@ -1204,6 +1211,63 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   <div class="panel-actions">
     <button class="btn-apply" onclick="applyJob()"><span id="panel-accept-btn">✦ Ta oppdraget</span></button>
     <button class="btn-save">🔖</button>
+  </div>
+</div>
+
+<!-- SLIK FUNGERER TOKT MODAL -->
+<div id="how-it-works-overlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--surface);border-radius:24px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+    <div style="padding:24px 24px 0;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:20px;font-weight:800">⚡ Slik fungerer Tokt</div>
+      <button onclick="document.getElementById('how-it-works-overlay').style.display='none'" style="background:var(--surface2);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--muted)">✕</button>
+    </div>
+    <div style="padding:20px 24px">
+
+      <!-- Steg -->
+      <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:24px">
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;flex-shrink:0">1</div>
+          <div><div style="font-size:14px;font-weight:700;margin-bottom:2px">Legg ut oppdrag</div><div style="font-size:12px;color:var(--muted);line-height:1.5">Beskriv hva du trenger hjelp til, sett pris og legg ut på kartet. Andre i nærområdet ser det umiddelbart.</div></div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#3b6ff5,#0fa968);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;flex-shrink:0">2</div>
+          <div><div style="font-size:14px;font-weight:700;margin-bottom:2px">Utfører søker</div><div style="font-size:12px;color:var(--muted);line-height:1.5">Interesserte sender søknad. Du velger hvem du vil, eller aktiver "Førstemann til mølla" for automatisk tildeling.</div></div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0fa968,#3b6ff5);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;flex-shrink:0">3</div>
+          <div><div style="font-size:14px;font-weight:700;margin-bottom:2px">Chat og avtal</div><div style="font-size:12px;color:var(--muted);line-height:1.5">Snakk direkte i chatten. Avtal tidspunkt, detaljer og møtested.</div></div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#ff5b24,#f97316);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;flex-shrink:0">4</div>
+          <div><div style="font-size:14px;font-weight:700;margin-bottom:2px">Jobb gjøres</div><div style="font-size:12px;color:var(--muted);line-height:1.5">Utfører gjør jobben. Begge parter har hverandres telefonnummer tilgjengelig i appen.</div></div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#ff5b24,#a855f7);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">💸</div>
+          <div><div style="font-size:14px;font-weight:700;margin-bottom:2px">Betal via Vipps</div><div style="font-size:12px;color:var(--muted);line-height:1.5">Oppdragsgiver sender betaling direkte via Vipps. Utfører bekrefter mottak i appen. Tokt tar <strong>ingen provisjon</strong>.</div></div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#f97316);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">⭐</div>
+          <div><div style="font-size:14px;font-weight:700;margin-bottom:2px">Vurder hverandre</div><div style="font-size:12px;color:var(--muted);line-height:1.5">Etter fullført oppdrag gir begge en vurdering. Gode vurderinger gir høyere rang og mer synlighet.</div></div>
+        </div>
+      </div>
+
+      <!-- Betingelser -->
+      <div style="background:rgba(255,91,36,0.06);border:1px solid rgba(255,91,36,0.2);border-radius:14px;padding:16px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#e07050">📋 Viktige betingelser</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--muted);line-height:1.5">
+          <div>💸 <strong>All betaling skjer via Vipps</strong> direkte mellom partene. Tokt er kun formidler.</div>
+          <div>🚫 <strong>Betal aldri på forhånd</strong> til noen du ikke kjenner.</div>
+          <div>📱 <strong>Telefonnummer er påkrevd</strong> for å søke eller godkjenne oppdrag.</div>
+          <div>⚠️ <strong>Oppdrag over 10 000 kr</strong> bør ha skriftlig avtale.</div>
+          <div>🔒 <strong>Utfører bekrefter</strong> at betaling er mottatt før oppdraget lukkes.</div>
+          <div>❌ <strong>Tokt tar null ansvar</strong> for kvalitet, skader eller tvister.</div>
+        </div>
+      </div>
+
+      <a href="/terms.html" target="_blank" style="display:block;text-align:center;font-size:12px;color:var(--accent);text-decoration:underline;margin-bottom:8px">Les fullstendige brukervilkår og personvernserklæring →</a>
+
+      <button onclick="document.getElementById('how-it-works-overlay').style.display='none'" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Forstått! 👍</button>
+    </div>
   </div>
 </div>
 
@@ -2939,6 +3003,11 @@ function toggleKeepOpen(el) {
   check.style.background = isOn ? 'var(--surface2)' : 'var(--accent)';
   check.style.borderColor = isOn ? 'var(--border)' : 'var(--accent)';
   check.style.color = '#fff';
+}
+
+function showHowItWorks() {
+  const overlay = document.getElementById('how-it-works-overlay');
+  overlay.style.display = 'flex';
 }
 
 function setScheduleType(type) {
