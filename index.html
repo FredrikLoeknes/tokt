@@ -261,15 +261,12 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 }
 
 /* ── RANK BADGE COLORS ── */
-.rank-trell      { background:rgba(107,114,128,0.12); color:#6b7280; border-color:#6b7280; }
-.rank-bonde      { background:rgba(139,90,43,0.12); color:#8b5a2b; border-color:#8b5a2b; }
-.rank-varjager   { background:rgba(59,111,245,0.12); color:var(--accent); border-color:var(--accent); }
-.rank-hovding    { background:rgba(124,92,252,0.12); color:var(--accent2); border-color:var(--accent2); }
-.rank-gode       { background:rgba(15,169,104,0.12); color:var(--green); border-color:var(--green); }
-.rank-vaering    { background:rgba(249,115,22,0.12); color:#f97316; border-color:#f97316; }
-.rank-jarl       { background:rgba(201,144,10,0.15); color:var(--gold); border-color:var(--gold); }
-.rank-konge      { background:linear-gradient(135deg,rgba(201,144,10,0.2),rgba(124,92,252,0.2)); color:var(--gold); border-color:var(--gold); }
-.rank-valkyrje   { background:linear-gradient(135deg,rgba(233,30,140,0.15),rgba(124,92,252,0.2)); color:#e91e8c; border-color:#e91e8c; font-style:italic; }
+.rank-wanderer { background:rgba(107,114,128,0.12); color:#6b7280; border-color:#6b7280; }
+.rank-scout { background:rgba(59,111,245,0.12); color:var(--accent); border-color:var(--accent); }
+.rank-rover { background:rgba(124,92,252,0.12); color:var(--accent2); border-color:var(--accent2); }
+.rank-pathfinder { background:rgba(15,169,104,0.12); color:var(--green); border-color:var(--green); }
+.rank-champion { background:rgba(201,144,10,0.15); color:var(--gold); border-color:var(--gold); }
+.rank-legend { background:linear-gradient(135deg,rgba(201,144,10,0.2),rgba(124,92,252,0.2)); color:var(--gold); border-color:var(--gold); }
 
 /* ── MARKERS ── */
 .mapbox-marker {
@@ -944,18 +941,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 <!-- TOPBAR -->
 <div id="topbar">
   <div class="logo">
-    <div style="position:relative;display:inline-block">
-      <!-- Buet tekst over logoen -->
-      <svg width="90" height="18" viewBox="0 0 90 18" style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);overflow:visible">
-        <defs>
-          <path id="arc" d="M 5,16 Q 45,-4 85,16"/>
-        </defs>
-        <text font-family="Skranji, cursive" font-size="9" fill="var(--muted)" opacity="0.7" letter-spacing="1">
-          <textPath href="#arc" startOffset="50%" text-anchor="middle">nå skal vi på</textPath>
-        </text>
-      </svg>
-      <div class="logo-name">Tokt<span>.app</span></div>
-    </div>
+    <div class="logo-name">Tokt<span>.app</span></div>
   </div>
 
   <div class="logo-xp">
@@ -1224,7 +1210,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   </div>
   <div class="panel-actions">
     <button class="btn-apply" onclick="applyJob()"><span id="panel-accept-btn">✦ Ta oppdraget</span></button>
-    <button id="panel-edit-btn" onclick="editQuest()" style="display:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 13px;font-size:14px;cursor:pointer">✏️</button>
     <button class="btn-save">🔖</button>
   </div>
 </div>
@@ -1307,15 +1292,12 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   <div class="lb-ranks-info">
     <div id="lb-rank-ladder-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:10px 14px 6px">Rangstige</div>
     <div class="rank-ladder">
-      <span class="lb-badge rank-trell">Trell</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-bonde">Bonde</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-varjager">Varjager</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-hovding">Høvding</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-gode">Gode</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-vaering">Væring</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-jarl">Jarl</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-konge">Konge</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-valkyrje">Valkyrje</span>
+      <span class="lb-badge rank-wanderer">Wanderer</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-scout">Scout</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-rover">Rover</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-pathfinder">Pathfinder</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-champion">Champion</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-legend">Legend</span>
     </div>
   </div>
   <div id="lb-top-questers-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:10px 14px 6px;border-top:1px solid var(--border)">Topp-utførere</div>
@@ -1323,37 +1305,37 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <div class="lb-rank gold">1</div>
     <div class="lb-avatar" style="background:#f5c51820;color:#c9900a">JS</div>
     <div class="lb-info"><div class="lb-name">Jonas S.</div><div class="lb-quests">47 oppdrag · ★ 4.97</div></div>
-    <span class="lb-badge rank-valkyrje">Valkyrje</span>
+    <span class="lb-badge rank-legend">Legend</span>
   </div>
   <div class="lb-row">
     <div class="lb-rank silver">2</div>
     <div class="lb-avatar" style="background:#4f8ef720;color:#3b6ff5">AK</div>
     <div class="lb-info"><div class="lb-name">Anders K.</div><div class="lb-quests">31 oppdrag · ★ 4.9</div></div>
-    <span class="lb-badge rank-jarl">Jarl</span>
+    <span class="lb-badge rank-champion">Champion</span>
   </div>
   <div class="lb-row">
     <div class="lb-rank bronze">3</div>
     <div class="lb-avatar" style="background:#2de08a20;color:#0fa968">MR</div>
     <div class="lb-info"><div class="lb-name">Maria R.</div><div class="lb-quests">18 oppdrag · ★ 4.8</div></div>
-    <span class="lb-badge rank-hovding">Høvding</span>
+    <span class="lb-badge rank-pathfinder">Pathfinder</span>
   </div>
   <div class="lb-row">
     <div class="lb-rank">4</div>
     <div class="lb-avatar" style="background:#7c5cfc20;color:#7c5cfc">TH</div>
     <div class="lb-info"><div class="lb-name">Tone H.</div><div class="lb-quests">11 oppdrag · ★ 5.0</div></div>
-    <span class="lb-badge rank-varjager">Varjager</span>
+    <span class="lb-badge rank-rover">Rover</span>
   </div>
   <div class="lb-row">
     <div class="lb-rank">5</div>
     <div class="lb-avatar" style="background:#6b728020;color:#6b7280">PL</div>
     <div class="lb-info"><div class="lb-name">Per L.</div><div class="lb-quests">4 oppdrag · ★ 4.7</div></div>
-    <span class="lb-badge rank-bonde">Bonde</span>
+    <span class="lb-badge rank-scout">Scout</span>
   </div>
 </div>
 
 <!-- CORNER WIDGETS -->
 <div id="corner-widgets">
-  <div id="week-worker" onclick="showUserProfile('Jonas S.','JS','#f5c518',47,4.97,'Valkyrje')" title="Se profil">
+  <div id="week-worker" onclick="showUserProfile('Jonas S.','JS','#f5c518',47,4.97,'Legend')" title="Se profil">
     <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
       <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold)">👑 Ukens utfører</div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
@@ -1452,21 +1434,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <div class="form-group">
       <label class="form-label">Beskrivelse</label>
       <textarea id="quest-desc-input" class="form-textarea" placeholder="Beskriv hva som skal gjøres, hva som er tilgjengelig og andre detaljer…"></textarea>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">🧰 Utstyr til jobben</label>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <div class="mode-btn active" id="equip-provided" onclick="setEquipment('provided')" style="font-size:12px;padding:10px 8px;text-align:center">
-          🔧 Utstyr finnes<br><span style="font-size:10px;font-weight:400;color:var(--muted)">Jeg har alt som trengs</span>
-        </div>
-        <div class="mode-btn" id="equip-own" onclick="setEquipment('own')" style="font-size:12px;padding:10px 8px;text-align:center">
-          🎒 Ta med eget<br><span style="font-size:10px;font-weight:400;color:var(--muted)">Utfører trenger utstyr</span>
-        </div>
-      </div>
-      <input id="quest-equipment-note" class="form-input" type="text" 
-        placeholder="Spesifiser utstyr om nødvendig, f.eks. «støvsuger og mopp»…"
-        style="font-size:13px">
     </div>
     <div class="form-group">
       <label class="form-label">Bilde (valgfritt)</label>
@@ -2068,15 +2035,12 @@ document.head.appendChild(manifestLink);
 
 // Rank system – global so all functions can access it
 const RANKS = [
-  { name:'Trell',    cls:'rank-trell',    min:0,  desc:'Samfunnets laveste klasse. Gjør det tyngste arbeidet, men alle starter et sted.' },
-  { name:'Bonde',    cls:'rank-bonde',    min:2,  desc:'Den frie og største delen av befolkningen. Eier egen gård og deltar i samfunnet.' },
-  { name:'Varjager', cls:'rank-varjager', min:5,  desc:'Skandinaver som reiste ut i verden for handel og eventyr.' },
-  { name:'Høvding',  cls:'rank-hovding',  min:10, desc:'En lokal leder som samler en hær og leder viktige tokt.' },
-  { name:'Gode',     cls:'rank-gode',     min:18, desc:'En høvding som også fungerer som religiøs leder og dommer på tinget.' },
-  { name:'Væring',   cls:'rank-vaering',  min:30, desc:'Elitesoldater i den bysantinske keiserens livgarde i Konstantinopel.' },
-  { name:'Jarl',     cls:'rank-jarl',     min:50, desc:'Den mektigste klassen under kongen. Kontrollerer store landområder.' },
-  { name:'Konge',    cls:'rank-konge',    min:75, desc:'Det øverste sjiktet i samfunnet. En overkonge som styrer over jarler og bønder.' },
-  { name:'Valkyrje', cls:'rank-valkyrje', min:100,desc:'De som velger hvem som er verdig. Legendariske krigere som overgår alle andre.' }
+  { name:'Wanderer', cls:'rank-wanderer', min:0 },
+  { name:'Scout',    cls:'rank-scout',    min:1 },
+  { name:'Rover',    cls:'rank-rover',    min:4 },
+  { name:'Pathfinder',cls:'rank-pathfinder',min:8 },
+  { name:'Champion', cls:'rank-champion', min:16 },
+  { name:'Legend',   cls:'rank-legend',   min:31 }
 ];
 function getRank(quests) {
   let r = RANKS[0];
@@ -2417,13 +2381,6 @@ function showPanel(job) {
   jobPanelEl.dataset.questId = job.id || '';
   jobPanelEl.dataset.giverId = job.raw?.user_id || '';
   jobPanelEl.dataset.questTitle = job.title;
-
-  // Show edit button for own quests, hide apply button
-  const isOwner = currentUser && (job.raw?.user_id === currentUser.id);
-  const applyBtn = document.querySelector('.btn-apply');
-  const editBtn = document.getElementById('panel-edit-btn');
-  if(applyBtn) applyBtn.style.display = isOwner ? 'none' : 'flex';
-  if(editBtn) editBtn.style.display = isOwner ? 'block' : 'none';
   document.getElementById('panel-title').textContent = job.title;
   document.getElementById('panel-tags').innerHTML = job.tags.map(t=>`<span class="tag ${t.cls||''}">${t.t}</span>`).join('');
   document.getElementById('panel-desc').textContent = job.desc;
@@ -2494,7 +2451,7 @@ function showPanel(job) {
   // Expired banner
   const existingExpired = document.getElementById('panel-expired-banner');
   if(existingExpired) existingExpired.remove();
-  const expiredApplyBtn = document.querySelector('.btn-apply');
+  const applyBtn = document.querySelector('.btn-apply');
   const isExpired = job.raw?.status === 'expired';
   if(isExpired) {
     const banner = document.createElement('div');
@@ -2502,9 +2459,9 @@ function showPanel(job) {
     banner.style.cssText = 'margin:0 16px 12px;padding:10px 12px;background:rgba(107,114,128,0.1);border:1px solid rgba(107,114,128,0.25);border-radius:10px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)';
     banner.innerHTML = `<span style="font-size:16px">⏰</span><div><div style="font-weight:600">Dette oppdraget er utløpt</div><div style="margin-top:1px">Forsvinner fra kartet om mindre enn 24 timer</div></div>`;
     document.getElementById('panel-quest-type').after(banner);
-    if(expiredApplyBtn) { expiredApplyBtn.disabled = true; expiredApplyBtn.style.opacity = '0.4'; expiredApplyBtn.style.cursor = 'not-allowed'; }
+    if(applyBtn) { applyBtn.disabled = true; applyBtn.style.opacity = '0.4'; applyBtn.style.cursor = 'not-allowed'; }
   } else {
-    if(expiredApplyBtn) { expiredApplyBtn.disabled = false; expiredApplyBtn.style.opacity = '1'; expiredApplyBtn.style.cursor = 'pointer'; }
+    if(applyBtn) { applyBtn.disabled = false; applyBtn.style.opacity = '1'; applyBtn.style.cursor = 'pointer'; }
   }
   const jobPanel = document.getElementById('job-panel');
   if(window.innerWidth > 768) {
@@ -2710,12 +2667,6 @@ async function postJob() {
 
   const category = document.getElementById('quest-category-input')?.value || 'Annet';
   const description = document.getElementById('quest-desc-input')?.value?.trim() || '';
-  const equipType = document.getElementById('equip-own')?.classList.contains('active') ? 'own' : 'provided';
-  const equipNote = document.getElementById('quest-equipment-note')?.value?.trim() || '';
-  const equipText = equipType === 'provided'
-    ? '🔧 Utstyr finnes' + (equipNote ? ': ' + equipNote : '')
-    : '🎒 Ta med eget utstyr' + (equipNote ? ': ' + equipNote : '');
-  const fullDescription = description + (description ? '\n\n' : '') + equipText;
   const duration = document.getElementById('quest-duration-input')?.value || '';
   const isCharity = document.getElementById('charity-toggle')?.classList.contains('on') || false;
   const scheduleType = document.getElementById('schedule-recurring')?.classList.contains('active') ? 'recurring'
@@ -2770,7 +2721,7 @@ async function postJob() {
   const { data: quest, error } = await sb.from('quests').insert({
     user_id: currentUser.id,
     title,
-    description: fullDescription,
+    description,
     category,
     duration,
     pay,
@@ -3093,16 +3044,6 @@ function selectAddress(name, lat, lng) {
   document.getElementById('address-confirmed-text').textContent = name;
   // Fly to address on map
   if(window.map) window.map.flyTo({ center: [lng, lat], zoom: 15, speed: 1.4 });
-}
-
-function setSvcEquipment(type) {
-  document.getElementById('svc-equip-own').classList.toggle('active', type === 'own');
-  document.getElementById('svc-equip-customer').classList.toggle('active', type === 'customer');
-}
-
-function setEquipment(type) {
-  document.getElementById('equip-provided').classList.toggle('active', type === 'provided');
-  document.getElementById('equip-own').classList.toggle('active', type === 'own');
 }
 
 function toggleCharity(el) {
@@ -3492,19 +3433,13 @@ function switchMqTab(tab) {
 }
 
 async function loadMyQuests() {
-  if(!currentUser) return;
-
-  // Load ALL quests I posted (all statuses)
-  const { data: posted, error } = await sb.from('quests')
+  // Load quests I posted
+  const { data: posted } = await sb.from('quests')
     .select('*, conversations(id,status,taker:taker_id(raw_user_meta_data))')
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false });
 
-  if(error) { console.error('loadMyQuests error:', error.message); }
-
   const postedEl = document.getElementById('mq-posted');
-  if(!postedEl) return;
-
   if(!posted || posted.length === 0) {
     postedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke lagt ut noen oppdrag ennå.<br><br><button onclick="closeMyQuests();openModal()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Legg ut ditt første oppdrag</button></div>';
   } else {
@@ -3588,7 +3523,6 @@ function questCard(q, type) {
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${applicants.length > 0 ? `<button onclick="openChat('${applicants[0]?.id||''}','${q.title}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : ''}
         ${q.status==='taken' ? `<button onclick="completeQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✅ Merk fullført</button>` : ''}
-        ${(q.status==='open'||q.status==='paused') ? `<button onclick="sb.from('quests').select('*').eq('id','${q.id}').single().then(({data})=>showEditQuestModal(data))" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✏️ Endre</button>` : ''}
         ${q.status==='open' ? `<button onclick="pauseQuest('${q.id}')" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⏸️ Pause</button>` : ''}
         ${q.status==='paused' ? `<button onclick="resumeQuest('${q.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">▶️ Gjenåpne</button>` : ''}
         ${(q.status==='open'||q.status==='paused') ? `<button onclick="closeQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button>` : ''}
@@ -3820,78 +3754,7 @@ function timeAgo(dateStr) {
 // ── CHAT FUNCTIONS ──
 let activeChatId = null;
 
-async function editQuest() {
-  const panel = document.getElementById('job-panel');
-  const questId = panel?.dataset?.questId;
-  if(!questId) return;
-
-  // Find quest data from raw
-  sb.from('quests').select('*').eq('id', questId).single().then(({ data: q }) => {
-    if(!q) return;
-    showEditQuestModal(q);
-  });
-}
-
-function showEditQuestModal(q) {
-  const existing = document.getElementById('edit-quest-overlay');
-  if(existing) existing.remove();
-
-  const overlay = document.createElement('div');
-  overlay.id = 'edit-quest-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
-  overlay.innerHTML = `
-    <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90svh;overflow-y:auto;padding:24px 20px 80px;box-sizing:border-box">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-        <div style="font-size:18px;font-weight:800">✏️ Endre oppdrag</div>
-        <button onclick="document.getElementById('edit-quest-overlay').remove()" style="background:var(--surface2);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--muted)">✕</button>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Tittel</label>
-        <input id="edit-title" class="form-input" type="text" value="${q.title || ''}">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Beskrivelse</label>
-        <textarea id="edit-desc" class="form-textarea" rows="4">${q.description || ''}</textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Betaling (kr)</label>
-        <input id="edit-pay" class="form-input" type="number" value="${q.pay || 250}" min="0" max="50000">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Kategori</label>
-        <select id="edit-category" class="form-select">
-          ${['🏠 Hjem og hage','🚗 Kjøring og transport','🛒 Handel og ærend','🐕 Dyr','🔧 Håndverk og montering','👴 Eldre og selskap','📦 Bære og flytte','🧹 Rengjøring','🤝 Dugnad','💻 Teknologi og IT','🚘 Bil og kjøretøy','👶 Barn og familie','🎉 Fest og arrangement','🍕 Mat og matlaging','📸 Foto og video','💇 Hår og skjønnhet','🐾 Dyrepass','🌿 Hagearbeid','🔑 Nøkler og ærend','🛠️ Småfiks','🎓 Undervisning og leksehjelp','💘 Blind date','✨ Annet'].map(c => `<option ${q.category===c?'selected':''}>${c}</option>`).join('')}
-        </select>
-      </div>
-
-      <button onclick="saveQuestEdits('${q.id}')" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">
-        💾 Lagre endringer
-      </button>
-    </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
-}
-
-async function saveQuestEdits(questId) {
-  const title = document.getElementById('edit-title')?.value?.trim();
-  const description = document.getElementById('edit-desc')?.value?.trim();
-  const pay = parseInt(document.getElementById('edit-pay')?.value) || 0;
-  const category = document.getElementById('edit-category')?.value;
-
-  if(!title) { showToast('⚠️ Tittel kan ikke være tom'); return; }
-
-  const { error } = await sb.from('quests').update({ title, description, pay, category }).eq('id', questId);
-  if(error) { showToast('❌ ' + error.message); return; }
-
-  document.getElementById('edit-quest-overlay')?.remove();
-  closePanel();
-  showToast('✅ Oppdrag oppdatert!');
-  await addMarkers();
-  await loadMyQuests();
-}
-
-function showChatPaymentInfo() {
+async function showChatPaymentInfo() {
   if(!activeChatId) return;
   const { data: conv } = await sb.from('conversations')
     .select('id, quest_id, giver_id, taker_id, status').eq('id', activeChatId).single();
@@ -4288,9 +4151,6 @@ async function postService() {
   const price = parseInt(document.getElementById('svc-price-display').textContent);
   const category = document.getElementById('svc-category').value;
   const desc = document.getElementById('svc-desc').value.trim();
-  const svcEquip = document.getElementById('svc-equip-customer')?.classList.contains('active') ? 'customer' : 'own';
-  const equipLabel = svcEquip === 'own' ? '🔧 Har eget utstyr – tar med alt' : '🏠 Kunden skaffer utstyr';
-  const fullDesc = desc + (desc ? '\n\n' : '') + equipLabel;
   const priceType = document.getElementById('svc-price-type').value;
   const isRecurring = document.getElementById('svc-recurring-toggle').classList.contains('on');
   const recurringInfo = document.getElementById('svc-recurring-info').value.trim();
@@ -4303,7 +4163,7 @@ async function postService() {
   }
 
   const { data, error } = await sb.from('services').insert({
-    user_id: currentUser.id, title, description: fullDesc, category,
+    user_id: currentUser.id, title, description: desc, category,
     price, price_type: priceType, is_recurring: isRecurring,
     recurring_info: recurringInfo || null, lat, lng
   }).select().single();
@@ -4331,6 +4191,7 @@ async function postService() {
 // ── WELCOME POPUP ──
 function showWelcomeIfNew() {
   const seen = localStorage.getItem('tokt-welcome-seen');
+  // Never show for logged in users, only for brand new visitors
   if(!seen && !currentUser) {
     document.getElementById('welcome-overlay').style.display = 'flex';
   } else {
@@ -4779,9 +4640,6 @@ async function loadUserProfile(user) {
     document.getElementById('profile-rating').textContent = profile.rating ? profile.rating.toFixed(1) : '–';
     document.getElementById('profile-level').textContent = profile.level || 1;
     document.getElementById('profile-rank-badge').textContent = rank.name;
-    // Rank description
-    const rankDescEl = document.getElementById('profile-rank-desc');
-    if(rankDescEl) rankDescEl.textContent = rank.desc || '';
     // XP bar
     const xpNeeded = [1,2,4,8,16];
     const lvl = (profile.level || 1) - 1;
@@ -4806,17 +4664,8 @@ async function loadUserProfile(user) {
 
 function updateUIForAuth(user) {
   const loginBtn = document.getElementById('btn-login');
-  if(loginBtn) {
-    if(user) {
-      loginBtn.textContent = '🚪 Logg ut';
-      loginBtn.onclick = doLogout;
-      loginBtn.style.color = 'var(--muted)';
-    } else {
-      loginBtn.textContent = t('logIn');
-      loginBtn.onclick = () => openAuth('login');
-      loginBtn.style.color = '';
-    }
-  }
+  if(loginBtn) loginBtn.textContent = user ? (currentUser?.user_metadata?.first_name || 'Profil') : t('logIn');
+  // Update bottom nav profile
   const navProfile = document.getElementById('nav-profile-label');
   if(navProfile) navProfile.textContent = user ? '👤' : t('navProfile');
 }
@@ -4959,8 +4808,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <div style="background:linear-gradient(135deg,#f97316,#a855f7);padding:20px;text-align:center">
     <div id="profile-avatar-big" style="width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,0.2);border:3px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;margin:0 auto 10px">?</div>
     <div id="profile-name" style="font-size:16px;font-weight:700;color:#fff">Laster...</div>
-    <div id="profile-rank-badge" style="display:inline-block;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:50px;margin-top:4px">Trell</div>
-    <div id="profile-rank-desc" style="font-size:11px;color:rgba(255,255,255,0.75);margin-top:6px;line-height:1.4;padding:0 8px;font-style:italic"></div>
+    <div id="profile-rank-badge" style="display:inline-block;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:50px;margin-top:4px">Wanderer</div>
   </div>
   <div style="padding:14px">
     <div style="display:flex;gap:0;background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:14px">
@@ -5163,17 +5011,6 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <textarea id="svc-desc" class="form-textarea" placeholder="Beskriv tjenesten din, din erfaring og hva som er inkludert…"></textarea>
     </div>
     <div class="form-group">
-      <label class="form-label">🧰 Utstyr</label>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <div class="mode-btn active" id="svc-equip-own" onclick="setSvcEquipment('own')" style="font-size:12px;padding:10px 8px;text-align:center">
-          🔧 Har eget utstyr<br><span style="font-size:10px;font-weight:400;color:var(--muted)">Jeg tar med alt</span>
-        </div>
-        <div class="mode-btn" id="svc-equip-customer" onclick="setSvcEquipment('customer')" style="font-size:12px;padding:10px 8px;text-align:center">
-          🏠 Kunde skaffer<br><span style="font-size:10px;font-weight:400;color:var(--muted)">Utstyr finnes hos deg</span>
-        </div>
-      </div>
-    </div>
-    <div class="form-group">
       <label class="form-label">Pris</label>
       <div class="cost-display"><span id="svc-price-display">350</span> <small>kr</small></div>
       <input type="range" min="50" max="5000" value="350" oninput="document.getElementById('svc-price-display').textContent=this.value" style="margin-top:8px">
@@ -5219,7 +5056,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 </div>
 
 <!-- WELCOME POPUP -->
-<div id="welcome-overlay" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
+<div id="welcome-overlay" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px">
   <div id="welcome-modal" style="background:var(--surface);border:1px solid var(--border);border-radius:24px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:popIn .3s ease">
     
     <!-- Top gradient banner -->
