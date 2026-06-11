@@ -1857,7 +1857,7 @@ function getRank(quests) {
 }
 
 // ── DEMO DATA – global so search and markers can access them ──
-const JOBS = [
+window.JOBS = [
   { id:'j1', type:'normal', title:'Klipp gresset 🌿', label:'Klipp gresset · 150 kr',
     tags:[{t:'🏠 Hjem'},{t:'~45 min'},{t:'Grünerløkka'}],
     desc:'Trenger noen til å klippe en middels stor hage. Gressklipper tilgjengelig. Ta gjerne bilde etter.',
@@ -1921,8 +1921,32 @@ function initMap() {
     attributionControl: false
   });
 
+  window.map.on('load', () => {
+    addMarkers();
+    requestLocation();
+    applyLanguage();
+    const L = LANGUAGES[currentLang];
+    const lc = document.getElementById('lang-current');
+    if(lc) lc.innerHTML = L.flag + ' <span style="font-size:11px;font-weight:700">' + L.code.toUpperCase() + '</span>';
+    setTimeout(showWelcomeIfNew, 800);
+    setTimeout(() => { if(localStorage.getItem('tokt-welcome-seen')) initTipsBar(); }, 1200);
+  });
+
+  window.map.on('click', closePanel);
+
+  window.map.on('move', () => {
+    const movePanel = document.getElementById('job-panel');
+    if(movePanel && movePanel.style.display === 'block' && window.innerWidth > 768) {
+      const questId = movePanel.dataset.questId;
+      const job = (window.JOBS||[]).find(j => j.id === questId) || (window.DEMO_SERVICES||[]).find(s => s.id === questId);
+      if(job && job.coords) positionPanelNearMarker(movePanel, job.coords);
+    }
+  });
+
+} // end initMap
+
 // ── DEMO SERVICES (shown when DB empty) ──
-const DEMO_SERVICES = [
+window.DEMO_SERVICES = [
   {
     id: 's1', type: 'service',
     title: 'Hjemmefrisør – hårklipp 💇',
@@ -2176,34 +2200,6 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('mouseleave', () => el.style.background = '');
   });
 });
-
-  window.map.on('load', () => {
-    addMarkers();
-    requestLocation();
-    applyLanguage();
-    const L = LANGUAGES[currentLang];
-    const lc = document.getElementById('lang-current');
-    if(lc) lc.innerHTML = L.flag + ' <span style="font-size:11px;font-weight:700">' + L.code.toUpperCase() + '</span>';
-    // Show welcome popup after short delay
-    setTimeout(showWelcomeIfNew, 800);
-    // Init tips bar after welcome check
-    setTimeout(() => {
-      if(localStorage.getItem('tokt-welcome-seen')) initTipsBar();
-    }, 1200);
-  });
-
-  window.map.on('click', closePanel);
-  // Reposition panel on map move
-  window.map.on('move', () => {
-    const movePanel = document.getElementById('job-panel');
-    if(movePanel.style.display === 'block' && window.innerWidth > 768) {
-      const questId = movePanel.dataset.questId;
-      const job = JOBS.find(j => j.id === questId) ||
-        DEMO_SERVICES.find(s => s.id === questId);
-      if(job && job.coords) positionPanelNearMarker(movePanel, job.coords);
-    }
-  });
-} // end initMap
 
 window.addEventListener('load', initMap);
 
@@ -3413,74 +3409,56 @@ async function runSearch(query) {
   results.innerHTML = '<div class="search-empty">🔍 Søker…</div>';
 
   const q = query.toLowerCase().trim();
+  const all = [];
 
-  // Helper: strip emoji and normalize for matching
-  const norm = str => (str || '').toLowerCase().replace(/[^\w\s\-æøå]/gu, '').trim();
-  const matches = str => norm(str).includes(q) || (str||'').toLowerCase().includes(q);
+  // 1. Demo oppdrag
+  const jobs = window.JOBS || [];
+  jobs.forEach(j => {
+    const hay = [j.title||'', j.desc||'', j.label||'', ...(j.tags||[]).map(t=>t.t||'')].join(' ').toLowerCase();
+    if(hay.includes(q)) all.push({ id:j.id, title:j.title, category:(j.tags||[]).find(t=>!t.cls&&!t.t?.startsWith('~')&&!t.t?.startsWith('🔴'))?.t||'', pay:j.pay, coords:j.coords, _type:'quest' });
+  });
 
-  // Search demo jobs
-  const demoJobResults = JOBS
-    .filter(j => matches(j.title) || matches(j.desc) || matches(j.label) || (j.tags||[]).some(t => matches(t.t)))
-    .map(j => ({
-      id: j.id, title: j.title,
-      category: (j.tags||[]).find(t => !t.cls && !t.t?.startsWith('~') && !t.t?.startsWith('🔴'))?.t || '',
-      pay: j.pay, image_url: null, coords: j.coords, _type: 'quest'
-    }));
+  // 2. Demo tjenester
+  const svcs = window.DEMO_SERVICES || [];
+  svcs.forEach(s => {
+    const hay = [s.title||'', s.desc||'', s.category||'', s.label||''].join(' ').toLowerCase();
+    if(hay.includes(q)) all.push({ id:s.id, title:s.title, category:s.category||'', pay:s.price, coords:s.coords, _type:'service' });
+  });
 
-  // Search demo services
-  const demoSvcResults = DEMO_SERVICES
-    .filter(s => matches(s.title) || matches(s.desc) || matches(s.category) || matches(s.label))
-    .map(s => ({
-      id: s.id, title: s.title, category: s.category || '',
-      pay: s.price, image_url: null, coords: s.coords, _type: 'service'
-    }));
-
-  // Search Supabase quests
-  let dbResults = [];
+  // 3. Supabase oppdrag
   try {
-    const { data: dbQuests, error: qErr } = await sb.from('quests')
+    const { data } = await sb.from('quests')
       .select('id, title, description, category, pay, image_url, lat, lng')
-      .in('status', ['open', 'expired'])
+      .in('status', ['open','expired'])
       .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
       .limit(8);
-    if(qErr) console.warn('Quest search error:', qErr.message);
-    dbResults = (dbQuests || []).map(q => ({
-      id: q.id, title: q.title, category: q.category || '',
-      pay: q.pay, image_url: q.image_url,
-      coords: [q.lng, q.lat], _type: 'quest'
-    }));
+    (data||[]).forEach(r => all.push({ id:r.id, title:r.title, category:r.category||'', pay:r.pay, image_url:r.image_url, coords:[r.lng,r.lat], _type:'quest' }));
   } catch(e) {}
 
-  // Search Supabase services
-  let dbSvcResults = [];
+  // 4. Supabase tjenester
   try {
-    const { data: dbServices } = await sb.from('services')
+    const { data } = await sb.from('services')
       .select('id, title, description, category, price, image_url, lat, lng')
-      .eq('status', 'active')
+      .eq('status','active')
       .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
       .limit(4);
-    dbSvcResults = (dbServices || []).map(s => ({
-      id: s.id, title: s.title, category: s.category || '',
-      pay: s.price, image_url: s.image_url,
-      coords: [s.lng, s.lat], _type: 'service'
-    }));
+    (data||[]).forEach(r => all.push({ id:r.id, title:r.title, category:r.category||'', pay:r.price, image_url:r.image_url, coords:[r.lng,r.lat], _type:'service' }));
   } catch(e) {}
 
-  const all = [...dbResults, ...dbSvcResults, ...demoJobResults, ...demoSvcResults];
-  console.log('Søk etter:', query, '→ DB:', dbResults.length, 'Demo:', demoJobResults.length, 'Tjenester:', dbSvcResults.length + demoSvcResults.length);
+  // Dedupliser
+  const seen = new Set();
+  const deduped = all.filter(x => { if(seen.has(x.id)) return false; seen.add(x.id); return true; });
 
-  // TEMP DEBUG – vises i søkeresultater
-  const debugInfo = `DB: ${dbResults.length} | Demo: ${demoJobResults.length} | Tjenester: ${dbSvcResults.length + demoSvcResults.length}`;
+  const debugInfo = `Fant: ${deduped.length} (demo: ${jobs.filter(j=>[j.title,j.desc||''].join(' ').toLowerCase().includes(q)).length})`;
 
-  if(all.length === 0) {
+  if(deduped.length === 0) {
     results.innerHTML = `<div class="search-empty">Ingen treff for "<strong>${query}</strong>"<br><span style="font-size:10px;color:var(--muted)">${debugInfo}</span></div>`;
     return;
   }
-
-  renderSearchResults(all, debugInfo);
+  renderSearchResults(deduped, debugInfo);
 }
 
-function renderSearchResults(quests, debugInfo) {
+
   const results = document.getElementById('search-results');
   const catIcons = {
     'Hjem og hage': '🏠', 'Kjøring og transport': '🚗',
