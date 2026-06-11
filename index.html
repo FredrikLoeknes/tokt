@@ -3468,15 +3468,18 @@ async function runSearch(query) {
   const all = [...dbResults, ...dbSvcResults, ...demoJobResults, ...demoSvcResults];
   console.log('Søk etter:', query, '→ DB:', dbResults.length, 'Demo:', demoJobResults.length, 'Tjenester:', dbSvcResults.length + demoSvcResults.length);
 
+  // TEMP DEBUG – vises i søkeresultater
+  const debugInfo = `DB: ${dbResults.length} | Demo: ${demoJobResults.length} | Tjenester: ${dbSvcResults.length + demoSvcResults.length}`;
+
   if(all.length === 0) {
-    results.innerHTML = `<div class="search-empty">Ingen treff for "<strong>${query}</strong>"</div>`;
+    results.innerHTML = `<div class="search-empty">Ingen treff for "<strong>${query}</strong>"<br><span style="font-size:10px;color:var(--muted)">${debugInfo}</span></div>`;
     return;
   }
 
-  renderSearchResults(all);
+  renderSearchResults(all, debugInfo);
 }
 
-function renderSearchResults(quests) {
+function renderSearchResults(quests, debugInfo) {
   const results = document.getElementById('search-results');
   const catIcons = {
     'Hjem og hage': '🏠', 'Kjøring og transport': '🚗',
@@ -3495,7 +3498,7 @@ function renderSearchResults(quests) {
   const seen = new Set();
   const deduped = quests.filter(q => { if(seen.has(q.id)) return false; seen.add(q.id); return true; });
 
-  results.innerHTML = `<div class="search-section-title">${deduped.length} treff</div>` +
+  results.innerHTML = `<div class="search-section-title">${deduped.length} treff <span style="font-weight:400;font-size:9px;color:var(--muted)">${debugInfo||''}</span></div>` +
     deduped.map(q => {
       const icon = catIcons[q.category] || (q._type==='service' ? '🏪' : '✨');
       const imgUrl = q.image_url || q.image || null;
