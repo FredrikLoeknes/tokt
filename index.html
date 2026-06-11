@@ -2458,9 +2458,45 @@ function requestLocation() {
   });
 }
 
+async function confirmPaymentReceived(convId, questId) {
+  // Taker confirms payment received – marks quest as completed
+  await sb.from('quests').update({ status: 'completed' }).eq('id', questId);
+  await sb.from('conversations').update({ status: 'completed' }).eq('id', convId);
+
+  // Get quest and giver info for notification
+  const { data: conv } = await sb.from('conversations')
+    .select('giver_id, quest:quest_id(title)').eq('id', convId).single();
+
+  if(conv) {
+    await sb.from('notifications').insert({
+      user_id: conv.giver_id,
+      type: 'completed',
+      title: '✅ Oppdrag fullført!',
+      body: `${conv.quest?.title || 'Oppdraget'} er bekreftet fullført av utfører.`,
+      link_id: convId
+    });
+
+    // Show rating for taker to rate giver
+    const { data: giverProfile } = await sb.from('profiles')
+      .select('full_name').eq('id', conv.giver_id).single();
+    showRating(giverProfile?.full_name || 'Oppdragsgiver', convId, conv.giver_id, questId);
+  }
+
+  showToast('🎉 Betaling bekreftet og oppdrag fullført!');
+  loadMyQuests();
+  addMarkers();
+}
+
 async function applyJob() {
   if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å søke på oppdrag'); return; }
-  
+
+  // Check phone number before applying
+  const { data: profile } = await sb.from('profiles').select('phone').eq('id', currentUser.id).single();
+  if(!profile?.phone) {
+    showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) for at oppdragsgiver kan betale deg.');
+    return;
+  }
+
   const applyPanel = document.getElementById('job-panel');
   const questId = applyPanel?.dataset?.questId;
   const giverId = applyPanel?.dataset?.giverId;
@@ -3101,6 +3137,17 @@ async function handleNotifClick(notifId, type, linkId) {
   // Mark as read
   await sb.from('notifications').update({ read: true }).eq('id', notifId);
   closeNotifications();
+  if(type === 'accepted' && linkId) {
+    // Show payment info popup for taker
+    const { data: conv } = await sb.from('conversations')
+      .select('id, quest_id, giver_id, taker_id').eq('id', linkId).single();
+    if(conv) {
+      const { data: giverProfile } = await sb.from('profiles').select('full_name, phone').eq('id', conv.giver_id).single();
+      const { data: takerProfile } = await sb.from('profiles').select('full_name, phone').eq('id', conv.taker_id).single();
+      showPaymentInfoPopup(giverProfile, takerProfile, conv.id, conv.quest_id, 'taker');
+    }
+    return;
+  }
   if(type === 'message' && linkId) openChat(linkId, 'Melding');
   else if(type === 'application') openMyQuests();
   else if(type === 'completed' && linkId) {
@@ -3347,23 +3394,117 @@ function questCard(q, type) {
 }
 
 async function acceptApplicant(convId, questId) {
-  // Update conversation status
-  await sb.from('conversations').update({ status: 'accepted' }).eq('id', convId);
-  // Close quest to new applicants
-  await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
-  // Notify taker
-  const { data: conv } = await sb.from('conversations').select('taker_id').eq('id', convId).single();
-  if(conv) {
-    await sb.from('notifications').insert({
-      user_id: conv.taker_id,
-      type: 'accepted',
-      title: '🎉 Søknaden din ble godkjent!',
-      body: 'Du har fått oppdraget. Ta kontakt med oppdragsgiver.',
-      link_id: convId
-    });
+  // Check that giver has phone number
+  const { data: giverProfile } = await sb.from('profiles').select('phone, full_name').eq('id', currentUser.id).single();
+  if(!giverProfile?.phone) {
+    showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) før du kan godkjenne søkere.');
+    return;
   }
+
+  // Get taker profile
+  const { data: conv } = await sb.from('conversations')
+    .select('taker_id, taker:taker_id(id)')
+    .eq('id', convId).single();
+
+  if(!conv) return;
+
+  const { data: takerProfile } = await sb.from('profiles')
+    .select('phone, full_name').eq('id', conv.taker_id).single();
+
+  // Update statuses
+  await sb.from('conversations').update({ status: 'accepted' }).eq('id', convId);
+  await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
+
+  // Notify taker with giver's phone
+  await sb.from('notifications').insert({
+    user_id: conv.taker_id,
+    type: 'accepted',
+    title: '🎉 Søknaden din ble godkjent!',
+    body: `Du har fått oppdraget. Oppdragsgiver: ${giverProfile.full_name}, Vipps: ${giverProfile.phone}`,
+    link_id: convId
+  });
+
   showToast('✅ Søker godkjent!');
   loadMyQuests();
+
+  // Show payment info popup to giver
+  showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, 'giver');
+}
+
+function showPhoneRequired(msg) {
+  const popup = document.createElement('div');
+  popup.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px';
+  popup.innerHTML = `
+    <div style="background:var(--surface);border-radius:20px;padding:28px;max-width:360px;width:100%;text-align:center">
+      <div style="font-size:40px;margin-bottom:12px">📱</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:8px">Telefonnummer mangler</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5">${msg}</div>
+      <input id="popup-phone" type="tel" placeholder="Ditt Vipps-nummer (8 siffer)" maxlength="8"
+        style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:inherit;background:var(--surface2);color:var(--text);outline:none;margin-bottom:12px;box-sizing:border-box;text-align:center"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      <button onclick="savePhoneAndClose(this)" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
+        Lagre og fortsett
+      </button>
+      <button onclick="this.closest('[style]').remove()" style="width:100%;background:none;border:none;color:var(--muted);padding:10px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">Avbryt</button>
+    </div>`;
+  document.body.appendChild(popup);
+}
+
+async function savePhoneAndClose(btn) {
+  const phone = document.getElementById('popup-phone')?.value?.trim();
+  if(!phone || phone.length < 8) { showToast('⚠️ Skriv inn 8-sifret nummer'); return; }
+  await sb.from('profiles').update({ phone }).eq('id', currentUser.id);
+  btn.closest('[style*="position:fixed"]').remove();
+  showToast('✅ Telefonnummer lagret!');
+}
+
+function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, role) {
+  const existing = document.getElementById('payment-info-popup');
+  if(existing) existing.remove();
+
+  const otherName = role === 'giver' ? takerProfile?.full_name || 'Utfører' : giverProfile?.full_name || 'Oppdragsgiver';
+  const otherPhone = role === 'giver' ? takerProfile?.phone : giverProfile?.phone;
+  const vippsUrl = otherPhone ? `vipps://payment?phone=${otherPhone}` : null;
+
+  const popup = document.createElement('div');
+  popup.id = 'payment-info-popup';
+  popup.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px';
+  popup.innerHTML = `
+    <div style="background:var(--surface);border-radius:20px;padding:28px;max-width:360px;width:100%">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:40px;margin-bottom:8px">${role === 'giver' ? '🎉' : '💰'}</div>
+        <div style="font-size:18px;font-weight:800">${role === 'giver' ? 'Utfører godkjent!' : 'Du har fått oppdraget!'}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">${role === 'giver' ? 'Betalingsinformasjon for utfører' : 'Oppdragsgiver vil betale deg via Vipps'}</div>
+      </div>
+
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px">${role === 'giver' ? '📤 Send betaling til' : '📥 Du mottar betaling fra'}</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">${otherName[0]?.toUpperCase()}</div>
+          <div>
+            <div style="font-size:15px;font-weight:700">${otherName}</div>
+            <div style="font-size:14px;color:var(--muted);margin-top:2px">📱 ${otherPhone ? otherPhone.replace(/(\d{3})(\d{2})(\d{3})/, '$1 $2 $3') : 'Nummer ikke oppgitt'}</div>
+          </div>
+        </div>
+      </div>
+
+      ${role === 'giver' && vippsUrl ? `
+        <a href="${vippsUrl}" style="display:block;width:100%;background:#ff5b24;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
+          💸 Åpne Vipps og betal
+        </a>` : ''}
+
+      ${role === 'taker' ? `
+        <button onclick="confirmPaymentReceived('${convId}','${questId}');document.getElementById('payment-info-popup').remove()" 
+          style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">
+          ✅ Betaling mottatt – bekreft fullført
+        </button>` : ''}
+
+      <button onclick="document.getElementById('payment-info-popup').remove()" 
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:12px;font-size:14px;cursor:pointer;font-family:inherit">
+        Lukk
+      </button>
+    </div>`;
+  document.body.appendChild(popup);
 }
 
 async function rejectApplicant(convId) {
@@ -3474,6 +3615,17 @@ function timeAgo(dateStr) {
 // ── CHAT FUNCTIONS ──
 let activeChatId = null;
 
+async function showChatPaymentInfo() {
+  if(!activeChatId) return;
+  const { data: conv } = await sb.from('conversations')
+    .select('id, quest_id, giver_id, taker_id, status').eq('id', activeChatId).single();
+  if(!conv) return;
+  const { data: giverProfile } = await sb.from('profiles').select('full_name, phone').eq('id', conv.giver_id).single();
+  const { data: takerProfile } = await sb.from('profiles').select('full_name, phone').eq('id', conv.taker_id).single();
+  const role = currentUser.id === conv.giver_id ? 'giver' : 'taker';
+  showPaymentInfoPopup(giverProfile, takerProfile, conv.id, conv.quest_id, role);
+}
+
 async function openChat(convId, title) {
   activeChatId = convId;
   const chatPanel = document.getElementById('chat-panel');
@@ -3485,6 +3637,12 @@ async function openChat(convId, title) {
   if(window.innerWidth < 769) {
     chatPanel.style.cssText += ';position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;border-radius:0;z-index:600';
   }
+
+  // Show Vipps button if conversation is accepted
+  const { data: conv } = await sb.from('conversations')
+    .select('status').eq('id', convId).single();
+  const vippsBtn = document.getElementById('chat-payment-btn');
+  if(vippsBtn) vippsBtn.style.display = conv?.status === 'accepted' ? 'block' : 'none';
 
   await loadMessages(convId);
   subscribeToMessages(convId);
@@ -4631,6 +4789,9 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div id="chat-title" style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Chat</div>
       <div id="chat-status" style="font-size:11px;color:var(--muted)">Aktiv</div>
     </div>
+    <button id="chat-payment-btn" onclick="showChatPaymentInfo()" style="display:none;background:#ff5b24;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
+      💸 Vipps
+    </button>
     <div id="chat-status-badge" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);border:1px solid var(--green)">Åpen</div>
   </div>
 
