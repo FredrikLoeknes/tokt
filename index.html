@@ -1478,6 +1478,15 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       </div>
 
       <div style="font-size:11px;color:var(--muted);margin-top:6px">Valgfritt – hjelper utfører å planlegge</div>
+
+      <!-- Legg ut til det blir tatt -->
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px 12px;background:rgba(59,111,245,0.06);border:1px solid rgba(59,111,245,0.15);border-radius:10px;cursor:pointer" onclick="toggleKeepOpen(this)">
+        <div id="keep-open-check" style="width:20px;height:20px;border-radius:6px;border:2px solid var(--border);background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:13px"></div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">📌 Legg ut til oppdraget blir tatt</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px">Oppdraget utløper ikke automatisk</div>
+        </div>
+      </div>
     </div>
 
     <div class="form-group">
@@ -2106,7 +2115,7 @@ function questToJob(q) {
     desc: q.description || '',
     image: q.image_url || null,
     pay: q.pay,
-    rating: null,
+    applicants: 0,
     scheduledDate: q.scheduled_date || null,
     scheduledTimeFrom: q.scheduled_time_from || null,
     scheduledTimeTo: q.scheduled_time_to || null,
@@ -2306,10 +2315,11 @@ function showPanel(job) {
     imgEl.innerHTML = `<img src="${job.image}" style="width:100%;height:160px;object-fit:cover" onerror="this.parentElement.remove()">`;
     document.getElementById('panel-desc').before(imgEl);
   }
+  const L = LANGUAGES[currentLang];
   document.getElementById('panel-meta').innerHTML = `
-    <div class="meta-item"><div class="meta-label" id="panel-reward-label">Reward</div><div class="meta-value green">${job.pay} kr</div></div>
-    <div class="meta-item"><div class="meta-label" id="panel-rating-label">Rating</div><div class="meta-value yellow">${job.rating ? '★ ' + job.rating : '–'}</div></div>
-    <div class="meta-item"><div class="meta-label" id="panel-applicants-label">Applicants</div><div class="meta-value">${job.applicants}</div></div>`;
+    <div class="meta-item"><div class="meta-label" id="panel-reward-label">${L.rewardLabel||'Betaling'}</div><div class="meta-value green">${job.pay} kr</div></div>
+    <div class="meta-item"><div class="meta-label" id="panel-rating-label">${L.ratingLabel||'Vurdering'}</div><div class="meta-value yellow">${job.rating ? '★ ' + job.rating : '–'}</div></div>
+    <div class="meta-item"><div class="meta-label" id="panel-applicants-label">${L.applicantsLabel||'Søkere'}</div><div class="meta-value">${job.applicants ?? 0}</div></div>`;
 
   // Show scheduled time if set
   const schedEl = document.getElementById('panel-schedule');
@@ -2344,7 +2354,7 @@ function showPanel(job) {
         </div>`;
       }).join('');
   } else {
-    appEl.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0">No applicants yet — be the first!</div>`;
+    appEl.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0">${LANGUAGES[currentLang]?.noApplicants || 'Ingen søkere ennå – vær den første!'}</div>`;
   }
   // Quest type badge
   const badge = document.getElementById('quest-type-badge');
@@ -2353,7 +2363,7 @@ function showPanel(job) {
     badge.style.color = 'var(--accent)';
     badge.style.borderColor = 'var(--accent)';
   } else {
-    badge.textContent = '✋ Approval required';
+    badge.textContent = LANGUAGES[currentLang]?.approvalRequired || '✋ Godkjenning kreves';
     badge.style.color = 'var(--muted)';
     badge.style.borderColor = 'var(--border)';
   }
@@ -2559,8 +2569,12 @@ async function postJob() {
     : scheduleType === 'flexible'
     ? document.getElementById('quest-flexible-time-to')?.value || null
     : document.getElementById('quest-time-to')?.value || null;
-  const recurringDays = scheduleType === 'recurring' ? getSelectedDays() : null;
-  const scheduledDateEnd = scheduleType === 'recurring' ? document.getElementById('quest-date-end-input')?.value || null : null;
+  const keepOpen = document.getElementById('keep-open-check')?.textContent === '✓';
+
+  // If "keep open until taken" is checked, clear the scheduled date so it never expires
+  const finalScheduledDate = keepOpen ? null : scheduledDate;
+  const finalTimeFrom = keepOpen ? null : scheduledTimeFrom;
+  const finalTimeTo = keepOpen ? null : scheduledTimeTo;
 
   const isFirstCome = document.getElementById('mode-firstcome')?.classList.contains('active') || false;
   const isUrgent = document.querySelector('#modal .toggle')?.classList.contains('on') || false;
@@ -2594,9 +2608,9 @@ async function postJob() {
     is_urgent: isUrgent,
     is_charity: isCharity,
     is_first_come: isFirstCome,
-    scheduled_date: scheduledDate,
-    scheduled_time_from: scheduledTimeFrom,
-    scheduled_time_to: scheduledTimeTo,
+    scheduled_date: finalScheduledDate,
+    scheduled_time_from: finalTimeFrom,
+    scheduled_time_to: finalTimeTo,
     status: 'open',
     lat,
     lng
@@ -2880,6 +2894,15 @@ function closeLeaderboard() {
 }
 
 // Quest mode toggle
+function toggleKeepOpen(el) {
+  const check = document.getElementById('keep-open-check');
+  const isOn = check.textContent === '✓';
+  check.textContent = isOn ? '' : '✓';
+  check.style.background = isOn ? 'var(--surface2)' : 'var(--accent)';
+  check.style.borderColor = isOn ? 'var(--border)' : 'var(--accent)';
+  check.style.color = '#fff';
+}
+
 function setScheduleType(type) {
   document.getElementById('schedule-once').classList.toggle('active', type === 'once');
   document.getElementById('schedule-recurring').classList.toggle('active', type === 'recurring');
