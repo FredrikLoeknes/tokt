@@ -1935,6 +1935,55 @@ window.DEMO_SERVICES = [
 ];
 
 function initMap() {
+  if (typeof mapboxgl === 'undefined') {
+    setTimeout(initMap, 100);
+    return;
+  }
+  const mapEl = document.getElementById('map');
+  if (!mapEl) {
+    setTimeout(initMap, 100);
+    return;
+  }
+  mapboxgl.accessToken = 'pk.eyJ1IjoiZnJlZHJpa2xvZWtuZXMiLCJhIjoiY21xNjl6c25kMDFodjJxcXprcXc0NHYzMyJ9.e3IAYTrRQ6053w-zO-4fvw';
+
+  try {
+    window.map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/light-v11',
+      center: [10.757933, 59.911491],
+      zoom: 13,
+      attributionControl: false
+    });
+  } catch(e) {
+    console.error('Map init failed:', e);
+    return;
+  }
+
+  if(!window.map) return;
+
+  window.map.on('load', () => {
+    addMarkers();
+    requestLocation();
+    applyLanguage();
+    const L = LANGUAGES[currentLang];
+    const lc = document.getElementById('lang-current');
+    if(lc) lc.innerHTML = L.flag + ' <span style="font-size:11px;font-weight:700">' + L.code.toUpperCase() + '</span>';
+    setTimeout(showWelcomeIfNew, 800);
+    setTimeout(() => { if(localStorage.getItem('tokt-welcome-seen')) initTipsBar(); }, 1200);
+  });
+
+  window.map.on('click', closePanel);
+
+  window.map.on('move', () => {
+    const movePanel = document.getElementById('job-panel');
+    if(movePanel && movePanel.style.display === 'block' && window.innerWidth > 768) {
+      const questId = movePanel.dataset.questId;
+      const job = (window.JOBS||[]).find(j => j.id === questId) || (window.DEMO_SERVICES||[]).find(s => s.id === questId);
+      if(job && job.coords) positionPanelNearMarker(movePanel, job.coords);
+    }
+  });
+
+} // end initMap
 
 function questToJob(q) {
   // Convert Supabase quest row to job display object
@@ -2127,34 +2176,6 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('mouseleave', () => el.style.background = '');
   });
 });
-
-  window.map.on('load', () => {
-    addMarkers();
-    requestLocation();
-    applyLanguage();
-    const L = LANGUAGES[currentLang];
-    const lc = document.getElementById('lang-current');
-    if(lc) lc.innerHTML = L.flag + ' <span style="font-size:11px;font-weight:700">' + L.code.toUpperCase() + '</span>';
-    // Show welcome popup after short delay
-    setTimeout(showWelcomeIfNew, 800);
-    // Init tips bar after welcome check
-    setTimeout(() => {
-      if(localStorage.getItem('tokt-welcome-seen')) initTipsBar();
-    }, 1200);
-  });
-
-  window.map.on('click', closePanel);
-  // Reposition panel on map move
-  window.map.on('move', () => {
-    const movePanel = document.getElementById('job-panel');
-    if(movePanel.style.display === 'block' && window.innerWidth > 768) {
-      const questId = movePanel.dataset.questId;
-      const job = JOBS.find(j => j.id === questId) ||
-        DEMO_SERVICES.find(s => s.id === questId);
-      if(job && job.coords) positionPanelNearMarker(movePanel, job.coords);
-    }
-  });
-} // end initMap
 
 window.addEventListener('load', initMap);
 
