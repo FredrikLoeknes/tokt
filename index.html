@@ -261,12 +261,15 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 }
 
 /* ── RANK BADGE COLORS ── */
-.rank-wanderer { background:rgba(107,114,128,0.12); color:#6b7280; border-color:#6b7280; }
-.rank-scout { background:rgba(59,111,245,0.12); color:var(--accent); border-color:var(--accent); }
-.rank-rover { background:rgba(124,92,252,0.12); color:var(--accent2); border-color:var(--accent2); }
-.rank-pathfinder { background:rgba(15,169,104,0.12); color:var(--green); border-color:var(--green); }
-.rank-champion { background:rgba(201,144,10,0.15); color:var(--gold); border-color:var(--gold); }
-.rank-legend { background:linear-gradient(135deg,rgba(201,144,10,0.2),rgba(124,92,252,0.2)); color:var(--gold); border-color:var(--gold); }
+.rank-trell      { background:rgba(107,114,128,0.12); color:#6b7280; border-color:#6b7280; }
+.rank-bonde      { background:rgba(139,90,43,0.12); color:#8b5a2b; border-color:#8b5a2b; }
+.rank-varjager   { background:rgba(59,111,245,0.12); color:var(--accent); border-color:var(--accent); }
+.rank-hovding    { background:rgba(124,92,252,0.12); color:var(--accent2); border-color:var(--accent2); }
+.rank-gode       { background:rgba(15,169,104,0.12); color:var(--green); border-color:var(--green); }
+.rank-vaering    { background:rgba(249,115,22,0.12); color:#f97316; border-color:#f97316; }
+.rank-jarl       { background:rgba(201,144,10,0.15); color:var(--gold); border-color:var(--gold); }
+.rank-konge      { background:linear-gradient(135deg,rgba(201,144,10,0.2),rgba(124,92,252,0.2)); color:var(--gold); border-color:var(--gold); }
+.rank-valkyrje   { background:linear-gradient(135deg,rgba(233,30,140,0.15),rgba(124,92,252,0.2)); color:#e91e8c; border-color:#e91e8c; font-style:italic; }
 
 /* ── MARKERS ── */
 .mapbox-marker {
@@ -941,7 +944,18 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 <!-- TOPBAR -->
 <div id="topbar">
   <div class="logo">
-    <div class="logo-name">Tokt<span>.app</span></div>
+    <div style="position:relative;display:inline-block">
+      <!-- Buet tekst over logoen -->
+      <svg width="90" height="18" viewBox="0 0 90 18" style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);overflow:visible">
+        <defs>
+          <path id="arc" d="M 5,16 Q 45,-4 85,16"/>
+        </defs>
+        <text font-family="Skranji, cursive" font-size="9" fill="var(--muted)" opacity="0.7" letter-spacing="1">
+          <textPath href="#arc" startOffset="50%" text-anchor="middle">nå skal vi på</textPath>
+        </text>
+      </svg>
+      <div class="logo-name">Tokt<span>.app</span></div>
+    </div>
   </div>
 
   <div class="logo-xp">
@@ -1293,12 +1307,15 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   <div class="lb-ranks-info">
     <div id="lb-rank-ladder-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:10px 14px 6px">Rangstige</div>
     <div class="rank-ladder">
-      <span class="lb-badge rank-wanderer">Wanderer</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-scout">Scout</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-rover">Rover</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-pathfinder">Pathfinder</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-champion">Champion</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-legend">Legend</span>
+      <span class="lb-badge rank-trell">Trell</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-bonde">Bonde</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-varjager">Varjager</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-hovding">Høvding</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-gode">Gode</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-vaering">Væring</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-jarl">Jarl</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-konge">Konge</span><span class="rank-arrow">→</span>
+      <span class="lb-badge rank-valkyrje">Valkyrje</span>
     </div>
   </div>
   <div id="lb-top-questers-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:10px 14px 6px;border-top:1px solid var(--border)">Topp-utførere</div>
@@ -1306,37 +1323,37 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <div class="lb-rank gold">1</div>
     <div class="lb-avatar" style="background:#f5c51820;color:#c9900a">JS</div>
     <div class="lb-info"><div class="lb-name">Jonas S.</div><div class="lb-quests">47 oppdrag · ★ 4.97</div></div>
-    <span class="lb-badge rank-legend">Legend</span>
+    <span class="lb-badge rank-valkyrje">Valkyrje</span>
   </div>
   <div class="lb-row">
     <div class="lb-rank silver">2</div>
     <div class="lb-avatar" style="background:#4f8ef720;color:#3b6ff5">AK</div>
     <div class="lb-info"><div class="lb-name">Anders K.</div><div class="lb-quests">31 oppdrag · ★ 4.9</div></div>
-    <span class="lb-badge rank-champion">Champion</span>
+    <span class="lb-badge rank-jarl">Jarl</span>
   </div>
   <div class="lb-row">
     <div class="lb-rank bronze">3</div>
     <div class="lb-avatar" style="background:#2de08a20;color:#0fa968">MR</div>
     <div class="lb-info"><div class="lb-name">Maria R.</div><div class="lb-quests">18 oppdrag · ★ 4.8</div></div>
-    <span class="lb-badge rank-pathfinder">Pathfinder</span>
+    <span class="lb-badge rank-hovding">Høvding</span>
   </div>
   <div class="lb-row">
     <div class="lb-rank">4</div>
     <div class="lb-avatar" style="background:#7c5cfc20;color:#7c5cfc">TH</div>
     <div class="lb-info"><div class="lb-name">Tone H.</div><div class="lb-quests">11 oppdrag · ★ 5.0</div></div>
-    <span class="lb-badge rank-rover">Rover</span>
+    <span class="lb-badge rank-varjager">Varjager</span>
   </div>
   <div class="lb-row">
     <div class="lb-rank">5</div>
     <div class="lb-avatar" style="background:#6b728020;color:#6b7280">PL</div>
     <div class="lb-info"><div class="lb-name">Per L.</div><div class="lb-quests">4 oppdrag · ★ 4.7</div></div>
-    <span class="lb-badge rank-scout">Scout</span>
+    <span class="lb-badge rank-bonde">Bonde</span>
   </div>
 </div>
 
 <!-- CORNER WIDGETS -->
 <div id="corner-widgets">
-  <div id="week-worker" onclick="showUserProfile('Jonas S.','JS','#f5c518',47,4.97,'Legend')" title="Se profil">
+  <div id="week-worker" onclick="showUserProfile('Jonas S.','JS','#f5c518',47,4.97,'Valkyrje')" title="Se profil">
     <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
       <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold)">👑 Ukens utfører</div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
@@ -2051,12 +2068,15 @@ document.head.appendChild(manifestLink);
 
 // Rank system – global so all functions can access it
 const RANKS = [
-  { name:'Wanderer', cls:'rank-wanderer', min:0 },
-  { name:'Scout',    cls:'rank-scout',    min:1 },
-  { name:'Rover',    cls:'rank-rover',    min:4 },
-  { name:'Pathfinder',cls:'rank-pathfinder',min:8 },
-  { name:'Champion', cls:'rank-champion', min:16 },
-  { name:'Legend',   cls:'rank-legend',   min:31 }
+  { name:'Trell',    cls:'rank-trell',    min:0,  desc:'Samfunnets laveste klasse. Gjør det tyngste arbeidet, men alle starter et sted.' },
+  { name:'Bonde',    cls:'rank-bonde',    min:2,  desc:'Den frie og største delen av befolkningen. Eier egen gård og deltar i samfunnet.' },
+  { name:'Varjager', cls:'rank-varjager', min:5,  desc:'Skandinaver som reiste ut i verden for handel og eventyr.' },
+  { name:'Høvding',  cls:'rank-hovding',  min:10, desc:'En lokal leder som samler en hær og leder viktige tokt.' },
+  { name:'Gode',     cls:'rank-gode',     min:18, desc:'En høvding som også fungerer som religiøs leder og dommer på tinget.' },
+  { name:'Væring',   cls:'rank-vaering',  min:30, desc:'Elitesoldater i den bysantinske keiserens livgarde i Konstantinopel.' },
+  { name:'Jarl',     cls:'rank-jarl',     min:50, desc:'Den mektigste klassen under kongen. Kontrollerer store landområder.' },
+  { name:'Konge',    cls:'rank-konge',    min:75, desc:'Det øverste sjiktet i samfunnet. En overkonge som styrer over jarler og bønder.' },
+  { name:'Valkyrje', cls:'rank-valkyrje', min:100,desc:'De som velger hvem som er verdig. Legendariske krigere som overgår alle andre.' }
 ];
 function getRank(quests) {
   let r = RANKS[0];
@@ -4760,6 +4780,9 @@ async function loadUserProfile(user) {
     document.getElementById('profile-rating').textContent = profile.rating ? profile.rating.toFixed(1) : '–';
     document.getElementById('profile-level').textContent = profile.level || 1;
     document.getElementById('profile-rank-badge').textContent = rank.name;
+    // Rank description
+    const rankDescEl = document.getElementById('profile-rank-desc');
+    if(rankDescEl) rankDescEl.textContent = rank.desc || '';
     // XP bar
     const xpNeeded = [1,2,4,8,16];
     const lvl = (profile.level || 1) - 1;
@@ -4937,7 +4960,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <div style="background:linear-gradient(135deg,#f97316,#a855f7);padding:20px;text-align:center">
     <div id="profile-avatar-big" style="width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,0.2);border:3px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;margin:0 auto 10px">?</div>
     <div id="profile-name" style="font-size:16px;font-weight:700;color:#fff">Laster...</div>
-    <div id="profile-rank-badge" style="display:inline-block;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:50px;margin-top:4px">Wanderer</div>
+    <div id="profile-rank-badge" style="display:inline-block;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:50px;margin-top:4px">Trell</div>
+    <div id="profile-rank-desc" style="font-size:11px;color:rgba(255,255,255,0.75);margin-top:6px;line-height:1.4;padding:0 8px;font-style:italic"></div>
   </div>
   <div style="padding:14px">
     <div style="display:flex;gap:0;background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:14px">
