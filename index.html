@@ -1857,22 +1857,8 @@ function getRank(quests) {
 }
 
 // Ensure mapbox loads before init
-function initMap() {
-  if (typeof mapboxgl === 'undefined') {
-    setTimeout(initMap, 100);
-    return;
-  }
-  mapboxgl.accessToken = 'pk.eyJ1IjoiZnJlZHJpa2xvZWtuZXMiLCJhIjoiY21xNjl6c25kMDFodjJxcXprcXc0NHYzMyJ9.e3IAYTrRQ6053w-zO-4fvw';
-
-  window.map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/light-v11',
-    center: [10.757933, 59.911491],
-    zoom: 13,
-    attributionControl: false
-  });
-
-const JOBS = window.JOBS = [
+// ── DEMO DATA – definert globalt FØR initMap ──
+window.JOBS = [
   { id:'j1', type:'normal', title:'Klipp gresset 🌿', label:'Klipp gresset · 150 kr',
     tags:[{t:'🏠 Hjem'},{t:'~45 min'},{t:'Grünerløkka'}],
     desc:'Trenger noen til å klippe en middels stor hage. Gressklipper tilgjengelig. Ta gjerne bilde etter.',
@@ -1920,69 +1906,35 @@ const JOBS = window.JOBS = [
   }
 ];
 
-// ── DEMO SERVICES (shown when DB empty) ──
-const DEMO_SERVICES = window.DEMO_SERVICES = [
-  {
-    id: 's1', type: 'service',
-    title: 'Hjemmefrisør – hårklipp 💇',
-    label: '💇 Hårklipp – 350 kr',
-    category: '💇 Hår og skjønnhet',
-    desc: 'Profesjonell hårklipp hjemme hos deg eller hos meg på Grünerløkka. Damer og herrer. Farging på forespørsel. Bestill i god tid!',
-    price: 350, priceType: 'per_visit',
-    recurring: true, recurringInfo: 'Fast klipp hver 6. uke tilbys',
-    rating: 4.9, reviews: 12,
-    coords: [10.7580, 59.9220],
-    provider: { name: 'Sara L.', initials: 'SL', color: '#e91e8c' }
+window.DEMO_SERVICES = [
+  { id:'s1', type:'service', title:'Hjemmefrisør – hårklipp 💇', label:'💇 Hårklipp – 350 kr',
+    category:'💇 Hår og skjønnhet', desc:'Profesjonell hårklipp hjemme hos deg eller hos meg på Grünerløkka. Damer og herrer. Farging på forespørsel. Bestill i god tid!',
+    price:350, priceType:'per_visit', recurring:true, recurringInfo:'Fast klipp hver 6. uke tilbys', rating:4.9, reviews:12,
+    coords:[10.7580,59.9220], provider:{name:'Sara L.',initials:'SL',color:'#e91e8c'}
   },
-  {
-    id: 's2', type: 'service',
-    title: 'Traktor og snømåking ❄️',
-    label: '❄️ Snømåking – fra 500 kr',
-    category: '🌿 Hagearbeid',
-    desc: 'Har traktor med skuffe og salter. Rydder innkjørsler, parkeringsplasser og gårdsplasser raskt og effektivt. Fast abonnement gjennom vinteren tilbys!',
-    price: 500, priceType: 'per_visit',
-    recurring: true, recurringInfo: 'Vinter-abonnement: 2500 kr/mnd',
-    rating: 5.0, reviews: 8,
-    coords: [10.7900, 59.9050],
-    provider: { name: 'Erik L.', initials: 'EL', color: '#3b6ff5' }
+  { id:'s2', type:'service', title:'Traktor og snømåking ❄️', label:'❄️ Snømåking – fra 500 kr',
+    category:'🌿 Hagearbeid', desc:'Har traktor med skuffe og salter. Rydder innkjørsler, parkeringsplasser og gårdsplasser raskt og effektivt. Fast abonnement gjennom vinteren tilbys!',
+    price:500, priceType:'per_visit', recurring:true, recurringInfo:'Vinter-abonnement: 2500 kr/mnd', rating:5.0, reviews:8,
+    coords:[10.7900,59.9050], provider:{name:'Erik L.',initials:'EL',color:'#3b6ff5'}
   },
-  {
-    id: 's3', type: 'service',
-    title: 'Daglig hundetur 🐕',
-    label: '🐕 Hundetur – 150 kr',
-    category: '🐾 Dyrepass',
-    desc: 'Lufter hunden din hver dag mens du er på jobb. 45 minutter tur i nærområdet. Sender bilde underveis. Har erfaring med alle raser.',
-    price: 150, priceType: 'per_tur',
-    recurring: true, recurringInfo: 'Fast daglig tur tilbys – 2500 kr/mnd',
-    rating: 4.8, reviews: 24,
-    coords: [10.7200, 59.9150],
-    provider: { name: 'Tone H.', initials: 'TH', color: '#0fa968' }
+  { id:'s3', type:'service', title:'Daglig hundetur 🐕', label:'🐕 Hundetur – 150 kr',
+    category:'🐾 Dyrepass', desc:'Lufter hunden din hver dag mens du er på jobb. 45 minutter tur i nærområdet. Sender bilde underveis. Har erfaring med alle raser.',
+    price:150, priceType:'per_tur', recurring:true, recurringInfo:'Fast daglig tur tilbys – 2500 kr/mnd', rating:4.8, reviews:24,
+    coords:[10.7200,59.9150], provider:{name:'Tone H.',initials:'TH',color:'#0fa968'}
   },
-  {
-    id: 's4', type: 'service',
-    title: 'Pianotimer for barn og voksne 🎹',
-    label: '🎹 Pianotimer – 400 kr',
-    category: '📚 Undervisning og leksehjelp',
-    desc: 'Utdannet pianist tilbyr timer hjemme hos deg. Alle nivåer fra nybegynnere til viderekomne. 60 min per time. Fast ukentlig time tilbys.',
-    price: 400, priceType: 'per_time',
-    recurring: true, recurringInfo: 'Fast ukentlig time anbefales',
-    rating: 4.9, reviews: 31,
-    coords: [10.7400, 59.9300],
-    provider: { name: 'Mia K.', initials: 'MK', color: '#a855f7' }
+  { id:'s4', type:'service', title:'Pianotimer for barn og voksne 🎹', label:'🎹 Pianotimer – 400 kr',
+    category:'📚 Undervisning og leksehjelp', desc:'Utdannet pianist tilbyr timer hjemme hos deg. Alle nivåer fra nybegynnere til viderekomne. 60 min per time. Fast ukentlig time tilbys.',
+    price:400, priceType:'per_time', recurring:true, recurringInfo:'Fast ukentlig time anbefales', rating:4.9, reviews:31,
+    coords:[10.7400,59.9300], provider:{name:'Mia K.',initials:'MK',color:'#a855f7'}
   },
-  {
-    id: 's5', type: 'service',
-    title: 'Gressklipp og hagepleie 🌿',
-    label: '🌿 Gressklipp – 400 kr',
-    category: '🌿 Hagearbeid',
-    desc: 'Klipper gress, steller hekker og rydder hagen. Har eget utstyr. Fast sesongavtale tilbys fra mai til september.',
-    price: 400, priceType: 'per_visit',
-    recurring: true, recurringInfo: 'Sesongavtale: 1500 kr/mnd (mai–sept)',
-    rating: 4.7, reviews: 15,
-    coords: [10.7650, 59.9180],
-    provider: { name: 'Lars B.', initials: 'LB', color: '#f97316' }
+  { id:'s5', type:'service', title:'Gressklipp og hagepleie 🌿', label:'🌿 Gressklipp – 400 kr',
+    category:'🌿 Hagearbeid', desc:'Klipper gress, steller hekker og rydder hagen. Har eget utstyr. Fast sesongavtale tilbys fra mai til september.',
+    price:400, priceType:'per_visit', recurring:true, recurringInfo:'Sesongavtale: 1500 kr/mnd (mai–sept)', rating:4.7, reviews:15,
+    coords:[10.7650,59.9180], provider:{name:'Lars B.',initials:'LB',color:'#f97316'}
   }
 ];
+
+function initMap() {
 
 function questToJob(q) {
   // Convert Supabase quest row to job display object
@@ -3387,174 +3339,124 @@ async function checkUnread() {
 }
 
 // ── SEARCH ──
-let allQuests = []; // cache of loaded quests
 let searchDebounce = null;
 
 function handleSearch(query) {
-  // Sync both inputs
   const desktop = document.getElementById('search-input-desktop');
   const mobile = document.getElementById('search-input-mobile');
   if(desktop && desktop.value !== query) desktop.value = query;
   if(mobile && mobile.value !== query) mobile.value = query;
-
   clearTimeout(searchDebounce);
-  if(!query.trim()) {
-    closeSearch();
-    return;
-  }
-  searchDebounce = setTimeout(() => runSearch(query.trim()), 250);
+  if(!query.trim()) { closeSearch(); return; }
+  searchDebounce = setTimeout(() => runSearch(query.trim()), 300);
 }
 
 async function runSearch(query) {
-  const results = document.getElementById('search-results');
-  if(!results) return;
-  results.style.display = 'block';
-  results.innerHTML = '<div class="search-empty">🔍 Søker…</div>';
+  const box = document.getElementById('search-results');
+  if(!box) return;
+  box.style.display = 'block';
+  box.innerHTML = '<div class="search-empty">🔍 Søker…</div>';
 
-  const q = query.toLowerCase().trim();
+  const q = query.toLowerCase();
+  const hits = [];
 
-  // Helper: strip emoji and normalize for matching
-  const norm = str => (str || '').toLowerCase().replace(/[^\w\s\-æøå]/gu, '').trim();
-  const matches = str => norm(str).includes(q) || (str||'').toLowerCase().includes(q);
+  // Demo oppdrag – bruk window.JOBS som er satt globalt
+  const jobList = window.JOBS || [];
+  for(const j of jobList) {
+    const text = (j.title + ' ' + j.desc + ' ' + j.label + ' ' + (j.tags||[]).map(t=>t.t||'').join(' ')).toLowerCase();
+    if(text.includes(q)) {
+      hits.push({ id: j.id, title: j.title, pay: j.pay, coords: j.coords, type: 'quest', src: 'demo' });
+    }
+  }
 
-  // Search demo jobs
-  const demoJobResults = JOBS
-    .filter(j => matches(j.title) || matches(j.desc) || matches(j.label) || (j.tags||[]).some(t => matches(t.t)))
-    .map(j => ({
-      id: j.id, title: j.title,
-      category: (j.tags||[]).find(t => !t.cls && !t.t?.startsWith('~') && !t.t?.startsWith('🔴'))?.t || '',
-      pay: j.pay, image_url: null, coords: j.coords, _type: 'quest'
-    }));
+  // Demo tjenester
+  const svcList = window.DEMO_SERVICES || [];
+  for(const s of svcList) {
+    const text = (s.title + ' ' + (s.desc||'') + ' ' + (s.category||'')).toLowerCase();
+    if(text.includes(q)) {
+      hits.push({ id: s.id, title: s.title, pay: s.price, coords: s.coords, type: 'service', src: 'demo' });
+    }
+  }
 
-  // Search demo services
-  const demoSvcResults = DEMO_SERVICES
-    .filter(s => matches(s.title) || matches(s.desc) || matches(s.category) || matches(s.label))
-    .map(s => ({
-      id: s.id, title: s.title, category: s.category || '',
-      pay: s.price, image_url: null, coords: s.coords, _type: 'service'
-    }));
-
-  // Search Supabase quests
-  let dbResults = [];
+  // Supabase oppdrag
   try {
-    const { data: dbQuests } = await sb.from('quests')
+    const { data } = await sb.from('quests')
       .select('id, title, category, pay, image_url, lat, lng')
       .in('status', ['open', 'expired'])
-      .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
+      .or('title.ilike.%' + query + '%,category.ilike.%' + query + '%')
       .limit(8);
-    dbResults = (dbQuests || []).map(q => ({
-      id: q.id, title: q.title, category: q.category || '',
-      pay: q.pay, image_url: q.image_url,
-      coords: [q.lng, q.lat], _type: 'quest'
-    }));
+    for(const r of (data||[])) {
+      hits.push({ id: r.id, title: r.title, pay: r.pay, img: r.image_url, coords: [r.lng, r.lat], type: 'quest', src: 'db' });
+    }
   } catch(e) {}
 
-  // Search Supabase services
-  let dbSvcResults = [];
+  // Supabase tjenester
   try {
-    const { data: dbServices } = await sb.from('services')
+    const { data } = await sb.from('services')
       .select('id, title, category, price, image_url, lat, lng')
       .eq('status', 'active')
-      .or(`title.ilike.%${query}%,description.ilike.%${query}%,category.ilike.%${query}%`)
+      .or('title.ilike.%' + query + '%,category.ilike.%' + query + '%')
       .limit(4);
-    dbSvcResults = (dbServices || []).map(s => ({
-      id: s.id, title: s.title, category: s.category || '',
-      pay: s.price, image_url: s.image_url,
-      coords: [s.lng, s.lat], _type: 'service'
-    }));
+    for(const r of (data||[])) {
+      hits.push({ id: r.id, title: r.title, pay: r.price, img: r.image_url, coords: [r.lng, r.lat], type: 'service', src: 'db' });
+    }
   } catch(e) {}
 
-  const all = [...dbResults, ...dbSvcResults, ...demoJobResults, ...demoSvcResults];
-
-  if(all.length === 0) {
-    results.innerHTML = `<div class="search-empty">Ingen treff for "<strong>${query}</strong>"</div>`;
+  if(hits.length === 0) {
+    box.innerHTML = '<div class="search-empty">Ingen treff for «' + query + '»</div>';
     return;
   }
 
-  renderSearchResults(all);
-}
-
-function renderSearchResults(quests) {
-  const results = document.getElementById('search-results');
-  const catIcons = {
-    'Hjem og hage': '🏠', 'Kjøring og transport': '🚗',
-    'Handel og ærend': '🛒', 'Dyr': '🐕', 'Dyrepass': '🐾',
-    'Håndverk og montering': '🔧', 'Eldre og selskap': '👴',
-    'Bære og flytte': '📦', 'Rengjøring': '🧹',
-    'Teknologi og IT': '💻', 'Bil og kjøretøy': '🚘',
-    'Barn og familie': '👶', 'Fest og arrangement': '🎉',
-    'Mat og matlaging': '🍕', 'Foto og video': '📸',
-    'Hår og skjønnhet': '💇', 'Hagearbeid': '🌿',
-    'Nøkler og ærend': '🔑', 'Småfiks': '🛠️', 'Undervisning og leksehjelp': '🎓', 'Blind date': '💘', 'Undervisning og hjelp': '📚',
-    'Annet': '✨'
-  };
-
-  // Deduplicate by id
+  // Deduplicate
   const seen = new Set();
-  const deduped = quests.filter(q => { if(seen.has(q.id)) return false; seen.add(q.id); return true; });
+  const uniq = hits.filter(h => { if(seen.has(h.id)) return false; seen.add(h.id); return true; });
 
-  results.innerHTML = `<div class="search-section-title">${deduped.length} treff</div>` +
-    deduped.map(q => {
-      const icon = catIcons[q.category] || (q._type==='service' ? '🏪' : '✨');
-      const imgUrl = q.image_url || q.image || null;
-      const thumb = imgUrl
-        ? `<img src="${imgUrl}" class="search-result-thumb" style="border-radius:10px;object-fit:cover">`
-        : `<div class="search-result-thumb" style="background:${q._type==='service'?'rgba(168,85,247,0.1)':'var(--surface2)'};display:flex;align-items:center;justify-content:center;font-size:20px">${icon}</div>`;
-      const typeLabel = q._type==='service' ? '<span style="font-size:9px;background:rgba(168,85,247,0.1);color:var(--accent2);padding:1px 5px;border-radius:4px;font-weight:700;margin-left:4px">TJENESTE</span>' : '';
-      return `<div class="search-result-item" onclick="selectSearchResult('${q.id}', ${JSON.stringify(q.coords || [0,0]).replace(/"/g,'&quot;')})">
-        ${thumb}
-        <div class="search-result-info">
-          <div class="search-result-title">${q.title}${typeLabel}</div>
-          <div class="search-result-meta">${q.category || ''}</div>
-        </div>
-        <div class="search-result-pay">${q.pay} kr</div>
-      </div>`;
+  box.innerHTML = '<div class="search-section-title">' + uniq.length + ' treff</div>' +
+    uniq.map(h => {
+      const icon = h.type === 'service' ? '🏪' : '✨';
+      const tag = h.type === 'service' ? '<span style="font-size:9px;background:rgba(168,85,247,0.1);color:#7c5cfc;padding:1px 5px;border-radius:4px;font-weight:700;margin-left:4px">TJENESTE</span>' : '';
+      const thumb = h.img
+        ? '<img src="' + h.img + '" class="search-result-thumb" style="border-radius:10px;object-fit:cover">'
+        : '<div class="search-result-thumb" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px">' + icon + '</div>';
+      const coordStr = JSON.stringify(h.coords || [0,0]);
+      return '<div class="search-result-item" onclick="selectSearchResult(\'' + h.id + '\',' + coordStr + ')">' +
+        thumb +
+        '<div class="search-result-info">' +
+          '<div class="search-result-title">' + h.title + tag + '</div>' +
+          '<div class="search-result-meta">' + (h.type === 'service' ? 'Tjeneste' : 'Oppdrag') + '</div>' +
+        '</div>' +
+        '<div class="search-result-pay">' + (h.pay || 0) + ' kr</div>' +
+        '</div>';
     }).join('');
 }
 
 function selectSearchResult(questId, coords) {
   closeSearch();
-  // Clear search inputs
-  const di = document.getElementById('search-input-desktop');
-  const mi = document.getElementById('search-input-mobile');
-  if(di) di.value = '';
-  if(mi) mi.value = '';
-
-  if(window.map && coords && coords[0]) {
-    window.map.flyTo({ center: coords, zoom: 15, speed: 1.6 });
-  }
+  document.getElementById('search-input-desktop').value = '';
+  document.getElementById('search-input-mobile').value = '';
+  if(window.map && coords && coords[0]) window.map.flyTo({ center: coords, zoom: 15, speed: 1.6 });
   setTimeout(async () => {
-    // Try demo jobs first
-    const demoJob = JOBS.find(j => j.id === questId);
+    const demoJob = (window.JOBS||[]).find(j => j.id === questId);
     if(demoJob) { showPanel(demoJob); return; }
-    // Try demo services
-    const demoSvc = DEMO_SERVICES.find(s => s.id === questId);
+    const demoSvc = (window.DEMO_SERVICES||[]).find(s => s.id === questId);
     if(demoSvc) { showServicePanel(demoSvc); return; }
-    // Try DB quests
     const { data: q } = await sb.from('quests').select('*').eq('id', questId).single();
     if(q) { showPanel(questToJob(q)); return; }
-    // Try DB services
     const { data: s } = await sb.from('services').select('*').eq('id', questId).single();
-    if(s) { showServicePanel(serviceToSvc(s)); return; }
+    if(s) { showServicePanel(serviceToSvc(s)); }
   }, 300);
 }
 
 function closeSearch() {
-  const results = document.getElementById('search-results');
-  if(results) results.style.display = 'none';
+  const el = document.getElementById('search-results');
+  if(el) el.style.display = 'none';
 }
 
-// Close search on outside click
 document.addEventListener('click', e => {
-  const searchEl = document.getElementById('search-results');
-  const searchbox = document.getElementById('searchbox');
-  const mobileSearch = document.getElementById('mobile-search');
-  if(searchEl &&
-     !searchbox?.contains(e.target) &&
-     !mobileSearch?.contains(e.target) &&
-     !searchEl.contains(e.target)) {
-    closeSearch();
-  }
+  const box = document.getElementById('search-results');
+  const sb1 = document.getElementById('searchbox');
+  const ms = document.getElementById('mobile-search');
+  if(box && !sb1?.contains(e.target) && !ms?.contains(e.target) && !box.contains(e.target)) closeSearch();
 });
 
 // ── SERVICE FUNCTIONS ──
