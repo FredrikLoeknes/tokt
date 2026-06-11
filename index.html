@@ -2509,17 +2509,15 @@ function requestLocation() {
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(pos => {
     const { latitude: lat, longitude: lng } = pos.coords;
-    // Fly to user location
     map.flyTo({ center: [lng, lat], zoom: 14, speed: 1.4, curve: 1.4 });
-    // Add pulsing user dot
     const el = document.createElement('div');
     el.className = 'user-dot';
     el.innerHTML = '<div class="user-pulse"></div><div class="user-center"></div>';
     new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
-    showToast(t('toastLocation'));
-  }, () => {
-    // silently fail if denied
-  });
+    // Only show toast if welcome popup is NOT visible
+    const welcomeVisible = document.getElementById('welcome-overlay')?.style.display === 'flex';
+    if(!welcomeVisible) showToast(t('toastLocation'));
+  }, () => {});
 }
 
 async function confirmPaymentReceived(convId, questId) {
@@ -4140,12 +4138,13 @@ async function postService() {
 
 // ── WELCOME POPUP ──
 function showWelcomeIfNew() {
-  // Show only if user hasn't seen it before AND is not logged in
   const seen = localStorage.getItem('tokt-welcome-seen');
+  // Never show for logged in users, only for brand new visitors
   if(!seen && !currentUser) {
     document.getElementById('welcome-overlay').style.display = 'flex';
   } else {
     document.getElementById('welcome-overlay').style.display = 'none';
+    if(!seen) initTipsBar();
   }
 }
 
