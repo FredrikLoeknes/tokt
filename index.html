@@ -2696,7 +2696,10 @@ async function confirmPaymentReceived(convId, questId) {
   }
 
   // Taker confirms payment received – marks quest as completed
-  await sb.from('quests').update({ status: 'completed' }).eq('id', questId);
+  // For service conversations (no questId): only the conversation completes, service stays active on map
+  if(questId && questId !== 'null' && questId !== 'undefined') {
+    await sb.from('quests').update({ status: 'completed' }).eq('id', questId);
+  }
   await sb.from('conversations').update({ status: 'completed' }).eq('id', convId);
 
   // Get quest and giver info for notification
@@ -4572,7 +4575,7 @@ async function loadInbox() {
   list.innerHTML = '<div style="padding:20px;text-align:center;font-size:13px;color:var(--muted)">Laster…</div>';
 
   const { data: convs, error } = await sb.from('conversations')
-    .select(`*, quest:quest_id(title)`)
+    .select(`*, quest:quest_id(title), service:service_id(title)`)
     .or(`giver_id.eq.${currentUser.id},taker_id.eq.${currentUser.id}`);
 
   if(error) console.error('loadInbox error:', error.message);
@@ -4593,8 +4596,8 @@ async function loadInbox() {
     const isGiver = conv.giver_id === currentUser.id;
     const otherId = isGiver ? conv.taker_id : conv.giver_id;
     const otherName = nameMap[otherId] || 'Bruker';
-    const questTitle = conv.quest?.title || 'Oppdrag';
-    const role = isGiver ? '👤 Søker' : '📋 Ditt oppdrag';
+    const questTitle = conv.quest?.title || conv.service?.title || 'Samtale';
+    const role = conv.service_id ? '🏪 Tjeneste' : (isGiver ? '👤 Søker' : '📋 Ditt oppdrag');
     return `
       <div onclick="window._chatOtherName='${otherName.replace(/'/g,"\\'")}';openChat('${conv.id}','${questTitle.replace(/'/g,"\\'")}')" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;display:flex;gap:10px;align-items:center" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
         <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${otherName[0].toUpperCase()}</div>
@@ -4836,11 +4839,69 @@ function closeServicePanel() {
   activeService = null;
 }
 
-function contactService() {
+async function contactService() {
   if(!currentUser) { openAuth('login'); return; }
+  const svc = activeService;
+
+  // Demo service
+  if(!svc?.raw?.id || !svc?.raw?.user_id) {
+    closeServicePanel();
+    showToast('💬 Dette er en demo-tjeneste – test med ekte tjenester!');
+    return;
+  }
+
+  // Own service
+  if(svc.raw.user_id === currentUser.id) {
+    showToast('⚠️ Dette er din egen tjeneste');
+    return;
+  }
+
+  // Phone required
+  const { data: myProfile } = await sb.from('profiles').select('phone, full_name').eq('id', currentUser.id).single();
+  if(!myProfile?.phone) {
+    showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) for å kontakte tilbydere.');
+    return;
+  }
+
+  // Existing conversation for this service?
+  const { data: existing } = await sb.from('conversations')
+    .select('id')
+    .eq('service_id', svc.raw.id)
+    .eq('giver_id', currentUser.id)
+    .limit(1);
+
   closeServicePanel();
-  showToast('💬 Åpner chat med tilbyder…');
-  // In real version: create conversation with service provider
+
+  const { data: providerProfile } = await sb.from('profiles').select('full_name').eq('id', svc.raw.user_id).single();
+  window._chatOtherName = providerProfile?.full_name || 'Tilbyder';
+
+  if(existing?.length) {
+    openChat(existing[0].id, svc.title);
+    return;
+  }
+
+  // Create conversation: customer = giver (pays), provider = taker (gets paid)
+  // Service stays ACTIVE on the map – multiple customers can book the same service
+  const { data: conv, error } = await sb.from('conversations').insert({
+    service_id: svc.raw.id,
+    giver_id: currentUser.id,
+    taker_id: svc.raw.user_id,
+    status: 'accepted'
+  }).select().single();
+
+  if(error) { showToast('❌ Feil: ' + error.message); return; }
+
+  // Notify provider (also sends email via Edge Function)
+  await sb.from('notifications').insert({
+    user_id: svc.raw.user_id,
+    type: 'application',
+    title: '🏪 Ny henvendelse på tjenesten din!',
+    body: `${myProfile.full_name || 'En bruker'} er interessert i «${svc.title}». Åpne chatten og avtal tid.`,
+    link_id: conv.id
+  });
+
+  showToast('💬 Chat åpnet! Avtal tid med tilbyderen.');
+  openChat(conv.id, svc.title);
 }
 
 function openServiceModal() {
