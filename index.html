@@ -5487,7 +5487,16 @@ async function loadUserProfile(user) {
   if(profile) {
     const quests = profile.quests_completed || 0;
     const rank = getRank(quests);
-    document.getElementById('profile-quests').textContent = quests;
+    // Show total involvement: posted + taken (active/completed)
+    try {
+      const { count: postedCount } = await sb.from('quests').select('id', { count:'exact', head:true })
+        .eq('user_id', user.id).neq('status', 'deleted');
+      const { count: takenCount } = await sb.from('conversations').select('id', { count:'exact', head:true })
+        .eq('taker_id', user.id).in('status', ['accepted','completed']);
+      document.getElementById('profile-quests').textContent = (postedCount || 0) + (takenCount || 0);
+    } catch(e) {
+      document.getElementById('profile-quests').textContent = quests;
+    }
     document.getElementById('profile-rating').textContent = profile.rating ? profile.rating.toFixed(1) : '–';
     document.getElementById('profile-level').textContent = profile.level || 1;
     document.getElementById('profile-rank-badge').textContent = rank.name;
