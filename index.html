@@ -76,7 +76,7 @@ html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg); 
 /* ── TOPBAR ── */
 #topbar {
   position:fixed; top:0; left:0; right:0; z-index:100;
-  display:flex; align-items:center; gap:12px; padding:12px 18px;
+  display:flex; align-items:center; gap:12px; padding:18px 18px 12px;
   background:var(--topbar);
   border-bottom:1px solid var(--border);
   box-shadow:var(--shadow-sm);
@@ -944,13 +944,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 <!-- TOPBAR -->
 <div id="topbar">
   <div class="logo">
-    <div style="position:relative;display:inline-block;padding-top:12px">
-      <svg width="90" height="0" viewBox="0 0 90 18" style="position:absolute;top:-2px;left:50%;transform:translateX(-50%);overflow:visible;pointer-events:none">
-        <defs><path id="logo-arc" d="M 5,16 Q 45,-4 85,16"/></defs>
-        <text font-family="Skranji,cursive" font-size="8.5" fill="var(--muted)" opacity="0.65" letter-spacing="0.8">
-          <textPath href="#logo-arc" startOffset="50%" text-anchor="middle">nå skal vi på</textPath>
-        </text>
-      </svg>
+    <div style="position:relative;display:inline-block">
+      <div style="position:absolute;top:-11px;left:0;right:0;text-align:center;font-family:'Skranji',cursive;font-size:8px;color:var(--muted);opacity:0.6;white-space:nowrap;letter-spacing:1px;pointer-events:none">
+        nå skal vi på
+      </div>
       <div class="logo-name">Tokt<span>.app</span></div>
     </div>
   </div>
@@ -1052,6 +1049,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="dyr"><div class="fcat-icon">🐕</div><div class="fcat-label">Dyr</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="håndverk"><div class="fcat-icon">🔧</div><div class="fcat-label">Håndverk</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="dugnad"><div class="fcat-icon">🤝</div><div class="fcat-label">Dugnad</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="dynga"><div class="fcat-icon">🗑️</div><div class="fcat-label">Dynga</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="eldre"><div class="fcat-icon">👴</div><div class="fcat-label">Eldre</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="bære"><div class="fcat-icon">📦</div><div class="fcat-label">Bære</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="rengjøring"><div class="fcat-icon">🧹</div><div class="fcat-label">Rengjøring</div></div>
@@ -1421,6 +1419,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         <option>👴 Eldre og selskap</option>
         <option>📦 Bære og flytte</option>
         <option>🧹 Rengjøring</option>
+        <option>🗑️ Dynga</option>
         <option>🤝 Dugnad</option>
         <option>💻 Teknologi og IT</option>
         <option>🚘 Bil og kjøretøy</option>
@@ -2818,6 +2817,9 @@ async function postJob() {
 
   // Reload profile
   if(currentUser) await loadUserProfile(currentUser);
+
+  // Reload mine oppdrag so new quest shows up immediately
+  loadMyQuests();
 }
 
 function showQuestPostedPopup(title) {
@@ -5018,6 +5020,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
         <option>📚 Undervisning og leksehjelp</option>
         <option>🔧 Håndverk og montering</option>
         <option>🤝 Dugnad</option>
+        <option>🗑️ Dynga</option>
         <option>🧹 Rengjøring</option>
         <option>🍕 Mat og matlaging</option>
         <option>📸 Foto og video</option>
