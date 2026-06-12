@@ -271,6 +271,14 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .rank-konge      { background:linear-gradient(135deg,rgba(201,144,10,0.2),rgba(124,92,252,0.2)); color:var(--gold); border-color:var(--gold); }
 .rank-valkyrje   { background:linear-gradient(135deg,rgba(233,30,140,0.15),rgba(124,92,252,0.2)); color:#e91e8c; border-color:#e91e8c; font-style:italic; }
 
+/* ── PROFILSIDE ── */
+.pp-tab { flex:1; padding:9px 8px; border:1.5px solid var(--border); border-radius:10px; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); background:var(--surface2); text-align:center; transition:all .15s; }
+.pp-tab.active { border-color:var(--accent); color:var(--accent); background:rgba(59,111,245,0.08); }
+.pp-rank-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+.pp-rank-row:last-child { border-bottom:none; }
+.pp-ach-row { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:12px; }
+.pp-ach-row.locked { opacity:0.45; filter:grayscale(0.8); }
+
 /* ── MARKERS ── */
 .mapbox-marker {
   cursor: pointer !important;
@@ -2401,6 +2409,29 @@ function showPanel(job) {
   document.getElementById('panel-tags').innerHTML = job.tags.map(t=>`<span class="tag ${t.cls||''}">${t.t}</span>`).join('');
   document.getElementById('panel-desc').textContent = job.desc;
 
+  // Klikkbar oppdragsgiver-rad (kun ekte oppdrag, ikke demo)
+  const existingGiver = document.getElementById('panel-giver-row');
+  if(existingGiver) existingGiver.remove();
+  if(job.raw?.user_id) {
+    sb.from('profiles').select('full_name').eq('id', job.raw.user_id).single().then(({ data: gp }) => {
+      if(!gp) return;
+      const gname = gp.full_name || 'Bruker';
+      const ginit = gname.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+      const row = document.createElement('div');
+      row.id = 'panel-giver-row';
+      row.style.cssText = 'margin:0 16px 12px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;gap:10px;cursor:pointer';
+      row.onclick = () => viewOtherProfile(job.raw.user_id);
+      row.innerHTML = `
+        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${ginit}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${gname}</div>
+          <div style="font-size:11px;color:var(--muted)">Oppdragsgiver · Trykk for profil</div>
+        </div>
+        <span style="color:var(--muted);font-size:14px">›</span>`;
+      document.getElementById('panel-quest-type')?.before(row);
+    });
+  }
+
   // Show image if available
   const existingImg = document.getElementById('panel-image');
   if(existingImg) existingImg.remove();
@@ -2996,6 +3027,8 @@ async function loadLeaderboard() {
     const rankCl = rankCls[i] || '';
     const row = document.createElement('div');
     row.className = 'lb-row';
+    row.style.cursor = 'pointer';
+    row.onclick = () => viewOtherProfile(p.id);
     row.innerHTML = `
       <div class="lb-rank ${rankCl}">${i+1}</div>
       <div class="lb-avatar" style="background:${col}20;color:${col}">${initials}</div>
@@ -3014,7 +3047,7 @@ async function loadLeaderboard() {
     const topRank = getRank(topQuests);
     const ww = document.getElementById('week-worker');
     if(ww) {
-      ww.onclick = () => showUserProfile(topName, topInit, '#f5c518', topQuests, top.rating || 0, topRank.name);
+      ww.onclick = () => viewOtherProfile(top.id);
       const wwAvatar = ww.querySelector('.ww-avatar');
       if(wwAvatar) wwAvatar.textContent = topInit;
       const wwName = ww.querySelector('.ww-name');
@@ -3036,6 +3069,202 @@ function toggleProfile() {
     openAuth('login');
   }
 }
+
+// ═══════════ PROFILSIDE ═══════════
+const ACHIEVEMENTS = [
+  { id:'first_apply',  icon:'📨', title:'Første søknad',       desc:'Søk på ditt første oppdrag',          check: s => s.applied >= 1 },
+  { id:'first_quest',  icon:'⚡', title:'Første oppdrag',       desc:'Få tildelt ditt første oppdrag',      check: s => s.taken >= 1 },
+  { id:'first_done',   icon:'🏆', title:'Fullført!',            desc:'Fullfør ditt første oppdrag',         check: s => s.completed >= 1 },
+  { id:'first_post',   icon:'📋', title:'Oppdragsgiver',        desc:'Legg ut ditt første oppdrag',         check: s => s.posted >= 1 },
+  { id:'five_done',    icon:'🛡️', title:'Pålitelig',            desc:'Fullfør 5 oppdrag',                   check: s => s.completed >= 5 },
+  { id:'ten_done',     icon:'⚔️', title:'Kriger',               desc:'Fullfør 10 oppdrag',                  check: s => s.completed >= 10 },
+  { id:'rating_45',    icon:'⭐', title:'Stjerneutfører',       desc:'Oppnå 4.5+ i snittvurdering',         check: s => s.rating >= 4.5 },
+  { id:'charity',      icon:'💚', title:'Hjertegod',            desc:'Fullfør et veldedighetsoppdrag',      check: s => s.charity >= 1 },
+  { id:'twentyfive',   icon:'🪓', title:'Veteran',              desc:'Fullfør 25 oppdrag',                  check: s => s.completed >= 25 },
+  { id:'fifty',        icon:'👑', title:'Jarlens verdighet',    desc:'Fullfør 50 oppdrag',                  check: s => s.completed >= 50 },
+  { id:'hundred',      icon:'🌟', title:'Valkyrjens utvalgte',  desc:'Fullfør 100 oppdrag',                 check: s => s.completed >= 100 }
+];
+
+function openProfilePage() {
+  if(!currentUser) { openAuth('login'); return; }
+  document.getElementById('profile-page').style.display = 'block';
+  closeLeaderboard();
+  closePanel();
+  loadProfilePage(currentUser.id, true);
+}
+
+function closeProfilePage() {
+  document.getElementById('profile-page').style.display = 'none';
+}
+
+function ppShowTab(tab) {
+  document.getElementById('pp-tab-posted').classList.toggle('active', tab === 'posted');
+  document.getElementById('pp-tab-taken').classList.toggle('active', tab === 'taken');
+  document.getElementById('pp-quests-posted').style.display = tab === 'posted' ? 'block' : 'none';
+  document.getElementById('pp-quests-taken').style.display = tab === 'taken' ? 'block' : 'none';
+}
+
+async function loadProfilePage(userId, isOwn) {
+  // Vis/skjul egne seksjoner
+  document.getElementById('pp-edit-section').style.display = isOwn ? 'block' : 'none';
+  document.getElementById('pp-quests-section').style.display = isOwn ? 'block' : 'none';
+  document.getElementById('pp-header-title').textContent = isOwn ? 'Min profil' : 'Profil';
+
+  // Hent profildata
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', userId).single();
+  if(!profile) { showToast('❌ Fant ikke profilen'); return; }
+
+  const name = profile.full_name || 'Bruker';
+  const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('pp-avatar').textContent = initials;
+  document.getElementById('pp-name').textContent = name;
+
+  // Hent statistikk
+  const { count: completedCount } = await sb.from('quests')
+    .select('id', { count:'exact', head:true })
+    .eq('user_id', userId).eq('status','completed');
+
+  const { count: postedCount } = await sb.from('quests')
+    .select('id', { count:'exact', head:true })
+    .eq('user_id', userId);
+
+  const { data: takenConvs } = await sb.from('conversations')
+    .select('id, status, quest:quest_id(status, is_charity)')
+    .eq('taker_id', userId);
+
+  const appliedCount = takenConvs?.length || 0;
+  const takenCount = takenConvs?.filter(c => c.status === 'accepted' || c.status === 'completed').length || 0;
+  const doneAsTaker = takenConvs?.filter(c => c.quest?.status === 'completed').length || 0;
+  const charityDone = takenConvs?.filter(c => c.quest?.status === 'completed' && c.quest?.is_charity).length || 0;
+
+  // Snittvurdering
+  const { data: ratings } = await sb.from('ratings').select('score').eq('rated_id', userId);
+  const avgRating = ratings?.length ? (ratings.reduce((a,r)=>a+r.score,0) / ratings.length) : null;
+
+  const questsDone = doneAsTaker; // rang baseres på utførte oppdrag
+  const rank = getRank(questsDone);
+
+  // Hero
+  document.getElementById('pp-rank-badge').textContent = rank.name;
+  document.getElementById('pp-rank-desc').textContent = rank.desc || '';
+
+  // Stats
+  document.getElementById('pp-stat-quests').textContent = questsDone;
+  document.getElementById('pp-stat-rating').textContent = avgRating ? '★ ' + avgRating.toFixed(1) : '–';
+  document.getElementById('pp-stat-level').textContent = profile.level || 1;
+
+  // XP til neste rang
+  const nextRank = RANKS.find(r => r.min > questsDone);
+  if(nextRank) {
+    const prevMin = rank.min;
+    const progress = ((questsDone - prevMin) / (nextRank.min - prevMin)) * 100;
+    document.getElementById('pp-xp-label').textContent = `${questsDone} / ${nextRank.min} oppdrag til ${nextRank.name}`;
+    document.getElementById('pp-xp-fill').style.width = Math.max(progress, 2) + '%';
+  } else {
+    document.getElementById('pp-xp-label').textContent = 'Høyeste rang oppnådd! 🌟';
+    document.getElementById('pp-xp-fill').style.width = '100%';
+  }
+
+  // Rediger-felter (kun egen)
+  if(isOwn) {
+    document.getElementById('pp-edit-name').value = profile.full_name || '';
+    document.getElementById('pp-edit-phone').value = profile.phone || '';
+    loadProfileQuests(userId);
+  }
+
+  // Rangstige
+  renderRankLadder(questsDone);
+
+  // Achievements
+  const stats = { applied: appliedCount, taken: takenCount, completed: doneAsTaker, posted: postedCount || 0, rating: avgRating || 0, charity: charityDone };
+  renderAchievements(stats);
+}
+
+function renderRankLadder(questsDone) {
+  const el = document.getElementById('pp-rank-ladder');
+  el.innerHTML = RANKS.map(r => {
+    const achieved = questsDone >= r.min;
+    const isCurrent = getRank(questsDone).name === r.name;
+    return `<div class="pp-rank-row" style="${isCurrent ? 'background:rgba(59,111,245,0.05);margin:0 -8px;padding:8px;border-radius:10px' : ''}">
+      <span class="lb-badge ${r.cls}" style="${achieved ? '' : 'opacity:0.35;filter:grayscale(0.7)'}">${r.name}</span>
+      <div style="flex:1;font-size:11px;color:var(--muted)">${r.min} oppdrag${isCurrent ? ' · <strong style="color:var(--accent)">Din rang</strong>' : ''}</div>
+      <span style="font-size:14px">${achieved ? '✅' : '🔒'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderAchievements(stats) {
+  const el = document.getElementById('pp-achievements');
+  el.innerHTML = ACHIEVEMENTS.map(a => {
+    const unlocked = a.check(stats);
+    return `<div class="pp-ach-row ${unlocked ? '' : 'locked'}">
+      <div style="font-size:26px;flex-shrink:0">${unlocked ? a.icon : '🔒'}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700">${a.title}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:1px">${a.desc}</div>
+      </div>
+      ${unlocked ? '<span style="font-size:11px;font-weight:700;color:var(--green)">✓ Låst opp</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+async function loadProfileQuests(userId) {
+  // Lagt ut
+  const { data: posted } = await sb.from('quests')
+    .select('*').eq('user_id', userId)
+    .order('created_at', { ascending:false }).limit(10);
+  const postedEl = document.getElementById('pp-quests-posted');
+  postedEl.innerHTML = (posted?.length)
+    ? posted.map(q => ppQuestRow(q)).join('')
+    : '<div style="font-size:12px;color:var(--muted);padding:8px 4px">Ingen oppdrag lagt ut ennå.</div>';
+
+  // Tar / utført
+  const { data: taken } = await sb.from('conversations')
+    .select('status, quest:quest_id(*)')
+    .eq('taker_id', userId)
+    .order('created_at', { ascending:false }).limit(10);
+  const takenEl = document.getElementById('pp-quests-taken');
+  const takenQuests = (taken || []).filter(c => c.quest).map(c => c.quest);
+  takenEl.innerHTML = takenQuests.length
+    ? takenQuests.map(q => ppQuestRow(q)).join('')
+    : '<div style="font-size:12px;color:var(--muted);padding:8px 4px">Ingen oppdrag tatt ennå.</div>';
+}
+
+function ppQuestRow(q) {
+  const statusLabel = q.status === 'completed' ? '🏆' : q.status === 'taken' ? '🔒' : q.status === 'open' ? '🟢' : q.status === 'paused' ? '⏸️' : q.status === 'expired' ? '⏰' : '🔴';
+  return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:6px">
+    <span style="font-size:16px">${statusLabel}</span>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.title}</div>
+      <div style="font-size:11px;color:var(--muted)">${q.category || ''} · ${q.pay} kr</div>
+    </div>
+  </div>`;
+}
+
+async function saveProfileEdits() {
+  const name = document.getElementById('pp-edit-name')?.value?.trim();
+  const phone = document.getElementById('pp-edit-phone')?.value?.trim();
+  if(!name) { showToast('⚠️ Navn kan ikke være tomt'); return; }
+  if(phone && phone.length < 8) { showToast('⚠️ Telefonnummer må være 8 siffer'); return; }
+
+  const { error } = await sb.from('profiles').update({ full_name: name, phone: phone || null }).eq('id', currentUser.id);
+  if(error) { showToast('❌ ' + error.message); return; }
+
+  showToast('✅ Profil oppdatert!');
+  loadProfilePage(currentUser.id, true);
+  if(currentUser) await loadUserProfile(currentUser);
+}
+
+// Åpne andres profil (fra toppliste eller oppdrag)
+async function viewOtherProfile(userId) {
+  if(!userId) return;
+  document.getElementById('profile-page').style.display = 'block';
+  closeLeaderboard();
+  closePanel();
+  loadProfilePage(userId, false);
+}
+
+
 function closeLeaderboard() {
   const lb = document.getElementById('leaderboard');
   if(!lb) return;
@@ -4881,6 +5110,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
         <div id="profile-xp-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#f97316,#a855f7);border-radius:3px;transition:width .5s ease"></div>
       </div>
     </div>
+    <button onclick="document.getElementById('profile-panel').style.display='none';openProfilePage()" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">👤 Min profil</button>
     <button onclick="openMyQuests()" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">📋 Mine oppdrag</button>
 <button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">Logg ut</button>
   </div>
@@ -5188,6 +5418,91 @@ sb.auth.onAuthStateChange(async (event, session) => {
 <div id="panel-overlay" onclick="closePanel();closeServicePanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199;backdrop-filter:blur(2px)"></div>
 
 <!-- BOTTOM NAV (mobile only) -->
+<!-- ═══════════ PROFILSIDE (fullskjerm) ═══════════ -->
+<div id="profile-page" style="display:none;position:fixed;inset:0;z-index:460;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideIn .2s ease">
+
+  <!-- Header med tilbakeknapp -->
+  <div style="position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px">
+    <button onclick="closeProfilePage()" style="background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:16px;color:var(--text)">←</button>
+    <div style="font-size:16px;font-weight:800" id="pp-header-title">Min profil</div>
+  </div>
+
+  <!-- Hero: avatar, navn, rang -->
+  <div style="background:linear-gradient(135deg,#f97316,#a855f7);padding:28px 20px 24px;text-align:center;color:#fff">
+    <div id="pp-avatar" style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,0.25);border:3px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;margin:0 auto 12px">?</div>
+    <div id="pp-name" style="font-size:22px;font-weight:800">Laster…</div>
+    <div id="pp-rank-badge" style="display:inline-block;background:rgba(255,255,255,0.22);font-size:12px;font-weight:700;padding:4px 14px;border-radius:50px;margin-top:8px">Trell</div>
+    <div id="pp-rank-desc" style="font-size:12px;opacity:0.85;margin-top:8px;line-height:1.5;font-style:italic;max-width:300px;margin-left:auto;margin-right:auto"></div>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:flex;gap:1px;background:var(--border);border-bottom:1px solid var(--border)">
+    <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
+      <div id="pp-stat-quests" style="font-size:22px;font-weight:800;color:var(--accent)">0</div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Oppdrag</div>
+    </div>
+    <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
+      <div id="pp-stat-rating" style="font-size:22px;font-weight:800;color:var(--gold)">–</div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Vurdering</div>
+    </div>
+    <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
+      <div id="pp-stat-level" style="font-size:22px;font-weight:800;color:var(--green)">1</div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Level</div>
+    </div>
+  </div>
+
+  <!-- XP-bar -->
+  <div id="pp-xp-section" style="padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
+    <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">
+      <span>Fremgang til neste rang</span>
+      <span id="pp-xp-label">0 / 2 oppdrag</span>
+    </div>
+    <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">
+      <div id="pp-xp-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#f97316,#a855f7);border-radius:4px;transition:width .4s ease"></div>
+    </div>
+  </div>
+
+  <!-- Rediger profil (kun egen profil) -->
+  <div id="pp-edit-section" style="padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px">⚙️ Rediger profil</div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Navn</div>
+      <input id="pp-edit-name" class="form-input" type="text" placeholder="Ditt navn" style="width:100%;box-sizing:border-box">
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Telefon (Vipps-nummer)</div>
+      <input id="pp-edit-phone" class="form-input" type="tel" placeholder="8 siffer" maxlength="8" style="width:100%;box-sizing:border-box">
+    </div>
+    <button onclick="saveProfileEdits()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">💾 Lagre endringer</button>
+  </div>
+
+  <!-- Oppdrag-tabs (kun egen profil) -->
+  <div id="pp-quests-section" style="background:var(--surface);border-bottom:1px solid var(--border)">
+    <div style="padding:16px 20px 0">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px">⚔️ Mine oppdrag</div>
+      <div style="display:flex;gap:6px;margin-bottom:14px">
+        <div class="pp-tab active" id="pp-tab-posted" onclick="ppShowTab('posted')">📋 Lagt ut</div>
+        <div class="pp-tab" id="pp-tab-taken" onclick="ppShowTab('taken')">🔨 Tar/Utført</div>
+      </div>
+    </div>
+    <div id="pp-quests-posted" style="padding:0 16px 16px"></div>
+    <div id="pp-quests-taken" style="display:none;padding:0 16px 16px"></div>
+  </div>
+
+  <!-- Rangstige -->
+  <div style="padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px">🪓 Rangstige</div>
+    <div id="pp-rank-ladder"></div>
+  </div>
+
+  <!-- Achievements -->
+  <div style="padding:16px 20px 90px;background:var(--surface)">
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px">🏅 Achievements</div>
+    <div id="pp-achievements" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+
+</div>
+
 <div id="bottom-nav">
   <div class="nav-item active" onclick="showToast('🗺️ Map view')">
     <div class="nav-icon">🗺️</div>
@@ -5209,7 +5524,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div class="nav-icon">🏆</div>
     <div class="nav-label" id="nav-ranks-label">Ranks</div>
   </div>
-  <div class="nav-item" onclick="showToast('👤 Profile coming soon!')">
+  <div class="nav-item" onclick="openProfilePage()">
     <div class="nav-icon">👤</div>
     <div class="nav-label" id="nav-profile-label">Profile</div>
   </div>
