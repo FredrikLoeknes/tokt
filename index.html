@@ -2630,9 +2630,19 @@ async function applyJob() {
   if(error) { showToast('❌ Feil: ' + error.message); return; }
 
   closePanel();
-  showToast('✦ Søknad sendt! Chat med oppdragsgiver');
+
+  // Check if first-come quest - give achievement immediately
+  const { data: questData } = await sb.from('quests').select('is_first_come, title').eq('id', questId).single();
+  if(questData?.is_first_come) {
+    showToast('⚡ Oppdrag tildelt! Du er førstemann til mølla!');
+    setTimeout(() => showAchievement('⚡', 'Første oppdrag!', 'Du fikk ditt første oppdrag – førstemann til mølla!'), 1000);
+    await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
+    await sb.from('conversations').update({ status: 'accepted' }).eq('id', conv.id);
+  } else {
+    showToast('✦ Søknad sendt! Venter på godkjenning fra oppdragsgiver.');
+    setTimeout(() => showAchievement('📨', 'Første søknad!', 'Du har søkt på ditt første oppdrag. Venter på godkjenning!'), 1800);
+  }
   openChat(conv.id, applyPanel?.dataset?.questTitle || 'Oppdrag');
-  setTimeout(() => showAchievement('✦', t('firstQuestTitle'), t('firstQuestDesc')), 1800);
 }
 
 function openModal() { if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å legge ut oppdrag'); return; } document.getElementById('modal-overlay').classList.add('open'); }
@@ -3580,6 +3590,15 @@ async function acceptApplicant(convId, questId) {
     type: 'accepted',
     title: '🎉 Søknaden din ble godkjent!',
     body: `Du har fått oppdraget. Oppdragsgiver: ${giverProfile.full_name}, Vipps: ${giverProfile.phone}`,
+    link_id: convId
+  });
+
+  // Achievement notification for taker
+  await sb.from('notifications').insert({
+    user_id: conv.taker_id,
+    type: 'achievement',
+    title: '🏅 Achievement: Første oppdrag tildelt!',
+    body: 'Du ble valgt til å utføre et oppdrag for første gang. Lykke til!',
     link_id: convId
   });
 
