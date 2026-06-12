@@ -2569,7 +2569,41 @@ function showPanel(job) {
     document.getElementById('panel-meta').after(schedDiv);
   }
   const appEl = document.getElementById('panel-applicants');
-  if(job.people?.length) {
+  const isQuestOwner = currentUser && job.raw?.user_id === currentUser.id;
+  if(job.raw?.id && isQuestOwner) {
+    // Real quest, owner viewing: load actual applicants with approve buttons
+    appEl.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0">Laster søkere…</div>';
+    sb.from('conversations').select('id,status,taker_id').eq('quest_id', job.raw.id).then(async ({ data: convs }) => {
+      const relevant = (convs||[]).filter(c => c.status === 'pending' || c.status === 'accepted');
+      if(!relevant.length) {
+        appEl.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0">${LANGUAGES[currentLang]?.noApplicants || 'Ingen søkere ennå – vær den første!'}</div>`;
+        return;
+      }
+      const ids = [...new Set(relevant.map(c => c.taker_id))];
+      const { data: profs } = await sb.from('profiles').select('id, full_name').in('id', ids);
+      const nm = {};
+      (profs||[]).forEach(p => nm[p.id] = p.full_name);
+      appEl.innerHTML = `<div class="applicants-title">Søkere (${relevant.length})</div>` +
+        relevant.map(c => {
+          const name = nm[c.taker_id] || 'Bruker';
+          const init = name[0].toUpperCase();
+          return `<div class="applicant-row">
+            <div class="applicant-avatar" style="background:rgba(249,115,22,0.15);color:#f97316;cursor:pointer" onclick="viewOtherProfile('${c.taker_id}')">${init}</div>
+            <div class="applicant-name" style="cursor:pointer" onclick="viewOtherProfile('${c.taker_id}')">${name}</div>
+            ${c.status === 'pending'
+              ? `<button onclick="acceptApplicant('${c.id}','${job.raw.id}')" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✓ Godkjenn</button>`
+              : `<span style="font-size:11px;font-weight:700;color:var(--green)">✅ Godkjent</span>`}
+          </div>`;
+        }).join('');
+    });
+  } else if(job.raw?.id) {
+    // Real quest, visitor viewing: show applicant count only
+    sb.from('conversations').select('id', { count:'exact', head:true }).eq('quest_id', job.raw.id).then(({ count }) => {
+      appEl.innerHTML = count > 0
+        ? `<div style="font-size:12px;color:var(--muted);padding:8px 0">👤 ${count} søker${count !== 1 ? 'e' : ''} på dette oppdraget</div>`
+        : `<div style="font-size:12px;color:var(--muted);padding:8px 0">${LANGUAGES[currentLang]?.noApplicants || 'Ingen søkere ennå – vær den første!'}</div>`;
+    });
+  } else if(job.people?.length) {
     const rank = q => getRank(q);
     appEl.innerHTML = `<div class="applicants-title">Applicants</div>` +
       job.people.map(p => {
