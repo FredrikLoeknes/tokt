@@ -3809,7 +3809,9 @@ function questCard(q, type) {
               ${c.status==='pending' ? `
                 <button onclick="acceptApplicant('${c.id}','${q.id}')" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✓ Godkjenn</button>
                 <button onclick="rejectApplicant('${c.id}')" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">✕</button>
-              ` : `<span style="font-size:11px;font-weight:700;color:var(--green)">✅ Godkjent</span>`}
+              ` : c.status==='rejected' ? `<span style="font-size:11px;font-weight:700;color:var(--muted)">✕ Avvist</span>`
+                : c.status==='completed' ? `<span style="font-size:11px;font-weight:700;color:var(--accent)">🏆 Fullført</span>`
+                : `<span style="font-size:11px;font-weight:700;color:var(--green)">✅ Godkjent</span>`}
             </div>`;
           }).join('')}
         </div>
@@ -3834,19 +3836,26 @@ async function acceptApplicant(convId, questId) {
     return;
   }
 
-  // Get taker profile
-  const { data: conv } = await sb.from('conversations')
-    .select('taker_id, taker:taker_id(id)')
+  // Get conversation (no auth-join)
+  const { data: conv, error: convErr } = await sb.from('conversations')
+    .select('id, taker_id')
     .eq('id', convId).single();
 
-  if(!conv) return;
+  if(convErr || !conv) {
+    showToast('❌ Fant ikke søknaden' + (convErr ? ': ' + convErr.message : ''));
+    return;
+  }
 
   const { data: takerProfile } = await sb.from('profiles')
     .select('phone, full_name').eq('id', conv.taker_id).single();
 
-  // Update statuses
-  await sb.from('conversations').update({ status: 'accepted' }).eq('id', convId);
-  await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
+  // Update conversation status
+  const { error: updConvErr } = await sb.from('conversations').update({ status: 'accepted' }).eq('id', convId);
+  if(updConvErr) { showToast('❌ Kunne ikke godkjenne: ' + updConvErr.message); return; }
+
+  // Update quest status
+  const { error: updQuestErr } = await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
+  if(updQuestErr) { showToast('❌ Kunne ikke oppdatere oppdraget: ' + updQuestErr.message); return; }
 
   // Notify taker with giver's phone
   await sb.from('notifications').insert({
@@ -3861,13 +3870,32 @@ async function acceptApplicant(convId, questId) {
   await sb.from('notifications').insert({
     user_id: conv.taker_id,
     type: 'achievement',
-    title: '🏅 Achievement: Første oppdrag tildelt!',
-    body: 'Du ble valgt til å utføre et oppdrag for første gang. Lykke til!',
+    title: '🏅 Achievement: Oppdrag tildelt!',
+    body: 'Du ble valgt til å utføre oppdraget. Lykke til!',
     link_id: convId
   });
 
+  // Notify other pending applicants that quest is taken
+  const { data: others } = await sb.from('conversations')
+    .select('id, taker_id')
+    .eq('quest_id', questId)
+    .eq('status', 'pending')
+    .neq('id', convId);
+  if(others?.length) {
+    for(const o of others) {
+      await sb.from('notifications').insert({
+        user_id: o.taker_id,
+        type: 'rejected',
+        title: 'Oppdraget gikk til en annen',
+        body: 'Oppdragsgiveren valgte en annen utfører denne gangen. Lykke til med neste!',
+        link_id: o.id
+      });
+    }
+  }
+
   showToast('✅ Søker godkjent!');
   loadMyQuests();
+  addMarkers();
 
   // Show payment info popup to giver
   showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, 'giver');
@@ -3955,7 +3983,18 @@ function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, role)
 }
 
 async function rejectApplicant(convId) {
-  await sb.from('conversations').update({ status: 'rejected' }).eq('id', convId);
+  const { data: conv } = await sb.from('conversations').select('taker_id').eq('id', convId).single();
+  const { error } = await sb.from('conversations').update({ status: 'rejected' }).eq('id', convId);
+  if(error) { showToast('❌ Kunne ikke avvise: ' + error.message); return; }
+  if(conv?.taker_id) {
+    await sb.from('notifications').insert({
+      user_id: conv.taker_id,
+      type: 'rejected',
+      title: 'Søknaden ble ikke valgt',
+      body: 'Oppdragsgiveren valgte en annen utfører denne gangen. Lykke til med neste oppdrag!',
+      link_id: convId
+    });
+  }
   showToast('❌ Søker avvist');
   loadMyQuests();
 }
