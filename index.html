@@ -2277,6 +2277,19 @@ function createMarkerEl(type, label, imageUrl, onClick) {
 
 window.mapMarkers = [];
 window.viewMode = 'all';
+window._usedCoords = {};
+
+// Spread markers that share the same position (~20m offset in a circle)
+function spreadCoords(coords) {
+  if(!coords || coords[0] == null) return coords;
+  const key = coords[1].toFixed(4) + ',' + coords[0].toFixed(4);
+  const n = window._usedCoords[key] || 0;
+  window._usedCoords[key] = n + 1;
+  if(n === 0) return coords;
+  const angle = n * 2.4; // golden angle for nice distribution
+  const dist = 0.00020 + 0.00006 * Math.floor(n / 8);
+  return [coords[0] + Math.cos(angle) * dist, coords[1] + Math.sin(angle) * dist * 0.55];
+}
 
 function registerMarker(el, info) {
   window.mapMarkers.push({ el, ...info });
@@ -2318,7 +2331,7 @@ function addQuestMarker(q) {
     isFirstCome: !!q.is_first_come
   });
   new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-    .setLngLat(job.coords)
+    .setLngLat(spreadCoords(job.coords))
     .addTo(window.map);
 }
 
@@ -2357,6 +2370,7 @@ async function addMarkers() {
   // Remove old markers
   document.querySelectorAll('.mapbox-marker').forEach(m => m.remove());
   window.mapMarkers = [];
+  window._usedCoords = {};
 
   // Always show demo markers as background
   loadDemoMarkers();
@@ -2413,7 +2427,7 @@ function loadDemoMarkers() {
       isFirstCome: !!job.firstCome
     });
     new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-      .setLngLat(job.coords)
+      .setLngLat(spreadCoords(job.coords))
       .addTo(window.map);
   });
   DEMO_SERVICES.forEach(svc => addServiceMarker(svc));
@@ -2438,7 +2452,7 @@ function addServiceMarker(svc) {
     isUrgent: false, isCharity: false, isFirstCome: false
   });
   new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-    .setLngLat(svc.coords)
+    .setLngLat(spreadCoords(svc.coords))
     .addTo(window.map);
 }
 
