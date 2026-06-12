@@ -2582,6 +2582,18 @@ function requestLocation() {
 }
 
 async function confirmPaymentReceived(convId, questId) {
+  // Verify that current user IS the taker of this conversation
+  const { data: convCheck } = await sb.from('conversations')
+    .select('taker_id, status').eq('id', convId).single();
+  if(!convCheck || convCheck.taker_id !== currentUser?.id) {
+    showToast('⚠️ Kun utføreren kan bekrefte betaling');
+    return;
+  }
+  if(convCheck.status !== 'accepted') {
+    showToast('⚠️ Oppdraget må være godkjent først');
+    return;
+  }
+
   // Taker confirms payment received – marks quest as completed
   await sb.from('quests').update({ status: 'completed' }).eq('id', questId);
   await sb.from('conversations').update({ status: 'completed' }).eq('id', convId);
@@ -3786,6 +3798,7 @@ async function loadMyQuests() {
             <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
             ${active ? `<button onclick="showChatPaymentInfoFor('${c.id}')" style="flex:1;background:#ff5b24;color:#fff;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💸 Betaling</button>` : ''}
           </div>
+          ${active ? `<button onclick="if(confirm('Har du mottatt betalingen og er jobben ferdig?')) confirmPaymentReceived('${c.id}','${q.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">✅ Betaling mottatt – fullfør oppdrag</button>` : ''}
         </div>
       </div>`;
     };
