@@ -1227,6 +1227,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   </div>
   <div class="panel-actions">
     <button class="btn-apply" onclick="applyJob()"><span id="panel-accept-btn">✦ Ta oppdraget</span></button>
+    <button id="panel-edit-btn" onclick="editQuestFromPanel()" style="display:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 14px;font-size:14px;cursor:pointer;font-family:inherit">✏️ Endre</button>
     <button class="btn-save">🔖</button>
   </div>
 </div>
@@ -2432,6 +2433,13 @@ function showPanel(job) {
     });
   }
 
+  // Owner check: show edit button, hide apply for own quests
+  const isOwner = currentUser && job.raw?.user_id === currentUser.id;
+  const ownApplyBtn = document.querySelector('.btn-apply');
+  const ownEditBtn = document.getElementById('panel-edit-btn');
+  if(ownApplyBtn) ownApplyBtn.style.display = isOwner ? 'none' : 'flex';
+  if(ownEditBtn) ownEditBtn.style.display = isOwner ? 'block' : 'none';
+
   // Show image if available
   const existingImg = document.getElementById('panel-image');
   if(existingImg) existingImg.remove();
@@ -3256,16 +3264,18 @@ async function loadProfileQuests(userId) {
   // Tjenester (5 siste)
   const { data: services, error: sErr } = await sb.from('services')
     .select('*').eq('user_id', userId)
+    .neq('status', 'deleted')
     .order('created_at', { ascending:false }).limit(5);
   if(sErr) console.error('Profile services error:', sErr.message);
   if(services?.length) {
     postedEl.innerHTML += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:12px 0 8px">🏪 Mine tjenester</div>' +
-      services.map(s => `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.2);border-radius:10px;margin-bottom:6px">
+      services.map(s => `<div onclick="editServiceById('${s.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.2);border-radius:10px;margin-bottom:6px;cursor:pointer">
         <span style="font-size:16px">🏪</span>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.title}</div>
           <div style="font-size:11px;color:var(--muted)">${s.category || ''} · ${s.price} kr</div>
         </div>
+        <span style="font-size:13px;color:var(--muted)">✏️</span>
       </div>`).join('');
   }
   if(posted?.length || services?.length) postedEl.innerHTML += seeAllBtn;
@@ -3815,6 +3825,108 @@ async function loadMyQuests() {
   }
 }
 
+async function editQuestFromPanel() {
+  const panel = document.getElementById('job-panel');
+  const questId = panel?.dataset?.questId;
+  if(!questId) { showToast('⚠️ Demo-oppdrag kan ikke endres'); return; }
+  const { data: q } = await sb.from('quests').select('*').eq('id', questId).single();
+  if(!q) { showToast('❌ Fant ikke oppdraget'); return; }
+  showEditQuestModal(q);
+}
+
+function showEditQuestModal(q) {
+  const existing = document.getElementById('edit-quest-overlay');
+  if(existing) existing.remove();
+  const cats = ['🏠 Hjem og hage','🚗 Kjøring og transport','🛒 Handel og ærend','🐕 Dyr','🔧 Håndverk og montering','👴 Eldre og selskap','📦 Bære og flytte','🧹 Rengjøring','🗑️ Dynga','🤝 Dugnad','💻 Teknologi og IT','🚘 Bil og kjøretøy','👶 Barn og familie','🎉 Fest og arrangement','🍕 Mat og matlaging','📸 Foto og video','💇 Hår og skjønnhet','🐾 Dyrepass','🌿 Hagearbeid','🔑 Nøkler og ærend','🛠️ Småfiks','🎓 Undervisning og leksehjelp','💘 Blind date','✨ Annet'];
+  const overlay = document.createElement('div');
+  overlay.id = 'edit-quest-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90svh;overflow-y:auto;padding:24px 20px 80px;box-sizing:border-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div style="font-size:18px;font-weight:800">✏️ Endre oppdrag</div>
+        <button onclick="document.getElementById('edit-quest-overlay').remove()" style="background:var(--surface2);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--muted)">✕</button>
+      </div>
+      <div class="form-group"><label class="form-label">Tittel</label>
+        <input id="eq-title" class="form-input" type="text" value="${(q.title||'').replace(/"/g,'&quot;')}"></div>
+      <div class="form-group"><label class="form-label">Beskrivelse</label>
+        <textarea id="eq-desc" class="form-textarea" rows="4">${q.description||''}</textarea></div>
+      <div class="form-group"><label class="form-label">Betaling (kr)</label>
+        <input id="eq-pay" class="form-input" type="number" value="${q.pay||250}" min="0" max="50000"></div>
+      <div class="form-group"><label class="form-label">Kategori</label>
+        <select id="eq-category" class="form-select">${cats.map(c=>`<option ${q.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <button onclick="saveQuestEdits('${q.id}')" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">💾 Lagre endringer</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+}
+
+async function saveQuestEdits(questId) {
+  const title = document.getElementById('eq-title')?.value?.trim();
+  const description = document.getElementById('eq-desc')?.value?.trim();
+  const pay = parseInt(document.getElementById('eq-pay')?.value) || 0;
+  const category = document.getElementById('eq-category')?.value;
+  if(!title) { showToast('⚠️ Tittel kan ikke være tom'); return; }
+  const { error } = await sb.from('quests').update({ title, description, pay, category }).eq('id', questId);
+  if(error) { showToast('❌ ' + error.message); return; }
+  document.getElementById('edit-quest-overlay')?.remove();
+  closePanel();
+  showToast('✅ Oppdrag oppdatert!');
+  await addMarkers();
+  loadMyQuests();
+}
+
+async function editServiceById(serviceId) {
+  const { data: s } = await sb.from('services').select('*').eq('id', serviceId).single();
+  if(!s) { showToast('❌ Fant ikke tjenesten'); return; }
+  const existing = document.getElementById('edit-svc-overlay');
+  if(existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'edit-svc-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90svh;overflow-y:auto;padding:24px 20px 80px;box-sizing:border-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div style="font-size:18px;font-weight:800">✏️ Endre tjeneste</div>
+        <button onclick="document.getElementById('edit-svc-overlay').remove()" style="background:var(--surface2);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--muted)">✕</button>
+      </div>
+      <div class="form-group"><label class="form-label">Tittel</label>
+        <input id="es-title" class="form-input" type="text" value="${(s.title||'').replace(/"/g,'&quot;')}"></div>
+      <div class="form-group"><label class="form-label">Beskrivelse</label>
+        <textarea id="es-desc" class="form-textarea" rows="4">${s.description||''}</textarea></div>
+      <div class="form-group"><label class="form-label">Pris (kr)</label>
+        <input id="es-price" class="form-input" type="number" value="${s.price||350}" min="0" max="50000"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="saveServiceEdits('${s.id}')" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">💾 Lagre</button>
+        <button onclick="if(confirm('Slette tjenesten permanent?')) deleteService('${s.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);color:var(--red);border-radius:12px;padding:14px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">🗑️</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+}
+
+async function saveServiceEdits(serviceId) {
+  const title = document.getElementById('es-title')?.value?.trim();
+  const description = document.getElementById('es-desc')?.value?.trim();
+  const price = parseInt(document.getElementById('es-price')?.value) || 0;
+  if(!title) { showToast('⚠️ Tittel kan ikke være tom'); return; }
+  const { error } = await sb.from('services').update({ title, description, price }).eq('id', serviceId);
+  if(error) { showToast('❌ ' + error.message); return; }
+  document.getElementById('edit-svc-overlay')?.remove();
+  showToast('✅ Tjeneste oppdatert!');
+  await addMarkers();
+  if(document.getElementById('profile-page').style.display === 'block') loadProfileQuests(currentUser.id);
+}
+
+async function deleteService(serviceId) {
+  const { error } = await sb.from('services').update({ status: 'deleted' }).eq('id', serviceId);
+  if(error) { showToast('❌ ' + error.message); return; }
+  document.getElementById('edit-svc-overlay')?.remove();
+  showToast('🗑️ Tjeneste slettet');
+  await addMarkers();
+  if(document.getElementById('profile-page').style.display === 'block') loadProfileQuests(currentUser.id);
+}
+
 async function showChatPaymentInfoFor(convId) {
   const { data: conv } = await sb.from('conversations')
     .select('id, quest_id, giver_id, taker_id, status').eq('id', convId).single();
@@ -3876,6 +3988,7 @@ function questCard(q, type) {
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${applicants.length > 0 ? `<button onclick="openChat('${applicants[0]?.id||''}','${q.title}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : ''}
         ${q.status==='taken' ? `<button onclick="completeQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✅ Merk fullført</button>` : ''}
+        ${(q.status==='open'||q.status==='paused') ? `<button onclick="sb.from('quests').select('*').eq('id','${q.id}').single().then(r=>r.data&&showEditQuestModal(r.data))" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✏️ Endre</button>` : ''}
         ${q.status==='open' ? `<button onclick="pauseQuest('${q.id}')" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⏸️ Pause</button>` : ''}
         ${q.status==='paused' ? `<button onclick="resumeQuest('${q.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">▶️ Gjenåpne</button>` : ''}
         ${(q.status==='open'||q.status==='paused') ? `<button onclick="closeQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button>` : ''}
@@ -4566,7 +4679,7 @@ async function postService() {
   if(!currentUser) { openAuth('login'); return; }
   const title = document.getElementById('svc-title').value.trim();
   if(!title) { showToast('⚠️ Legg til en tittel'); return; }
-  const price = parseInt(document.getElementById('svc-price-display').textContent);
+  const price = parseInt(document.getElementById('svc-price')?.value) || 0;
   const category = document.getElementById('svc-category').value;
   const desc = document.getElementById('svc-desc').value.trim();
   const priceType = document.getElementById('svc-price-type').value;
@@ -5436,7 +5549,11 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div class="form-group">
       <label class="form-label">Pris</label>
       <div class="cost-display"><span id="svc-price-display">350</span> <small>kr</small></div>
-      <input type="range" min="50" max="5000" value="350" oninput="document.getElementById('svc-price-display').textContent=this.value" style="margin-top:8px">
+      <input id="svc-price" type="number" min="0" max="50000" value="350"
+        oninput="document.getElementById('svc-price-display').textContent=this.value||0"
+        style="width:100%;margin-top:8px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text);font-size:15px;font-weight:600;font-family:inherit;outline:none"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+        placeholder="Skriv inn beløp…">
     </div>
     <div class="form-group">
       <label class="form-label">Pristype</label>
