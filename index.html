@@ -603,6 +603,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   .logo-xp { display: none; } /* hidden on mobile */
   .btn-login-only { display: none !important; } /* hide login btn on mobile - in bottom nav */
   .btn-tilby-desktop { display: none !important; } /* Tilby is in bottom nav on mobile */
+  .btn-primary { display: none !important; } /* Legg ut is in bottom nav on mobile */
+  #inbox-btn { display: none !important; } /* Innboks is in bottom nav on mobile */
   /* Ensure search is hidden on mobile */
   #searchbox { display: none !important; }
   .btn-primary { padding: 0 12px; height: 36px; font-size: 12px; }
@@ -5375,6 +5377,38 @@ function closeAuth() {
     overlay.style.opacity = '1';
   }, 3000);
 }
+function showPostChoice() {
+  if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å legge ut'); return; }
+  const existing = document.getElementById('post-choice-overlay');
+  if(existing) { existing.remove(); return; }
+  const overlay = document.createElement('div');
+  overlay.id = 'post-choice-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:24px 20px 90px;box-sizing:border-box;animation:slideIn .2s ease">
+      <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px"></div>
+      <div style="font-size:17px;font-weight:800;text-align:center;margin-bottom:18px">Hva vil du legge ut?</div>
+      <button onclick="document.getElementById('post-choice-overlay').remove();openModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(59,111,245,0.07);border:1.5px solid rgba(59,111,245,0.3);border-radius:14px;padding:16px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:10px">
+        <span style="font-size:28px">📋</span>
+        <span style="flex:1">
+          <span style="display:block;font-size:15px;font-weight:700;color:var(--text)">Oppdrag</span>
+          <span style="display:block;font-size:12px;color:var(--muted);margin-top:2px">Jeg trenger hjelp med noe</span>
+        </span>
+        <span style="color:var(--muted)">›</span>
+      </button>
+      <button onclick="document.getElementById('post-choice-overlay').remove();openServiceModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(168,85,247,0.07);border:1.5px solid rgba(168,85,247,0.3);border-radius:14px;padding:16px;cursor:pointer;font-family:inherit;text-align:left">
+        <span style="font-size:28px">🏪</span>
+        <span style="flex:1">
+          <span style="display:block;font-size:15px;font-weight:700;color:var(--text)">Tjeneste</span>
+          <span style="display:block;font-size:12px;color:var(--muted);margin-top:2px">Jeg tilbyr hjelp eller en tjeneste</span>
+        </span>
+        <span style="color:var(--muted)">›</span>
+      </button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+}
+
 function goToMap() {
   // Close every panel/overlay so the map is visible again
   ['chat-panel','inbox-panel','notif-panel','profile-panel','myquests-panel','profile-page','search-results']
@@ -6148,13 +6182,9 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div class="nav-icon">🗺️</div>
     <div class="nav-label" id="nav-map-label">Map</div>
   </div>
-  <div class="nav-item" onclick="openModal()" style="flex:1">
-    <div class="nav-icon">📋</div>
-    <div class="nav-label" id="nav-post-label">Oppdrag</div>
-  </div>
-  <div class="nav-item nav-post" onclick="openServiceModal()" style="flex:1.2">
-    <div class="nav-icon">🏪</div>
-    <div class="nav-label" style="color:#fff;font-weight:700">Tilby</div>
+  <div class="nav-item nav-post" onclick="showPostChoice()" style="flex:1.2">
+    <div class="nav-icon">➕</div>
+    <div class="nav-label" style="color:#fff;font-weight:700">Legg ut</div>
   </div>
   <div class="nav-item" onclick="toggleInbox()">
     <div class="nav-icon" style="position:relative">💬<span id="mobile-inbox-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:8px;font-weight:800;width:14px;height:14px;border-radius:50%;align-items:center;justify-content:center">0</span></div>
