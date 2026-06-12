@@ -674,6 +674,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     border-radius: 20px 20px 0 0 !important;
     max-height: calc(100vh - 170px);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
     padding-bottom: 10px;
     transform: translateY(120%) !important;
     transition: transform .3s cubic-bezier(.32,.72,0,1) !important;
@@ -1787,7 +1790,7 @@ const LANGUAGES = {
     // Week worker
     questOfWeek: 'Ukens utfører',
     // Bottom nav
-    navMap: 'Kart', navPost: 'Legg ut', navRanks: 'Ranger', navProfile: 'Profil',
+    navMap: 'Kart', navPost: 'Legg ut', navRanks: 'Toppliste', navProfile: 'Profil',
     // Toasts
     toastLocation: '📍 Viser oppdrag nær deg!',
     toastApplied: '✦ Søknad sendt! Du varsles når bekreftet.',
