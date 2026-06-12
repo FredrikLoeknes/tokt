@@ -3241,40 +3241,59 @@ async function loadLeaderboard() {
   // Remove existing lb-rows (keep header sections above)
   lb.querySelectorAll('.lb-row').forEach(r => r.remove());
 
+  // Mix real users with demo users so the list feels alive until enough real users join
+  const DEMO_LB = [
+    { name:'Jonas S.', quests:47, rating:4.97, demo:true },
+    { name:'Anders K.', quests:31, rating:4.9, demo:true },
+    { name:'Maria R.', quests:18, rating:4.8, demo:true },
+    { name:'Tone H.', quests:11, rating:5.0, demo:true },
+    { name:'Per L.', quests:4, rating:4.7, demo:true }
+  ];
+  const realRows = profiles.map(p => ({
+    id: p.id,
+    name: p.full_name || 'Bruker',
+    quests: p.quests_completed || 0,
+    rating: p.rating || null,
+    demo: false
+  }));
+  const combined = [...realRows, ...DEMO_LB].sort((a,b) => b.quests - a.quests).slice(0, 10);
+
   const rankColors = ['#f5c518','#9aa0b0','#c87533'];
   const rankCls = ['gold','silver','bronze'];
 
-  profiles.forEach((p, i) => {
-    const name = p.full_name || 'Bruker';
-    const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-    const quests = p.quests_completed || 0;
-    const rating = p.rating ? p.rating.toFixed(1) : '–';
-    const rank = getRank(quests);
+  combined.forEach((p, i) => {
+    const initials = p.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    const rating = p.rating ? Number(p.rating).toFixed(1) : '–';
+    const rank = getRank(p.quests);
     const col = rankColors[i] || 'var(--muted)';
     const rankCl = rankCls[i] || '';
     const row = document.createElement('div');
     row.className = 'lb-row';
     row.style.cursor = 'pointer';
-    row.onclick = () => viewOtherProfile(p.id);
+    row.onclick = p.demo
+      ? () => showUserProfile(p.name, initials, col, p.quests, p.rating, rank.name)
+      : () => viewOtherProfile(p.id);
     row.innerHTML = `
       <div class="lb-rank ${rankCl}">${i+1}</div>
       <div class="lb-avatar" style="background:${col}20;color:${col}">${initials}</div>
-      <div class="lb-info"><div class="lb-name">${name}</div><div class="lb-quests">${quests} oppdrag · ★ ${rating}</div></div>
+      <div class="lb-info"><div class="lb-name">${p.name}</div><div class="lb-quests">${p.quests} oppdrag · ★ ${rating}</div></div>
       <span class="lb-badge ${rank.cls}">${rank.name}</span>`;
     lb.appendChild(row);
   });
 
-  // Also update week-worker widget with #1
-  if(profiles[0]) {
-    const top = profiles[0];
-    const topName = top.full_name || 'Bruker';
+  // Also update week-worker widget with #1 from the combined list
+  if(combined[0]) {
+    const top = combined[0];
+    const topName = top.name;
     const topInit = topName.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-    const topQuests = top.quests_completed || 0;
-    const topRating = top.rating ? top.rating.toFixed(2) : '–';
+    const topQuests = top.quests;
+    const topRating = top.rating ? Number(top.rating).toFixed(2) : '–';
     const topRank = getRank(topQuests);
     const ww = document.getElementById('week-worker');
     if(ww) {
-      ww.onclick = () => viewOtherProfile(top.id);
+      ww.onclick = top.demo
+        ? () => showUserProfile(topName, topInit, '#f5c518', topQuests, top.rating, topRank.name)
+        : () => viewOtherProfile(top.id);
       const wwAvatar = ww.querySelector('.ww-avatar');
       if(wwAvatar) wwAvatar.textContent = topInit;
       const wwName = ww.querySelector('.ww-name');
