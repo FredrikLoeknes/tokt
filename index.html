@@ -3209,20 +3209,22 @@ function renderAchievements(stats) {
 }
 
 async function loadProfileQuests(userId) {
-  // Lagt ut
+  const seeAllBtn = `<button onclick="closeProfilePage();openMyQuests()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--accent);border-radius:10px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px">Se alle i Mine oppdrag →</button>`;
+
+  // Lagt ut (5 siste)
   const { data: posted, error: pErr } = await sb.from('quests')
     .select('*').eq('user_id', userId)
-    .order('created_at', { ascending:false }).limit(10);
+    .order('created_at', { ascending:false }).limit(5);
   if(pErr) console.error('Profile posted quests error:', pErr.message);
   const postedEl = document.getElementById('pp-quests-posted');
   postedEl.innerHTML = (posted?.length)
     ? posted.map(q => ppQuestRow(q)).join('')
     : '<div style="font-size:12px;color:var(--muted);padding:8px 4px">Ingen oppdrag lagt ut ennå.</div>';
 
-  // Tjenester
+  // Tjenester (5 siste)
   const { data: services, error: sErr } = await sb.from('services')
     .select('*').eq('user_id', userId)
-    .order('created_at', { ascending:false }).limit(10);
+    .order('created_at', { ascending:false }).limit(5);
   if(sErr) console.error('Profile services error:', sErr.message);
   if(services?.length) {
     postedEl.innerHTML += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:12px 0 8px">🏪 Mine tjenester</div>' +
@@ -3234,17 +3236,18 @@ async function loadProfileQuests(userId) {
         </div>
       </div>`).join('');
   }
+  if(posted?.length || services?.length) postedEl.innerHTML += seeAllBtn;
 
-  // Tar / utført
+  // Tar / utført (5 siste)
   const { data: taken, error: tErr } = await sb.from('conversations')
     .select('status, quest:quest_id(*)')
     .eq('taker_id', userId)
-    .limit(10);
+    .limit(5);
   if(tErr) console.error('Profile taken quests error:', tErr.message);
   const takenEl = document.getElementById('pp-quests-taken');
   const takenQuests = (taken || []).filter(c => c.quest).map(c => c.quest);
   takenEl.innerHTML = takenQuests.length
-    ? takenQuests.map(q => ppQuestRow(q)).join('')
+    ? takenQuests.map(q => ppQuestRow(q)).join('') + seeAllBtn
     : '<div style="font-size:12px;color:var(--muted);padding:8px 4px">Ingen oppdrag tatt ennå.</div>';
 }
 
@@ -3571,10 +3574,11 @@ async function handleNotifClick(notifId, type, linkId) {
     openMyQuests();
     setTimeout(async () => {
       const { data: conv } = await sb.from('conversations')
-        .select('*, quest:quest_id(title,user_id), giver:giver_id(raw_user_meta_data)')
+        .select('*, quest:quest_id(title,user_id)')
         .eq('id', linkId).single();
       if(conv) {
-        const giverName = conv.giver?.raw_user_meta_data?.first_name || 'Oppdragsgiver';
+        const { data: gp } = await sb.from('profiles').select('full_name').eq('id', conv.giver_id).single();
+        const giverName = gp?.full_name || 'Oppdragsgiver';
         showRating(giverName, conv.id, conv.quest?.user_id, conv.quest_id);
       }
     }, 800);
@@ -3710,11 +3714,23 @@ function switchMqTab(tab) {
 }
 
 async function loadMyQuests() {
-  // Load quests I posted
-  const { data: posted } = await sb.from('quests')
-    .select('*, conversations(id,status,taker:taker_id(raw_user_meta_data))')
+  if(!currentUser) return;
+
+  // Load quests I posted (no auth-join, fetch names separately)
+  const { data: posted, error: postedErr } = await sb.from('quests')
+    .select('*, conversations(id,status,taker_id)')
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false });
+
+  if(postedErr) console.error('loadMyQuests posted error:', postedErr.message);
+
+  // Fetch applicant names from profiles in one batch
+  const takerIds = [...new Set((posted||[]).flatMap(q => (q.conversations||[]).map(c => c.taker_id)).filter(Boolean))];
+  window.takerNameMap = {};
+  if(takerIds.length) {
+    const { data: profs } = await sb.from('profiles').select('id, full_name').in('id', takerIds);
+    (profs||[]).forEach(p => window.takerNameMap[p.id] = p.full_name);
+  }
 
   const postedEl = document.getElementById('mq-posted');
   if(!posted || posted.length === 0) {
@@ -3723,11 +3739,12 @@ async function loadMyQuests() {
     postedEl.innerHTML = posted.map(q => questCard(q, 'posted')).join('');
   }
 
-  // Load quests I applied to
-  const { data: applied } = await sb.from('conversations')
+  // Load quests I applied to (no created_at ordering - column may not exist)
+  const { data: applied, error: appliedErr } = await sb.from('conversations')
     .select('*, quest:quest_id(*, user_id)')
-    .eq('taker_id', currentUser.id)
-    .order('created_at', { ascending: false });
+    .eq('taker_id', currentUser.id);
+
+  if(appliedErr) console.error('loadMyQuests applied error:', appliedErr.message);
 
   const appliedEl = document.getElementById('mq-applied');
   if(!applied || applied.length === 0) {
@@ -3784,7 +3801,7 @@ function questCard(q, type) {
         <div style="border-top:1px solid var(--border);padding-top:10px;margin-bottom:10px">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px">Søkere</div>
           ${applicants.map(c => {
-            const name = c.taker?.raw_user_meta_data?.first_name || 'Bruker';
+            const name = (window.takerNameMap||{})[c.taker_id] || 'Bruker';
             const init = name[0].toUpperCase();
             return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
               <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">${init}</div>
@@ -4000,7 +4017,7 @@ async function completeQuest(questId) {
 
   // Find the accepted conversation to notify taker
   const { data: conv } = await sb.from('conversations')
-    .select('id, taker_id, taker:taker_id(raw_user_meta_data)')
+    .select('id, taker_id')
     .eq('quest_id', questId)
     .eq('status', 'accepted')
     .single();
@@ -4008,7 +4025,11 @@ async function completeQuest(questId) {
   // Get quest title
   const { data: quest } = await sb.from('quests').select('title').eq('id', questId).single();
   const title = quest?.title || 'Oppdraget';
-  const takerName = conv?.taker?.raw_user_meta_data?.first_name || 'deg';
+  let takerName = 'deg';
+  if(conv?.taker_id) {
+    const { data: tp } = await sb.from('profiles').select('full_name').eq('id', conv.taker_id).single();
+    takerName = tp?.full_name || 'deg';
+  }
 
   if(conv) {
     // Update conversation
@@ -4086,10 +4107,12 @@ function closeChat() {
 }
 
 async function loadMessages(convId) {
-  const { data: msgs } = await sb.from('messages')
-    .select('*, sender:sender_id(email, raw_user_meta_data)')
+  const { data: msgs, error: msgErr } = await sb.from('messages')
+    .select('*')
     .eq('conversation_id', convId)
     .order('created_at', { ascending: true });
+
+  if(msgErr) console.error('loadMessages error:', msgErr.message);
 
   const container = document.getElementById('chat-messages');
   if(!msgs || msgs.length === 0) {
@@ -4110,7 +4133,7 @@ function renderMessages(msgs) {
   container.innerHTML = '';
   msgs.forEach(msg => {
     const isMe = msg.sender_id === currentUser.id;
-    const name = msg.sender?.raw_user_meta_data?.first_name || 'Ukjent';
+    const name = isMe ? 'Deg' : (window._chatOtherName || 'Bruker');
     const time = new Date(msg.created_at).toLocaleTimeString('no', { hour:'2-digit', minute:'2-digit' });
     const div = document.createElement('div');
     div.style.cssText = `display:flex;flex-direction:column;align-items:${isMe?'flex-end':'flex-start'};gap:2px`;
@@ -4171,23 +4194,31 @@ async function loadInbox() {
   list.innerHTML = '<div style="padding:20px;text-align:center;font-size:13px;color:var(--muted)">Laster…</div>';
 
   const { data: convs, error } = await sb.from('conversations')
-    .select(`*, quest:quest_id(title), giver:giver_id(raw_user_meta_data), taker:taker_id(raw_user_meta_data)`)
-    .or(`giver_id.eq.${currentUser.id},taker_id.eq.${currentUser.id}`)
-    .order('created_at', { ascending: false });
+    .select(`*, quest:quest_id(title)`)
+    .or(`giver_id.eq.${currentUser.id},taker_id.eq.${currentUser.id}`);
 
+  if(error) console.error('loadInbox error:', error.message);
   if(error || !convs || convs.length === 0) {
     list.innerHTML = '<div style="padding:20px;text-align:center;font-size:13px;color:var(--muted)">Ingen samtaler ennå.<br>Søk på et oppdrag for å starte!</div>';
     return;
   }
 
+  // Fetch names for all counterparts in one batch
+  const otherIds = [...new Set(convs.map(c => c.giver_id === currentUser.id ? c.taker_id : c.giver_id).filter(Boolean))];
+  const nameMap = {};
+  if(otherIds.length) {
+    const { data: profs } = await sb.from('profiles').select('id, full_name').in('id', otherIds);
+    (profs||[]).forEach(p => nameMap[p.id] = p.full_name);
+  }
+
   list.innerHTML = convs.map(conv => {
     const isGiver = conv.giver_id === currentUser.id;
-    const other = isGiver ? conv.taker : conv.giver;
-    const otherName = other?.raw_user_meta_data?.first_name || 'Bruker';
+    const otherId = isGiver ? conv.taker_id : conv.giver_id;
+    const otherName = nameMap[otherId] || 'Bruker';
     const questTitle = conv.quest?.title || 'Oppdrag';
     const role = isGiver ? '👤 Søker' : '📋 Ditt oppdrag';
     return `
-      <div onclick="openChat('${conv.id}','${questTitle}')" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;display:flex;gap:10px;align-items:center" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <div onclick="window._chatOtherName='${otherName.replace(/'/g,"\\'")}';openChat('${conv.id}','${questTitle.replace(/'/g,"\\'")}')" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;display:flex;gap:10px;align-items:center" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
         <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${otherName[0].toUpperCase()}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${otherName}</div>
