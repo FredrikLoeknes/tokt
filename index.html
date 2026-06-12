@@ -5361,6 +5361,16 @@ function closeAuth() {
     overlay.style.opacity = '1';
   }, 3000);
 }
+function goToMap() {
+  // Close every panel/overlay so the map is visible again
+  ['chat-panel','inbox-panel','notif-panel','profile-panel','myquests-panel','profile-page','search-results']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
+  if(typeof closePanel === 'function') closePanel();
+  if(typeof closeServicePanel === 'function') closeServicePanel();
+  if(typeof closeLeaderboard === 'function') closeLeaderboard();
+  if(typeof closeFilters === 'function') closeFilters();
+}
+
 function switchTab(tab) {
   document.getElementById('form-login').style.display = tab==='login' ? 'block' : 'none';
   document.getElementById('form-register').style.display = tab==='register' ? 'block' : 'none';
@@ -6120,7 +6130,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 </div>
 
 <div id="bottom-nav">
-  <div class="nav-item active" onclick="showToast('🗺️ Map view')">
+  <div class="nav-item active" onclick="goToMap()">
     <div class="nav-icon">🗺️</div>
     <div class="nav-label" id="nav-map-label">Map</div>
   </div>
