@@ -3936,7 +3936,12 @@ async function loadMyQuests() {
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false });
 
-  if(postedErr) console.error('loadMyQuests posted error:', postedErr.message);
+  if(postedErr) {
+    console.error('loadMyQuests posted error:', postedErr.message);
+    const pe = document.getElementById('mq-posted');
+    if(pe) pe.innerHTML = '<div style="padding:20px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.3);border-radius:12px;font-size:12px;color:var(--red)"><strong>⚠️ Teknisk feil ved henting:</strong><br>' + postedErr.message + '<br><br>Send denne meldingen til utvikleren.</div>';
+    return;
+  }
 
   // Fetch applicant names from profiles in one batch
   const takerIds = [...new Set((posted||[]).flatMap(q => (q.conversations||[]).map(c => c.taker_id)).filter(Boolean))];
@@ -3948,9 +3953,13 @@ async function loadMyQuests() {
 
   const postedEl = document.getElementById('mq-posted');
   if(!posted || posted.length === 0) {
-    postedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke lagt ut noen oppdrag ennå.<br><br><button onclick="closeMyQuests();openModal()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Legg ut ditt første oppdrag</button></div>';
+    postedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke lagt ut noen oppdrag ennå.<br><span style="font-size:10px;opacity:0.6">(0 oppdrag funnet for denne kontoen)</span><br><br><button onclick="closeMyQuests();openModal()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Legg ut ditt første oppdrag</button></div>';
   } else {
-    postedEl.innerHTML = posted.map(q => questCard(q, 'posted')).join('');
+    try {
+      postedEl.innerHTML = posted.map(q => questCard(q, 'posted')).join('');
+    } catch(renderErr) {
+      postedEl.innerHTML = '<div style="padding:20px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.3);border-radius:12px;font-size:12px;color:var(--red)"><strong>⚠️ Visningsfeil:</strong><br>' + renderErr.message + '<br><br>Fant ' + posted.length + ' oppdrag, men kunne ikke vise dem. Send denne meldingen til utvikleren.</div>';
+    }
   }
 
   // Load quests I applied to (no created_at ordering - column may not exist)
