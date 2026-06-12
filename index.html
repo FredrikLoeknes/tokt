@@ -4317,13 +4317,29 @@ async function savePhoneAndClose() {
   showToast('✅ Telefonnummer lagret! Prøv igjen.');
 }
 
+function copyAndOpenVipps(phone) {
+  const formatted = phone.replace(/(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
+  const doOpen = () => { window.location.href = 'vipps://'; };
+  if(navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(formatted).then(() => {
+      showToast('📋 ' + formatted + ' kopiert! Lim inn i Vipps');
+      setTimeout(doOpen, 600);
+    }).catch(() => { showToast('📱 Nummer: ' + formatted); setTimeout(doOpen, 1200); });
+  } else {
+    showToast('📱 Nummer: ' + formatted);
+    setTimeout(doOpen, 1200);
+  }
+}
+
 function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, role) {
   const existing = document.getElementById('payment-info-popup');
   if(existing) existing.remove();
 
   const otherName = role === 'giver' ? takerProfile?.full_name || 'Utfører' : giverProfile?.full_name || 'Oppdragsgiver';
-  const otherPhone = role === 'giver' ? takerProfile?.phone : giverProfile?.phone;
-  const vippsUrl = otherPhone ? `vipps://payment?phone=${otherPhone}` : null;
+  const otherPhoneRaw = role === 'giver' ? takerProfile?.phone : giverProfile?.phone;
+  // Strip non-digits, use last 8 digits (handles +47 prefix etc)
+  const otherPhone = otherPhoneRaw ? otherPhoneRaw.replace(/\D/g, '').slice(-8) : null;
+  const phoneDisplay = otherPhone ? otherPhone.replace(/(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4') : 'Nummer ikke oppgitt';
 
   const popup = document.createElement('div');
   popup.id = 'payment-info-popup';
@@ -4342,15 +4358,16 @@ function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, role)
           <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">${otherName[0]?.toUpperCase()}</div>
           <div>
             <div style="font-size:15px;font-weight:700">${otherName}</div>
-            <div style="font-size:14px;color:var(--muted);margin-top:2px">📱 ${otherPhone ? otherPhone.replace(/(\d{3})(\d{2})(\d{3})/, '$1 $2 $3') : 'Nummer ikke oppgitt'}</div>
+            <div style="font-size:14px;color:var(--muted);margin-top:2px">📱 ${phoneDisplay}</div>
           </div>
         </div>
       </div>
 
-      ${role === 'giver' && vippsUrl ? `
-        <a href="${vippsUrl}" style="display:block;width:100%;background:#ff5b24;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box">
-          💸 Åpne Vipps og betal
-        </a>` : ''}
+      ${role === 'giver' && otherPhone ? `
+        <button onclick="copyAndOpenVipps('${otherPhone}')" style="display:block;width:100%;background:#ff5b24;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;margin-bottom:10px;box-sizing:border-box">
+          💸 Kopier nummer og åpne Vipps
+        </button>
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px">Nummeret kopieres – lim inn i Vipps-søket</div>` : ''}
 
       ${role === 'taker' ? `
         <button onclick="confirmPaymentReceived('${convId}','${questId}');document.getElementById('payment-info-popup').remove()" 
