@@ -2582,6 +2582,16 @@ async function confirmPaymentReceived(convId, questId) {
 async function applyJob() {
   if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å søke på oppdrag'); return; }
 
+  const applyPanel = document.getElementById('job-panel');
+  const questId = applyPanel?.dataset?.questId;
+  const giverId = applyPanel?.dataset?.giverId;
+
+  // Block applying to own quest first
+  if(giverId && giverId === currentUser.id) {
+    showToast('⚠️ Du kan ikke søke på ditt eget oppdrag');
+    return;
+  }
+
   // Check phone number before applying
   const { data: profile } = await sb.from('profiles').select('phone').eq('id', currentUser.id).single();
   if(!profile?.phone) {
@@ -2589,20 +2599,11 @@ async function applyJob() {
     return;
   }
 
-  const applyPanel = document.getElementById('job-panel');
-  const questId = applyPanel?.dataset?.questId;
-  const giverId = applyPanel?.dataset?.giverId;
-
   if(!questId || !giverId) {
-    // Demo quest - just show toast
+    // Demo quest
     closePanel();
     showToast(t('toastApplied'));
     setTimeout(() => showAchievement('✦', t('firstQuestTitle'), t('firstQuestDesc')), 1800);
-    return;
-  }
-
-  if(giverId === currentUser.id) {
-    showToast('⚠️ Du kan ikke søke på ditt eget oppdrag');
     return;
   }
 
@@ -2615,7 +2616,7 @@ async function applyJob() {
 
   if(existing) {
     closePanel();
-    openChat(existing.id, panel?.dataset?.questTitle || 'Oppdrag');
+    openChat(existing.id, applyPanel?.dataset?.questTitle || 'Oppdrag');
     return;
   }
 
@@ -2630,7 +2631,7 @@ async function applyJob() {
 
   closePanel();
   showToast('✦ Søknad sendt! Chat med oppdragsgiver');
-  openChat(conv.id, panel?.dataset?.questTitle || 'Oppdrag');
+  openChat(conv.id, applyPanel?.dataset?.questTitle || 'Oppdrag');
   setTimeout(() => showAchievement('✦', t('firstQuestTitle'), t('firstQuestDesc')), 1800);
 }
 
@@ -3590,7 +3591,10 @@ async function acceptApplicant(convId, questId) {
 }
 
 function showPhoneRequired(msg) {
+  const existing = document.getElementById('phone-required-popup');
+  if(existing) existing.remove();
   const popup = document.createElement('div');
+  popup.id = 'phone-required-popup';
   popup.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px';
   popup.innerHTML = `
     <div style="background:var(--surface);border-radius:20px;padding:28px;max-width:360px;width:100%;text-align:center">
@@ -3599,21 +3603,23 @@ function showPhoneRequired(msg) {
       <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5">${msg}</div>
       <input id="popup-phone" type="tel" placeholder="Ditt Vipps-nummer (8 siffer)" maxlength="8"
         style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:inherit;background:var(--surface2);color:var(--text);outline:none;margin-bottom:12px;box-sizing:border-box;text-align:center"
-        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-      <button onclick="savePhoneAndClose(this)" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter') savePhoneAndClose()">
+      <button onclick="savePhoneAndClose()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
         Lagre og fortsett
       </button>
-      <button onclick="this.closest('[style]').remove()" style="width:100%;background:none;border:none;color:var(--muted);padding:10px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">Avbryt</button>
+      <button onclick="document.getElementById('phone-required-popup').remove()" style="width:100%;background:none;border:none;color:var(--muted);padding:10px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">Avbryt</button>
     </div>`;
   document.body.appendChild(popup);
 }
 
-async function savePhoneAndClose(btn) {
+async function savePhoneAndClose() {
   const phone = document.getElementById('popup-phone')?.value?.trim();
   if(!phone || phone.length < 8) { showToast('⚠️ Skriv inn 8-sifret nummer'); return; }
-  await sb.from('profiles').update({ phone }).eq('id', currentUser.id);
-  btn.closest('[style*="position:fixed"]').remove();
-  showToast('✅ Telefonnummer lagret!');
+  const { error } = await sb.from('profiles').update({ phone }).eq('id', currentUser.id);
+  if(error) { showToast('❌ Kunne ikke lagre: ' + error.message); return; }
+  document.getElementById('phone-required-popup')?.remove();
+  showToast('✅ Telefonnummer lagret! Prøv igjen.');
 }
 
 function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, role) {
