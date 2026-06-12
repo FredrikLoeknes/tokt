@@ -936,7 +936,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   /* ── MAP fix for mobile ── */
   @media(max-width:768px) {
     #map { top: 108px; bottom: 60px; position: fixed; left: 0; right: 0; }
-    #tips-bar { top: auto; bottom: 66px; border-radius: 12px; left: 10px; right: 10px; }
+    #tips-bar { top: auto !important; bottom: 66px !important; border-radius: 12px; left: 10px !important; right: 10px !important; }
   }
 </style>
 </head>
@@ -5206,10 +5206,10 @@ const TIPS = [
   { icon:'⚡', text:'Haste-oppdrag med rød markør får mer oppmerksomhet – bruk det når du trenger hjelp raskt!' },
   { icon:'💇', text:'Visste du at du kan tilby egne tjenester? Trykk "🏪 Tilby" og nå kunder i nabolaget ditt.' },
   { icon:'⭐', text:'Jo høyere rating, jo mer synlig blir profilen din. Gjør en god jobb og be om en vurdering!' },
-  { icon:'🎁', text:'Inviter en venn via profilen din – dere får begge 50 XP når de registrerer seg!' },
+  { icon:'👤', text:'Trykk på en oppdragsgiver eller toppliste-rad for å se profilen deres med rang og vurderinger!' },
   { icon:'🔗', text:'Del oppdraget på WhatsApp eller Facebook for å nå enda flere som kan hjelpe deg.' },
   { icon:'💚', text:'Veldedighetsoppdrag er gratis å legge ut og gir utfører et spesielt achievement – perfekt for å hjelpe eldre!' },
-  { icon:'🏆', text:'Fullfør 31 oppdrag og bli Legend – den høyeste rangen på Tokt!' },
+  { icon:'🏆', text:'Fullfør 100 oppdrag og bli Valkyrje – den høyeste rangen på Tokt!' },
   { icon:'📍', text:'Tips: Aktiver posisjon så ser du oppdrag og tjenester rett i nabolaget ditt.' },
   { icon:'🗺️', text:'Kartet oppdateres i sanntid – nye oppdrag dukker opp med én gang noen legger dem ut!' },
   { icon:'🔄', text:'Trenger du fast hjelp? Be en tilbyder om fast ukentlig eller månedlig avtale direkte i chatten.' },
@@ -5235,7 +5235,7 @@ function initTipsBar() {
   tipInterval = setInterval(() => {
     currentTip = (currentTip + 1) % TIPS.length;
     showTip(currentTip);
-  }, 8000);
+  }, 13000);
 }
 
 function showTip(index) {
@@ -5265,7 +5265,7 @@ function nextTip() {
   tipInterval = setInterval(() => {
     currentTip = (currentTip + 1) % TIPS.length;
     showTip(currentTip);
-  }, 8000);
+  }, 13000);
 }
 
 function closeTipsBar(e) {
