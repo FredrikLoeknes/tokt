@@ -3210,19 +3210,37 @@ function renderAchievements(stats) {
 
 async function loadProfileQuests(userId) {
   // Lagt ut
-  const { data: posted } = await sb.from('quests')
+  const { data: posted, error: pErr } = await sb.from('quests')
     .select('*').eq('user_id', userId)
     .order('created_at', { ascending:false }).limit(10);
+  if(pErr) console.error('Profile posted quests error:', pErr.message);
   const postedEl = document.getElementById('pp-quests-posted');
   postedEl.innerHTML = (posted?.length)
     ? posted.map(q => ppQuestRow(q)).join('')
     : '<div style="font-size:12px;color:var(--muted);padding:8px 4px">Ingen oppdrag lagt ut ennå.</div>';
 
+  // Tjenester
+  const { data: services, error: sErr } = await sb.from('services')
+    .select('*').eq('user_id', userId)
+    .order('created_at', { ascending:false }).limit(10);
+  if(sErr) console.error('Profile services error:', sErr.message);
+  if(services?.length) {
+    postedEl.innerHTML += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:12px 0 8px">🏪 Mine tjenester</div>' +
+      services.map(s => `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.2);border-radius:10px;margin-bottom:6px">
+        <span style="font-size:16px">🏪</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.title}</div>
+          <div style="font-size:11px;color:var(--muted)">${s.category || ''} · ${s.price} kr</div>
+        </div>
+      </div>`).join('');
+  }
+
   // Tar / utført
-  const { data: taken } = await sb.from('conversations')
+  const { data: taken, error: tErr } = await sb.from('conversations')
     .select('status, quest:quest_id(*)')
     .eq('taker_id', userId)
-    .order('created_at', { ascending:false }).limit(10);
+    .limit(10);
+  if(tErr) console.error('Profile taken quests error:', tErr.message);
   const takenEl = document.getElementById('pp-quests-taken');
   const takenQuests = (taken || []).filter(c => c.quest).map(c => c.quest);
   takenEl.innerHTML = takenQuests.length
