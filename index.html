@@ -928,7 +928,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   /* ── MAP fix for mobile ── */
   @media(max-width:768px) {
     #map { top: 108px; bottom: 60px; position: fixed; left: 0; right: 0; }
-    #tips-bar { top: 108px; }
+    #tips-bar { top: auto; bottom: 66px; border-radius: 12px; left: 10px; right: 10px; }
   }
 </style>
 </head>
@@ -1456,6 +1456,18 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <div class="form-group">
       <label class="form-label">Beskrivelse</label>
       <textarea id="quest-desc-input" class="form-textarea" placeholder="Beskriv hva som skal gjøres, hva som er tilgjengelig og andre detaljer…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🧰 Utstyr til jobben</label>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div class="mode-btn active" id="equip-provided" onclick="setEquipment('provided')" style="font-size:12px;padding:10px 8px">
+          🔧 Utstyr finnes<br><span style="font-size:10px;font-weight:400;color:var(--muted)">Jeg har alt som trengs</span>
+        </div>
+        <div class="mode-btn" id="equip-own" onclick="setEquipment('own')" style="font-size:12px;padding:10px 8px">
+          🎒 Ta med eget<br><span style="font-size:10px;font-weight:400;color:var(--muted)">Utfører trenger utstyr</span>
+        </div>
+      </div>
+      <input id="quest-equipment-note" class="form-input" type="text" placeholder="Spesifiser utstyr om nødvendig, f.eks. «støvsuger og mopp»…" style="font-size:13px">
     </div>
     <div class="form-group">
       <label class="form-label">Bilde (valgfritt)</label>
@@ -2765,6 +2777,12 @@ async function postJob() {
 
   const category = document.getElementById('quest-category-input')?.value || 'Annet';
   const description = document.getElementById('quest-desc-input')?.value?.trim() || '';
+  const equipType = document.getElementById('equip-own')?.classList.contains('active') ? 'own' : 'provided';
+  const equipNote = document.getElementById('quest-equipment-note')?.value?.trim() || '';
+  const equipText = equipType === 'provided'
+    ? '🔧 Utstyr finnes' + (equipNote ? ': ' + equipNote : '')
+    : '🎒 Ta med eget utstyr' + (equipNote ? ': ' + equipNote : '');
+  const fullDescription = description + (description ? '\n\n' : '') + equipText;
   const duration = document.getElementById('quest-duration-input')?.value || '';
   const isCharity = document.getElementById('charity-toggle')?.classList.contains('on') || false;
   const scheduleType = document.getElementById('schedule-recurring')?.classList.contains('active') ? 'recurring'
@@ -2819,7 +2837,7 @@ async function postJob() {
   const { data: quest, error } = await sb.from('quests').insert({
     user_id: currentUser.id,
     title,
-    description,
+    description: fullDescription,
     category,
     duration,
     pay,
@@ -3339,6 +3357,34 @@ function closeLeaderboard() {
 
 // Quest mode toggle
 let questLat = null, questLng = null;
+let svcLat = null, svcLng = null;
+
+async function searchSvcAddress(query) {
+  if(query.length < 3) { document.getElementById('svc-address-suggestions').style.display = 'none'; return; }
+  const token = 'pk.eyJ1IjoiZnJlZHJpa2xvZWtuZXMiLCJhIjoiY21xNjl6c25kMDFodjJxcXprcXc0NHYzMyJ9.e3IAYTrRQ6053w-zO-4fvw';
+  const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&country=NO&language=no&limit=5&proximity=10.757933,59.911491`);
+  const data = await res.json();
+  const box = document.getElementById('svc-address-suggestions');
+  if(!data.features?.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = data.features.map(f => `
+    <div onclick="selectSvcAddress('${f.place_name.replace(/'/g,"\\'")}',${f.center[1]},${f.center[0]})"
+      style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s"
+      onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <div style="font-weight:600">${f.text}</div>
+      <div style="font-size:11px;color:var(--muted)">${f.place_name}</div>
+    </div>`).join('');
+}
+
+function selectSvcAddress(name, lat, lng) {
+  svcLat = lat;
+  svcLng = lng;
+  document.getElementById('svc-address-input').value = name;
+  document.getElementById('svc-address-suggestions').style.display = 'none';
+  document.getElementById('svc-address-confirmed').style.display = 'block';
+  document.getElementById('svc-address-confirmed-text').textContent = name;
+  if(window.map) window.map.flyTo({ center: [lng, lat], zoom: 15, speed: 1.4 });
+}
 
 async function searchAddress(query) {
   if(query.length < 3) { document.getElementById('address-suggestions').style.display = 'none'; return; }
@@ -3366,6 +3412,16 @@ function selectAddress(name, lat, lng) {
   document.getElementById('address-confirmed-text').textContent = name;
   // Fly to address on map
   if(window.map) window.map.flyTo({ center: [lng, lat], zoom: 15, speed: 1.4 });
+}
+
+function setEquipment(type) {
+  document.getElementById('equip-provided')?.classList.toggle('active', type === 'provided');
+  document.getElementById('equip-own')?.classList.toggle('active', type === 'own');
+}
+
+function setSvcEquipment(type) {
+  document.getElementById('svc-equip-own')?.classList.toggle('active', type === 'own');
+  document.getElementById('svc-equip-customer')?.classList.toggle('active', type === 'customer');
 }
 
 function toggleCharity(el) {
@@ -4682,19 +4738,25 @@ async function postService() {
   const price = parseInt(document.getElementById('svc-price')?.value) || 0;
   const category = document.getElementById('svc-category').value;
   const desc = document.getElementById('svc-desc').value.trim();
+  const svcEquip = document.getElementById('svc-equip-customer')?.classList.contains('active') ? 'customer' : 'own';
+  const svcEquipText = svcEquip === 'own' ? '🔧 Har eget utstyr – tar med alt' : '🏠 Kunden skaffer utstyr';
+  const svcFullDesc = desc + (desc ? '\n\n' : '') + svcEquipText;
   const priceType = document.getElementById('svc-price-type').value;
   const isRecurring = document.getElementById('svc-recurring-toggle').classList.contains('on');
   const recurringInfo = document.getElementById('svc-recurring-info').value.trim();
 
   let lat = 59.911491, lng = 10.757933;
-  if(navigator.geolocation) {
+  if(svcLat && svcLng) {
+    lat = svcLat;
+    lng = svcLng;
+  } else if(navigator.geolocation) {
     await new Promise(resolve => {
       navigator.geolocation.getCurrentPosition(p => { lat=p.coords.latitude; lng=p.coords.longitude; resolve(); }, resolve, {timeout:3000});
     });
   }
 
   const { data, error } = await sb.from('services').insert({
-    user_id: currentUser.id, title, description: desc, category,
+    user_id: currentUser.id, title, description: svcFullDesc, category,
     price, price_type: priceType, is_recurring: isRecurring,
     recurring_info: recurringInfo || null, lat, lng
   }).select().single();
@@ -4717,6 +4779,12 @@ async function postService() {
   closeServiceModal();
   showToast('🏪 Tjeneste publisert på kartet!');
   addServiceMarker(serviceToSvc(data));
+  // Reset address fields
+  const svcAddrInput = document.getElementById('svc-address-input');
+  if(svcAddrInput) svcAddrInput.value = '';
+  const svcAddrConf = document.getElementById('svc-address-confirmed');
+  if(svcAddrConf) svcAddrConf.style.display = 'none';
+  svcLat = null; svcLng = null;
 }
 
 // ── WELCOME POPUP ──
@@ -5545,6 +5613,31 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div class="form-group">
       <label class="form-label">Beskrivelse</label>
       <textarea id="svc-desc" class="form-textarea" placeholder="Beskriv tjenesten din, din erfaring og hva som er inkludert…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">📍 Adresse / område du tilbyr tjenesten</label>
+      <div style="position:relative">
+        <input id="svc-address-input" class="form-input" type="text"
+          placeholder="Skriv adresse, sted eller nabolag…"
+          autocomplete="off"
+          oninput="searchSvcAddress(this.value)"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="setTimeout(()=>document.getElementById('svc-address-suggestions').style.display='none',200)">
+        <div id="svc-address-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);z-index:999;overflow:hidden;margin-top:4px"></div>
+      </div>
+      <div id="svc-address-confirmed" style="display:none;margin-top:6px;font-size:12px;color:var(--green);font-weight:600">✅ <span id="svc-address-confirmed-text"></span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Brukes til å plassere tjenesten på kartet</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🧰 Utstyr</label>
+      <div style="display:flex;gap:8px">
+        <div class="mode-btn active" id="svc-equip-own" onclick="setSvcEquipment('own')" style="font-size:12px;padding:10px 8px">
+          🔧 Har eget utstyr<br><span style="font-size:10px;font-weight:400;color:var(--muted)">Jeg tar med alt</span>
+        </div>
+        <div class="mode-btn" id="svc-equip-customer" onclick="setSvcEquipment('customer')" style="font-size:12px;padding:10px 8px">
+          🏠 Kunde skaffer<br><span style="font-size:10px;font-weight:400;color:var(--muted)">Utstyr finnes hos kunden</span>
+        </div>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Pris</label>
