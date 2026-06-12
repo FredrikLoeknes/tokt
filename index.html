@@ -279,6 +279,14 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .pp-ach-row { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:12px; }
 .pp-ach-row.locked { opacity:0.45; filter:grayscale(0.8); }
 
+/* ── VIEW TOGGLE ── */
+.vt-btn { border:none; background:none; padding:7px 13px; border-radius:50px; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; font-family:inherit; white-space:nowrap; transition:all .15s; }
+.vt-btn.active { background:linear-gradient(135deg,#f97316,#a855f7); color:#fff; }
+@media(max-width:768px) {
+  #view-toggle { top:116px; }
+  .vt-btn { padding:6px 10px; font-size:11px; }
+}
+
 /* ── MARKERS ── */
 .mapbox-marker {
   cursor: pointer !important;
@@ -936,6 +944,13 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 <div id="map"></div>
 
+<!-- VIEW TOGGLE: Alt / Oppdrag / Tjenester -->
+<div id="view-toggle" style="position:fixed;top:120px;left:50%;transform:translateX(-50%);z-index:95;display:flex;background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:3px;box-shadow:var(--shadow-lg);gap:2px">
+  <button class="vt-btn active" id="vt-all" onclick="setViewMode('all')">🗺️ Alt</button>
+  <button class="vt-btn" id="vt-quests" onclick="setViewMode('quests')">📋 Oppdrag</button>
+  <button class="vt-btn" id="vt-services" onclick="setViewMode('services')">🏪 Tjenester</button>
+</div>
+
 <!-- TIPS BAR -->
 <div id="tips-bar" style="position:fixed;top:62px;left:0;right:0;z-index:89;background:linear-gradient(135deg,rgba(249,115,22,0.92),rgba(168,85,247,0.92));backdrop-filter:blur(4px);padding:8px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:opacity .3s" onclick="nextTip()">
   <span style="font-size:16px;flex-shrink:0" id="tip-icon">💡</span>
@@ -1072,8 +1087,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="nøkler"><div class="fcat-icon">🔑</div><div class="fcat-label">Nøkler</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="småfiks"><div class="fcat-icon">🛠️</div><div class="fcat-label">Småfiks</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="undervisning"><div class="fcat-icon">🎓</div><div class="fcat-label">Læring</div></div>
-        <div class="fcat-item" onclick="toggleCat(this)" data-cat="blinddate"><div class="fcat-icon">💘</div><div class="fcat-label">Blind date</div></div>
-        <div class="fcat-item" onclick="toggleCat(this)" data-cat="undervisning"><div class="fcat-icon">📚</div><div class="fcat-label">Læring</div></div>
+        <div class="fcat-item" onclick="toggleCat(this)" data-cat="blind date"><div class="fcat-icon">💘</div><div class="fcat-label">Blind date</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="annet"><div class="fcat-icon">✨</div><div class="fcat-label">Annet</div></div>
       </div>
     </div>
@@ -1443,7 +1457,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         <option>🛠️ Småfiks</option>
         <option>🎓 Undervisning og leksehjelp</option>
         <option>💘 Blind date</option>
-        <option>📚 Undervisning og hjelp</option>
         <option>✨ Annet</option>
       </select>
     </div>
@@ -2263,6 +2276,27 @@ function createMarkerEl(type, label, imageUrl, onClick) {
   return el;
 }
 
+window.mapMarkers = [];
+window.viewMode = 'all';
+
+function registerMarker(el, info) {
+  window.mapMarkers.push({ el, ...info });
+  // Respect active view mode immediately
+  const mode = window.viewMode || 'all';
+  if(mode === 'quests' && info.kind !== 'quest') el.style.display = 'none';
+  if(mode === 'services' && info.kind !== 'service') el.style.display = 'none';
+}
+
+function setViewMode(mode) {
+  window.viewMode = mode;
+  ['all','quests','services'].forEach(m => document.getElementById('vt-'+m)?.classList.toggle('active', m === mode));
+  (window.mapMarkers || []).forEach(m => {
+    const show = mode === 'all' || (mode === 'quests' && m.kind === 'quest') || (mode === 'services' && m.kind === 'service');
+    m.el.style.display = show ? '' : 'none';
+  });
+  showToast(mode === 'all' ? '🗺️ Viser alt' : mode === 'quests' ? '📋 Viser kun oppdrag' : '🏪 Viser kun tjenester');
+}
+
 function addQuestMarker(q) {
   const job = questToJob(q);
   const expired = q.status === 'expired';
@@ -2276,6 +2310,14 @@ function addQuestMarker(q) {
       pill.style.filter = 'grayscale(0.6)';
     }
   }
+  registerMarker(el, {
+    kind: 'quest',
+    matchText: ((q.category||'') + ' ' + (q.title||'')).toLowerCase(),
+    pay: q.pay || 0,
+    isUrgent: !!q.is_urgent,
+    isCharity: !!q.is_charity,
+    isFirstCome: !!q.is_first_come
+  });
   new mapboxgl.Marker({ element: el, anchor: 'bottom' })
     .setLngLat(job.coords)
     .addTo(window.map);
@@ -2315,6 +2357,7 @@ async function checkAndExpireQuests() {
 async function addMarkers() {
   // Remove old markers
   document.querySelectorAll('.mapbox-marker').forEach(m => m.remove());
+  window.mapMarkers = [];
 
   // Always show demo markers as background
   loadDemoMarkers();
@@ -2362,6 +2405,14 @@ function serviceToSvc(s) {
 function loadDemoMarkers() {
   JOBS.forEach(job => {
     const el = createMarkerEl(job.type, job.label, job.image || null, () => showPanel(job));
+    registerMarker(el, {
+      kind: 'quest',
+      matchText: (job.title + ' ' + (job.tags||[]).map(t=>t.t).join(' ')).toLowerCase(),
+      pay: job.pay || 0,
+      isUrgent: job.type === 'haste',
+      isCharity: job.type === 'charity',
+      isFirstCome: !!job.firstCome
+    });
     new mapboxgl.Marker({ element: el, anchor: 'bottom' })
       .setLngLat(job.coords)
       .addTo(window.map);
@@ -2370,13 +2421,23 @@ function loadDemoMarkers() {
 }
 
 function addServiceMarker(svc) {
-  const label = svc.label + (svc.recurring ? ' 🔄' : '');
+  const label = '🏪 ' + svc.label + (svc.recurring ? ' 🔄' : '');
   const el = createMarkerEl('service-pill', label, null, () => showServicePanel(svc));
-  el.querySelector('.marker-pill').style.borderColor = 'var(--accent2)';
-  el.querySelector('.marker-pill').style.background = 'rgba(168,85,247,0.1)';
+  const pill = el.querySelector('.marker-pill');
+  if(pill) {
+    pill.style.borderColor = 'var(--accent2)';
+    pill.style.background = 'rgba(168,85,247,0.92)';
+    pill.style.color = '#fff';
+  }
   // Replace dot with service dot
   const dot = el.querySelector('.marker-dot');
   if(dot) { dot.style.background = 'var(--accent2)'; dot.style.boxShadow = '0 0 6px var(--accent2)'; }
+  registerMarker(el, {
+    kind: 'service',
+    matchText: ((svc.title||'') + ' ' + (svc.category||'') + ' ' + (svc.tags||[]).map(t=>t.t||t).join(' ')).toLowerCase(),
+    pay: svc.price || svc.pay || 0,
+    isUrgent: false, isCharity: false, isFirstCome: false
+  });
   new mapboxgl.Marker({ element: el, anchor: 'bottom' })
     .setLngLat(svc.coords)
     .addTo(window.map);
@@ -2418,6 +2479,15 @@ function showPanel(job) {
   jobPanelEl.dataset.questId = job.id || '';
   jobPanelEl.dataset.giverId = job.raw?.user_id || '';
   jobPanelEl.dataset.questTitle = job.title;
+  // Type badge: OPPDRAG
+  let kindBadge = document.getElementById('panel-kind-badge');
+  if(!kindBadge) {
+    kindBadge = document.createElement('div');
+    kindBadge.id = 'panel-kind-badge';
+    document.getElementById('panel-title').before(kindBadge);
+  }
+  kindBadge.style.cssText = 'display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:50px;margin-bottom:6px;background:rgba(59,111,245,0.12);color:var(--accent);border:1px solid var(--accent)';
+  kindBadge.textContent = '📋 OPPDRAG';
   document.getElementById('panel-title').textContent = job.title;
   document.getElementById('panel-tags').innerHTML = job.tags.map(t=>`<span class="tag ${t.cls||''}">${t.t}</span>`).join('');
   document.getElementById('panel-desc').textContent = job.desc;
@@ -2977,9 +3047,39 @@ function closeFilters() {
   document.getElementById('filter-overlay').classList.remove('open');
 }
 function applyFilters() {
+  // Active categories (mapped: læring matches undervisning)
+  const catMap = { 'læring': 'undervisning' };
+  const activeCats = [...document.querySelectorAll('.fcat-item.active:not([data-cat="all"])')]
+    .map(el => catMap[el.dataset.cat] || el.dataset.cat);
+
+  const urgentOn = document.getElementById('tog-urgent')?.classList.contains('on');
+  const charityOn = document.getElementById('tog-charity')?.classList.contains('on');
+  const firstOn = document.getElementById('tog-firstcome')?.classList.contains('on');
+  const minPay = parseInt(document.getElementById('range-min')?.value) || 0;
+  const maxPay = parseInt(document.getElementById('range-max')?.value) || 50000;
+
+  let visible = 0;
+  const mode = window.viewMode || 'all';
+  (window.mapMarkers || []).forEach(m => {
+    let show = true;
+    // View mode (Alt / Oppdrag / Tjenester)
+    if(mode === 'quests' && m.kind !== 'quest') show = false;
+    if(mode === 'services' && m.kind !== 'service') show = false;
+    // Category match (any active category must appear in matchText)
+    if(show && activeCats.length && !activeCats.some(c => m.matchText.includes(c))) show = false;
+    // Toggles apply to quests only
+    if(show && urgentOn && m.kind === 'quest' && !m.isUrgent) show = false;
+    if(show && charityOn && m.kind === 'quest' && !m.isCharity) show = false;
+    if(show && firstOn && m.kind === 'quest' && !m.isFirstCome) show = false;
+    // Price range
+    if(show && (m.pay < minPay || m.pay > maxPay)) show = false;
+    m.el.style.display = show ? '' : 'none';
+    if(show) visible++;
+  });
+
   closeFilters();
   updateFilterCount();
-  showToast(t('toastFilters'));
+  showToast(`🔍 Viser ${visible} treff på kartet`);
 }
 function clearFilters() {
   document.querySelectorAll('.fcat-item').forEach((el,i) => el.classList.toggle('active', i===0));
@@ -2989,6 +3089,8 @@ function clearFilters() {
   document.getElementById('range-max').value = 50000;
   updateRange();
   updateFilterCount();
+  // Show all markers again
+  (window.mapMarkers || []).forEach(m => m.el.style.display = '');
 }
 function updateFilterCount() {
   const urgentOn = document.getElementById('tog-urgent')?.classList.contains('on');
@@ -4600,23 +4702,33 @@ async function runSearch(query) {
   const seen = new Set();
   const uniq = hits.filter(h => { if(seen.has(h.id)) return false; seen.add(h.id); return true; });
 
-  box.innerHTML = '<div class="search-section-title">' + uniq.length + ' treff</div>' +
-    uniq.map(h => {
-      const icon = h.type === 'service' ? '🏪' : '✨';
-      const tag = h.type === 'service' ? '<span style="font-size:9px;background:rgba(168,85,247,0.1);color:#7c5cfc;padding:1px 5px;border-radius:4px;font-weight:700;margin-left:4px">TJENESTE</span>' : '';
-      const thumb = h.img
-        ? '<img src="' + h.img + '" class="search-result-thumb" style="border-radius:10px;object-fit:cover">'
-        : '<div class="search-result-thumb" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px">' + icon + '</div>';
-      const coordStr = JSON.stringify(h.coords || [0,0]);
-      return '<div class="search-result-item" onclick="selectSearchResult(\'' + h.id + '\',' + coordStr + ')">' +
-        thumb +
-        '<div class="search-result-info">' +
-          '<div class="search-result-title">' + h.title + tag + '</div>' +
-          '<div class="search-result-meta">' + (h.type === 'service' ? 'Tjeneste' : 'Oppdrag') + '</div>' +
-        '</div>' +
-        '<div class="search-result-pay">' + (h.pay || 0) + ' kr</div>' +
-        '</div>';
-    }).join('');
+  const renderHit = h => {
+    const icon = h.type === 'service' ? '🏪' : '✨';
+    const thumb = h.img
+      ? '<img src="' + h.img + '" class="search-result-thumb" style="border-radius:10px;object-fit:cover">'
+      : '<div class="search-result-thumb" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px">' + icon + '</div>';
+    const coordStr = JSON.stringify(h.coords || [0,0]);
+    return '<div class="search-result-item" onclick="selectSearchResult(\'' + h.id + '\',' + coordStr + ')">' +
+      thumb +
+      '<div class="search-result-info">' +
+        '<div class="search-result-title">' + h.title + '</div>' +
+        '<div class="search-result-meta">' + (h.type === 'service' ? 'Tjeneste' : 'Oppdrag') + '</div>' +
+      '</div>' +
+      '<div class="search-result-pay">' + (h.pay || 0) + ' kr</div>' +
+      '</div>';
+  };
+
+  const questHits = uniq.filter(h => h.type === 'quest');
+  const svcHits = uniq.filter(h => h.type === 'service');
+
+  let resultHtml = '';
+  if(questHits.length) {
+    resultHtml += '<div class="search-section-title" style="background:rgba(59,111,245,0.06);color:var(--accent)">📋 Oppdrag (' + questHits.length + ')</div>' + questHits.map(renderHit).join('');
+  }
+  if(svcHits.length) {
+    resultHtml += '<div class="search-section-title" style="background:rgba(168,85,247,0.06);color:var(--accent2)">🏪 Tjenester (' + svcHits.length + ')</div>' + svcHits.map(renderHit).join('');
+  }
+  box.innerHTML = resultHtml;
 }
 
 function selectSearchResult(questId, coords) {
@@ -4659,6 +4771,15 @@ function showServicePanel(svc) {
   document.getElementById('notif-panel').style.display = 'none';
   document.getElementById('inbox-panel').style.display = 'none';
   activeService = svc;
+  // Type badge: TJENESTE
+  let svcKindBadge = document.getElementById('service-kind-badge');
+  if(!svcKindBadge) {
+    svcKindBadge = document.createElement('div');
+    svcKindBadge.id = 'service-kind-badge';
+    document.getElementById('service-title').before(svcKindBadge);
+  }
+  svcKindBadge.style.cssText = 'display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:50px;margin-bottom:6px;background:rgba(168,85,247,0.12);color:var(--accent2);border:1px solid var(--accent2)';
+  svcKindBadge.textContent = '🏪 TJENESTE';
   document.getElementById('service-title').textContent = svc.title;
   document.getElementById('service-desc').textContent = svc.desc;
   document.getElementById('service-price').textContent = svc.price + ' kr';
