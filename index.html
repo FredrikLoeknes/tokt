@@ -2091,47 +2091,47 @@ window.JOBS = [
   { id:'j1', type:'normal', title:'Klipp gresset 🌿', label:'Klipp gresset · 150 kr',
     tags:[{t:'🏠 Hjem'},{t:'~45 min'},{t:'Grünerløkka'}],
     desc:'Trenger noen til å klippe en middels stor hage. Gressklipper tilgjengelig. Ta gjerne bilde etter.',
-    pay:150, rating:4.8, applicants:2, coords:[10.7603,59.9228],
+    pay:150, rating:4.8, applicants:2, coords:[10.7603,59.9228], giver:{name:'Hilde Ås',rating:4.8,quests:12},
     people:[{init:'AK',col:'#3b6ff5',name:'Anders K.',rating:'4.9',quests:31},{init:'MR',col:'#0fa968',name:'Maria R.',rating:'4.6',quests:18}]
   },
   { id:'j2', type:'haste', title:'Handle dagligvarer 🛒', label:'🔴 Handle · 300 kr',
     tags:[{t:'🔴 Haste',cls:'haste-tag'},{t:'🛒 Handel'},{t:'~30 min'},{t:'Majorstua'}],
     desc:'Trenger hjelp med 10–12 varer fra Kiwi. Ta bilde av kvitteringen. Dekker utlegg i tillegg.',
-    pay:300, rating:4.5, applicants:0, firstCome:true, coords:[10.7158,59.9248], people:[]
+    pay:300, rating:4.5, applicants:0, firstCome:true, coords:[10.7158,59.9248], people:[], giver:{name:'Espen Vik',rating:4.5,quests:6}
   },
   { id:'j3', type:'normal', title:'Passe hunden 🐕', label:'Passe hunden · 200 kr',
     tags:[{t:'🐕 Dyr'},{t:'~2 timer'},{t:'Frogner'}],
     desc:'Snill labrador trenger en tur og litt selskap tirsdag ettermiddag. Han heter Bamsefot og er snill.',
-    pay:200, rating:5.0, applicants:3, coords:[10.7083,59.9180],
+    pay:200, rating:5.0, applicants:3, coords:[10.7083,59.9180], giver:{name:'Nora Lie',rating:5.0,quests:22},
     people:[{init:'TH',col:'#7c5cfc',name:'Tone H.',rating:'5.0',quests:11}]
   },
   { id:'j4', type:'high', title:'Sette opp IKEA-møbler 🔧', label:'IKEA-montering · 500 kr',
     tags:[{t:'🔧 Håndverk'},{t:'~3 timer'},{t:'Sagene'}],
     desc:'3 møbler: KALLAX hylle, MALM seng og BILLY bokhylle. Alt er unboxet og klart. Ta med verktøy.',
-    pay:500, rating:4.7, applicants:1, coords:[10.7712,59.9285],
+    pay:500, rating:4.7, applicants:1, coords:[10.7712,59.9285], giver:{name:'Ola Berg',rating:4.7,quests:9},
     people:[{init:'PL',col:'#e07050',name:'Per L.',rating:'4.7',quests:4}]
   },
   { id:'j5', type:'normal', title:'Vaske vinduer 🪣', label:'Vaske vinduer · 180 kr',
     tags:[{t:'🏠 Hjem'},{t:'~1 time'},{t:'St. Hanshaugen'}],
     desc:'6 vinduer trenger vask innvendig og utvendig. Utstyr finnes. Leilighet i 2. etasje.',
-    pay:180, rating:4.3, applicants:0, firstCome:true, coords:[10.7350,59.9260], people:[]
+    pay:180, rating:4.3, applicants:0, firstCome:true, coords:[10.7350,59.9260], people:[], giver:{name:'Mia Strand',rating:4.3,quests:3}
   },
   { id:'j6', type:'haste', title:'Kjøre til Gardermoen 🚗', label:'🔴 Gardermoen · 450 kr',
     tags:[{t:'🔴 Haste',cls:'haste-tag'},{t:'🚗 Kjøring'},{t:'~45 min'},{t:'Tøyen'}],
     desc:'Flyet går 07:30. Trenger henting kl 05:45 fra Tøyen. To kofferter. Drivstoffkostnader dekkes.',
-    pay:450, rating:4.9, applicants:1, coords:[10.7750,59.9100],
+    pay:450, rating:4.9, applicants:1, coords:[10.7750,59.9100], giver:{name:'Jonas Solli',rating:4.9,quests:35},
     people:[{init:'KN',col:'#e53935',name:'Kari N.',rating:'4.9',quests:31}]
   },
   { id:'j7', type:'charity', title:'Besøke eldre dame 💙', label:'💚 Eldre · 100 kr',
     tags:[{t:'👴 Eldre'},{t:'~2 timer'},{t:'Nordstrand'},{t:'💚 Veldedighet',cls:'charity-tag'}],
     desc:'Bestemoren min er 82 år og bor alene. Ønsker at noen besøker henne, drikker kaffe og spiller kort. Gir achievement!',
-    pay:100, rating:4.9, applicants:4, coords:[10.8020,59.8760],
+    pay:100, rating:4.9, applicants:4, coords:[10.8020,59.8760], giver:{name:'Astrid Holm',rating:4.9,quests:18},
     people:[{init:'LB',col:'#0fa968',name:'Lars B.',rating:'5.0',quests:47},{init:'SH',col:'#3b6ff5',name:'Silje H.',rating:'4.8',quests:18}]
   },
   { id:'j8', type:'high', title:'Male dørterskel 🎨', label:'Male terskel · 250 kr',
     tags:[{t:'🔧 Håndverk'},{t:'~1–2 timer'},{t:'Bislett'}],
     desc:'Trenger maling av innvendig dørterskel og listverk. Maling finnes. Litt erfaring nødvendig.',
-    pay:250, rating:4.6, applicants:0, coords:[10.7290,59.9215], people:[]
+    pay:250, rating:4.6, applicants:0, coords:[10.7290,59.9215], people:[], giver:{name:'Petter Eng',rating:4.6,quests:7}
   }
 ];
 
@@ -2422,27 +2422,38 @@ function showPanel(job) {
   document.getElementById('panel-tags').innerHTML = job.tags.map(t=>`<span class="tag ${t.cls||''}">${t.t}</span>`).join('');
   document.getElementById('panel-desc').textContent = job.desc;
 
-  // Klikkbar oppdragsgiver-rad (kun ekte oppdrag, ikke demo)
+  // Oppdragsgiver-rad – vises for ALLE oppdrag (demo og ekte), likt utseende
   const existingGiver = document.getElementById('panel-giver-row');
   if(existingGiver) existingGiver.remove();
+
+  const renderGiverRow = (name, rating, questsDone, clickFn) => {
+    const ginit = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    const r = getRank(questsDone || 0);
+    const row = document.createElement('div');
+    row.id = 'panel-giver-row';
+    row.style.cssText = 'margin:0 16px 12px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;gap:10px;cursor:pointer';
+    row.onclick = clickFn;
+    row.innerHTML = `
+      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${ginit}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${name} <span class="lb-badge ${r.cls}" style="font-size:9px;padding:2px 7px">${r.name}</span></div>
+        <div style="font-size:11px;color:var(--muted)">Oppdragsgiver · ${rating ? '★ ' + Number(rating).toFixed(1) : 'Ny bruker'} · Trykk for profil</div>
+      </div>
+      <span style="color:var(--muted);font-size:14px">›</span>`;
+    document.getElementById('panel-quest-type')?.before(row);
+  };
+
   if(job.raw?.user_id) {
-    sb.from('profiles').select('full_name').eq('id', job.raw.user_id).single().then(({ data: gp }) => {
-      if(!gp) return;
-      const gname = gp.full_name || 'Bruker';
-      const ginit = gname.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-      const row = document.createElement('div');
-      row.id = 'panel-giver-row';
-      row.style.cssText = 'margin:0 16px 12px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;gap:10px;cursor:pointer';
-      row.onclick = () => viewOtherProfile(job.raw.user_id);
-      row.innerHTML = `
-        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${ginit}</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:600">${gname}</div>
-          <div style="font-size:11px;color:var(--muted)">Oppdragsgiver · Trykk for profil</div>
-        </div>
-        <span style="color:var(--muted);font-size:14px">›</span>`;
-      document.getElementById('panel-quest-type')?.before(row);
+    sb.from('profiles').select('full_name, rating, quests_completed').eq('id', job.raw.user_id).single().then(({ data: gp }) => {
+      const gname = gp?.full_name || 'Bruker';
+      renderGiverRow(gname, gp?.rating, gp?.quests_completed, () => viewOtherProfile(job.raw.user_id));
+      // Oppdater rating-feltet i meta med giverens rating
+      const metaRating = document.querySelector('#panel-meta .meta-value.yellow');
+      if(metaRating) metaRating.textContent = gp?.rating ? '★ ' + Number(gp.rating).toFixed(1) : '–';
     });
+  } else if(job.giver) {
+    renderGiverRow(job.giver.name, job.giver.rating, job.giver.quests,
+      () => showUserProfile(job.giver.name, job.giver.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2), '#f97316', job.giver.quests, job.giver.rating, getRank(job.giver.quests).name));
   }
 
   // Owner check: show edit button, hide apply for own quests
