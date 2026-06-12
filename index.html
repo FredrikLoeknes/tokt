@@ -2662,6 +2662,10 @@ async function applyJob() {
 
   closePanel();
 
+  // Get applicant name for notification
+  const { data: myProfile } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
+  const applicantName = myProfile?.full_name || 'En bruker';
+
   // Check if first-come quest - give achievement immediately
   const { data: questData } = await sb.from('quests').select('is_first_come, title').eq('id', questId).single();
   if(questData?.is_first_come) {
@@ -2669,9 +2673,25 @@ async function applyJob() {
     setTimeout(() => showAchievement('⚡', 'Første oppdrag!', 'Du fikk ditt første oppdrag – førstemann til mølla!'), 1000);
     await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
     await sb.from('conversations').update({ status: 'accepted' }).eq('id', conv.id);
+    // Notify giver that quest was taken
+    await sb.from('notifications').insert({
+      user_id: giverId,
+      type: 'application',
+      title: '⚡ Oppdraget ditt ble tatt!',
+      body: `${applicantName} tok oppdraget «${questData?.title || 'Oppdrag'}» (førstemann til mølla). Åpne chatten for å avtale detaljer.`,
+      link_id: conv.id
+    });
   } else {
     showToast('✦ Søknad sendt! Venter på godkjenning fra oppdragsgiver.');
     setTimeout(() => showAchievement('📨', 'Første søknad!', 'Du har søkt på ditt første oppdrag. Venter på godkjenning!'), 1800);
+    // Notify giver about new applicant
+    await sb.from('notifications').insert({
+      user_id: giverId,
+      type: 'application',
+      title: '📨 Ny søker på oppdraget ditt!',
+      body: `${applicantName} vil gjerne utføre «${questData?.title || 'Oppdrag'}». Gå til Mine oppdrag for å godkjenne.`,
+      link_id: conv.id
+    });
   }
   openChat(conv.id, applyPanel?.dataset?.questTitle || 'Oppdrag');
 }
