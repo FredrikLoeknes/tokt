@@ -709,6 +709,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   #searchbox { display: none; } /* hidden on mobile, tap search icon instead */
   .logo-xp { display: none; } /* hidden on mobile */
   .btn-login-only { display: none !important; } /* hide login btn on mobile - in bottom nav */
+  .avatar-wrap { display: none !important; } /* profile lives in bottom nav on mobile */
   .btn-tilby-desktop { display: none !important; } /* Tilby is in bottom nav on mobile */
   .btn-primary { display: none !important; } /* Legg ut is in bottom nav on mobile */
   #inbox-btn { display: none !important; } /* Innboks is in bottom nav on mobile */
@@ -1079,7 +1080,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 <!-- TIPS BAR -->
 <div id="tips-bar" style="position:fixed;top:62px;left:0;right:0;z-index:89;background:linear-gradient(135deg,rgba(249,115,22,0.92),rgba(168,85,247,0.92));backdrop-filter:blur(4px);padding:8px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:opacity .3s" onclick="nextTip()">
   <span style="font-size:16px;flex-shrink:0" id="tip-icon">💡</span>
-  <span id="tip-text" style="font-size:12px;color:#fff;font-weight:500;flex:1;line-height:1.4"></span>
+  <span id="tip-text" style="font-size:12px;color:#fff;font-weight:500;flex:1;line-height:1.4;text-align:center"></span>
   <button onclick="closeTipsBar(event)" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
 </div>
 
@@ -1101,7 +1102,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   </div>
 
   <div class="logo-xp">
-    <div class="xp-rank">⚡ Scout · LVL 3</div>
+    <div class="xp-rank">⚡ Høvding · Nivå 4</div>
     <div class="xp-track"><div class="xp-fill" id="xp-fill"></div></div>
     <div class="xp-label">620 / 1000 XP</div>
   </div>
@@ -1118,9 +1119,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     </button>
     <button class="btn btn-ghost btn-tilby-desktop" onclick="openServiceModal()" style="border-color:var(--accent2);color:var(--accent2)">🏪 Tilby</button>
     <button class="btn btn-ghost btn-login-only" onclick="openAuth('login')"><span id="btn-login">Logg inn</span></button>
-    <div class="avatar-wrap" onclick="toggleProfile()" title="View your profile">
+    <div class="avatar-wrap" onclick="toggleProfile()" title="Din profil" style="display:none">
       <div class="avatar">You</div>
-      <div class="avatar-lvl">LVL 3</div>
+      <div class="avatar-lvl">Nivå 4</div>
     </div>
     <!-- NOTIFICATIONS BELL -->
 <button id="notif-btn" onclick="toggleNotifications()" style="position:relative;width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0" title="Varsler">
@@ -6061,6 +6062,9 @@ async function loadUserProfile(user) {
     }
     document.getElementById('profile-rating').textContent = profile.rating ? profile.rating.toFixed(1) : '–';
     document.getElementById('profile-level').textContent = profile.level || 1;
+    // Oppdater Nivå-teksten under topbar-avataren (var hardkodet)
+    const avatarLvl = document.querySelector('.avatar-lvl');
+    if(avatarLvl) avatarLvl.textContent = 'Nivå ' + (profile.level || 1);
     document.getElementById('profile-rank-badge').textContent = `${rank.name} · nivå ${RANKS.indexOf(rank)+1} av ${RANKS.length}`;
     const rankDescEl = document.getElementById('profile-rank-desc');
     if(rankDescEl) rankDescEl.textContent = rank.desc || '';
@@ -6074,7 +6078,7 @@ async function loadUserProfile(user) {
     // Topbar XP
     const xpFill = document.getElementById('xp-fill');
     if(xpFill) xpFill.style.width = Math.min(100,(xpCur/xpMax)*100) + '%';
-    document.querySelector('.xp-rank') && (document.querySelector('.xp-rank').textContent = '⚡ ' + rank.name + ' · LVL ' + (profile.level||1));
+    document.querySelector('.xp-rank') && (document.querySelector('.xp-rank').textContent = '⚡ ' + rank.name + ' · Nivå ' + (profile.level||1));
   }
   updateUIForAuth(user);
   checkUnread();
@@ -6089,9 +6093,13 @@ async function loadUserProfile(user) {
 }
 
 function updateUIForAuth(user) {
-  const loginBtn = document.getElementById('btn-login');
-  if(loginBtn) loginBtn.textContent = user ? (currentUser?.user_metadata?.first_name || 'Profil') : t('logIn');
-  // Update bottom nav profile
+  // Logget inn: skjul «Logg inn»-knapp, vis avatar (som åpner profil).
+  // Logget ut: vis «Logg inn»-knapp, skjul avatar.
+  const loginBtn = document.querySelector('.btn-login-only');
+  const avatarWrap = document.querySelector('.avatar-wrap');
+  if(loginBtn) loginBtn.style.display = user ? 'none' : '';
+  if(avatarWrap) avatarWrap.style.display = user ? '' : 'none';
+  // Bunnmeny-profil (mobil)
   const navProfile = document.getElementById('nav-profile-label');
   if(navProfile) navProfile.textContent = user ? '👤' : t('navProfile');
 }
