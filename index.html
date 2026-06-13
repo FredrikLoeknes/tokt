@@ -396,6 +396,35 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .quest-pin.applied { opacity:.62; filter:saturate(.6); }
 .quest-pin.applied .qp-badge { background:var(--surface); color:var(--muted); border:1px solid var(--border); }
 
+/* live preview card in the "Legg ut" modal */
+.qpreview-card { background:var(--surface2); border:1px solid var(--border); border-radius:14px; padding:12px 12px 6px; margin-bottom:18px; }
+.qpreview-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.qpreview-label { font-size:12px; font-weight:700; color:var(--text); }
+.qpreview-hint { font-size:10px; color:var(--muted); }
+.qpreview-stage {
+  position:relative; height:104px; border-radius:10px; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  background:
+    linear-gradient(0deg, var(--surface) 0 2px, transparent 2px) 0 34px / 100% 44px,
+    linear-gradient(90deg, var(--surface) 0 2px, transparent 2px) 26px 0 / 70px 100%,
+    var(--bg);
+}
+.qpreview-stage .quest-pin { transform:translateY(-4px); }
+
+/* map cluster bubbles (shown when markers overlap) */
+.cluster-marker { will-change:transform; }
+.cluster-bubble {
+  min-width:38px; height:38px; padding:0 7px;
+  border-radius:50px;
+  background:linear-gradient(135deg, var(--accent), var(--accent2));
+  color:#fff; font-weight:800; font-size:14px; font-family:'Inter',sans-serif;
+  display:flex; align-items:center; justify-content:center;
+  border:2.5px solid var(--surface);
+  box-shadow:var(--shadow);
+  transition:transform .12s;
+}
+.cluster-marker:hover .cluster-bubble { transform:scale(1.08); }
+
 /* ── JOB PANEL ── */
 #job-panel {
   position:fixed; right:18px; top:74px; z-index:200;
@@ -1479,9 +1508,25 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       <div class="modal-title"><span id="modal-title-text">✦ Post a quest</span></div>
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
+    <div class="qpreview-card">
+      <div class="qpreview-top">
+        <span class="qpreview-label">Slik ser oppdraget ut på kartet</span>
+        <span class="qpreview-hint">slik andre ser det</span>
+      </div>
+      <div class="qpreview-stage">
+        <div class="quest-pin shape-circle" id="qpreview-pin">
+          <div class="qp-emblem">
+            <div class="qp-shape"></div>
+            <span class="qp-icon" id="qpreview-icon">✨</span>
+            <div class="qp-coin" id="qpreview-coin">250 kr</div>
+          </div>
+          <div class="qp-name" id="qpreview-name">Oppdragets navn</div>
+        </div>
+      </div>
+    </div>
     <div class="form-group">
       <label class="form-label">Tittel på oppdraget</label>
-      <input id="quest-title-input" class="form-input" type="text" placeholder="E.g. «Mow the lawn in my garden»">
+      <input id="quest-title-input" class="form-input" type="text" placeholder="E.g. «Mow the lawn in my garden»" oninput="updateQuestPreview()">
     </div>
     <div class="form-group">
       <label class="form-label">📍 Adresse der oppdraget skal gjøres</label>
@@ -1499,7 +1544,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     </div>
     <div class="form-group">
       <label class="form-label">Kategori</label>
-      <select id="quest-category-input" class="form-select" onchange="checkCategoryWarning(this.value)">
+      <select id="quest-category-input" class="form-select" onchange="checkCategoryWarning(this.value);updateQuestPreview()">
         <option>🏠 Hjem og hage</option>
         <option>🚗 Kjøring og transport</option>
         <option>🛒 Handel og ærend</option>
@@ -1686,7 +1731,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       <label class="form-label">Betaling</label>
       <div class="cost-display"><span id="modal-price-display">250</span> <small>kr</small></div>
       <input id="modal-price" type="number" min="0" max="50000" value="250"
-        oninput="document.getElementById('modal-price-display').textContent=this.value||0"
+        oninput="document.getElementById('modal-price-display').textContent=this.value||0;updateQuestPreview()"
         style="width:100%;margin-top:8px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text);font-size:15px;font-weight:600;font-family:inherit;outline:none"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
         placeholder="Skriv inn beløp…">
@@ -1708,7 +1753,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <div class="form-group">
       <div class="toggle-row">
         <div class="toggle-info"><div class="toggle-label">🔴 Haste-oppdrag (+100 kr)</div><div class="toggle-sub">Rød pulserende markør med prioritet</div></div>
-        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+        <div class="toggle" onclick="this.classList.toggle('on');updateQuestPreview()"></div>
       </div>
       <div class="toggle-row">
         <div class="toggle-info"><div class="toggle-label">📍 Del posisjon i sanntid</div><div class="toggle-sub">Følg utfører på kartet</div></div>
@@ -2281,6 +2326,7 @@ function initMap() {
   });
 
   window.map.on('click', closePanel);
+  window.map.on('moveend', clusterMarkers);
 
   window.map.on('move', () => {
     const movePanel = document.getElementById('job-panel');
@@ -2407,6 +2453,7 @@ function setViewMode(mode) {
     const show = mode === 'all' || (mode === 'quests' && m.kind === 'quest') || (mode === 'services' && m.kind === 'service');
     m.el.style.display = show ? '' : 'none';
   });
+  clusterMarkers();
   showToast(mode === 'all' ? '🗺️ Viser alt' : mode === 'quests' ? '📋 Viser kun oppdrag' : '🏪 Viser kun tjenester');
 }
 
@@ -2429,16 +2476,18 @@ function addQuestMarker(q) {
     ownership,
     onClick: () => showPanel(job)
   });
+  const coords = spreadCoords(job.coords);
   registerMarker(el, {
     kind: 'quest',
     matchText: ((q.category||'') + ' ' + (q.title||'')).toLowerCase(),
     pay: q.pay || 0,
     isUrgent: !!q.is_urgent,
     isCharity: !!q.is_charity,
-    isFirstCome: !!q.is_first_come
+    isFirstCome: !!q.is_first_come,
+    lng: coords && coords[0], lat: coords && coords[1]
   });
   new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-    .setLngLat(spreadCoords(job.coords))
+    .setLngLat(coords)
     .addTo(window.map);
 }
 
@@ -2518,6 +2567,8 @@ async function addMarkers() {
   if(services && services.length > 0) {
     services.forEach(s => addServiceMarker(serviceToSvc(s)));
   }
+
+  clusterMarkers();
 }
 
 function serviceToSvc(s) {
@@ -2547,16 +2598,18 @@ function loadDemoMarkers() {
       imageUrl: job.image || null,
       onClick: () => showPanel(job)
     });
+    const coords = spreadCoords(job.coords);
     registerMarker(el, {
       kind: 'quest',
       matchText: (job.title + ' ' + (job.tags||[]).map(t=>t.t).join(' ')).toLowerCase(),
       pay: job.pay || 0,
       isUrgent: job.type === 'haste',
       isCharity: job.type === 'charity',
-      isFirstCome: !!job.firstCome
+      isFirstCome: !!job.firstCome,
+      lng: coords && coords[0], lat: coords && coords[1]
     });
     new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-      .setLngLat(spreadCoords(job.coords))
+      .setLngLat(coords)
       .addTo(window.map);
   });
   DEMO_SERVICES.forEach(svc => addServiceMarker(svc));
@@ -2571,15 +2624,66 @@ function addServiceMarker(svc) {
     imageUrl: svc.image || null,
     onClick: () => showServicePanel(svc)
   });
+  const coords = spreadCoords(svc.coords);
   registerMarker(el, {
     kind: 'service',
     matchText: ((svc.title||'') + ' ' + (svc.category||'') + ' ' + (svc.tags||[]).map(t=>t.t||t).join(' ')).toLowerCase(),
     pay: svc.price || svc.pay || 0,
-    isUrgent: false, isCharity: false, isFirstCome: false
+    isUrgent: false, isCharity: false, isFirstCome: false,
+    lng: coords && coords[0], lat: coords && coords[1]
   });
   new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-    .setLngLat(spreadCoords(svc.coords))
+    .setLngLat(coords)
     .addTo(window.map);
+}
+
+// ── Clustering: group overlapping markers into a count bubble ──
+// Filters use el.style.display; clustering uses el.style.visibility so the two don't fight.
+window._clusterMarkers = window._clusterMarkers || [];
+function clearClusterMarkers() {
+  (window._clusterMarkers || []).forEach(m => m.remove());
+  window._clusterMarkers = [];
+}
+function clusterMarkers() {
+  const map = window.map;
+  if(!map || !window.mapMarkers || typeof map.project !== 'function') return;
+  clearClusterMarkers();
+  const CELL = 58; // grid size in screen px
+
+  // Eligible = not filtered out, with coordinates
+  const eligible = window.mapMarkers.filter(m =>
+    m.el && m.el.style.display !== 'none' && m.lng != null && m.lat != null);
+  // Reset any previous clustering hide
+  eligible.forEach(m => { m.el.style.visibility = ''; m.el.style.pointerEvents = ''; });
+
+  // Bucket by screen-pixel grid at the current zoom
+  const buckets = {};
+  eligible.forEach(m => {
+    const p = map.project([m.lng, m.lat]);
+    const key = Math.floor(p.x / CELL) + ':' + Math.floor(p.y / CELL);
+    (buckets[key] || (buckets[key] = [])).push(m);
+  });
+
+  Object.values(buckets).forEach(group => {
+    if(group.length < 2) return; // lone marker stays as-is
+    let slng = 0, slat = 0;
+    group.forEach(m => {
+      m.el.style.visibility = 'hidden';
+      m.el.style.pointerEvents = 'none';
+      slng += m.lng; slat += m.lat;
+    });
+    const clng = slng / group.length, clat = slat / group.length;
+    const el = document.createElement('div');
+    el.className = 'cluster-marker';
+    el.innerHTML = `<div class="cluster-bubble"><span>${group.length}</span></div>`;
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      map.easeTo({ center: [clng, clat], zoom: Math.min(map.getZoom() + 2, 18) });
+    });
+    const cm = new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat([clng, clat]).addTo(map);
+    window._clusterMarkers.push(cm);
+  });
 }
 
 // Close lang dropdown on outside click
@@ -2985,8 +3089,56 @@ async function applyJob() {
   openChat(conv.id, applyPanel?.dataset?.questTitle || 'Oppdrag');
 }
 
-function openModal() { if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å legge ut oppdrag'); return; } document.getElementById('modal-overlay').classList.add('open'); }
+function openModal() { if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å legge ut oppdrag'); return; } document.getElementById('modal-overlay').classList.add('open'); updateQuestPreview(); }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// Live marker preview in the "Legg ut" modal – mirrors how the marker will look to others
+function updateQuestPreview() {
+  const pin = document.getElementById('qpreview-pin');
+  if(!pin) return;
+  const title = (document.getElementById('quest-title-input')?.value || '').trim();
+  const cat = document.getElementById('quest-category-input')?.value || '';
+  let price = parseInt(document.getElementById('modal-price')?.value, 10);
+  if(isNaN(price)) price = 0;
+  const urgentOn  = !!document.querySelector('#modal .toggle')?.classList.contains('on');
+  const charityOn = !!document.getElementById('charity-toggle')?.classList.contains('on');
+
+  // colour mirrors questToJob: urgent → haste, else charity → charity
+  const type = urgentOn ? 'haste' : charityOn ? 'charity' : 'normal';
+  pin.className = 'quest-pin shape-circle' + (type === 'haste' ? ' haste' : type === 'charity' ? ' charity' : '');
+
+  // icon from the category emoji
+  const iconEl = document.getElementById('qpreview-icon');
+  if(iconEl) iconEl.textContent = firstEmoji(cat) || '✨';
+
+  // price mirrors postJob: charity → free, urgent → +100
+  let payText;
+  if(charityOn) payText = 'Gratis';
+  else { let pay = price; if(urgentOn) pay = Math.min(2000, pay + 100); payText = pay + ' kr'; }
+  const coinEl = document.getElementById('qpreview-coin');
+  if(coinEl) coinEl.textContent = payText;
+
+  // name (truncation handled by CSS)
+  const nameEl = document.getElementById('qpreview-name');
+  if(nameEl) nameEl.textContent = cleanName(title) || 'Oppdragets navn';
+
+  // optional photo fill
+  const imgPrev = document.getElementById('image-preview');
+  const hasImg = imgPrev && imgPrev.style.display !== 'none';
+  const emblem = pin.querySelector('.qp-emblem');
+  let img = document.getElementById('qpreview-img');
+  if(hasImg && emblem) {
+    if(!img) {
+      img = document.createElement('img');
+      img.id = 'qpreview-img';
+      img.className = 'qp-img';
+      emblem.insertBefore(img, document.getElementById('qpreview-coin'));
+    }
+    img.src = document.getElementById('preview-img')?.src || '';
+  } else if(img) {
+    img.remove();
+  }
+}
 function overlayClick(e) { if(e.target===document.getElementById('modal-overlay')) closeModal(); }
 async function previewImage(input) {
   const file = input.files[0];
@@ -3014,6 +3166,7 @@ async function previewImage(input) {
     const area = document.getElementById('image-upload-area');
     area.style.borderColor = '#0fa968';
     setTimeout(() => area.style.borderColor = 'var(--border)', 1500);
+    updateQuestPreview();
   };
   reader.readAsDataURL(file);
 }
@@ -3024,6 +3177,7 @@ function clearImage(e) {
   document.getElementById('image-preview').style.display = 'none';
   document.getElementById('upload-placeholder').style.display = 'block';
   document.getElementById('image-upload-area').style.borderColor = 'var(--border)';
+  updateQuestPreview();
 }
 
 async function postJob() {
@@ -3253,6 +3407,7 @@ function applyFilters() {
     if(show) visible++;
   });
 
+  clusterMarkers();
   closeFilters();
   updateFilterCount();
   showToast(`🔍 Viser ${visible} treff på kartet`);
@@ -3267,6 +3422,7 @@ function clearFilters() {
   updateFilterCount();
   // Show all markers again
   (window.mapMarkers || []).forEach(m => m.el.style.display = '');
+  clusterMarkers();
 }
 function updateFilterCount() {
   const urgentOn = document.getElementById('tog-urgent')?.classList.contains('on');
@@ -3750,6 +3906,7 @@ function toggleCharity(el) {
     if(priceInput) { priceInput.value = '250'; priceInput.disabled = false; priceInput.style.opacity = '1'; priceInput.style.cursor = 'text'; }
     if(priceDisplay) priceDisplay.textContent = '250';
   }
+  updateQuestPreview();
 }
 
 function toggleKeepOpen(el) {
