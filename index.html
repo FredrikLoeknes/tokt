@@ -2880,7 +2880,7 @@ function showPanel(job) {
       const { data: profs } = await sb.from('profiles').select('id, full_name').in('id', ids);
       const nm = {};
       (profs||[]).forEach(p => nm[p.id] = p.full_name);
-      appEl.innerHTML = `<div class="applicants-title">Søkere (${relevant.length})</div>` +
+      appEl.innerHTML = `<div class="applicants-title">${L.applicantsLabel||'Søkere'} (${relevant.length})</div>` +
         relevant.map(c => {
           const name = nm[c.taker_id] || 'Bruker';
           const init = name[0].toUpperCase();
@@ -2902,7 +2902,7 @@ function showPanel(job) {
     });
   } else if(job.people?.length) {
     const rank = q => getRank(q);
-    appEl.innerHTML = `<div class="applicants-title">Applicants</div>` +
+    appEl.innerHTML = `<div class="applicants-title">${L.applicantsLabel||'Søkere'} (${job.people.length})</div>` +
       job.people.map(p => {
         const r = rank(p.quests);
         return `<div class="applicant-row">
