@@ -1,7 +1,7 @@
-// Tokt.app Service Worker v1.0
+// Tokt.app Service Worker v2.0
 // Handles push notifications and offline caching
 
-const CACHE_NAME = 'tokt-v1';
+const CACHE_NAME = 'tokt-v2';
 const STATIC_ASSETS = ['/', '/index.html', '/terms.html'];
 
 // Install
@@ -12,7 +12,7 @@ self.addEventListener('install', e => {
   self.skipWaiting();
 });
 
-// Activate
+// Activate – delete any old caches (e.g. tokt-v1)
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -22,12 +22,38 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Fetch – serve from cache when offline
+// Fetch
+//  - Pages (HTML/navigations): NETWORK-FIRST so updates show up immediately,
+//    falling back to cache only when offline.
+//  - Other assets: cache-first, but refreshed in the background.
 self.addEventListener('fetch', e => {
-  if(e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
-  );
+  const req = e.request;
+  if(req.method !== 'GET') return;
+
+  const isHTML = req.mode === 'navigate' ||
+    (req.headers.get('accept') || '').includes('text/html');
+
+  if(isHTML) {
+    e.respondWith(
+      fetch(req).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then(c => c.put(req, copy));
+        return res;
+      }).catch(() =>
+        caches.match(req).then(cached => cached || caches.match('/index.html'))
+      )
+    );
+  } else {
+    e.respondWith(
+      caches.match(req).then(cached =>
+        cached || fetch(req).then(res => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(req, copy));
+          return res;
+        })
+      )
+    );
+  }
 });
 
 // Push notification received
@@ -36,8 +62,8 @@ self.addEventListener('push', e => {
   const title = data.title || 'Tokt.app';
   const options = {
     body: data.body || 'Du har et nytt varsel',
-    icon: data.icon || '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: data.icon || '/icon192.png',
+    badge: '/icon192.png',
     tag: data.tag || 'tokt-notification',
     data: { url: data.url || '/' },
     actions: data.actions || [],
