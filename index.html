@@ -308,31 +308,49 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-/* ── QUEST EMBLEM MARKERS ── */
+/* ── QUEST MARKERS (shape = type/ownership) ──
+   circle = quest · square = service · triangle = your own · diamond = working on */
 .quest-pin {
   display:flex; flex-direction:column; align-items:center;
   position:relative;
   font-family:'Inter',sans-serif;
   user-select:none; -webkit-user-select:none;
 }
+/* 42x42 box; the visible shape is drawn by .qp-shape behind the icon, so the
+   icon/photo/coin always stay upright regardless of the shape. */
 .qp-emblem {
   position:relative; z-index:2;
-  width:42px; height:42px; border-radius:50%;
-  background:var(--surface); border:2.5px solid var(--accent);
+  width:42px; height:42px;
   display:flex; align-items:center; justify-content:center;
   font-size:18px; line-height:1;
-  box-shadow:var(--shadow);
-  backdrop-filter:blur(4px);
   transition:transform .15s;
 }
-.qp-icon { pointer-events:none; }
-.qp-img { position:absolute; inset:0; width:100%; height:100%; border-radius:50%; object-fit:cover; }
-.quest-pin.haste   .qp-emblem { border-color:var(--red); }
-.quest-pin.high    .qp-emblem { border-color:var(--accent2); }
-.quest-pin.charity .qp-emblem { border-color:var(--green); }
-.quest-pin.service .qp-emblem { border-color:var(--accent2); }
-/* pulsing ring for haste */
-.quest-pin.haste .qp-emblem::before {
+.qp-shape {
+  position:absolute; inset:0; z-index:0;
+  background:var(--surface); border:2.5px solid var(--accent);
+  border-radius:50%;
+  box-shadow:var(--shadow); backdrop-filter:blur(4px);
+}
+.qp-icon { position:relative; z-index:1; pointer-events:none; }
+.qp-img  { position:absolute; inset:0; z-index:1; width:100%; height:100%; border-radius:50%; object-fit:cover; }
+
+/* shape variants */
+.shape-square  .qp-shape { border-radius:11px; }
+.shape-square  .qp-img   { border-radius:9px; }
+.shape-diamond .qp-shape { inset:auto; top:6px; left:6px; width:30px; height:30px; border-radius:7px; transform:rotate(45deg); }
+.shape-diamond .qp-img   { border-radius:0; clip-path:polygon(50% 2%,98% 50%,50% 98%,2% 50%); }
+.shape-triangle .qp-shape svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; filter:drop-shadow(var(--shadow-sm)); }
+.qp-tri-path { fill:var(--surface); stroke:#f0a500; stroke-width:2.5; stroke-linejoin:round; }
+.shape-triangle .qp-icon { font-size:15px; transform:translateY(4px); }
+.shape-triangle .qp-img  { border-radius:0; clip-path:polygon(50% 14%,92% 88%,8% 88%); }
+
+/* type colours (border on the shape) */
+.quest-pin.haste   .qp-shape { border-color:var(--red); }
+.quest-pin.high    .qp-shape { border-color:var(--accent2); }
+.quest-pin.charity .qp-shape { border-color:var(--green); }
+.quest-pin.service .qp-shape { border-color:var(--accent2); }
+/* pulsing ring for haste (circle only) */
+.quest-pin.haste.shape-circle .qp-emblem::before {
   content:''; position:absolute; inset:-5px; border-radius:50%;
   border:2px solid var(--red); opacity:.5; animation:pulse 1.4s infinite;
 }
@@ -345,6 +363,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   border:2px solid var(--surface); box-shadow:var(--shadow-sm);
   white-space:nowrap;
 }
+.shape-triangle .qp-coin { bottom:-2px; }
 .quest-pin.haste   .qp-coin { background:var(--red); }
 .quest-pin.high    .qp-coin { background:var(--accent2); }
 .quest-pin.charity .qp-coin { background:var(--green); }
@@ -358,15 +377,18 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 }
 /* expired */
 .quest-pin.expired { opacity:.6; filter:grayscale(.6); }
-.quest-pin.expired .qp-emblem { border-color:var(--muted); }
+.quest-pin.expired .qp-shape { border-color:var(--muted); }
+.quest-pin.expired .qp-tri-path { stroke:var(--muted); }
 .quest-pin.expired .qp-coin { background:var(--muted); }
-/* ── YOUR OWN / ACTIVE QUESTS (only the logged-in owner/taker sees these colors) ── */
-/* your own quest = gold */
-.quest-pin.mine .qp-emblem { border-color:#f0a500; box-shadow:0 0 0 3px rgba(240,165,0,.20), var(--shadow); }
-.quest-pin.mine .qp-coin { background:#f0a500; color:#241a00; }
-/* quest you're currently working on = teal */
-.quest-pin.working .qp-emblem { border-color:#14a89b; box-shadow:0 0 0 3px rgba(20,168,155,.22), var(--shadow); }
-.quest-pin.working .qp-coin { background:#14a89b; color:#fff; }
+/* ── YOUR OWN / ACTIVE QUESTS (only the logged-in owner/taker sees these) ── */
+/* your own quest = gold (triangle) */
+.quest-pin.mine .qp-shape { border-color:#f0a500; box-shadow:0 0 0 3px rgba(240,165,0,.20), var(--shadow); }
+.quest-pin.mine .qp-coin  { background:#f0a500; color:#241a00; }
+/* quest you're currently working on = teal (diamond) */
+.quest-pin.working .qp-shape { border-color:#14a89b; box-shadow:0 0 0 3px rgba(20,168,155,.22), var(--shadow); }
+.quest-pin.working .qp-coin  { background:#14a89b; color:#fff; }
+/* triangle gets its outline from the SVG, so no box ring/border on the shape div */
+.quest-pin.shape-triangle .qp-shape { background:none; border:none; box-shadow:none; backdrop-filter:none; }
 /* quest you've applied for (taker + pending) = toned down with a "Søkt" badge */
 .qp-badge {
   position:absolute; top:-13px; left:50%; transform:translateX(-50%); z-index:5;
@@ -2330,10 +2352,21 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
   const ownerClass = ownership === 'mine' ? 'mine' : ownership === 'working' ? 'working' : ownership === 'applied' ? 'applied' : '';
   const displayIcon = expired ? '⏰' : icon;
 
+  // Shape encodes type/ownership at a glance
+  const shape = type === 'service' ? 'square'
+    : ownership === 'mine' ? 'triangle'
+    : ownership === 'working' ? 'diamond'
+    : 'circle';
+
+  const triSvg = shape === 'triangle'
+    ? `<svg viewBox="0 0 42 42" preserveAspectRatio="none"><path class="qp-tri-path" d="M21 3.5 L37.5 35 Q39.5 38.5 35 38.5 L7 38.5 Q2.5 38.5 4.5 35 Z"/></svg>`
+    : '';
+
   el.innerHTML = `
-    <div class="quest-pin ${typeClass} ${ownerClass}">
+    <div class="quest-pin ${typeClass} ${ownerClass} shape-${shape}">
       ${ownership === 'applied' ? `<div class="qp-badge">✓ Søkt</div>` : ''}
       <div class="qp-emblem">
+        <div class="qp-shape">${triSvg}</div>
         <span class="qp-icon">${displayIcon}</span>
         ${imageUrl ? `<img class="qp-img" src="${imageUrl}" onerror="this.remove()">` : ''}
         ${priceText ? `<div class="qp-coin">${priceText}</div>` : ''}
