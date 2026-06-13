@@ -306,34 +306,58 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .mapboxgl-marker {
   pointer-events: auto !important;
 }
-.marker-pill {
-  background:var(--surface);
-  border:1.5px solid var(--accent);
-  border-radius:10px; padding:5px 10px;
-  font-size:11px; font-weight:600;
-  color:var(--text); white-space:nowrap;
-  box-shadow:var(--shadow);
-  display:flex; align-items:center; gap:5px;
-  position:relative;
-  backdrop-filter:blur(4px);
-  transition:all .15s;
-}
-.marker-pill:hover { box-shadow:var(--shadow-lg); }
-.marker-pill.haste { border-color:var(--red); background:rgba(229,57,53,0.08); }
-.marker-pill.high { border-color:var(--accent2); background:rgba(124,92,252,0.08); }
-.marker-pill.charity { border-color:var(--green); background:rgba(15,169,104,0.08); }
-.marker-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-.marker-pill .marker-dot { background:var(--accent); box-shadow:0 0 6px var(--accent); }
-.marker-pill.haste .marker-dot { background:var(--red); box-shadow:0 0 6px var(--red); animation:pulse 1.4s infinite; }
-.marker-pill.high .marker-dot { background:var(--accent2); box-shadow:0 0 6px var(--accent2); }
-.marker-pill.charity .marker-dot { background:var(--green); box-shadow:0 0 6px var(--green); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-.marker-pill::after {
-  content:''; position:absolute; bottom:-6px; left:50%;
-  transform:translateX(-50%);
-  border:6px solid transparent;
-  border-top-color:var(--surface);
+
+/* ── QUEST EMBLEM MARKERS ── */
+.quest-pin {
+  display:flex; flex-direction:column; align-items:center;
+  user-select:none; -webkit-user-select:none;
 }
+.qp-emblem {
+  position:relative; z-index:2;
+  width:42px; height:42px; border-radius:50%;
+  background:var(--surface); border:2.5px solid var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; line-height:1;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(4px);
+  transition:transform .15s;
+}
+.qp-icon { pointer-events:none; }
+.qp-img { position:absolute; inset:0; width:100%; height:100%; border-radius:50%; object-fit:cover; }
+.quest-pin.haste   .qp-emblem { border-color:var(--red); }
+.quest-pin.high    .qp-emblem { border-color:var(--accent2); }
+.quest-pin.charity .qp-emblem { border-color:var(--green); }
+.quest-pin.service .qp-emblem { border-color:var(--accent2); }
+/* pulsing ring for haste */
+.quest-pin.haste .qp-emblem::before {
+  content:''; position:absolute; inset:-5px; border-radius:50%;
+  border:2px solid var(--red); opacity:.5; animation:pulse 1.4s infinite;
+}
+/* price coin */
+.qp-coin {
+  position:absolute; bottom:-7px; left:50%; transform:translateX(-50%); z-index:3;
+  background:var(--accent); color:#fff;
+  font-family:'Skranji',cursive; font-size:10px; line-height:1;
+  padding:3px 8px; border-radius:50px;
+  border:2px solid var(--surface); box-shadow:var(--shadow-sm);
+  white-space:nowrap;
+}
+.quest-pin.haste   .qp-coin { background:var(--red); }
+.quest-pin.high    .qp-coin { background:var(--accent2); }
+.quest-pin.charity .qp-coin { background:var(--green); }
+.quest-pin.service .qp-coin { background:var(--accent2); }
+/* name under emblem – single line, truncated if too long */
+.qp-name {
+  margin-top:9px; max-width:110px;
+  font-size:10px; font-weight:600; color:var(--text);
+  text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  text-shadow:0 1px 3px var(--bg), 0 0 2px var(--bg);
+}
+/* expired */
+.quest-pin.expired { opacity:.6; filter:grayscale(.6); }
+.quest-pin.expired .qp-emblem { border-color:var(--muted); }
+.quest-pin.expired .qp-coin { background:var(--muted); }
 
 /* ── JOB PANEL ── */
 #job-panel {
@@ -2260,23 +2284,45 @@ function questToJob(q) {
   };
 }
 
-function createMarkerEl(type, label, imageUrl, onClick) {
+// Grab the first emoji from a string (category or title), if any
+function firstEmoji(str) {
+  if(!str) return null;
+  const m = String(str).match(/\p{Extended_Pictographic}/u);
+  return m ? m[0] : null;
+}
+// Pick the icon for an emblem: category emoji → title emoji → fallback
+function markerIcon({ category, title, isService } = {}) {
+  return firstEmoji(category) || firstEmoji(title) || (isService ? '🏪' : '✨');
+}
+// Strip emoji from a name so the label under the emblem stays clean
+function cleanName(str) {
+  return String(str || '').replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim();
+}
+
+function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = '', imageUrl = null, expired = false, onClick } = {}) {
   const el = document.createElement('div');
   el.className = 'mapbox-marker';
 
-  const pillClass = type === 'haste' ? 'haste'
+  const typeClass = expired ? 'expired'
+    : type === 'haste' ? 'haste'
     : type === 'high' ? 'high'
     : type === 'charity' ? 'charity'
+    : type === 'service' ? 'service'
     : '';
 
+  const displayIcon = expired ? '⏰' : icon;
+
   el.innerHTML = `
-    <div class="marker-pill ${pillClass}">
-      <div class="marker-dot"></div>
-      ${imageUrl ? `<img src="${imageUrl}" style="width:18px;height:18px;border-radius:4px;object-fit:cover;flex-shrink:0" onerror="this.remove()">` : ''}
-      <span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${label}</span>
+    <div class="quest-pin ${typeClass}">
+      <div class="qp-emblem">
+        <span class="qp-icon">${displayIcon}</span>
+        ${imageUrl ? `<img class="qp-img" src="${imageUrl}" onerror="this.remove()">` : ''}
+        ${priceText ? `<div class="qp-coin">${priceText}</div>` : ''}
+      </div>
+      ${name ? `<div class="qp-name">${name}</div>` : ''}
     </div>`;
 
-  el.addEventListener('click', e => { e.stopPropagation(); onClick(); });
+  el.addEventListener('click', e => { e.stopPropagation(); onClick && onClick(); });
   el.style.cursor = 'pointer';
   return el;
 }
@@ -2318,16 +2364,15 @@ function setViewMode(mode) {
 function addQuestMarker(q) {
   const job = questToJob(q);
   const expired = q.status === 'expired';
-  const label = expired ? `⏰ ${job.title}` : job.label;
-  const el = createMarkerEl(expired ? 'expired' : job.type, label, job.image || null, () => showPanel(job));
-  if(expired) {
-    const pill = el.querySelector('.marker-pill');
-    if(pill) {
-      pill.style.borderColor = 'var(--muted)';
-      pill.style.opacity = '0.6';
-      pill.style.filter = 'grayscale(0.6)';
-    }
-  }
+  const el = createMarkerEl({
+    type: job.type,
+    icon: markerIcon({ category: q.category, title: q.title }),
+    name: cleanName(q.title),
+    priceText: (q.pay != null ? q.pay + ' kr' : ''),
+    imageUrl: job.image || null,
+    expired,
+    onClick: () => showPanel(job)
+  });
   registerMarker(el, {
     kind: 'quest',
     matchText: ((q.category||'') + ' ' + (q.title||'')).toLowerCase(),
@@ -2423,7 +2468,14 @@ function serviceToSvc(s) {
 
 function loadDemoMarkers() {
   JOBS.forEach(job => {
-    const el = createMarkerEl(job.type, job.label, job.image || null, () => showPanel(job));
+    const el = createMarkerEl({
+      type: job.type,
+      icon: markerIcon({ category: job.category, title: job.title }),
+      name: cleanName(job.title),
+      priceText: (job.pay != null ? job.pay + ' kr' : ''),
+      imageUrl: job.image || null,
+      onClick: () => showPanel(job)
+    });
     registerMarker(el, {
       kind: 'quest',
       matchText: (job.title + ' ' + (job.tags||[]).map(t=>t.t).join(' ')).toLowerCase(),
@@ -2440,17 +2492,14 @@ function loadDemoMarkers() {
 }
 
 function addServiceMarker(svc) {
-  const label = '🏪 ' + svc.label + (svc.recurring ? ' 🔄' : '');
-  const el = createMarkerEl('service-pill', label, null, () => showServicePanel(svc));
-  const pill = el.querySelector('.marker-pill');
-  if(pill) {
-    pill.style.borderColor = 'var(--accent2)';
-    pill.style.background = 'rgba(168,85,247,0.92)';
-    pill.style.color = '#fff';
-  }
-  // Replace dot with service dot
-  const dot = el.querySelector('.marker-dot');
-  if(dot) { dot.style.background = 'var(--accent2)'; dot.style.boxShadow = '0 0 6px var(--accent2)'; }
+  const el = createMarkerEl({
+    type: 'service',
+    icon: markerIcon({ category: svc.category, title: svc.title, isService: true }),
+    name: cleanName(svc.title),
+    priceText: (svc.price != null ? svc.price + ' kr' : (svc.pay != null ? svc.pay + ' kr' : '')),
+    imageUrl: svc.image || null,
+    onClick: () => showServicePanel(svc)
+  });
   registerMarker(el, {
     kind: 'service',
     matchText: ((svc.title||'') + ' ' + (svc.category||'') + ' ' + (svc.tags||[]).map(t=>t.t||t).join(' ')).toLowerCase(),
