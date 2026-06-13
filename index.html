@@ -346,7 +346,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 /* type colours (border on the shape) */
 .quest-pin.haste   .qp-shape { border-color:var(--red); }
-.quest-pin.high    .qp-shape { border-color:var(--accent2); }
 .quest-pin.charity .qp-shape { border-color:var(--green); }
 .quest-pin.service .qp-shape { border-color:var(--accent2); }
 /* pulsing ring for haste (circle only) */
@@ -365,7 +364,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 }
 .shape-triangle .qp-coin { bottom:-2px; }
 .quest-pin.haste   .qp-coin { background:var(--red); }
-.quest-pin.high    .qp-coin { background:var(--accent2); }
 .quest-pin.charity .qp-coin { background:var(--green); }
 .quest-pin.service .qp-coin { background:var(--accent2); }
 /* name under emblem – single line, truncated if too long */
@@ -2297,7 +2295,7 @@ function initMap() {
 
 function questToJob(q) {
   // Convert Supabase quest row to job display object
-  const type = q.is_urgent ? 'haste' : (q.pay >= 400 ? 'high' : q.is_charity ? 'charity' : 'normal');
+  const type = q.is_urgent ? 'haste' : q.is_charity ? 'charity' : 'normal';
   const prefix = q.is_urgent ? '🔴 ' : q.is_charity ? '💚 ' : '';
   return {
     id: q.id,
@@ -2344,7 +2342,6 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
 
   const typeClass = expired ? 'expired'
     : type === 'haste' ? 'haste'
-    : type === 'high' ? 'high'
     : type === 'charity' ? 'charity'
     : type === 'service' ? 'service'
     : '';
