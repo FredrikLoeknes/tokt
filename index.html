@@ -188,6 +188,19 @@ html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg); 
   border:1px solid var(--surface);
 }
 
+/* Rank ring – subtle, static, colour by tier (bronze → silver → gold → legend) */
+.rank-ring-start, .rank-ring-bronze, .rank-ring-silver, .rank-ring-gold, .rank-ring-legend { position:relative; }
+.rank-ring-start  { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--border); }
+.rank-ring-bronze { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #b9763a; }
+.rank-ring-silver { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #9aa7b4; }
+.rank-ring-gold   { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #d9a300; }
+.rank-ring-legend::after {
+  content:''; position:absolute; inset:-4px; border-radius:50%; padding:2px;
+  background:conic-gradient(#d9a300,#a855f7,#0ea5e9,#d9a300);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none;
+}
+
 /* Theme toggle */
 #theme-toggle {
   width:38px; height:38px; border-radius:50%;
@@ -761,6 +774,16 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   #job-panel.expanded { max-height: 92vh; }
   #job-panel .panel-top { touch-action: none; }
 
+  /* Drag handle on service panel */
+  .svc-grabber {
+    display: block;
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 10px;
+  }
+  #service-panel-top { touch-action: none; }
+
   /* LEADERBOARD – bottom sheet on mobile */
   .lb-popup {
     position: fixed !important;
@@ -1050,7 +1073,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 <div id="view-toggle" style="position:fixed;top:120px;left:50%;transform:translateX(-50%);z-index:95;display:flex;background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:3px;box-shadow:var(--shadow-lg);gap:2px">
   <button class="vt-btn active" id="vt-all" onclick="setViewMode('all')">🗺️ Alt</button>
   <button class="vt-btn" id="vt-quests" onclick="setViewMode('quests')">📋 Oppdrag</button>
-  <button class="vt-btn" id="vt-services" onclick="setViewMode('services')">🏪 Tjenester</button>
+  <button class="vt-btn" id="vt-services" onclick="setViewMode('services')">🏪 Tilbud</button>
 </div>
 
 <!-- TIPS BAR -->
@@ -2214,6 +2237,20 @@ function getRank(quests) {
   for(const rank of RANKS) { if(quests >= rank.min) r = rank; }
   return r;
 }
+// Map a rank to a visual tier for the avatar ring
+function rankTier(quests) {
+  const idx = RANKS.indexOf(getRank(quests || 0));
+  if(idx >= 8) return 'legend';
+  if(idx >= 6) return 'gold';
+  if(idx >= 4) return 'silver';
+  if(idx >= 2) return 'bronze';
+  return 'start';
+}
+function applyRankRing(el, quests) {
+  if(!el) return;
+  el.classList.remove('rank-ring-start','rank-ring-bronze','rank-ring-silver','rank-ring-gold','rank-ring-legend');
+  el.classList.add('rank-ring-' + rankTier(quests));
+}
 
 // Ensure mapbox loads before init
 // ── DEMO DATA – definert globalt FØR initMap ──
@@ -2460,7 +2497,7 @@ function setViewMode(mode) {
     m.el.style.display = show ? '' : 'none';
   });
   clusterMarkers();
-  showToast(mode === 'all' ? '🗺️ Viser alt' : mode === 'quests' ? '📋 Viser kun oppdrag' : '🏪 Viser kun tjenester');
+  showToast(mode === 'all' ? '🗺️ Viser alt' : mode === 'quests' ? '📋 Viser kun oppdrag' : '🏪 Viser kun tilbud');
 }
 
 function addQuestMarker(q) {
@@ -2756,7 +2793,7 @@ function showPanel(job) {
     row.style.cssText = 'margin:0 16px 12px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;gap:10px;cursor:pointer';
     row.onclick = clickFn;
     row.innerHTML = `
-      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${ginit}</div>
+      <div class="rank-ring-${rankTier(questsDone)}" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${ginit}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${name} <span class="lb-badge ${r.cls}" style="font-size:9px;padding:2px 7px">${r.name}</span></div>
         <div style="font-size:11px;color:var(--muted)">Oppdragsgiver · ${rating ? '★ ' + Number(rating).toFixed(1) : 'Ny bruker'} · Trykk for profil</div>
@@ -2992,6 +3029,38 @@ function initPanelDrag() {
   });
 }
 initPanelDrag();
+
+// Same drag-to-dismiss / drag-up-to-expand for the service bottom sheet.
+// Bound lazily (the panel markup lives late in the document).
+function initServicePanelDrag() {
+  const panel = document.getElementById('service-panel');
+  const handle = document.getElementById('service-panel-top');
+  if(!panel || !handle || handle.dataset.dragBound) return;
+  handle.dataset.dragBound = '1';
+  let startY = 0, dy = 0, dragging = false;
+  handle.addEventListener('touchstart', e => {
+    if(window.innerWidth > 768) return;
+    dragging = true; startY = e.touches[0].clientY; dy = 0;
+    panel.style.transition = 'none';
+  }, { passive: true });
+  handle.addEventListener('touchmove', e => {
+    if(!dragging) return;
+    dy = e.touches[0].clientY - startY;
+    panel.style.transform = `translateY(${dy > 0 ? dy : Math.max(dy, -16)}px)`;
+  }, { passive: true });
+  handle.addEventListener('touchend', () => {
+    if(!dragging) return;
+    dragging = false;
+    panel.style.transition = 'transform .2s ease';
+    if(dy > 120) {
+      panel.style.transform = 'translateY(100%)';
+      setTimeout(() => { closeServicePanel(); panel.style.transform = ''; panel.style.transition = ''; }, 200);
+    } else {
+      if(dy < -40 && window.innerWidth <= 768) panel.style.maxHeight = '92vh';
+      panel.style.transform = 'translateY(0)';
+    }
+  });
+}
 
 function requestLocation() {
   if (!navigator.geolocation) return;
@@ -3704,6 +3773,7 @@ async function loadProfilePage(userId, isOwn) {
   const name = profile.full_name || 'Bruker';
   const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
   document.getElementById('pp-avatar').textContent = initials;
+  applyRankRing(document.getElementById('pp-avatar'), questsDone);
   document.getElementById('pp-name').textContent = name;
 
   // Hent statistikk
@@ -3732,7 +3802,8 @@ async function loadProfilePage(userId, isOwn) {
   const rank = getRank(questsDone);
 
   // Hero
-  document.getElementById('pp-rank-badge').textContent = rank.name;
+  const rankIndex = RANKS.indexOf(rank) + 1;
+  document.getElementById('pp-rank-badge').textContent = `${rank.name} · nivå ${rankIndex} av ${RANKS.length}`;
   document.getElementById('pp-rank-desc').textContent = rank.desc || '';
 
   // Stats
@@ -3745,7 +3816,8 @@ async function loadProfilePage(userId, isOwn) {
   if(nextRank) {
     const prevMin = rank.min;
     const progress = ((questsDone - prevMin) / (nextRank.min - prevMin)) * 100;
-    document.getElementById('pp-xp-label').textContent = `${questsDone} / ${nextRank.min} oppdrag til ${nextRank.name}`;
+    const remaining = Math.max(nextRank.min - questsDone, 0);
+    document.getElementById('pp-xp-label').textContent = `${remaining} oppdrag igjen til ${nextRank.name}`;
     document.getElementById('pp-xp-fill').style.width = Math.max(progress, 2) + '%';
   } else {
     document.getElementById('pp-xp-label').textContent = 'Høyeste rang oppnådd! 🌟';
@@ -5169,7 +5241,7 @@ async function runSearch(query) {
     resultHtml += '<div class="search-section-title" style="background:rgba(59,111,245,0.06);color:var(--accent)">📋 Oppdrag (' + questHits.length + ')</div>' + questHits.map(renderHit).join('');
   }
   if(svcHits.length) {
-    resultHtml += '<div class="search-section-title" style="background:rgba(168,85,247,0.06);color:var(--accent2)">🏪 Tjenester (' + svcHits.length + ')</div>' + svcHits.map(renderHit).join('');
+    resultHtml += '<div class="search-section-title" style="background:rgba(168,85,247,0.06);color:var(--accent2)">🏪 Tilbud (' + svcHits.length + ')</div>' + svcHits.map(renderHit).join('');
   }
   box.innerHTML = resultHtml;
 }
@@ -5222,7 +5294,7 @@ function showServicePanel(svc) {
     document.getElementById('service-title').before(svcKindBadge);
   }
   svcKindBadge.style.cssText = 'display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:50px;margin-bottom:6px;background:rgba(168,85,247,0.12);color:var(--accent2);border:1px solid var(--accent2)';
-  svcKindBadge.textContent = '🏪 TJENESTE';
+  svcKindBadge.textContent = '🏪 TILBUD';
   document.getElementById('service-title').textContent = svc.title;
   document.getElementById('service-desc').textContent = svc.desc;
   document.getElementById('service-price').textContent = svc.price + ' kr';
@@ -5259,6 +5331,7 @@ function showServicePanel(svc) {
   ].filter(Boolean).map(t => `<span style="font-size:10px;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">${t}</span>`).join('');
 
   const svcPanel = document.getElementById('service-panel');
+  initServicePanelDrag();
   if(window.innerWidth > 768 && svc.coords) {
     positionPanelNearMarker(svcPanel, svc.coords);
   } else {
@@ -5266,7 +5339,7 @@ function showServicePanel(svc) {
     Object.assign(svcPanel.style, {
       left:'0', right:'0', bottom:'60px', top:'auto',
       width:'100%', borderRadius:'20px 20px 0 0',
-      maxHeight:'75vh', overflowY:'auto'
+      maxHeight:'75vh', overflowY:'auto', transform:'none', transition:'none'
     });
   }
   svcPanel.style.display = 'block';
@@ -5541,21 +5614,26 @@ function showUserProfile(name, initials, color, quests, rating, rank) {
   activeUserProfile = { name, initials, color, quests, rating, rank };
   document.getElementById('upp-avatar').textContent = initials;
   document.getElementById('upp-avatar').style.background = color + '40';
+  applyRankRing(document.getElementById('upp-avatar'), quests);
   document.getElementById('upp-name').textContent = name;
   document.getElementById('upp-rating').textContent = rating ? '★ ' + rating : '–';
   document.getElementById('upp-quests').textContent = quests || 0;
   const rankObj = getRank(quests || 0);
-  document.getElementById('upp-rank').textContent = rankObj.name;
+  const rankIdx = RANKS.indexOf(rankObj) + 1;
+  document.getElementById('upp-rank').textContent = `${rankObj.name} · ${rankIdx}/${RANKS.length}`;
 
-  // Badges based on quests
+  // Trust signals only (no game milestones) – keep it credible, not gamey
   const badges = [];
-  if(quests >= 1) badges.push('🎯 Første oppdrag');
-  if(quests >= 10) badges.push('⚡ 10 oppdrag');
-  if(quests >= 31) badges.push('🏆 Veteran');
   if(rating >= 4.8) badges.push('⭐ Topp-rated');
-  document.getElementById('upp-badges').innerHTML = badges.length
-    ? badges.map(b => `<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)">${b}</span>`).join('')
-    : '<span style="font-size:11px;color:var(--muted)">Ingen badges ennå</span>';
+  if(quests >= 31) badges.push('🏆 Erfaren');
+  const bEl = document.getElementById('upp-badges');
+  if(badges.length) {
+    bEl.style.display = 'flex';
+    bEl.innerHTML = badges.map(b => `<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)">${b}</span>`).join('');
+  } else {
+    bEl.style.display = 'none';
+    bEl.innerHTML = '';
+  }
 
   // Position popup near week worker
   const popup = document.getElementById('user-profile-popup');
@@ -5914,6 +5992,8 @@ async function loadUserProfile(user) {
   if(profile) {
     const quests = profile.quests_completed || 0;
     const rank = getRank(quests);
+    applyRankRing(document.querySelector('.avatar'), quests);
+    applyRankRing(document.getElementById('profile-avatar-big'), quests);
     // Show total involvement: posted + taken (active/completed)
     try {
       const { count: postedCount } = await sb.from('quests').select('id', { count:'exact', head:true })
@@ -5926,7 +6006,7 @@ async function loadUserProfile(user) {
     }
     document.getElementById('profile-rating').textContent = profile.rating ? profile.rating.toFixed(1) : '–';
     document.getElementById('profile-level').textContent = profile.level || 1;
-    document.getElementById('profile-rank-badge').textContent = rank.name;
+    document.getElementById('profile-rank-badge').textContent = `${rank.name} · nivå ${RANKS.indexOf(rank)+1} av ${RANKS.length}`;
     const rankDescEl = document.getElementById('profile-rank-desc');
     if(rankDescEl) rankDescEl.textContent = rank.desc || '';
     // XP bar
@@ -6170,9 +6250,12 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <img id="service-img" style="width:100%;height:100%;object-fit:cover">
   </div>
   <div style="padding:16px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-      <div id="service-title" style="font-size:16px;font-weight:700;flex:1;margin-right:8px"></div>
-      <button onclick="closeServicePanel()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1">×</button>
+    <div id="service-panel-top">
+      <div class="svc-grabber"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div id="service-title" style="font-size:16px;font-weight:700;flex:1;margin-right:8px"></div>
+        <button onclick="closeServicePanel()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;line-height:1">×</button>
+      </div>
     </div>
 
     <!-- Provider -->
@@ -6224,7 +6307,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div style="display:flex;gap:0;background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:12px">
       <div style="flex:1;padding:8px;text-align:center;border-right:1px solid var(--border)">
         <div id="upp-quests" style="font-size:16px;font-weight:800;color:var(--accent)">0</div>
-        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Oppdrag</div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Fullført</div>
       </div>
       <div style="flex:1;padding:8px;text-align:center">
         <div id="upp-rating" style="font-size:16px;font-weight:800;color:var(--gold)">–</div>
