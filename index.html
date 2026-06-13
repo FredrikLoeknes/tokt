@@ -1859,11 +1859,11 @@ const LANGUAGES = {
     questsLabel: 'oppdrag',
     // Categories
     catAll: 'Alle', catHome: 'Hjem', catDrive: 'Kjøring', catErrands: 'Handel',
-    catPets: 'Dyr', catCrafts: 'Håndverk', catElderly: 'Eldre',
+    catPets: 'Dyr', catCrafts: 'Håndverk', catDugnad: 'Dugnad', catDynga: 'Dynga', catElderly: 'Eldre',
     catMoving: 'Bære', catCleaning: 'Rengjøring', catTech: 'Teknologi',
     catCar: 'Bil', catKids: 'Barn', catParty: 'Fest', catFood: 'Mat',
     catPhoto: 'Foto', catHair: 'Hår', catGarden: 'Hage',
-    catKeys: 'Nøkler', catFix: 'Småfiks', catTeaching: 'Læring', catDate: '💘 Blind date', catOther: 'Annet',
+    catKeys: 'Nøkler', catFix: 'Småfiks', catTeaching: 'Læring', catDate: 'Blind date', catOther: 'Annet',
     // Duration pills
     dur1: '⚡ Under 30 min', dur2: '🕐 30–60 min', dur3: '🕑 1–2 timer',
     dur4: '🕓 2–4 timer', dur5: '☀️ Halvdag', dur6: '🌅 Heldags',
@@ -1965,11 +1965,11 @@ const LANGUAGES = {
     showQuests: 'Show',
     questsLabel: 'quests',
     catAll: 'All', catHome: 'Home', catDrive: 'Driving', catErrands: 'Errands',
-    catPets: 'Pets', catCrafts: 'Crafts', catElderly: 'Elderly',
+    catPets: 'Pets', catCrafts: 'Crafts', catDugnad: 'Volunteer', catDynga: 'Dump run', catElderly: 'Elderly',
     catMoving: 'Moving', catCleaning: 'Cleaning', catTech: 'Tech',
     catCar: 'Car', catKids: 'Kids', catParty: 'Events', catFood: 'Food',
     catPhoto: 'Photo', catHair: 'Beauty', catGarden: 'Garden',
-    catKeys: 'Keys', catFix: 'Quick fix', catTeaching: 'Tutoring', catDate: '💘 Blind date', catOther: 'Other',
+    catKeys: 'Keys', catFix: 'Quick fix', catTeaching: 'Tutoring', catDate: 'Blind date', catOther: 'Other',
     dur1: '⚡ Under 30 min', dur2: '🕐 30–60 min', dur3: '🕑 1–2 hours',
     dur4: '🕓 2–4 hours', dur5: '☀️ Half day', dur6: '🌅 Full day',
     // Sort
@@ -2095,7 +2095,7 @@ function applyLanguage() {
   safeText('fsec-sortby', L.sortByTitle);
 
   // Categories
-  const catKeys = ['catAll','catHome','catDrive','catErrands','catPets','catCrafts','catElderly','catMoving','catCleaning','catTech','catCar','catKids','catParty','catFood','catPhoto','catHair','catGarden','catKeys','catFix','catTeaching','catDate','catOther'];
+  const catKeys = ['catAll','catHome','catDrive','catErrands','catPets','catCrafts','catDugnad','catDynga','catElderly','catMoving','catCleaning','catTech','catCar','catKids','catParty','catFood','catPhoto','catHair','catGarden','catKeys','catFix','catTeaching','catDate','catOther'];
   document.querySelectorAll('.fcat-label').forEach((el,i) => { if(catKeys[i]) el.textContent = L[catKeys[i]]; });
 
   // Duration pills
@@ -2513,7 +2513,7 @@ function addQuestMarker(q) {
     type: job.type,
     icon: markerIcon({ category: q.category, title: q.title }),
     name: cleanName(q.title),
-    priceText: (q.pay != null ? q.pay + ' kr' : ''),
+    priceText: (q.is_charity ? 'Gratis' : (q.pay != null ? q.pay + ' kr' : '')),
     imageUrl: job.image || null,
     expired,
     ownership,
@@ -2637,7 +2637,7 @@ function loadDemoMarkers() {
       type: job.type,
       icon: markerIcon({ category: job.category, title: job.title }),
       name: cleanName(job.title),
-      priceText: (job.pay != null ? job.pay + ' kr' : ''),
+      priceText: (job.type === 'charity' ? 'Gratis' : (job.pay != null ? job.pay + ' kr' : '')),
       imageUrl: job.image || null,
       onClick: () => showPanel(job)
     });
