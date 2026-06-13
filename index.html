@@ -311,6 +311,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 /* ── QUEST EMBLEM MARKERS ── */
 .quest-pin {
   display:flex; flex-direction:column; align-items:center;
+  position:relative;
   user-select:none; -webkit-user-select:none;
 }
 .qp-emblem {
@@ -358,6 +359,21 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .quest-pin.expired { opacity:.6; filter:grayscale(.6); }
 .quest-pin.expired .qp-emblem { border-color:var(--muted); }
 .quest-pin.expired .qp-coin { background:var(--muted); }
+/* ── YOUR OWN / ACTIVE QUESTS (only the logged-in owner/taker sees these colors) ── */
+/* your own quest = gold */
+.quest-pin.mine .qp-emblem { border-color:#f0a500; box-shadow:0 0 0 3px rgba(240,165,0,.20), var(--shadow); }
+.quest-pin.mine .qp-coin { background:#f0a500; color:#241a00; }
+/* quest you're currently working on = teal */
+.quest-pin.working .qp-emblem { border-color:#14a89b; box-shadow:0 0 0 3px rgba(20,168,155,.22), var(--shadow); }
+.quest-pin.working .qp-coin { background:#14a89b; color:#fff; }
+/* quest you've applied for (taker + pending) = toned down with a "Søkt" badge */
+.qp-badge {
+  position:absolute; top:-13px; left:50%; transform:translateX(-50%); z-index:5;
+  font-size:8.5px; font-weight:800; letter-spacing:.3px;
+  padding:2px 7px; border-radius:50px; white-space:nowrap; box-shadow:var(--shadow-sm);
+}
+.quest-pin.applied { opacity:.62; filter:saturate(.6); }
+.quest-pin.applied .qp-badge { background:var(--surface); color:var(--muted); border:1px solid var(--border); }
 
 /* ── JOB PANEL ── */
 #job-panel {
@@ -2299,7 +2315,7 @@ function cleanName(str) {
   return String(str || '').replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim();
 }
 
-function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = '', imageUrl = null, expired = false, onClick } = {}) {
+function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = '', imageUrl = null, expired = false, ownership = null, onClick } = {}) {
   const el = document.createElement('div');
   el.className = 'mapbox-marker';
 
@@ -2310,10 +2326,12 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
     : type === 'service' ? 'service'
     : '';
 
+  const ownerClass = ownership === 'mine' ? 'mine' : ownership === 'working' ? 'working' : ownership === 'applied' ? 'applied' : '';
   const displayIcon = expired ? '⏰' : icon;
 
   el.innerHTML = `
-    <div class="quest-pin ${typeClass}">
+    <div class="quest-pin ${typeClass} ${ownerClass}">
+      ${ownership === 'applied' ? `<div class="qp-badge">✓ Søkt</div>` : ''}
       <div class="qp-emblem">
         <span class="qp-icon">${displayIcon}</span>
         ${imageUrl ? `<img class="qp-img" src="${imageUrl}" onerror="this.remove()">` : ''}
@@ -2364,6 +2382,12 @@ function setViewMode(mode) {
 function addQuestMarker(q) {
   const job = questToJob(q);
   const expired = q.status === 'expired';
+  let ownership = null;
+  if(currentUser) {
+    if(q.user_id && q.user_id === currentUser.id) ownership = 'mine';
+    else if(window._workingQuestIds && window._workingQuestIds.has(q.id)) ownership = 'working';
+    else if(window._appliedQuestIds && window._appliedQuestIds.has(q.id)) ownership = 'applied';
+  }
   const el = createMarkerEl({
     type: job.type,
     icon: markerIcon({ category: q.category, title: q.title }),
@@ -2371,6 +2395,7 @@ function addQuestMarker(q) {
     priceText: (q.pay != null ? q.pay + ' kr' : ''),
     imageUrl: job.image || null,
     expired,
+    ownership,
     onClick: () => showPanel(job)
   });
   registerMarker(el, {
@@ -2422,6 +2447,21 @@ async function addMarkers() {
   document.querySelectorAll('.mapbox-marker').forEach(m => m.remove());
   window.mapMarkers = [];
   window._usedCoords = {};
+
+  // Which quests is the current user involved in as taker?
+  // accepted = working on (teal), pending = applied/awaiting reply (toned down).
+  // This only affects the logged-in user's own view of the map.
+  window._workingQuestIds = new Set();
+  window._appliedQuestIds = new Set();
+  if(currentUser) {
+    const { data: myConvs } = await sb.from('conversations')
+      .select('quest_id, status').eq('taker_id', currentUser.id).in('status', ['pending', 'accepted']);
+    (myConvs || []).forEach(c => {
+      if(!c.quest_id) return;
+      if(c.status === 'accepted') window._workingQuestIds.add(c.quest_id);
+      else if(c.status === 'pending') window._appliedQuestIds.add(c.quest_id);
+    });
+  }
 
   // Always show demo markers as background
   loadDemoMarkers();
@@ -5573,6 +5613,7 @@ async function doLogout() {
   await sb.auth.signOut();
   currentUser = null;
   updateUIForAuth(null);
+  if(window.map) addMarkers();
   document.getElementById('profile-panel').style.display = 'none';
   showToast('👋 Du er nå logget ut');
 }
@@ -5652,6 +5693,8 @@ async function loadUserProfile(user) {
   checkUnreadNotifs();
   subscribeToNotifications();
   registerPushNotifications();
+  // Re-render the map so the user's own and active quests get their colours
+  if(window.map) addMarkers();
 }
 
 function updateUIForAuth(user) {
@@ -5707,6 +5750,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   } else if(event === 'SIGNED_OUT') {
     currentUser = null;
     updateUIForAuth(null);
+    if(window.map) addMarkers();
   }
 });
 
