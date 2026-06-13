@@ -823,7 +823,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   #legend { display: none; }
 
   /* CORNER WIDGETS */
-  #corner-widgets { bottom: 16px; right: 12px; gap: 8px; }
+  #corner-widgets { bottom: 120px; right: 12px; gap: 8px; }
   #week-worker { display: none !important; }
   .zoom-controls { border-radius: 12px; }
   .zoom-btn { width: 44px; height: 44px; font-size: 22px; } /* bigger touch targets */
@@ -1078,7 +1078,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 </div>
 
 <!-- TIPS BAR -->
-<div id="tips-bar" style="position:fixed;top:62px;left:0;right:0;z-index:89;background:linear-gradient(135deg,rgba(249,115,22,0.92),rgba(168,85,247,0.92));backdrop-filter:blur(4px);padding:8px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:opacity .3s" onclick="nextTip()">
+<div id="tips-bar" style="position:fixed;top:62px;left:0;right:0;z-index:89;background:linear-gradient(135deg,rgba(249,115,22,0.92),rgba(168,85,247,0.92));backdrop-filter:blur(4px);padding:4px 16px;min-height:30px;box-sizing:border-box;display:flex;align-items:center;gap:10px;cursor:pointer;transition:opacity .3s" onclick="nextTip()">
   <span style="font-size:16px;flex-shrink:0" id="tip-icon">💡</span>
   <span id="tip-text" style="font-size:12px;color:#fff;font-weight:500;flex:1;line-height:1.4;text-align:center"></span>
   <button onclick="closeTipsBar(event)" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
@@ -3812,7 +3812,7 @@ async function loadProfilePage(userId, isOwn) {
   // Stats
   document.getElementById('pp-stat-quests').textContent = questsDone;
   document.getElementById('pp-stat-rating').textContent = avgRating ? '★ ' + avgRating.toFixed(1) : '–';
-  document.getElementById('pp-stat-level').textContent = profile.level || 1;
+  document.getElementById('pp-stat-level').textContent = rankIndex;
 
   // XP til neste rang
   const nextRank = RANKS.find(r => r.min > questsDone);
@@ -6050,6 +6050,7 @@ async function loadUserProfile(user) {
   if(profile) {
     const quests = profile.quests_completed || 0;
     const rank = getRank(quests);
+    const rankLevel = RANKS.indexOf(rank) + 1;
     applyRankRing(document.querySelector('.avatar'), quests);
     applyRankRing(document.getElementById('profile-avatar-big'), quests);
     // Show total involvement: posted + taken (active/completed)
@@ -6063,10 +6064,10 @@ async function loadUserProfile(user) {
       document.getElementById('profile-quests').textContent = quests;
     }
     document.getElementById('profile-rating').textContent = profile.rating ? profile.rating.toFixed(1) : '–';
-    document.getElementById('profile-level').textContent = profile.level || 1;
+    document.getElementById('profile-level').textContent = rankLevel;
     // Oppdater Nivå-teksten under topbar-avataren (var hardkodet)
     const avatarLvl = document.querySelector('.avatar-lvl');
-    if(avatarLvl) avatarLvl.textContent = 'Nivå ' + (profile.level || 1);
+    if(avatarLvl) avatarLvl.textContent = 'Nivå ' + rankLevel;
     document.getElementById('profile-rank-badge').textContent = `${rank.name} · nivå ${RANKS.indexOf(rank)+1} av ${RANKS.length}`;
     const rankDescEl = document.getElementById('profile-rank-desc');
     if(rankDescEl) rankDescEl.textContent = rank.desc || '';
@@ -6080,7 +6081,7 @@ async function loadUserProfile(user) {
     // Topbar XP
     const xpFill = document.getElementById('xp-fill');
     if(xpFill) xpFill.style.width = Math.min(100,(xpCur/xpMax)*100) + '%';
-    document.querySelector('.xp-rank') && (document.querySelector('.xp-rank').textContent = '⚡ ' + rank.name + ' · Nivå ' + (profile.level||1));
+    document.querySelector('.xp-rank') && (document.querySelector('.xp-rank').textContent = '⚡ ' + rank.name + ' · Nivå ' + rankLevel);
   }
   updateUIForAuth(user);
   checkUnread();
@@ -6260,7 +6261,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       </div>
       <div style="flex:1;padding:10px;text-align:center">
         <div id="profile-level" style="font-size:18px;font-weight:800;color:var(--green)">1</div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Level</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Nivå</div>
       </div>
     </div>
     <div style="margin-bottom:14px">
@@ -6650,7 +6651,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
     <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
       <div id="pp-stat-level" style="font-size:22px;font-weight:800;color:var(--green)">1</div>
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Level</div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Nivå</div>
     </div>
   </div>
 
