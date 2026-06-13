@@ -3773,7 +3773,6 @@ async function loadProfilePage(userId, isOwn) {
   const name = profile.full_name || 'Bruker';
   const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
   document.getElementById('pp-avatar').textContent = initials;
-  applyRankRing(document.getElementById('pp-avatar'), questsDone);
   document.getElementById('pp-name').textContent = name;
 
   // Hent statistikk
@@ -3800,6 +3799,7 @@ async function loadProfilePage(userId, isOwn) {
 
   const questsDone = doneAsTaker; // rang baseres på utførte oppdrag
   const rank = getRank(questsDone);
+  applyRankRing(document.getElementById('pp-avatar'), questsDone);
 
   // Hero
   const rankIndex = RANKS.indexOf(rank) + 1;
@@ -5309,6 +5309,31 @@ function showServicePanel(svc) {
   av.textContent = svc.provider?.initials || '?';
   av.style.background = svc.provider?.color || 'var(--accent2)';
 
+  // Look up the real provider profile (real services only; demo keeps its name)
+  const provId = svc.raw?.user_id;
+  const provRow = document.getElementById('service-provider-row');
+  const provArrow = document.getElementById('service-provider-arrow');
+  if(provId) {
+    if(provRow) { provRow.style.cursor = 'pointer'; provRow.onclick = () => { closeServicePanel(); viewOtherProfile(provId); }; }
+    if(provArrow) provArrow.style.display = 'block';
+    sb.from('profiles').select('full_name, rating, quests_completed').eq('id', provId).single().then(({ data: pp }) => {
+      if(!pp) return;
+      const pname = pp.full_name || 'Tilbyder';
+      const pinit = pname.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
+      document.getElementById('service-provider-name').textContent = pname;
+      av.textContent = pinit;
+      av.style.background = 'linear-gradient(135deg,#0ea5e9,#6366f1)';
+      applyRankRing(av, pp.quests_completed || 0);
+      document.getElementById('service-rating').textContent = pp.rating ? `★ ${Number(pp.rating).toFixed(1)}` : 'Ny tilbyder';
+      const srs2 = document.getElementById('service-rating-stat');
+      if(srs2) srs2.textContent = pp.rating ? '★ ' + Number(pp.rating).toFixed(1) : '–';
+    });
+  } else {
+    if(provRow) { provRow.style.cursor = 'default'; provRow.onclick = null; }
+    if(provArrow) provArrow.style.display = 'none';
+    applyRankRing(av, 0);
+  }
+
   // Image
   if(svc.image) {
     document.getElementById('service-img').src = svc.image;
@@ -6259,12 +6284,13 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
 
     <!-- Provider -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:10px">
+    <div id="service-provider-row" style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:10px">
       <div id="service-provider-avatar" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0"></div>
-      <div>
+      <div style="flex:1;min-width:0">
         <div id="service-provider-name" style="font-size:13px;font-weight:600"></div>
         <div id="service-rating" style="font-size:11px;color:var(--gold)"></div>
       </div>
+      <span id="service-provider-arrow" style="color:var(--muted);font-size:14px;display:none">›</span>
     </div>
 
     <div id="service-desc" style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px"></div>
