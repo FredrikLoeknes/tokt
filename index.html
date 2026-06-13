@@ -5065,7 +5065,15 @@ async function sendMessage() {
     content
   });
 
-  if(error) { showToast('❌ Kunne ikke sende melding'); input.value = content; }
+  if(error) {
+    console.error('sendMessage error:', error.message);
+    showToast('❌ Kunne ikke sende melding');
+    input.value = content;
+    return;
+  }
+
+  // Vis meldingen med en gang – ikke vent på Realtime-ekko
+  await loadMessages(activeChatId);
 }
 
 // ── INBOX ──
