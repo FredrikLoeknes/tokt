@@ -1273,7 +1273,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="nøkler"><div class="fcat-icon">🔑</div><div class="fcat-label">Nøkler</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="småfiks"><div class="fcat-icon">🛠️</div><div class="fcat-label">Småfiks</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="undervisning"><div class="fcat-icon">🎓</div><div class="fcat-label">Læring</div></div>
-        <div class="fcat-item" onclick="toggleCat(this)" data-cat="blind date"><div class="fcat-icon">💘</div><div class="fcat-label">Blind date</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="annet"><div class="fcat-icon">✨</div><div class="fcat-label">Annet</div></div>
       </div>
     </div>
@@ -1682,15 +1681,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         <option>🔑 Nøkler og ærend</option>
         <option>🛠️ Småfiks</option>
         <option>🎓 Undervisning og leksehjelp</option>
-        <option>💘 Blind date</option>
         <option>✨ Annet</option>
       </select>
     </div>
-    <div id="blinddate-warning" style="display:none;background:rgba(233,30,140,0.08);border:1px solid rgba(233,30,140,0.25);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;color:#c2185b;line-height:1.6">
-      <strong>💘 Blind date</strong><br>
-      Kun for sosiale møter – kaffe, samtale og selskap. Seksuelle tjenester mot betaling er <strong>ulovlig i Norge</strong> og vil resultere i umiddelbar utestengelse og anmeldelse. Ved å fortsette bekrefter du at oppdraget er av sosial karakter.
-      <div style="margin-top:8px"><a href="/terms.html#p4b" target="_blank" style="color:#e91e8c;font-weight:600">Les våre regler for blind date →</a></div>
-    </div>
+    <div id="blinddate-warning" style="display:none"></div>
 
     <div class="form-group">
       <label class="form-label">Beskrivelse</label>
@@ -1896,10 +1890,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         Publiser oppdrag
       </button>
     </div>
-    <div class="crypto-row">
-      <button class="crypto-btn" style="background:#f7931a18;color:#f7931a" onclick="postJob()">₿ Bitcoin <span style="font-size:9px;opacity:.7">soon</span></button>
-      <button class="crypto-btn" style="background:#0033ad18;color:#4a7de8" onclick="postJob()">₳ Cardano <span style="font-size:9px;opacity:.7">soon</span></button>
-    </div>
   </div>
 </div>
 
@@ -2007,7 +1997,7 @@ const LANGUAGES = {
     urgentToggle: '🔴 Hastemarkering (+100 kr)', urgentToggleSub: 'Rød pulserende markør med prioritet',
     locationToggle: '📍 Del posisjon under arbeid', locationToggleSub: 'Utfører deler posisjon i sanntid',
     charityToggle: '💚 Veldedighetsoppdrag', charityToggleSub: 'Gir achievement til utfører',
-    disclaimer: '<strong>Viktig:</strong> Tokt er kun en formidlingsplattform. Alt økonomisk oppgjør skjer direkte via Vipps, Bitcoin eller Cardano mellom oppdragsgiver og utfører. Tokt er ikke part i avtalen og er ikke ansvarlig for kvalitet, skader eller tvister. Ved å publisere godtar du våre <u>brukervilkår</u>. Betal aldri forskudd til ukjente. Oppdrag over 10 000 kr krever signert kontrakt.',
+    disclaimer: '<strong>Viktig:</strong> Tokt er kun en formidlingsplattform. Alt økonomisk oppgjør skjer direkte via Vipps mellom oppdragsgiver og utfører. Tokt er ikke part i avtalen og er ikke ansvarlig for kvalitet, skader eller tvister. Ved å publisere godtar du våre <u>brukervilkår</u>. Betal aldri forskudd til ukjente. Oppdrag over 10 000 kr krever signert kontrakt.',
     publishQuest: 'Publiser oppdrag',
     cryptoSoon: 'snart',
     // Leaderboard
@@ -2108,7 +2098,7 @@ const LANGUAGES = {
     urgentToggle: '🔴 Urgent quest (+100 kr)', urgentToggleSub: 'Red pulsing marker with priority',
     locationToggle: '📍 Live location sharing', locationToggleSub: 'Taker shares live position',
     charityToggle: '💚 Charity quest', charityToggleSub: 'Earns taker a special achievement',
-    disclaimer: '<strong>Important:</strong> Tokt is a platform-only service. All payments are made directly between quest giver and taker via Vipps, Bitcoin or Cardano. Tokt is not party to any agreement and accepts no responsibility for quality, damages or disputes. By publishing you agree to our <u>terms of service</u>. Never pay strangers in advance. Quests over 10,000 NOK require a signed contract.',
+    disclaimer: '<strong>Important:</strong> Tokt is a platform-only service. All payments are made directly between quest giver and taker via Vipps. Tokt is not party to any agreement and accepts no responsibility for quality, damages or disputes. By publishing you agree to our <u>terms of service</u>. Never pay strangers in advance. Quests over 10,000 NOK require a signed contract.',
     publishQuest: 'Publiser oppdrag',
     cryptoSoon: 'soon',
     lbTitle: 'Leaderboard',
@@ -4614,7 +4604,7 @@ async function editQuestFromPanel() {
 function showEditQuestModal(q) {
   const existing = document.getElementById('edit-quest-overlay');
   if(existing) existing.remove();
-  const cats = ['🏠 Hjem og hage','🚗 Kjøring og transport','🛒 Handel og ærend','🐕 Dyr','🔧 Håndverk og montering','👴 Eldre og selskap','📦 Bære og flytte','🧹 Rengjøring','🗑️ Dynga','🤝 Dugnad','💻 Teknologi og IT','🚘 Bil og kjøretøy','👶 Barn og familie','🎉 Fest og arrangement','🍕 Mat og matlaging','📸 Foto og video','💇 Hår og skjønnhet','🐾 Dyrepass','🌿 Hagearbeid','🔑 Nøkler og ærend','🛠️ Småfiks','🎓 Undervisning og leksehjelp','💘 Blind date','✨ Annet'];
+  const cats = ['🏠 Hjem og hage','🚗 Kjøring og transport','🛒 Handel og ærend','🐕 Dyr','🔧 Håndverk og montering','👴 Eldre og selskap','📦 Bære og flytte','🧹 Rengjøring','🗑️ Dynga','🤝 Dugnad','💻 Teknologi og IT','🚘 Bil og kjøretøy','👶 Barn og familie','🎉 Fest og arrangement','🍕 Mat og matlaging','📸 Foto og video','💇 Hår og skjønnhet','🐾 Dyrepass','🌿 Hagearbeid','🔑 Nøkler og ærend','🛠️ Småfiks','🎓 Undervisning og leksehjelp','✨ Annet'];
   const overlay = document.createElement('div');
   overlay.id = 'edit-quest-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
