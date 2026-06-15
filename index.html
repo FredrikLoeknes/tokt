@@ -6058,6 +6058,17 @@ const MINOR_BLOCKED_CATCODES = ['blind date','kjøring','bil'];
 // Kategorier der «18+» hukes av automatisk (tungt/farlig arbeid)
 const AUTO_ADULT_CATEGORIES = ['📦 Bære og flytte','🔧 Håndverk og montering','🌿 Hagearbeid','🗑️ Dynga'];
 
+// Beregn alder fra fødselsdato (YYYY-MM-DD)
+function ageFromBirthdate(d){
+  if(!d) return null;
+  const b = new Date(d);
+  if(isNaN(b.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - b.getFullYear();
+  const m = now.getMonth() - b.getMonth();
+  if(m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+  return age;
+}
 function isCurrentUserAdult(){
   // ukjent = voksen (til Vipps-verifisering er på plass)
   return !(window.currentProfile && window.currentProfile.is_adult === false);
@@ -6150,8 +6161,13 @@ async function doRegister() {
   const btn = document.getElementById('register-btn');
   if(!firstName || !email || !password) { showAuthError('reg','Fyll inn alle feltene'); return; }
   if(password.length < 6) { showAuthError('reg','Passordet må være minst 6 tegn'); return; }
+  const birthdate = document.getElementById('reg-birthdate')?.value || '';
+  const age = ageFromBirthdate(birthdate);
+  if(age === null || age < 0 || age > 120) { showAuthError('reg','Fyll inn en gyldig fødselsdato'); return; }
+  if(age < 15) { showAuthError('reg','Du må være minst 15 år for å bruke Tokt.'); return; }
+  const isAdult = age >= 18;
   btn.textContent = 'Oppretter konto…'; btn.disabled = true;
-  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName, phone: phone } } });
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName, phone: phone, birth_date: birthdate, is_adult: isAdult } } });
   btn.textContent = 'Opprett konto'; btn.disabled = false;
   if(error) {
     let msg = error.message;
@@ -6172,6 +6188,8 @@ async function doRegister() {
       id: data.user.id,
       full_name: firstName + ' ' + lastName,
       phone: phone || null,
+      birth_date: birthdate,
+      is_adult: isAdult,
       level: 1,
       xp_current: 0,
       quests_completed: 0,
@@ -6237,6 +6255,10 @@ async function loadUserProfile(user) {
   // Try load profile from DB
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
   window.currentProfile = profile || null;   // brukes av aldersgrense-sjekken
+  if(window.currentProfile && window.currentProfile.birth_date){
+    const _a = ageFromBirthdate(window.currentProfile.birth_date);
+    if(_a !== null) window.currentProfile.is_adult = _a >= 18;   // korrekt selv etter bursdag
+  }
   if(profile) {
     const quests = profile.quests_completed || 0;
     const rank = getRank(quests);
@@ -6398,6 +6420,11 @@ sb.auth.onAuthStateChange(async (event, session) => {
         </div>
       </div>
       <div style="margin-bottom:12px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Fødselsdato</label>
+        <input id="reg-birthdate" type="date" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">🔞 Du må være minst 15 år. 15–17 år får noen begrensninger.</div>
+      </div>
+      <div style="margin-bottom:12px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Mobilnummer <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(valgfritt)</span></label>
         <div style="display:flex;gap:8px">
           <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--muted);white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:6px"><svg viewBox="0 0 22 16" width="18" height="13" style="border-radius:2px"><rect width="22" height="16" fill="#ba0c2f"/><rect x="6" width="4" height="16" fill="#fff"/><rect y="6" width="22" height="4" fill="#fff"/><rect x="7" width="2" height="16" fill="#002868"/><rect y="7" width="22" height="2" fill="#002868"/></svg> +47</div>
@@ -6415,7 +6442,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
       </div>
       <div id="reg-error" style="display:none;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--red);margin-bottom:12px"></div>
       <button onclick="doRegister()" id="register-btn" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">Opprett konto</button>
-      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5">Ved å registrere deg godtar du våre <a href="https://tokt.app/Tokt-Brukervilkaar-og-Personvern.docx" target="_blank" style="color:var(--accent)">brukervilkår</a> og <a href="https://tokt.app/Tokt-Brukervilkaar-og-Personvern.docx" target="_blank" style="color:var(--accent)">personvernregler</a></div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.5">🔞 Du må være minst <strong>15 år</strong> for å bruke Tokt.</div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.5">Ved å registrere deg godtar du våre <a href="https://tokt.app/Tokt-Brukervilkaar-og-Personvern.docx" target="_blank" style="color:var(--accent)">brukervilkår</a> og <a href="https://tokt.app/Tokt-Brukervilkaar-og-Personvern.docx" target="_blank" style="color:var(--accent)">personvernregler</a></div>
     </div>
 
     <!-- Divider -->
