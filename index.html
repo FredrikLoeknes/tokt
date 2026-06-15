@@ -3327,6 +3327,7 @@ async function applyJob() {
 
   if(error) { showToast('❌ Feil: ' + error.message); return; }
 
+  logEvent('quest_applied');
   closePanel();
 
   // Get applicant name for notification
@@ -3550,6 +3551,8 @@ async function postJob() {
     showToast('❌ ' + error.message);
     return;
   }
+
+  logEvent('quest_posted', { category: category });
 
   // Upload image if selected
   const imgInput = document.getElementById('quest-image-input');
@@ -4925,6 +4928,7 @@ async function savePhoneAndClose() {
 }
 
 function copyAndOpenVipps(phone) {
+  logEvent('vipps_clicked');
   const formatted = phone.replace(/(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
   const doOpen = () => { window.location.href = 'vipps://'; };
   if(navigator.clipboard?.writeText) {
@@ -5696,6 +5700,7 @@ async function postService() {
 
   closeServiceModal();
   showToast('🏪 Tjeneste publisert på kartet!');
+  logEvent('service_posted');
   addServiceMarker(serviceToSvc(data));
   // Reset address fields
   const svcAddrInput = document.getElementById('svc-address-input');
@@ -6027,6 +6032,17 @@ const SUPABASE_URL = 'https://notbntypwtorecnynkfr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vdGJudHlwd3RvcmVjbnlua2ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNDYxNzksImV4cCI6MjA5NjYyMjE3OX0.BqDLMfSHFf1TfaOcFLT4hKA2AfJevEQL472Is3IfT0E';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Enkel, personvernvennlig hendelseslogging til egen Supabase-tabell (gratis alternativ til Vercel Pro)
+async function logEvent(name, meta){
+  try {
+    await sb.from('events').insert({
+      name: name,
+      meta: meta || null,
+      user_id: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.id : null
+    });
+  } catch(e) { /* aldri la logging stoppe noe */ }
+}
+
 let currentUser = null;
 
 // ── AUTH FUNCTIONS ──
@@ -6299,6 +6315,7 @@ async function doRegister() {
   }
   closeAuth();
   showToast('✅ Konto opprettet! Du er nå logget inn.');
+  logEvent('signup');
   if(data.user) {
     // Create profile row – non-blocking, don't let this break auth
     sb.from('profiles').upsert({
@@ -6331,7 +6348,9 @@ async function doLogout() {
   updateUIForAuth(null);
   if(window.map) addMarkers();
   document.getElementById('profile-panel').style.display = 'none';
+  closeProfilePage();              // lukk fullskjerm-profilsiden
   showToast('👋 Du er nå logget ut');
+  openAuth('login');               // vis innloggings-/registreringsboksen
 }
 
 function showAuthError(form, msg) {
@@ -6560,7 +6579,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div id="reg-error" style="display:none;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--red);margin-bottom:12px"></div>
       <button onclick="doRegister()" id="register-btn" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">Opprett konto</button>
       <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.5">🔞 Du må være minst <strong>15 år</strong> for å bruke Tokt.</div>
-      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.5">Ved å registrere deg godtar du våre <a href="https://tokt.app/Tokt-Brukervilkaar-og-Personvern.docx" target="_blank" style="color:var(--accent)">brukervilkår</a> og <a href="https://tokt.app/Tokt-Brukervilkaar-og-Personvern.docx" target="_blank" style="color:var(--accent)">personvernregler</a></div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.5">Ved å registrere deg godtar du våre <a href="/terms.html#del1" target="_blank" style="color:var(--accent)">brukervilkår</a> og <a href="/terms.html#del2" target="_blank" style="color:var(--accent)">personvernregler</a></div>
     </div>
 
     <!-- Divider -->
