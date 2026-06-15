@@ -3864,6 +3864,8 @@ async function loadProfilePage(userId, isOwn) {
   // Vis/skjul egne seksjoner
   document.getElementById('pp-edit-section').style.display = isOwn ? 'block' : 'none';
   document.getElementById('pp-quests-section').style.display = isOwn ? 'block' : 'none';
+  const ppLogout = document.getElementById('pp-logout-section');
+  if(ppLogout) ppLogout.style.display = isOwn ? 'block' : 'none';
   document.getElementById('pp-header-title').textContent = isOwn ? 'Min profil' : 'Profil';
 
   // Hent profildata
@@ -6891,9 +6893,14 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
 
   <!-- Achievements -->
-  <div style="padding:16px 20px 90px;background:var(--surface)">
+  <div style="padding:16px 20px 24px;background:var(--surface)">
     <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px">🏅 Achievements</div>
     <div id="pp-achievements" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+
+  <!-- Logg ut (kun egen profil) -->
+  <div id="pp-logout-section" style="display:none;padding:8px 20px calc(90px + env(safe-area-inset-bottom,0px));background:var(--surface)">
+    <button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">🚪 Logg ut</button>
   </div>
 
 </div>
