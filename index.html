@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Tokt – Go on a quest</title>
 <meta name="description" content="Real quests. Real money. Find tasks near you.">
 <meta name="theme-color" content="#f97316">
@@ -80,7 +80,7 @@ html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg); 
   background:var(--topbar);
   border-bottom:1px solid var(--border);
   box-shadow:var(--shadow-sm);
-  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
 }
 
 /* LOGO */
@@ -346,7 +346,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   position:absolute; inset:0; z-index:0;
   background:var(--surface); border:2.5px solid var(--accent);
   border-radius:50%;
-  box-shadow:var(--shadow); backdrop-filter:blur(4px);
+  box-shadow:var(--shadow); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
 }
 .qp-icon { position:relative; z-index:1; pointer-events:none; }
 .qp-img  { position:absolute; inset:0; z-index:1; width:100%; height:100%; border-radius:50%; object-fit:cover; }
@@ -403,7 +403,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .quest-pin.working .qp-shape { border-color:#14a89b; box-shadow:0 0 0 3px rgba(20,168,155,.22), var(--shadow); }
 .quest-pin.working .qp-coin  { background:#14a89b; color:#fff; }
 /* triangle gets its outline from the SVG, so no box ring/border on the shape div */
-.quest-pin.shape-triangle .qp-shape { background:none; border:none; box-shadow:none; backdrop-filter:none; }
+.quest-pin.shape-triangle .qp-shape { background:none; border:none; box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none; }
 /* quest you've applied for (taker + pending) = toned down with a "Søkt" badge */
 .qp-badge {
   position:absolute; top:-13px; left:50%; transform:translateX(-50%); z-index:5;
@@ -528,12 +528,12 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .legend-dot { width:7px; height:7px; border-radius:50%; }
 
 /* ── MODAL ── */
-#modal-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.5); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; }
+#modal-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.5); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; }
 #modal-overlay.open { display:flex; }
 #modal {
   background:var(--surface); border:1px solid var(--border);
   border-radius:20px; padding:28px; width:440px;
-  max-width:95vw; max-height:90vh; overflow-y:auto;
+  max-width:95vw; max-height:90vh;max-height:90svh; overflow-y:auto;
   animation:slideIn .2s ease; box-shadow:var(--shadow-lg);
   flex-shrink:0; flex-grow:0; box-sizing:border-box;
 }
@@ -545,6 +545,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .form-label { font-size:11px; font-weight:700; color:var(--muted); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:.6px; }
 .form-input,.form-select,.form-textarea { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 14px; font-size:14px; color:var(--text); font-family:inherit; outline:none; transition:border-color .15s,box-shadow .15s; }
 .form-input:focus,.form-select:focus,.form-textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+/* iOS: font under 16px på skjemafelt utløser auto-zoom ved fokus. 16px på mobil hindrer det. */
+@media(max-width:768px){
+  input, textarea, select { font-size:16px !important; }
+}
 .form-textarea { resize:vertical; min-height:80px; }
 .form-select option { background:var(--surface2); }
 .cost-display { text-align:center; font-size:34px; font-weight:800; color:var(--accent); letter-spacing:-2px; margin:4px 0; }
@@ -687,7 +691,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   overflow-y: auto;
-  max-height: 70vh;
+  max-height:70vh;max-height:70svh;
   display: none; /* HIDDEN BY DEFAULT */
   opacity: 0;
   pointer-events: none;
@@ -758,7 +762,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     bottom: 0;
     width: 100%;
     border-radius: 20px 20px 0 0;
-    max-height: 80vh;
+    max-height:80vh;max-height:80svh;
     overflow-y: auto;
     animation: slideUp .25s ease;
   }
@@ -776,7 +780,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     border-radius: 2px;
     margin: 10px auto 0;
   }
-  #job-panel.expanded { max-height: 92vh; }
+  #job-panel.expanded { max-height:92vh;max-height:92svh; }
   #job-panel .panel-top { touch-action: none; }
 
   /* Drag handle on service panel */
@@ -925,10 +929,11 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   z-index: 95;
   background: var(--surface);
   border-top: 1px solid var(--border);
-  height: 60px;
+  height: calc(60px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   align-items: center;
   justify-content: space-around;
-  padding: 0 8px;
+  padding-left: 8px; padding-right: 8px;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
 }
 .nav-item {
@@ -956,7 +961,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     z-index: 400;
     background: var(--surface);
     border-radius: 24px 24px 0 0;
-    max-height: 88vh;
+    max-height:88vh;max-height:88svh;
     display: flex;
     flex-direction: column;
     transform: translateY(100%);
@@ -1082,7 +1087,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 </div>
 
 <!-- TIPS BAR -->
-<div id="tips-bar" style="position:fixed;top:62px;left:0;right:0;z-index:89;background:linear-gradient(135deg,rgba(249,115,22,0.92),rgba(168,85,247,0.92));backdrop-filter:blur(4px);padding:4px 16px;min-height:30px;box-sizing:border-box;display:flex;align-items:center;gap:10px;cursor:pointer;transition:opacity .3s" onclick="nextTip()">
+<div id="tips-bar" style="position:fixed;top:62px;left:0;right:0;z-index:89;background:linear-gradient(135deg,rgba(249,115,22,0.92),rgba(168,85,247,0.92));-webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);padding:4px 16px;min-height:30px;box-sizing:border-box;display:flex;align-items:center;gap:10px;cursor:pointer;transition:opacity .3s" onclick="nextTip()">
   <span style="font-size:16px;flex-shrink:0" id="tip-icon">💡</span>
   <span id="tip-text" style="font-size:12px;color:#fff;font-weight:500;flex:1;line-height:1.4;text-align:center"></span>
   <button onclick="closeTipsBar(event)" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
@@ -1377,8 +1382,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 </div>
 
 <!-- SLIK FUNGERER TOKT MODAL -->
-<div id="how-it-works-overlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:var(--surface);border-radius:24px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+<div id="how-it-works-overlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--surface);border-radius:24px;max-width:420px;width:100%;max-height:88vh;max-height:88svh;overflow-y:auto;-webkit-overflow-scrolling:touch">
     <div style="padding:24px 24px 0;display:flex;align-items:center;justify-content:space-between">
       <div style="font-size:20px;font-weight:800">⚡ Slik fungerer Tokt</div>
       <button onclick="document.getElementById('how-it-works-overlay').style.display='none'" style="background:var(--surface2);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--muted)">✕</button>
@@ -3481,7 +3486,7 @@ function showQuestPostedPopup(title) {
 
   const popup = document.createElement('div');
   popup.id = 'quest-posted-popup';
-  popup.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease';
+  popup.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease';
   popup.innerHTML = `
     <div style="background:var(--surface);border-radius:24px;padding:32px 28px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:popIn .3s ease">
       <div style="font-size:56px;margin-bottom:16px">🎉</div>
@@ -4514,7 +4519,7 @@ function showEditQuestModal(q) {
   const cats = ['🏠 Hjem og hage','🚗 Kjøring og transport','🛒 Handel og ærend','🐕 Dyr','🔧 Håndverk og montering','👴 Eldre og selskap','📦 Bære og flytte','🧹 Rengjøring','🗑️ Dynga','🤝 Dugnad','💻 Teknologi og IT','🚘 Bil og kjøretøy','👶 Barn og familie','🎉 Fest og arrangement','🍕 Mat og matlaging','📸 Foto og video','💇 Hår og skjønnhet','🐾 Dyrepass','🌿 Hagearbeid','🔑 Nøkler og ærend','🛠️ Småfiks','🎓 Undervisning og leksehjelp','💘 Blind date','✨ Annet'];
   const overlay = document.createElement('div');
   overlay.id = 'edit-quest-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
   overlay.innerHTML = `
     <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90svh;overflow-y:auto;padding:24px 20px 80px;box-sizing:border-box">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
@@ -4557,7 +4562,7 @@ async function editServiceById(serviceId) {
   if(existing) existing.remove();
   const overlay = document.createElement('div');
   overlay.id = 'edit-svc-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
   overlay.innerHTML = `
     <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90svh;overflow-y:auto;padding:24px 20px 80px;box-sizing:border-box">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
@@ -4750,7 +4755,7 @@ function showPhoneRequired(msg) {
   if(existing) existing.remove();
   const popup = document.createElement('div');
   popup.id = 'phone-required-popup';
-  popup.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px';
+  popup.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px';
   popup.innerHTML = `
     <div style="background:var(--surface);border-radius:20px;padding:28px;max-width:360px;width:100%;text-align:center">
       <div style="font-size:40px;margin-bottom:12px">📱</div>
@@ -4803,7 +4808,7 @@ function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, role)
 
   const popup = document.createElement('div');
   popup.id = 'payment-info-popup';
-  popup.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px';
+  popup.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px';
   popup.innerHTML = `
     <div style="background:var(--surface);border-radius:20px;padding:28px;max-width:360px;width:100%">
       <div style="text-align:center;margin-bottom:20px">
@@ -5891,7 +5896,7 @@ function showPostChoice() {
   if(existing) { existing.remove(); return; }
   const overlay = document.createElement('div');
   overlay.id = 'post-choice-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.5);-webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center';
   overlay.innerHTML = `
     <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:24px 20px 90px;box-sizing:border-box;animation:slideIn .2s ease">
       <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px"></div>
@@ -6163,7 +6168,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
 </script>
 <!-- AUTH MODAL -->
-<div id="auth-overlay" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+<div id="auth-overlay" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);align-items:center;justify-content:center">
   <div id="auth-modal" style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;width:400px;max-width:95vw;box-shadow:var(--shadow-lg);animation:popIn .2s ease;position:relative">
     
     <!-- Close -->
@@ -6284,7 +6289,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 </div>
 
 <!-- NOTIFICATIONS PANEL -->
-<div id="notif-panel" style="display:none;position:fixed;right:18px;top:74px;z-index:250;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;max-height:70vh;animation:slideIn .2s ease">
+<div id="notif-panel" style="display:none;position:fixed;right:18px;top:74px;z-index:250;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;max-height:70vh;max-height:70svh;animation:slideIn .2s ease">
   <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
     <div style="font-size:15px;font-weight:700;flex:1">🔔 Varsler</div>
     <button onclick="markAllRead()" style="background:none;border:none;font-size:11px;color:var(--accent);cursor:pointer;font-family:inherit">Merk alle lest</button>
@@ -6423,7 +6428,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 </div>
 
 <!-- INBOX PANEL -->
-<div id="inbox-panel" style="display:none;position:fixed;right:18px;top:74px;z-index:200;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;max-height:70vh;animation:slideIn .2s ease">
+<div id="inbox-panel" style="display:none;position:fixed;right:18px;top:74px;z-index:200;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;max-height:70vh;max-height:70svh;animation:slideIn .2s ease">
   <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
     <div style="font-size:15px;font-weight:700;flex:1">💬 Innboks</div>
     <button onclick="closeInbox()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer">×</button>
@@ -6434,8 +6439,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
 </div>
 
 <!-- SERVICE MODAL -->
-<div id="service-modal-overlay" onclick="if(event.target===this)closeServiceModal()" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);align-items:center;justify-content:center">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;width:440px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:popIn .2s ease">
+<div id="service-modal-overlay" onclick="if(event.target===this)closeServiceModal()" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;width:440px;max-width:95vw;max-height:90vh;max-height:90svh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:popIn .2s ease">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
       <div style="font-size:18px;font-weight:700">🏪 Tilby en tjeneste</div>
       <button onclick="closeServiceModal()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">×</button>
@@ -6542,7 +6547,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 </div>
 
 <!-- WELCOME POPUP -->
-<div id="welcome-overlay" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px">
+<div id="welcome-overlay" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px">
   <div id="welcome-modal" style="background:var(--surface);border:1px solid var(--border);border-radius:24px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:popIn .3s ease">
     
     <!-- Top gradient banner -->
@@ -6623,7 +6628,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 </div>
 
 <!-- MOBILE PANEL OVERLAY -->
-<div id="panel-overlay" onclick="closePanel();closeServicePanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199;backdrop-filter:blur(2px)"></div>
+<div id="panel-overlay" onclick="closePanel();closeServicePanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199;-webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px)"></div>
 
 <!-- BOTTOM NAV (mobile only) -->
 <!-- ═══════════ PROFILSIDE (fullskjerm) ═══════════ -->
