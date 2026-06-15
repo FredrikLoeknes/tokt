@@ -2000,6 +2000,7 @@ const LANGUAGES = {
     sortNewest: '🆕 Nyeste', sortRated: '⭐ Best vurdert',
     // Job panel
     rewardLabel: 'Betaling', ratingLabel: 'Vurdering', applicantsLabel: 'Søkere',
+    giverLabel: 'Oppdragsgiver', newUserLabel: 'Ny bruker', questsDoneShort: 'oppdrag fullført', newProviderLabel: 'Ny tilbyder',
     acceptQuest: '✦ Ta oppdraget',
     paymentNote: 'Betaling via <strong style="color:#ff5b24">&nbsp;Vipps&nbsp;</strong> direkte mellom partene',
     approvalRequired: '✋ Godkjenning kreves',
@@ -2101,6 +2102,7 @@ const LANGUAGES = {
     sortNearest: '📍 Nearest', sortPay: '💰 Highest pay',
     sortNewest: '🆕 Newest', sortRated: '⭐ Top rated',
     rewardLabel: 'Reward', ratingLabel: 'Rating', applicantsLabel: 'Applicants',
+    giverLabel: 'Posted by', newUserLabel: 'New user', questsDoneShort: 'quests completed', newProviderLabel: 'New provider',
     acceptQuest: '✦ Accept quest',
     paymentNote: '<span id="panel-payment-note">Payment via <strong style="color:#ff5b24">&nbsp;Vipps&nbsp;</strong> directly between parties</span>',
     approvalRequired: '✋ Approval required',
@@ -2924,9 +2926,9 @@ function showPanel(job) {
     const r = getRank(questsDone || 0);
     const n = questsDone || 0;
     const trustParts = [];
-    if(n > 0) trustParts.push(`✓ ${n} oppdrag fullført`);
+    if(n > 0) trustParts.push(`✓ ${n} ${t('questsDoneShort')}`);
     if(rating) trustParts.push('★ ' + Number(rating).toFixed(1));
-    const trustLine = trustParts.length ? trustParts.join(' · ') : 'Ny bruker';
+    const trustLine = trustParts.length ? trustParts.join(' · ') : t('newUserLabel');
     const row = document.createElement('div');
     row.id = 'panel-giver-row';
     row.style.cssText = 'margin:0 16px 12px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;gap:10px;cursor:pointer';
@@ -2935,7 +2937,7 @@ function showPanel(job) {
       <div class="rank-ring-${rankTier(questsDone)}" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${ginit}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${name} <span class="lb-badge ${r.cls}" style="font-size:9px;padding:2px 7px">${r.name}</span></div>
-        <div style="font-size:11px;color:var(--muted)">Oppdragsgiver · ${trustLine}</div>
+        <div style="font-size:11px;color:var(--muted)">${t('giverLabel')} · ${trustLine}</div>
       </div>
       <span style="color:var(--muted);font-size:14px">›</span>`;
     document.getElementById('panel-quest-type')?.before(row);
@@ -5497,7 +5499,7 @@ function showServicePanel(svc) {
   const sd = document.getElementById('service-distance'); if(sd) sd.textContent = formatDistance(svcDist);
   const srs = document.getElementById('service-rating-stat'); if(srs) srs.textContent = (svc.reviews > 0 && svc.rating) ? '★ ' + svc.rating : '–';
   document.getElementById('service-provider-name').textContent = svc.provider?.name || 'Tilbyder';
-  document.getElementById('service-rating').textContent = svc.reviews > 0 ? `★ ${svc.rating} (${svc.reviews} vurderinger)` : 'Ny tilbyder';
+  document.getElementById('service-rating').textContent = svc.reviews > 0 ? `★ ${svc.rating} (${svc.reviews} vurderinger)` : t('newProviderLabel');
   const av = document.getElementById('service-provider-avatar');
   av.textContent = svc.provider?.initials || '?';
   av.style.background = svc.provider?.color || 'var(--accent2)';
@@ -5519,9 +5521,9 @@ function showServicePanel(svc) {
       applyRankRing(av, pp.quests_completed || 0);
       const pn = pp.quests_completed || 0;
       const provParts = [];
-      if(pn > 0) provParts.push(`✓ ${pn} oppdrag fullført`);
+      if(pn > 0) provParts.push(`✓ ${pn} ${t('questsDoneShort')}`);
       if(pp.rating) provParts.push('★ ' + Number(pp.rating).toFixed(1));
-      document.getElementById('service-rating').textContent = provParts.length ? provParts.join(' · ') : 'Ny tilbyder';
+      document.getElementById('service-rating').textContent = provParts.length ? provParts.join(' · ') : t('newProviderLabel');
       const srs2 = document.getElementById('service-rating-stat');
       if(srs2) srs2.textContent = pp.rating ? '★ ' + Number(pp.rating).toFixed(1) : '–';
     });
