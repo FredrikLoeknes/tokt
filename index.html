@@ -1851,6 +1851,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
         placeholder="Skriv inn beløp…">
       <div class="cost-note">Høyere betaling = større markør på kartet</div>
+      <div id="minor-price-note" style="display:none;font-size:11px;color:var(--muted);margin-top:4px">🔞 Maks 2 000 kr for brukere under 18 år.</div>
     </div>
 
     <div class="form-group">
@@ -1877,6 +1878,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       <div class="toggle-row">
         <div class="toggle-info"><div class="toggle-label">💚 Veldedighetsoppdrag</div><div class="toggle-sub">Gratis oppdrag – gir utfører et achievement</div></div>
         <div class="toggle" id="charity-toggle" onclick="toggleCharity(this)"></div>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info"><div class="toggle-label">🔞 Krever 18 år</div><div class="toggle-sub">Skjuler oppdraget for brukere under 18 år</div></div>
+        <div class="toggle" id="adult-toggle" onclick="toggleAdultReq(this)"></div>
       </div>
     </div>
     <div id="charity-note" style="display:none;background:rgba(15,169,104,0.08);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:12px;font-size:12px;color:var(--green);margin-bottom:12px;line-height:1.6">
@@ -2689,7 +2694,7 @@ async function addMarkers() {
 
   if(!error && quests && quests.length > 0) {
     quests
-      .filter(q => !isQuestHidden(q)) // hide if expired > 24h ago
+      .filter(q => !isQuestHidden(q) && !isQuestHiddenForMinor(q)) // skjul utløpte + 18+ for mindreårige
       .forEach(q => addQuestMarker(q));
   }
 
@@ -2722,6 +2727,7 @@ function serviceToSvc(s) {
 
 function loadDemoMarkers() {
   JOBS.forEach(job => {
+    if(isQuestHiddenForMinor({ category: job.category, pay: job.pay })) return; // skjul 18+ for mindreårige
     const el = createMarkerEl({
       type: job.type,
       icon: markerIcon({ category: job.category, title: job.title }),
@@ -2856,6 +2862,7 @@ function showPanel(job) {
   jobPanelEl.classList.remove('expanded');
   jobPanelEl.dataset.questId = job.id || '';
   jobPanelEl.dataset.giverId = job.raw?.user_id || '';
+  jobPanelEl.dataset.adultOnly = ((job.raw && job.raw.requires_adult) || MINOR_BLOCKED_CATEGORIES.indexOf(job.category) !== -1 || (job.pay || 0) > MINOR_MAX_PAY) ? '1' : '';
   jobPanelEl.dataset.questTitle = job.title;
   // Type badge: OPPDRAG
   let kindBadge = document.getElementById('panel-kind-badge');
@@ -3239,6 +3246,12 @@ async function applyJob() {
     return;
   }
 
+  // Aldersgrense: mindreårige kan ikke ta 18+-oppdrag
+  if(isCurrentUserMinor() && applyPanel?.dataset?.adultOnly === '1') {
+    showToast('🔞 Dette oppdraget er kun for brukere over 18 år');
+    return;
+  }
+
   // Check phone number before applying
   const { data: profile } = await sb.from('profiles').select('phone').eq('id', currentUser.id).single();
   if(!profile?.phone) {
@@ -3312,7 +3325,7 @@ async function applyJob() {
   openChat(conv.id, applyPanel?.dataset?.questTitle || 'Oppdrag');
 }
 
-function openModal() { if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å legge ut oppdrag'); return; } document.getElementById('modal-overlay').classList.add('open'); updateQuestPreview(); }
+function openModal() { if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å legge ut oppdrag'); return; } const at = document.getElementById('adult-toggle'); if(at){ at.classList.remove('on'); at.dataset.locked = ''; } applyMinorUIRestrictions(); const catSel = document.getElementById('quest-category-input'); if(catSel) checkCategoryWarning(catSel.value); document.getElementById('modal-overlay').classList.add('open'); updateQuestPreview(); }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 
 // Live marker preview in the "Legg ut" modal – mirrors how the marker will look to others
@@ -3446,6 +3459,13 @@ async function postJob() {
   let pay = parseInt(document.getElementById('modal-price')?.value) || 250;
   if(isCharity) pay = 0;
   if(isUrgent && !isCharity) pay = Math.min(2000, pay + 100);
+  if(isCurrentUserMinor()) pay = Math.min(pay, MINOR_MAX_PAY);
+
+  // 18+-flagg: manuell avhuking, eller auto for tunge/sperrede kategorier
+  const adultToggleEl = document.getElementById('adult-toggle');
+  const requiresAdult = (adultToggleEl && adultToggleEl.classList.contains('on'))
+    || AUTO_ADULT_CATEGORIES.indexOf(category) !== -1
+    || MINOR_BLOCKED_CATEGORIES.indexOf(category) !== -1;
 
   const btn = document.querySelector('.publish-btn');
   if(btn) { btn.disabled = true; btn.innerHTML = '<span>⏳ Publiserer…</span>'; }
@@ -3478,6 +3498,7 @@ async function postJob() {
     is_urgent: isUrgent,
     is_charity: isCharity,
     is_first_come: isFirstCome,
+    requires_adult: requiresAdult,
     scheduled_date: finalScheduledDate,
     scheduled_time_from: finalTimeFrom,
     scheduled_time_to: finalTimeTo,
@@ -6031,6 +6052,66 @@ function hintLegendIfNew(){
   const t = document.getElementById('legend-toggle');
   if(t) t.classList.add('hint');
 }
+
+/* ===================== ALDERSGRENSE / UNDER 18 =====================
+   Hele mekanismen styres av ETT flagg: profiles.is_adult.
+   Vipps-innlogging vil senere sette dette ut fra verifisert fødselsdato.
+   Inntil da: ukjent alder = voksen, så dagens brukere ikke påvirkes.
+   Test: sett is_adult=false på en profil i Supabase for å simulere mindreårig. */
+const MINOR_MAX_PAY = 2000;
+// Kategorier helt sperret for under 18 (lagres som full etikett i quests.category)
+const MINOR_BLOCKED_CATEGORIES = ['💘 Blind date','🚗 Kjøring og transport','🚘 Bil og kjøretøy'];
+// data-cat-koder for filterchips som skjules for under 18
+const MINOR_BLOCKED_CATCODES = ['blind date','kjøring','bil'];
+// Kategorier der «18+» hukes av automatisk (tungt/farlig arbeid)
+const AUTO_ADULT_CATEGORIES = ['📦 Bære og flytte','🔧 Håndverk og montering','🌿 Hagearbeid','🗑️ Dynga'];
+
+function isCurrentUserAdult(){
+  // ukjent = voksen (til Vipps-verifisering er på plass)
+  return !(window.currentProfile && window.currentProfile.is_adult === false);
+}
+function isCurrentUserMinor(){
+  return !!currentUser && !isCurrentUserAdult();
+}
+// Skal dette oppdraget skjules for en mindreårig?
+function isQuestHiddenForMinor(q){
+  if(!isCurrentUserMinor()) return false;
+  if(q && q.requires_adult) return true;
+  if(q && MINOR_BLOCKED_CATEGORIES.indexOf(q.category) !== -1) return true;
+  if(q && (q.pay || 0) > MINOR_MAX_PAY) return true;
+  return false;
+}
+// Vis/skjul kategorier og sett pris-tak i UI etter alder
+function applyMinorUIRestrictions(){
+  const minor = isCurrentUserMinor();
+  document.querySelectorAll('.fcat-item[data-cat]').forEach(function(el){
+    if(MINOR_BLOCKED_CATCODES.indexOf(el.dataset.cat) !== -1) el.style.display = minor ? 'none' : '';
+  });
+  document.querySelectorAll('#quest-category-input option').forEach(function(op){
+    if(MINOR_BLOCKED_CATEGORIES.indexOf(op.textContent.trim()) !== -1) op.style.display = minor ? 'none' : '';
+  });
+  const price = document.getElementById('modal-price');
+  if(price) price.max = minor ? String(MINOR_MAX_PAY) : '50000';
+  const note = document.getElementById('minor-price-note');
+  if(note) note.style.display = minor ? 'block' : 'none';
+}
+// Kategori-valg i «legg ut»: blind date-advarsel + auto-18+
+function checkCategoryWarning(val){
+  const w = document.getElementById('blinddate-warning');
+  if(w) w.style.display = (val && val.indexOf('Blind date') !== -1) ? 'block' : 'none';
+  const adultToggle = document.getElementById('adult-toggle');
+  if(adultToggle){
+    const forced = AUTO_ADULT_CATEGORIES.indexOf(val) !== -1 || MINOR_BLOCKED_CATEGORIES.indexOf(val) !== -1;
+    if(forced){ adultToggle.classList.add('on'); adultToggle.dataset.locked = '1'; }
+    else { adultToggle.dataset.locked = ''; }
+  }
+}
+// 18+-toggle: kan ikke skrus av når kategorien tvinger den på
+function toggleAdultReq(el){
+  if(el.dataset.locked === '1'){ showToast('🔞 Denne kategorien krever 18 år'); return; }
+  el.classList.toggle('on');
+}
+
 document.addEventListener('click', function(e){
   const p = document.getElementById('legend-panel');
   const t = document.getElementById('legend-toggle');
@@ -6163,6 +6244,7 @@ async function loadUserProfile(user) {
 
   // Try load profile from DB
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  window.currentProfile = profile || null;   // brukes av aldersgrense-sjekken
   if(profile) {
     const quests = profile.quests_completed || 0;
     const rank = getRank(quests);
@@ -6200,6 +6282,7 @@ async function loadUserProfile(user) {
     document.querySelector('.xp-rank') && (document.querySelector('.xp-rank').textContent = '⚡ ' + rank.name + ' · Nivå ' + rankLevel);
   }
   updateUIForAuth(user);
+  applyMinorUIRestrictions();
   checkUnread();
   // Hide welcome popup when logged in
   localStorage.setItem('tokt-welcome-seen', '1');
@@ -6267,6 +6350,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
     await loadUserProfile(session.user);
   } else if(event === 'SIGNED_OUT') {
     currentUser = null;
+    window.currentProfile = null;
+    applyMinorUIRestrictions();
     updateUIForAuth(null);
     if(window.map) addMarkers();
   }
