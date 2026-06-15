@@ -568,6 +568,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   100% { box-shadow:var(--shadow), 0 0 0 0 rgba(59,111,245,0); }
 }
 #legend-toggle.hint { border-color:var(--accent); animation:legendHint 1.8s ease-out infinite; }
+/* Rapporter-grunner */
+.report-reason { width:100%; text-align:left; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; padding:11px 14px; font-size:13px; font-weight:600; color:var(--text); cursor:pointer; font-family:inherit; transition:border-color .15s, background .15s; }
+.report-reason:hover { border-color:var(--accent); }
+.report-reason.sel { border-color:var(--accent); background:rgba(59,111,245,0.10); }
 
 /* ── MODAL ── */
 #modal-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.5); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; }
@@ -616,9 +620,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .rating-tag.active { border-color:var(--gold); color:var(--gold); background:rgba(201,144,10,0.1); }
 .publish-btn { width:100%; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; transition:all .15s; box-shadow:0 3px 14px var(--accent-glow); }
 .publish-btn:hover { transform:translateY(-1px); box-shadow:0 5px 20px var(--accent-glow); }
-.crypto-row { display:flex; gap:8px; margin-top:8px; }
-.crypto-btn { flex:1; border:none; border-radius:10px; padding:9px 8px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; opacity:.55; transition:opacity .15s; }
-.crypto-btn:hover { opacity:.75; }
 
 /* ── ACHIEVEMENT TOAST ── */
 #achievement-pop {
@@ -1429,6 +1430,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <button id="panel-edit-btn" onclick="editQuestFromPanel()" style="display:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 14px;font-size:14px;cursor:pointer;font-family:inherit">✏️ Endre</button>
     <button class="btn-save">🔖</button>
   </div>
+  <div style="padding:2px 16px 14px;text-align:center">
+    <button onclick="reportQuestFromPanel()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline">⚠️ Rapporter oppdrag</button>
+  </div>
 </div>
 
 <!-- SLIK FUNGERER TOKT MODAL -->
@@ -1684,7 +1688,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         <option>✨ Annet</option>
       </select>
     </div>
-    <div id="blinddate-warning" style="display:none"></div>
 
     <div class="form-group">
       <label class="form-label">Beskrivelse</label>
@@ -1946,7 +1949,7 @@ const LANGUAGES = {
     catMoving: 'Bære', catCleaning: 'Rengjøring', catTech: 'Teknologi',
     catCar: 'Bil', catKids: 'Barn', catParty: 'Fest', catFood: 'Mat',
     catPhoto: 'Foto', catHair: 'Hår', catGarden: 'Hage',
-    catKeys: 'Nøkler', catFix: 'Småfiks', catTeaching: 'Læring', catDate: 'Blind date', catOther: 'Annet',
+    catKeys: 'Nøkler', catFix: 'Småfiks', catTeaching: 'Læring', catOther: 'Annet',
     // Duration pills
     dur1: '⚡ Under 30 min', dur2: '🕐 30–60 min', dur3: '🕑 1–2 timer',
     dur4: '🕓 2–4 timer', dur5: '☀️ Halvdag', dur6: '🌅 Heldags',
@@ -1999,7 +2002,6 @@ const LANGUAGES = {
     charityToggle: '💚 Veldedighetsoppdrag', charityToggleSub: 'Gir achievement til utfører',
     disclaimer: '<strong>Viktig:</strong> Tokt er kun en formidlingsplattform. Alt økonomisk oppgjør skjer direkte via Vipps mellom oppdragsgiver og utfører. Tokt er ikke part i avtalen og er ikke ansvarlig for kvalitet, skader eller tvister. Ved å publisere godtar du våre <u>brukervilkår</u>. Betal aldri forskudd til ukjente. Oppdrag over 10 000 kr krever signert kontrakt.',
     publishQuest: 'Publiser oppdrag',
-    cryptoSoon: 'snart',
     // Leaderboard
     lbTitle: 'Toppliste',
     lbTagline: 'XP som faktisk betaler husleien.',
@@ -2052,7 +2054,7 @@ const LANGUAGES = {
     catMoving: 'Moving', catCleaning: 'Cleaning', catTech: 'Tech',
     catCar: 'Car', catKids: 'Kids', catParty: 'Events', catFood: 'Food',
     catPhoto: 'Photo', catHair: 'Beauty', catGarden: 'Garden',
-    catKeys: 'Keys', catFix: 'Quick fix', catTeaching: 'Tutoring', catDate: 'Blind date', catOther: 'Other',
+    catKeys: 'Keys', catFix: 'Quick fix', catTeaching: 'Tutoring', catOther: 'Other',
     dur1: '⚡ Under 30 min', dur2: '🕐 30–60 min', dur3: '🕑 1–2 hours',
     dur4: '🕓 2–4 hours', dur5: '☀️ Half day', dur6: '🌅 Full day',
     // Sort
@@ -2100,7 +2102,6 @@ const LANGUAGES = {
     charityToggle: '💚 Charity quest', charityToggleSub: 'Earns taker a special achievement',
     disclaimer: '<strong>Important:</strong> Tokt is a platform-only service. All payments are made directly between quest giver and taker via Vipps. Tokt is not party to any agreement and accepts no responsibility for quality, damages or disputes. By publishing you agree to our <u>terms of service</u>. Never pay strangers in advance. Quests over 10,000 NOK require a signed contract.',
     publishQuest: 'Publiser oppdrag',
-    cryptoSoon: 'soon',
     lbTitle: 'Leaderboard',
     lbTagline: 'Finally, XP that pays the rent.',
     rankLadder: 'Rank ladder',
@@ -2178,7 +2179,7 @@ function applyLanguage() {
   safeText('fsec-sortby', L.sortByTitle);
 
   // Categories
-  const catKeys = ['catAll','catHome','catDrive','catErrands','catPets','catCrafts','catDugnad','catDynga','catElderly','catMoving','catCleaning','catTech','catCar','catKids','catParty','catFood','catPhoto','catHair','catGarden','catKeys','catFix','catTeaching','catDate','catOther'];
+  const catKeys = ['catAll','catHome','catDrive','catErrands','catPets','catCrafts','catDugnad','catDynga','catElderly','catMoving','catCleaning','catTech','catCar','catKids','catParty','catFood','catPhoto','catHair','catGarden','catKeys','catFix','catTeaching','catOther'];
   document.querySelectorAll('.fcat-label').forEach((el,i) => { if(catKeys[i]) el.textContent = L[catKeys[i]]; });
 
   // Duration pills
@@ -2238,7 +2239,6 @@ function applyLanguage() {
   safeText('modal-toggle-charity-label', L.charityToggle); safeText('modal-toggle-charity-sub', L.charityToggleSub);
   safeHTML('modal-disclaimer', L.disclaimer);
   safeText('modal-publish-btn', L.publishQuest);
-  document.querySelectorAll('.crypto-soon').forEach(el => el.textContent = L.cryptoSoon);
 
   // Leaderboard
   safeText('lb-title-text', L.lbTitle);
@@ -3867,6 +3867,10 @@ async function loadProfilePage(userId, isOwn) {
   const ppLogout = document.getElementById('pp-logout-section');
   if(ppLogout) ppLogout.style.display = isOwn ? 'block' : 'none';
   document.getElementById('pp-header-title').textContent = isOwn ? 'Min profil' : 'Profil';
+  const ppReport = document.getElementById('pp-report-btn');
+  if(ppReport) ppReport.style.display = isOwn ? 'none' : 'inline-block';
+  const ppPage = document.getElementById('profile-page');
+  if(ppPage) ppPage.dataset.viewUserId = userId;
 
   // Hent profildata
   const { data: profile } = await sb.from('profiles').select('*').eq('id', userId).single();
@@ -6100,8 +6104,6 @@ function applyMinorUIRestrictions(){
 }
 // Kategori-valg i «legg ut»: blind date-advarsel + auto-18+
 function checkCategoryWarning(val){
-  const w = document.getElementById('blinddate-warning');
-  if(w) w.style.display = (val && val.indexOf('Blind date') !== -1) ? 'block' : 'none';
   const adultToggle = document.getElementById('adult-toggle');
   if(adultToggle){
     const forced = AUTO_ADULT_CATEGORIES.indexOf(val) !== -1 || MINOR_BLOCKED_CATEGORIES.indexOf(val) !== -1;
@@ -6113,6 +6115,61 @@ function checkCategoryWarning(val){
 function toggleAdultReq(el){
   if(el.dataset.locked === '1'){ showToast('🔞 Denne kategorien krever 18 år'); return; }
   el.classList.toggle('on');
+}
+
+/* ===================== RAPPORTER / FLAGG ===================== */
+let _reportCtx = null;   // { type, id, name }
+function openReportModal(type, id, name){
+  if(!currentUser){ openAuth('login'); showToast('👋 Logg inn for å rapportere'); return; }
+  _reportCtx = { type: type, id: id, name: name };
+  const label = type === 'quest' ? 'Oppdrag: ' : type === 'user' ? 'Bruker: ' : 'Tjeneste: ';
+  document.getElementById('report-target-label').textContent = label + (name || '');
+  document.querySelectorAll('#report-reasons .report-reason').forEach(function(b){ b.classList.remove('sel'); });
+  document.getElementById('report-details').value = '';
+  document.getElementById('report-overlay').style.display = 'flex';
+}
+function closeReport(){
+  const o = document.getElementById('report-overlay');
+  if(o) o.style.display = 'none';
+}
+function selectReportReason(el){
+  document.querySelectorAll('#report-reasons .report-reason').forEach(function(b){ b.classList.remove('sel'); });
+  el.classList.add('sel');
+}
+async function submitReport(){
+  if(!_reportCtx) return;
+  const sel = document.querySelector('#report-reasons .report-reason.sel');
+  if(!sel){ showToast('⚠️ Velg en grunn'); return; }
+  const details = document.getElementById('report-details').value.trim() || null;
+  const btn = document.getElementById('report-submit-btn');
+  btn.disabled = true; btn.textContent = 'Sender…';
+  const { error } = await sb.from('reports').insert({
+    reporter_id: currentUser.id,
+    target_type: _reportCtx.type,
+    target_id: String(_reportCtx.id),
+    reason: sel.dataset.reason,
+    details: details
+  });
+  btn.disabled = false; btn.textContent = 'Send rapport';
+  if(error){ showToast('❌ ' + error.message); return; }
+  closeReport();
+  showToast('✅ Takk! Rapporten er sendt og blir vurdert.');
+}
+// Rapporter fra oppdragspanelet
+function reportQuestFromPanel(){
+  const p = document.getElementById('job-panel');
+  const qid = p && p.dataset ? p.dataset.questId : '';
+  const title = p && p.dataset ? p.dataset.questTitle : '';
+  if(!qid){ showToast('Demo-oppdrag kan ikke rapporteres'); return; }
+  openReportModal('quest', qid, title || 'oppdrag');
+}
+// Rapporter fra en annen brukers profil
+function reportUserFromProfile(){
+  const pageEl = document.getElementById('profile-page');
+  const uid = pageEl && pageEl.dataset ? pageEl.dataset.viewUserId : '';
+  const uname = (document.getElementById('pp-name') || {}).textContent || 'bruker';
+  if(!uid){ return; }
+  openReportModal('user', uid, uname);
 }
 
 document.addEventListener('click', function(e){
@@ -6850,6 +6907,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <div style="position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px">
     <button onclick="closeProfilePage()" style="background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:16px;color:var(--text)">←</button>
     <div style="font-size:16px;font-weight:800" id="pp-header-title">Min profil</div>
+    <button id="pp-report-btn" onclick="reportUserFromProfile()" style="display:none;margin-left:auto;background:none;border:1px solid var(--border);border-radius:50px;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;padding:6px 12px">⚠️ Rapporter</button>
   </div>
 
   <!-- Hero: avatar, navn, rang -->
@@ -6955,6 +7013,26 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div class="nav-label" id="nav-profile-label">Profile</div>
   </div>
 </div>
+<!-- RAPPORTER-MODAL -->
+<div id="report-overlay" style="display:none;position:fixed;top:0;left:0;right:0;height:100vh;height:100dvh;z-index:1100;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);align-items:center;justify-content:center;overflow-y:auto;padding:20px;padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom));box-sizing:border-box" onclick="if(event.target===this)closeReport()">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;width:400px;max-width:100%;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);max-height:calc(100svh - 40px);overflow-y:auto;overflow-x:hidden;box-shadow:var(--shadow-lg);padding:24px;position:relative;animation:popIn .2s ease">
+    <button onclick="closeReport()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">×</button>
+    <div style="font-size:18px;font-weight:800;margin-bottom:4px">⚠️ Rapporter</div>
+    <div id="report-target-label" style="font-size:13px;color:var(--muted);margin-bottom:16px">…</div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Hvorfor rapporterer du?</div>
+    <div id="report-reasons" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <button type="button" class="report-reason" data-reason="upassende" onclick="selectReportReason(this)">Upassende eller støtende innhold</button>
+      <button type="button" class="report-reason" data-reason="svindel" onclick="selectReportReason(this)">Svindel eller forsøk på lureri</button>
+      <button type="button" class="report-reason" data-reason="trakassering" onclick="selectReportReason(this)">Trakassering eller trusler</button>
+      <button type="button" class="report-reason" data-reason="ulovlig" onclick="selectReportReason(this)">Farlig eller ulovlig</button>
+      <button type="button" class="report-reason" data-reason="spam" onclick="selectReportReason(this)">Spam eller villedende</button>
+      <button type="button" class="report-reason" data-reason="annet" onclick="selectReportReason(this)">Annet</button>
+    </div>
+    <textarea id="report-details" placeholder="Beskriv kort hva som er galt (valgfritt)…" style="width:100%;min-height:70px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;resize:vertical;margin-bottom:16px;box-sizing:border-box"></textarea>
+    <button onclick="submitReport()" id="report-submit-btn" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Send rapport</button>
+  </div>
+</div>
+
 <!-- ============ MOBIL BACK-KNAPP / NAVIGASJON ============ -->
 <!-- Når en bruker trykker «tilbake» (særlig på mobil) skal det øverste
      åpne panelet/overlayet lukkes i stedet for at hele siden forlates.
@@ -6968,6 +7046,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
   // [id, åpen-test, lukke-funksjon] – sortert ca. etter z-index (øverst først)
   var LAYERS = [
+    ['report-overlay',        shown,   function(){ try{ closeReport(); }catch(e){} }],
     ['how-it-works-overlay',  shown,   function(el){ el.style.display='none'; }],
     ['welcome-overlay',       shown,   function(el){ el.style.display='none'; }],
     ['auth-overlay',          shown,   function(){ try{ closeAuth(); }catch(e){} }],
