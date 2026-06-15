@@ -87,7 +87,11 @@ html, body { height:100%; font-family:'Inter',sans-serif; background:var(--bg); 
 .logo {
   display:flex; align-items:center;
   text-decoration:none; flex-shrink:0;
+  cursor:pointer; user-select:none;
+  transition:transform .1s ease;
+  -webkit-tap-highlight-color:transparent;
 }
+.logo:active { transform:scale(0.95); }
 .logo-name {
   font-family:'Skranji', cursive;
   font-size:26px;
@@ -1092,8 +1096,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 <!-- TOPBAR -->
 <div id="topbar">
-  <div class="logo">
-    <div style="position:relative;display:inline-block">
+  <div class="logo" onclick="goToMap()" role="button" tabindex="0" title="Til forsiden" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goToMap();}">
+    <div style="position:relative;display:inline-block;pointer-events:none">
       <div style="position:absolute;top:-11px;left:0;right:0;text-align:center;font-family:'Skranji',cursive;font-size:8px;color:var(--muted);opacity:0.6;white-space:nowrap;letter-spacing:1px;pointer-events:none">
         ut på
       </div>
@@ -6729,6 +6733,126 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div class="nav-label" id="nav-profile-label">Profile</div>
   </div>
 </div>
+<!-- ============ MOBIL BACK-KNAPP / NAVIGASJON ============ -->
+<!-- Når en bruker trykker «tilbake» (særlig på mobil) skal det øverste
+     åpne panelet/overlayet lukkes i stedet for at hele siden forlates.
+     Vi holder én ekstra history-oppføring «foran» så lenge noe er åpent,
+     og fanger den med popstate. Ingen av appens andre funksjoner røres. -->
+<script>
+(function(){
+  var gid    = function(id){ return document.getElementById(id); };
+  var shown  = function(el){ return !!el && !!el.style.display && el.style.display !== 'none'; };
+  var hasOpen= function(el){ return !!el && el.classList.contains('open'); };
+
+  // [id, åpen-test, lukke-funksjon] – sortert ca. etter z-index (øverst først)
+  var LAYERS = [
+    ['how-it-works-overlay',  shown,   function(el){ el.style.display='none'; }],
+    ['welcome-overlay',       shown,   function(el){ el.style.display='none'; }],
+    ['auth-overlay',          shown,   function(){ try{ closeAuth(); }catch(e){} }],
+    ['service-modal-overlay', shown,   function(){ try{ closeServiceModal(); }catch(e){} }],
+    ['modal-overlay',         hasOpen, function(){ try{ closeModal(); }catch(e){} }],
+    ['rating-panel',          function(el){ return !!el; }, function(el){ el.remove(); }],
+    ['profile-page',          shown,   function(){ try{ closeProfilePage(); }catch(e){} }],
+    ['myquests-panel',        shown,   function(){ try{ closeMyQuests(); }catch(e){} }],
+    ['chat-panel',            shown,   function(){ try{ closeChat(); }catch(e){} }],
+    ['notif-panel',           shown,   function(){ try{ closeNotifications(); }catch(e){} }],
+    ['inbox-panel',           shown,   function(){ try{ closeInbox(); }catch(e){} }],
+    ['service-panel',         shown,   function(){ try{ closeServicePanel(); }catch(e){} }],
+    ['profile-panel',         shown,   function(el){ el.style.display='none'; }],
+    ['job-panel',             shown,   function(){ try{ closePanel(); }catch(e){} }],
+    ['search-results',        shown,   function(){ try{ closeSearch(); }catch(e){} }],
+    ['leaderboard',           hasOpen, function(){ try{ closeLeaderboard(); }catch(e){} }],
+    ['filter-sheet',          hasOpen, function(){ try{ closeFilters(); }catch(e){} }],
+    ['lang-dropdown',         hasOpen, function(){ try{ closeLangDropdown(); }catch(e){} }]
+  ];
+  var ids = LAYERS.map(function(l){ return l[0]; });
+
+  var recency  = [];          // åpne paneler, eldst → nyest
+  var prevSet  = {};          // forrige åpne-tilstand (id -> true)
+  var guard    = false;       // har vi en history-oppføring «foran»?
+  var suppress = false;       // ignorer observer/popstate under egne operasjoner
+
+  function isOpenNow(){
+    var s = {};
+    for(var i=0;i<LAYERS.length;i++){
+      var el = gid(LAYERS[i][0]);
+      if(LAYERS[i][1](el)) s[LAYERS[i][0]] = true;
+    }
+    return s;
+  }
+  function recompute(){
+    var now = isOpenNow();
+    for(var id in now){
+      if(now[id] && !prevSet[id] && recency.indexOf(id) === -1) recency.push(id);
+    }
+    recency = recency.filter(function(id){ return !!now[id]; });
+    prevSet = now;
+  }
+  function closeById(id){
+    for(var i=0;i<LAYERS.length;i++){
+      if(LAYERS[i][0] === id){
+        var el = gid(id);
+        if(el){ try{ LAYERS[i][2](el); }catch(e){} }
+        return;
+      }
+    }
+  }
+  function syncGuard(){
+    recompute();
+    if(suppress) return;
+    if(recency.length > 0 && !guard){
+      guard = true;
+      history.pushState({ toktLayer:1 }, '');
+    } else if(recency.length === 0 && guard){
+      // alt ble lukket via X-knapp e.l. – fjern vår ekstra oppføring stille
+      guard = false;
+      suppress = true;
+      history.back();
+    }
+  }
+
+  window.addEventListener('popstate', function(){
+    if(suppress){ suppress = false; recompute(); return; }
+    recompute();
+    if(recency.length > 0){
+      // brukeren trykket «tilbake» for å lukke øverste panel
+      guard = false;
+      var topId = recency[recency.length - 1];
+      suppress = true;
+      closeById(topId);
+      suppress = false;
+      recompute();
+      if(recency.length > 0){
+        guard = true;
+        history.pushState({ toktLayer:1 }, '');
+      }
+    }
+    // ellers: ingenting åpent → la «tilbake» gå som normalt (forlat siden)
+  });
+
+  var mo = new MutationObserver(function(){
+    if(mo._scheduled) return;
+    mo._scheduled = true;
+    Promise.resolve().then(function(){ mo._scheduled = false; syncGuard(); });
+  });
+
+  function start(){
+    for(var i=0;i<ids.length;i++){
+      var el = gid(ids[i]);
+      if(el) mo.observe(el, { attributes:true, attributeFilter:['style','class'] });
+    }
+    // fang dynamisk opprettede overlays (f.eks. rating-panel)
+    if(document.body) mo.observe(document.body, { childList:true });
+    syncGuard();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(start, 400); });
+  } else {
+    setTimeout(start, 400);
+  }
+})();
+</script>
 
 </body>
 </html>
