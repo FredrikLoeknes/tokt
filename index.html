@@ -561,6 +561,13 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .lg-sw.c-grey   { border-color:var(--muted); }
 .lg-sw.c-faded  { border-color:var(--accent); opacity:.4; }
 .lg-sw.pulse    { animation:pulse 1.4s infinite; }
+/* Diskré «se hit»-pulsering på legend-knappen for nye brukere */
+@keyframes legendHint {
+  0%   { box-shadow:var(--shadow), 0 0 0 0 rgba(59,111,245,0.45); }
+  70%  { box-shadow:var(--shadow), 0 0 0 10px rgba(59,111,245,0); }
+  100% { box-shadow:var(--shadow), 0 0 0 0 rgba(59,111,245,0); }
+}
+#legend-toggle.hint { border-color:var(--accent); animation:legendHint 1.8s ease-out infinite; }
 
 /* ── MODAL ── */
 #modal-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.5); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; }
@@ -2446,6 +2453,7 @@ function initMap() {
     const lc = document.getElementById('lang-current');
     if(lc) lc.innerHTML = L.flag + ' <span style="font-size:11px;font-weight:700">' + L.code.toUpperCase() + '</span>';
     setTimeout(showWelcomeIfNew, 800);
+    setTimeout(hintLegendIfNew, 1000);
     setTimeout(() => { if(localStorage.getItem('tokt-welcome-seen')) initTipsBar(); }, 1200);
   });
 
@@ -6007,6 +6015,21 @@ function toggleLegend(force){
   if(!p) return;
   const show = (typeof force === 'boolean') ? force : !p.classList.contains('open');
   p.classList.toggle('open', show);
+  if(show){
+    // brukeren har oppdaget legenden – stopp hint-pulsingen for godt
+    localStorage.setItem('tokt-legend-seen', '1');
+    const t = document.getElementById('legend-toggle');
+    if(t) t.classList.remove('hint');
+  }
+}
+// La ℹ️-knappen pulsere de første gangene for å gjøre nye brukere oppmerksomme – uten å forstyrre
+function hintLegendIfNew(){
+  if(localStorage.getItem('tokt-legend-seen')) return;
+  let hints = parseInt(localStorage.getItem('tokt-legend-hints') || '0', 10);
+  if(hints >= 4) return;                       // pulser maks 4 besøk hvis aldri åpnet
+  localStorage.setItem('tokt-legend-hints', String(hints + 1));
+  const t = document.getElementById('legend-toggle');
+  if(t) t.classList.add('hint');
 }
 document.addEventListener('click', function(e){
   const p = document.getElementById('legend-panel');
