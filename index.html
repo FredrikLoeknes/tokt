@@ -1143,6 +1143,13 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 <body>
 
 <div id="map"></div>
+<div id="map-empty" style="display:none;position:fixed;top:43%;left:50%;transform:translate(-50%,-50%);z-index:60;width:min(340px,86vw);background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);padding:24px 22px;text-align:center;animation:popIn .2s ease">
+  <button onclick="dismissMapEmpty()" aria-label="Lukk" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:22px;line-height:1;color:var(--muted);cursor:pointer;font-family:inherit">×</button>
+  <div style="font-size:40px;margin-bottom:6px">🧭</div>
+  <div id="map-empty-title" style="font-size:16px;font-weight:800;margin-bottom:6px">Ingen oppdrag her ennå</div>
+  <div id="map-empty-text" style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:16px">Bli den første til å legge ut et oppdrag i området – så ser folk i nærheten det med en gang.</div>
+  <button onclick="showPostChoice()" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✦ Legg ut</button>
+</div>
 
 <!-- VIEW TOGGLE: Alt / Oppdrag / Tjenester -->
 <div id="view-toggle" style="position:fixed;top:120px;left:50%;transform:translateX(-50%);z-index:95;display:flex;background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:3px;box-shadow:var(--shadow-lg);gap:2px">
@@ -2468,6 +2475,7 @@ function initMap() {
 
   window.map.on('click', closePanel);
   window.map.on('moveend', clusterMarkers);
+  window.map.on('dragstart', dismissMapEmpty);   // skjul hilsenen så snart man surfer rundt
 
   window.map.on('move', () => {
     const movePanel = document.getElementById('job-panel');
@@ -2786,6 +2794,28 @@ function clearClusterMarkers() {
   (window._clusterMarkers || []).forEach(m => m.remove());
   window._clusterMarkers = [];
 }
+// Tom-tilstand: «bli den første»-hilsen. Vises KUN når det ikke finnes noen
+// oppdrag i det hele tatt (ikke ved filter – det har egen toast), én gang per besøk.
+function updateMapEmptyState(count){
+  const box = document.getElementById('map-empty');
+  if(!box) return;
+  const mode = window.viewMode || 'all';
+  const anyCat = !!document.querySelector('.fcat-item.active:not([data-cat="all"])');
+  const togglesOn = ['tog-urgent','tog-charity','tog-firstcome'].some(id => document.getElementById(id)?.classList.contains('on'));
+  const filtered = anyCat || togglesOn || mode !== 'all';
+  if(count > 0 || filtered || window._mapEmptyDismissed){ box.style.display = 'none'; return; }
+  const noun = mode === 'services' ? 'tilbud' : 'oppdrag';
+  document.getElementById('map-empty-title').textContent = 'Ingen ' + noun + ' her ennå';
+  document.getElementById('map-empty-text').textContent = 'Bli den første til å legge ut et ' + noun + ' i området – så ser folk i nærheten det med en gang.';
+  box.style.display = 'block';
+}
+// Lukk hilsenen for resten av besøket (× eller når man tar tak i kartet)
+function dismissMapEmpty(){
+  window._mapEmptyDismissed = true;
+  const box = document.getElementById('map-empty');
+  if(box) box.style.display = 'none';
+}
+
 function clusterMarkers() {
   const map = window.map;
   if(!map || !window.mapMarkers || typeof map.project !== 'function') return;
@@ -2795,6 +2825,7 @@ function clusterMarkers() {
   // Eligible = not filtered out, with coordinates
   const eligible = window.mapMarkers.filter(m =>
     m.el && m.el.style.display !== 'none' && m.lng != null && m.lat != null);
+  updateMapEmptyState(eligible.length);   // vises kun når INGENTING matcher (ikke ved panorering)
   // Reset any previous clustering hide
   eligible.forEach(m => { m.el.style.visibility = ''; m.el.style.pointerEvents = ''; });
 
@@ -3658,7 +3689,7 @@ function applyFilters() {
   clusterMarkers();
   closeFilters();
   updateFilterCount();
-  showToast(`🔍 Viser ${visible} treff på kartet`);
+  showToast(visible === 0 ? '🔍 Ingen treff – prøv å justere filteret' : `🔍 Viser ${visible} treff på kartet`);
 }
 function clearFilters() {
   document.querySelectorAll('.fcat-item').forEach((el,i) => el.classList.toggle('active', i===0));
