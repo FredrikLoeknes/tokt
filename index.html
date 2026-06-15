@@ -1563,41 +1563,12 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     </div>
   </div>
   <div id="lb-top-questers-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:10px 14px 6px;border-top:1px solid var(--border)">Topp-utførere</div>
-  <div class="lb-row">
-    <div class="lb-rank gold">1</div>
-    <div class="lb-avatar" style="background:#f5c51820;color:#c9900a">JS</div>
-    <div class="lb-info"><div class="lb-name">Jonas S.</div><div class="lb-quests">47 oppdrag · ★ 4.97</div></div>
-    <span class="lb-badge rank-valkyrje">Valkyrje</span>
-  </div>
-  <div class="lb-row">
-    <div class="lb-rank silver">2</div>
-    <div class="lb-avatar" style="background:#4f8ef720;color:#3b6ff5">AK</div>
-    <div class="lb-info"><div class="lb-name">Anders K.</div><div class="lb-quests">31 oppdrag · ★ 4.9</div></div>
-    <span class="lb-badge rank-jarl">Jarl</span>
-  </div>
-  <div class="lb-row">
-    <div class="lb-rank bronze">3</div>
-    <div class="lb-avatar" style="background:#2de08a20;color:#0fa968">MR</div>
-    <div class="lb-info"><div class="lb-name">Maria R.</div><div class="lb-quests">18 oppdrag · ★ 4.8</div></div>
-    <span class="lb-badge rank-gode">Gode</span>
-  </div>
-  <div class="lb-row">
-    <div class="lb-rank">4</div>
-    <div class="lb-avatar" style="background:#7c5cfc20;color:#7c5cfc">TH</div>
-    <div class="lb-info"><div class="lb-name">Tone H.</div><div class="lb-quests">11 oppdrag · ★ 5.0</div></div>
-    <span class="lb-badge rank-varjager">Varjager</span>
-  </div>
-  <div class="lb-row">
-    <div class="lb-rank">5</div>
-    <div class="lb-avatar" style="background:#6b728020;color:#6b7280">PL</div>
-    <div class="lb-info"><div class="lb-name">Per L.</div><div class="lb-quests">4 oppdrag · ★ 4.7</div></div>
-    <span class="lb-badge rank-bonde">Bonde</span>
-  </div>
+  <div class="lb-empty" style="padding:18px 14px;text-align:center;font-size:12px;color:var(--muted);line-height:1.6">Ingen rangerte utførere ennå.<br>Fullfør et oppdrag og bli den første! ⚔️</div>
 </div>
 
 <!-- CORNER WIDGETS -->
 <div id="corner-widgets">
-  <div id="week-worker" onclick="showUserProfile('Jonas S.','JS','#f5c518',47,4.97,'Valkyrje')" title="Se profil">
+  <div id="week-worker" style="display:none" onclick="showUserProfile('Jonas S.','JS','#f5c518',47,4.97,'Valkyrje')" title="Se profil">
     <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
       <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold)">👑 Ukens utfører</div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
@@ -2373,6 +2344,16 @@ function applyRankRing(el, quests) {
 
 // Ensure mapbox loads before init
 // ── DEMO DATA – definert globalt FØR initMap ──
+// ── DEMO-BRYTERE ──────────────────────────────────────────────
+// SHOW_DEMO: eksempel-oppdrag og -tjenester vises på kartet og i søk
+//   (tydelig merket «Eksempel»). Sett til false når du har ekte
+//   oppdrag i området, så de ekte ikke drukner i eksemplene.
+// SHOW_DEMO_LEADERBOARD: falske topp-utførere. Holdes AV til du har
+//   ekte rangerte brukere – da fyller leaderboarden seg selv.
+window.SHOW_DEMO = true;
+window.SHOW_DEMO_LEADERBOARD = false;
+// ──────────────────────────────────────────────────────────────
+
 window.JOBS = [
   { id:'j1', type:'normal', title:'Klipp gresset 🌿', label:'Klipp gresset · 150 kr',
     tags:[{t:'🏠 Hjem'},{t:'~45 min'},{t:'Grünerløkka'}],
@@ -2480,6 +2461,7 @@ function initMap() {
     addMarkers();
     openSharedFromUrl();
     requestLocation();
+    loadLeaderboard(); // fyll/oppdater «Ukens utfører» med ekte data (eller skjul den)
     applyLanguage();
     const L = LANGUAGES[currentLang];
     const lc = document.getElementById('lang-current');
@@ -2709,7 +2691,7 @@ async function addMarkers() {
   }
 
   // Always show demo markers as background
-  loadDemoMarkers();
+  if(window.SHOW_DEMO) loadDemoMarkers();
 
   // Check and expire any overdue quests first
   await checkAndExpireQuests();
@@ -2922,8 +2904,14 @@ function showPanel(job) {
     kindBadge.id = 'panel-kind-badge';
     document.getElementById('panel-title').before(kindBadge);
   }
-  kindBadge.style.cssText = 'display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:50px;margin-bottom:6px;background:rgba(59,111,245,0.12);color:var(--accent);border:1px solid var(--accent)';
-  kindBadge.textContent = '📋 OPPDRAG';
+  const isDemoJob = !job.raw?.user_id;
+  if(isDemoJob) {
+    kindBadge.style.cssText = 'display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:50px;margin-bottom:6px;background:rgba(245,197,24,0.16);color:var(--gold);border:1px solid var(--gold)';
+    kindBadge.textContent = '🧪 EKSEMPEL';
+  } else {
+    kindBadge.style.cssText = 'display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:50px;margin-bottom:6px;background:rgba(59,111,245,0.12);color:var(--accent);border:1px solid var(--accent)';
+    kindBadge.textContent = '📋 OPPDRAG';
+  }
   document.getElementById('panel-title').textContent = job.title;
   document.getElementById('panel-tags').innerHTML = job.tags.map(t=>`<span class="tag ${t.cls||''}">${t.t}</span>`).join('');
   document.getElementById('panel-desc').textContent = job.desc;
@@ -3817,14 +3805,12 @@ async function loadLeaderboard() {
     .order('quests_completed', { ascending: false })
     .limit(10);
 
-  if(!profiles || profiles.length === 0) return; // Keep demo data
-
-  // Find the lb-rows container (after the "Topp-utførere" header)
   const lb = document.getElementById('leaderboard');
   if(!lb) return;
 
-  // Remove existing lb-rows (keep header sections above)
+  // Fjern eksisterende rader + evt. tom-tilstand (behold header-seksjonene over)
   lb.querySelectorAll('.lb-row').forEach(r => r.remove());
+  const oldEmpty = lb.querySelector('.lb-empty'); if(oldEmpty) oldEmpty.remove();
 
   // Mix real users with demo users so the list feels alive until enough real users join
   const DEMO_LB = [
@@ -3841,7 +3827,21 @@ async function loadLeaderboard() {
     rating: p.rating || null,
     demo: false
   }));
-  const combined = [...realRows, ...DEMO_LB].sort((a,b) => b.quests - a.quests).slice(0, 10);
+  const demoRows = window.SHOW_DEMO_LEADERBOARD ? DEMO_LB : [];
+  const combined = [...realRows, ...demoRows].sort((a,b) => b.quests - a.quests).slice(0, 10);
+
+  const ww0 = document.getElementById('week-worker');
+  if(combined.length === 0) {
+    // Ingen ekte rangerte ennå – ærlig tom-tilstand, skjul «Ukens utfører»
+    const empty = document.createElement('div');
+    empty.className = 'lb-empty';
+    empty.style.cssText = 'padding:18px 14px;text-align:center;font-size:12px;color:var(--muted);line-height:1.6';
+    empty.innerHTML = 'Ingen rangerte utførere ennå.<br>Fullfør et oppdrag og bli den første! ⚔️';
+    lb.appendChild(empty);
+    if(ww0) ww0.style.display = 'none';
+    return;
+  }
+  if(ww0) ww0.style.display = '';
 
   const rankColors = ['#f5c518','#9aa0b0','#c87533'];
   const rankCls = ['gold','silver','bronze'];
@@ -5393,8 +5393,8 @@ async function runSearch(query) {
   const q = query.toLowerCase();
   const hits = [];
 
-  // Demo oppdrag – bruk window.JOBS som er satt globalt
-  const jobList = window.JOBS || [];
+  // Demo oppdrag – bruk window.JOBS som er satt globalt (kun når demo er på)
+  const jobList = window.SHOW_DEMO ? (window.JOBS || []) : [];
   for(const j of jobList) {
     const text = (j.title + ' ' + j.desc + ' ' + j.label + ' ' + (j.tags||[]).map(t=>t.t||'').join(' ')).toLowerCase();
     if(text.includes(q)) {
@@ -5402,8 +5402,8 @@ async function runSearch(query) {
     }
   }
 
-  // Demo tjenester
-  const svcList = window.DEMO_SERVICES || [];
+  // Demo tjenester (kun når demo er på)
+  const svcList = window.SHOW_DEMO ? (window.DEMO_SERVICES || []) : [];
   for(const s of svcList) {
     const text = (s.title + ' ' + (s.desc||'') + ' ' + (s.category||'')).toLowerCase();
     if(text.includes(q)) {
@@ -5454,7 +5454,7 @@ async function runSearch(query) {
       thumb +
       '<div class="search-result-info">' +
         '<div class="search-result-title">' + h.title + '</div>' +
-        '<div class="search-result-meta">' + (h.type === 'service' ? 'Tjeneste' : 'Oppdrag') + '</div>' +
+        '<div class="search-result-meta">' + (h.type === 'service' ? 'Tjeneste' : 'Oppdrag') + (h.src === 'demo' ? ' · <span style="color:var(--gold);font-weight:700">Eksempel</span>' : '') + '</div>' +
       '</div>' +
       '<div class="search-result-pay">' + (h.pay || 0) + ' kr</div>' +
       '</div>';
@@ -5520,8 +5520,14 @@ function showServicePanel(svc) {
     svcKindBadge.id = 'service-kind-badge';
     document.getElementById('service-title').before(svcKindBadge);
   }
-  svcKindBadge.style.cssText = 'display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:50px;margin-bottom:6px;background:rgba(168,85,247,0.12);color:var(--accent2);border:1px solid var(--accent2)';
-  svcKindBadge.textContent = '🏪 TILBUD';
+  const isDemoSvc = !svc.raw?.user_id;
+  if(isDemoSvc) {
+    svcKindBadge.style.cssText = 'display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:50px;margin-bottom:6px;background:rgba(245,197,24,0.16);color:var(--gold);border:1px solid var(--gold)';
+    svcKindBadge.textContent = '🧪 EKSEMPEL';
+  } else {
+    svcKindBadge.style.cssText = 'display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:50px;margin-bottom:6px;background:rgba(168,85,247,0.12);color:var(--accent2);border:1px solid var(--accent2)';
+    svcKindBadge.textContent = '🏪 TILBUD';
+  }
   document.getElementById('service-title').textContent = svc.title;
   document.getElementById('service-desc').textContent = svc.desc;
   document.getElementById('service-price').textContent = svc.price + ' kr';
