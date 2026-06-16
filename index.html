@@ -3089,6 +3089,7 @@ function showPanel(job) {
     if(applyBtn) { applyBtn.disabled = false; applyBtn.style.opacity = '1'; applyBtn.style.cursor = 'pointer'; }
   }
   const jobPanel = document.getElementById('job-panel');
+  jobPanel.style.display = 'block';
   if(window.innerWidth > 768) {
     positionPanelNearMarker(jobPanel, job.coords);
   } else {
@@ -3096,8 +3097,9 @@ function showPanel(job) {
     jobPanel.style.left = '0';
     jobPanel.style.right = '0';
     jobPanel.style.bottom = '60px';
+    jobPanel.style.maxHeight = '';
+    jobPanel.style.overflowY = '';
   }
-  jobPanel.style.display = 'block';
   document.getElementById('hero-tag').classList.add('hidden');
   if(window.innerWidth <= 768) {
     document.getElementById('panel-overlay').style.display = 'block';
@@ -3105,31 +3107,50 @@ function showPanel(job) {
 }
 
 function positionPanelNearMarker(panel, coords) {
-  if(!window.map || !coords) {
-    // Fallback: show near center
-    panel.style.left = '50%';
-    panel.style.top = '50%';
-    panel.style.transform = 'translate(-50%, -50%)';
-    return;
-  }
-  // Convert map coords to screen pixels
-  const point = window.map.project(coords);
-  const panelW = 320;
-  const panelH = 420;
+  // Reset any height cap from a previous open so we measure the true height
+  panel.style.maxHeight = '';
+  panel.style.overflowY = '';
+
+  const topMin = 74;   // clear the top header bar
   const margin = 16;
   const mapW = window.innerWidth;
   const mapH = window.innerHeight;
+  const panelW = panel.offsetWidth || 320;
+  // Measure the ACTUAL rendered height instead of assuming a fixed value
+  let panelH = panel.offsetHeight || 420;
 
+  // If the panel is taller than the available viewport, cap it and let it scroll
+  const maxAvail = mapH - topMin - margin;
+  if(panelH > maxAvail) {
+    panel.style.maxHeight = maxAvail + 'px';
+    panel.style.overflowY = 'auto';
+    panelH = maxAvail;
+  }
+
+  if(!window.map || !coords) {
+    // Fallback: center within bounds
+    panel.style.transform = 'none';
+    panel.style.left = Math.max(margin, (mapW - panelW) / 2) + 'px';
+    panel.style.top = Math.max(topMin, (mapH - panelH) / 2) + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+    return;
+  }
+
+  // Convert map coords to screen pixels
+  const point = window.map.project(coords);
   let left = point.x + 20;
   let top = point.y - panelH / 2;
 
-  // Flip left if too close to right edge
+  // Flip left if too close to the right edge
   if(left + panelW + margin > mapW) left = point.x - panelW - 20;
-  // Keep within vertical bounds
-  if(top < 80) top = 80;
-  if(top + panelH > mapH - 20) top = mapH - panelH - 20;
-  // Keep within left bound
+  // Keep within horizontal bounds
   if(left < margin) left = margin;
+  if(left + panelW + margin > mapW) left = mapW - panelW - margin;
+
+  // Keep within vertical bounds using the REAL height
+  if(top + panelH + margin > mapH) top = mapH - panelH - margin;
+  if(top < topMin) top = topMin;
 
   panel.style.transform = 'none';
   panel.style.left = left + 'px';
@@ -3379,7 +3400,8 @@ async function applyJob() {
   const { data: conv, error } = await sb.from('conversations').insert({
     quest_id: questId,
     giver_id: giverId,
-    taker_id: currentUser.id
+    taker_id: currentUser.id,
+    status: 'pending'
   }).select().single();
 
   if(error) { showToast('❌ Feil: ' + error.message); return; }
@@ -4757,6 +4779,7 @@ async function loadMyQuests() {
               <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
             </div>
           ` : `
+            ${c.status === 'pending' ? `<div style="display:flex;align-items:center;gap:8px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.22);border-radius:10px;padding:11px 12px;margin-bottom:10px;font-size:12.5px;color:#d97a30;font-weight:700">⏳ Venter på svar fra oppdragsgiver</div>` : ''}
             <div style="display:flex;gap:8px">
               <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
             </div>
