@@ -4793,10 +4793,28 @@ async function loadMyQuests() {
     const waiting = applied.filter(c => c.status === 'pending' && c.quest);
     const done = applied.filter(c => (c.status === 'completed' || c.status === 'rejected') && c.quest);
 
+    const secHead = (badge, badgeBg, badgeCol, titleCol, title, sub) =>
+      `<div style="display:flex;align-items:center;gap:8px;margin:0 2px 12px">
+        <span style="font-size:11px;font-weight:800;min-width:20px;height:20px;padding:0 6px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;background:${badgeBg};color:${badgeCol}">${badge}</span>
+        <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:${titleCol}">${title}</span>
+        ${sub ? `<span style="font-size:11px;color:var(--muted);font-weight:500">${sub}</span>` : ''}
+      </div>`;
+
     let html = '';
-    if(active.length) html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--green);margin-bottom:2px">🔥 Aktive oppdrag</div>' + active.map(c => appliedCard(c, true)).join('');
-    if(waiting.length) html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#f97316;margin:8px 0 2px">⏳ Venter på svar</div>' + waiting.map(c => appliedCard(c, false)).join('');
-    if(done.length) html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:8px 0 2px">📜 Historikk</div>' + done.map(c => appliedCard(c, false)).join('');
+    if(active.length) {
+      html += `<div style="background:linear-gradient(180deg,rgba(15,169,104,.07),rgba(15,169,104,.02));border:1px solid rgba(15,169,104,.22);border-radius:18px;padding:14px 12px;margin-bottom:20px">`
+        + secHead(active.length, 'var(--green)', '#fff', 'var(--green)', '🔥 Aktive oppdrag', '— du har fått disse')
+        + `<div style="display:flex;flex-direction:column;gap:12px">` + active.map(c => appliedCard(c, true)).join('') + `</div>`
+        + `</div>`;
+    }
+    if(waiting.length) {
+      html += secHead(waiting.length, 'rgba(249,115,22,.14)', '#f97316', '#f97316', '🙋 Søkt på', '— venter på svar')
+        + `<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">` + waiting.map(c => appliedCard(c, false)).join('') + `</div>`;
+    }
+    if(done.length) {
+      html += secHead(done.length, 'var(--surface2)', 'var(--muted)', 'var(--muted)', '📜 Historikk', '')
+        + `<div style="display:flex;flex-direction:column;gap:10px">` + done.map(c => appliedCard(c, false)).join('') + `</div>`;
+    }
     appliedEl.innerHTML = html || '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Ingen oppdrag ennå.</div>';
   }
 
