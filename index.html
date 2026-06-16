@@ -6338,6 +6338,10 @@ async function doLogin() {
   await loadUserProfile(data.user);
 }
 
+// Versjon på gjeldende brukervilkår/personvern. ØK denne hver gang terms.html endres,
+// slik at du kan dokumentere nøyaktig hvilken tekst hver bruker godtok.
+const TERMS_VERSION = '1.0';
+
 async function doRegister() {
   const firstName = document.getElementById('reg-firstname').value.trim();
   const lastName = document.getElementById('reg-lastname').value.trim();
@@ -6352,10 +6356,28 @@ async function doRegister() {
   const age = ageFromBirthdate(birthdate);
   if(age === null || age < 0 || age > 120) { showAuthError('reg','Fyll inn en gyldig fødselsdato'); return; }
   if(age < 15) { showAuthError('reg','Du må være minst 15 år for å bruke Tokt.'); return; }
-  const isAdult = age >= 18;
-  btn.textContent = 'Oppretter konto…'; btn.disabled = true;
-  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName, phone: phone, birth_date: birthdate, is_adult: isAdult } } });
-  btn.textContent = 'Opprett konto'; btn.disabled = false;
+  // Alt validert → vis brukervilkår som MÅ leses (scroll til bunn) og godtas FØR konto opprettes
+  openTermsGate();
+}
+
+// Selve opprettelsen – kjøres først etter at brukeren har lest og godtatt vilkårene
+async function proceedRegister() {
+  // Re-les feltene; registreringsskjemaet står urørt bak vilkårs-modalen
+  const firstName = document.getElementById('reg-firstname').value.trim();
+  const lastName = document.getElementById('reg-lastname').value.trim();
+  const rawPhone = document.getElementById('reg-phone').value.replace(/\s/g, '').trim();
+  const phone = rawPhone ? '+47' + rawPhone.replace(/^\+47/, '') : null;
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const birthdate = document.getElementById('reg-birthdate')?.value || '';
+  const isAdult = ageFromBirthdate(birthdate) >= 18;
+  const gateBtn = document.getElementById('terms-gate-accept');
+  const en = currentLang === 'en';
+  // Tidspunkt brukeren faktisk godtok vilkårene (når de trykket «Godta»)
+  const acceptedAt = new Date().toISOString();
+  if(gateBtn){ gateBtn.textContent = en ? 'Creating account…' : 'Oppretter konto…'; gateBtn.disabled = true; }
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName, phone: phone, birth_date: birthdate, is_adult: isAdult, terms_accepted_at: acceptedAt, terms_version: TERMS_VERSION } } });
+  if(gateBtn){ gateBtn.textContent = en ? 'Accept and create account' : 'Godta og opprett konto'; gateBtn.disabled = false; }
   if(error) {
     let msg = error.message;
     if(msg.includes('already registered') || msg.includes('already exists') || msg.includes('User already registered')) msg = 'Denne e-posten er allerede registrert. Prøv å logge inn i stedet.';
@@ -6364,9 +6386,11 @@ async function doRegister() {
     else if(msg.includes('rate limit') || msg.includes('too many') || msg.includes('over_email_send_rate_limit')) msg = 'For mange forsøk. Vent noen minutter og prøv igjen.';
     else if(msg.includes('email') && msg.includes('confirm')) msg = 'Konto opprettet! Sjekk e-posten din for bekreftelseslenke.';
     else msg = 'Feil: ' + msg; // Show real error for debugging
+    closeTermsGate();
     showAuthError('reg', msg);
     return;
   }
+  closeTermsGate();
   closeAuth();
   showToast('✅ Konto opprettet! Du er nå logget inn.');
   logEvent('signup');
@@ -6384,9 +6408,118 @@ async function doRegister() {
       rating: null
     }, { onConflict: 'id' }).then(({ error }) => {
       if(error) console.warn('Profile upsert failed:', error.message);
+      // Logg samtykke til profiles separat så hovedprofilen aldri brytes om kolonnene mangler.
+      // (Primær-beviset ligger uansett i auth-metadataen over.)
+      sb.from('profiles').update({ terms_accepted_at: acceptedAt, terms_version: TERMS_VERSION })
+        .eq('id', data.user.id).then(({ error }) => {
+          if(error) console.warn('Terms consent log to profiles failed (kjørte du SQL-en?):', error.message);
+        });
     });
     await loadUserProfile(data.user);
   }
+}
+
+// ── Vilkårs-modal: må leses (scroll til bunn) og hukes av før konto opprettes ──
+function openTermsGate() {
+  const en = currentLang === 'en';
+  let gate = document.getElementById('terms-gate');
+  if (!gate) {
+    gate = document.createElement('div');
+    gate.id = 'terms-gate';
+    gate.style.cssText = 'display:none;position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.65);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom));box-sizing:border-box';
+    document.body.appendChild(gate);
+  }
+  const heading = (n, txtNo, txtEn) => `<h4 style="font-size:14px;font-weight:700;margin:16px 0 6px;color:var(--text);display:flex;align-items:center;gap:8px"><span style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">${n}</span>${en?txtEn:txtNo}</h4>`;
+  const p = (txt) => `<p style="font-size:13px;color:var(--muted);line-height:1.65;margin:0 0 8px">${txt}</p>`;
+
+  const bodyNo = `
+    <p style="font-size:13px;color:var(--muted);line-height:1.65;margin:0 0 10px">Les gjennom hovedpunktene under. Du må scrolle helt til bunnen før du kan huke av og opprette konto. Fullstendige vilkår finner du <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">her</a>.</p>
+    <div style="font-weight:800;font-size:13px;letter-spacing:.5px;color:var(--accent);margin:6px 0 4px">DEL 1 – BRUKERVILKÅR</div>
+    ${heading(1,'Om Tokt')}${p('Tokt er en norsk formidlingsplattform for småoppdrag. Ved å opprette konto godtar du disse vilkårene.')}
+    ${heading(2,'Kun en formidler')}${p('Tokt formidler kontakt mellom oppdragsgiver og utfører, men er ikke part i avtalen mellom dere. Vi tar ingen provisjon. Alt oppgjør skjer direkte mellom partene, hovedsakelig via Vipps.')}
+    ${heading(3,'Konto')}${p('Du må være minst 15 år. Du er selv ansvarlig for at opplysningene du oppgir er riktige, og for å holde passordet ditt hemmelig.')}
+    ${heading(4,'Bruk av plattformen')}${p('Du skal opptre redelig, ikke legge ut ulovlige, villedende eller støtende oppdrag, og ikke misbruke andre brukere. Betal aldri forskudd til ukjente.')}
+    ${heading(5,'Betaling')}${p('Betaling avtales og gjennomføres direkte mellom partene. Tokt håndterer ingen penger. Oppdrag over 10 000 kr krever en signert kontrakt mellom partene.')}
+    ${heading(6,'Vurderinger og rang')}${p('Etter fullførte oppdrag kan partene vurdere hverandre. Rangsystemet bygger på antall fullførte oppdrag. Falske eller misbrukende vurderinger kan fjernes.')}
+    ${heading(7,'Ansvarsbegrensning')}${p('Tokt er ikke ansvarlig for kvaliteten på arbeid, skader, tap, betalingsmislighold eller tvister som oppstår mellom brukere. Bruk av plattformen skjer på eget ansvar.')}
+    ${heading(8,'Endringer og lov')}${p('Vilkårene kan oppdateres. Norsk lov gjelder, og eventuelle tvister løses etter norsk rett.')}
+    <div style="font-weight:800;font-size:13px;letter-spacing:.5px;color:var(--accent);margin:14px 0 4px">DEL 2 – PERSONVERN</div>
+    ${heading(9,'Hva vi samler inn')}${p('Vi lagrer navn, e-post, (valgfritt) telefonnummer, fødselsdato og innhold du selv legger ut, for å kunne drive tjenesten. Vi selger ikke personopplysningene dine.')}
+    ${heading(10,'Dine rettigheter (GDPR)')}${p('Du har rett til innsyn, retting og sletting av dine opplysninger. Kontakt oss på hei.tokt@gmail.com.')}
+    ${heading(11,'Cookies og sikkerhet')}${p('Vi bruker nødvendige informasjonskapsler for innlogging og drift, og rimelige tiltak for å holde dataene dine trygge.')}
+    <p style="font-size:13px;color:var(--text);line-height:1.65;margin:14px 0 0;font-weight:600">Ved å huke av nedenfor bekrefter du at du har lest og forstått brukervilkårene og personvernerklæringen, og at du godtar dem.</p>
+  `;
+  const bodyEn = `
+    <p style="font-size:13px;color:var(--muted);line-height:1.65;margin:0 0 10px">Please read the key points below. You must scroll all the way to the bottom before you can tick the box and create your account. Full terms are available <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">here</a>.</p>
+    <div style="font-weight:800;font-size:13px;letter-spacing:.5px;color:var(--accent);margin:6px 0 4px">PART 1 – TERMS OF SERVICE</div>
+    ${heading(1,'','About Tokt')}${p('Tokt is a Norwegian platform for small local tasks. By creating an account you agree to these terms.')}
+    ${heading(2,'','Platform only')}${p('Tokt connects task givers and takers, but is not a party to the agreement between you. We take no commission. All settlement happens directly between the parties, mainly via Vipps.')}
+    ${heading(3,'','Account')}${p('You must be at least 15 years old. You are responsible for providing correct information and keeping your password secret.')}
+    ${heading(4,'','Use of the platform')}${p('Act honestly, do not post illegal, misleading or offensive tasks, and do not abuse other users. Never pay strangers in advance.')}
+    ${heading(5,'','Payment')}${p('Payment is agreed and made directly between the parties. Tokt handles no money. Tasks over NOK 10,000 require a signed contract between the parties.')}
+    ${heading(6,'','Ratings and rank')}${p('After completed tasks, parties may rate each other. The rank system is based on completed tasks. Fake or abusive ratings may be removed.')}
+    ${heading(7,'','Limitation of liability')}${p('Tokt is not responsible for work quality, damage, loss, payment defaults or disputes between users. Use of the platform is at your own risk.')}
+    ${heading(8,'','Changes and law')}${p('These terms may be updated. Norwegian law applies and any disputes are resolved under Norwegian law.')}
+    <div style="font-weight:800;font-size:13px;letter-spacing:.5px;color:var(--accent);margin:14px 0 4px">PART 2 – PRIVACY</div>
+    ${heading(9,'','What we collect')}${p('We store your name, email, (optional) phone, date of birth and the content you post, in order to run the service. We do not sell your personal data.')}
+    ${heading(10,'','Your rights (GDPR)')}${p('You have the right to access, correct and delete your data. Contact us at hei.tokt@gmail.com.')}
+    ${heading(11,'','Cookies and security')}${p('We use necessary cookies for login and operation, and reasonable measures to keep your data safe.')}
+    <p style="font-size:13px;color:var(--text);line-height:1.65;margin:14px 0 0;font-weight:600">By ticking the box below you confirm that you have read and understood the Terms of Service and Privacy Policy, and that you accept them.</p>
+  `;
+
+  gate.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;width:100%;max-width:440px;max-height:88vh;max-height:88dvh;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow-lg)">
+      <div style="padding:16px 18px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
+        <div style="font-family:'Skranji',cursive;font-size:18px;color:var(--text)">${en?'Terms & privacy':'Brukervilkår & personvern'}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${en?'Read and accept to continue':'Les og godta for å fortsette'} · v${TERMS_VERSION}</div>
+      </div>
+      <div id="terms-gate-scroll" style="padding:16px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0">${en?bodyEn:bodyNo}</div>
+      <div style="padding:12px 18px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface)">
+        <div id="terms-gate-hint" style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px">↓ ${en?'Scroll to the bottom to continue':'Scroll til bunnen for å fortsette'}</div>
+        <label id="terms-gate-checkrow" style="display:flex;align-items:flex-start;gap:10px;cursor:not-allowed;opacity:.45;margin-bottom:12px;transition:opacity .2s">
+          <input type="checkbox" id="terms-gate-check" disabled style="width:18px;height:18px;margin-top:1px;flex-shrink:0;accent-color:var(--accent);cursor:inherit" onchange="document.getElementById('terms-gate-accept').disabled=!this.checked">
+          <span style="font-size:13px;color:var(--text);line-height:1.5">${en?'I have read and accept the Terms of Service and Privacy Policy.':'Jeg har lest og godtar brukervilkårene og personvernerklæringen.'}</span>
+        </label>
+        <div style="display:flex;gap:10px">
+          <button onclick="closeTermsGate()" style="flex:0 0 auto;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">${en?'Cancel':'Avbryt'}</button>
+          <button id="terms-gate-accept" onclick="proceedRegister()" disabled style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(168,85,247,0.3);opacity:.5;transition:opacity .2s" onmouseover="if(!this.disabled)this.style.opacity='1'">${en?'Accept and create account':'Godta og opprett konto'}</button>
+        </div>
+      </div>
+    </div>`;
+  gate.style.display = 'flex';
+
+  // Lukk på klikk utenfor kortet
+  gate.onclick = (e) => { if (e.target === gate) closeTermsGate(); };
+
+  const scrollEl = document.getElementById('terms-gate-scroll');
+  const chk = document.getElementById('terms-gate-check');
+  const checkRow = document.getElementById('terms-gate-checkrow');
+  const hint = document.getElementById('terms-gate-hint');
+  const acceptBtn = document.getElementById('terms-gate-accept');
+
+  const unlock = () => {
+    if (chk.disabled === false) return;
+    chk.disabled = false;
+    checkRow.style.cursor = 'pointer';
+    checkRow.style.opacity = '1';
+    hint.style.display = 'none';
+  };
+  const checkScrolled = () => {
+    if (scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 8) unlock();
+  };
+  scrollEl.addEventListener('scroll', checkScrolled);
+  // Hvis innholdet får plass uten scroll (stor skjerm), lås opp med en gang
+  requestAnimationFrame(() => { if (scrollEl.scrollHeight <= scrollEl.clientHeight + 8) unlock(); });
+}
+
+function closeTermsGate() {
+  const gate = document.getElementById('terms-gate');
+  if (!gate) return;
+  gate.style.display = 'none';
+  const chk = document.getElementById('terms-gate-check');
+  const acceptBtn = document.getElementById('terms-gate-accept');
+  if (chk) chk.checked = false;
+  if (acceptBtn) acceptBtn.disabled = true;
 }
 
 async function doResetPassword() {
