@@ -4702,6 +4702,10 @@ function openMyQuests(tab) {
 function closeMyQuests() {
   document.getElementById('myquests-panel').style.display = 'none';
 }
+function backFromMyQuests() {
+  closeMyQuests();
+  openProfilePage();
+}
 function switchMqTab(tab) {
   document.getElementById('mq-posted').style.display = tab==='posted' ? 'flex' : 'none';
   document.getElementById('mq-applied').style.display = tab==='applied' ? 'flex' : 'none';
@@ -7748,7 +7752,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 <div id="myquests-panel" style="display:none;position:fixed;left:0;right:0;top:0;bottom:0;z-index:450;background:var(--bg);overflow-y:auto;animation:slideIn .2s ease">
   <div style="max-width:600px;margin:0 auto;padding:20px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-top:10px">
-      <button onclick="closeMyQuests()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">←</button>
+      <button onclick="backFromMyQuests()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">←</button>
       <div style="font-size:20px;font-weight:700">Mine oppdrag</div>
     </div>
 
