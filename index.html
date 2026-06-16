@@ -1505,7 +1505,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
         <div class="lg-row"><span class="lg-sw circle c-green"></span><span class="lg-txt"><b>Veldedighet</b> – gratis oppdrag</span></div>
         <div class="lg-row"><span class="lg-sw square c-purple"></span><span class="lg-txt"><b>Tjeneste</b> – noen tilbyr en tjeneste</span></div>
         <div class="lg-gtitle">Din status</div>
-        <div class="lg-row"><span class="lg-sw tri"></span><span class="lg-txt"><b>Mitt oppdrag</b> – vises som trekant</span></div>
+        <div class="lg-row"><span class="lg-sw tri"></span><span class="lg-txt"><b>Mitt oppdrag/tilbud</b> – vises som trekant</span></div>
         <div class="lg-row"><span class="lg-sw diamond c-teal"></span><span class="lg-txt"><b>Jobber med</b> – oppdrag du er tildelt (rombe)</span></div>
         <div class="lg-row"><span class="lg-sw circle c-faded"></span><span class="lg-txt"><b>Søkt på</b> – merket «✓ Søkt»</span></div>
         <div class="lg-row"><span class="lg-sw circle c-grey"></span><span class="lg-txt"><b>Utløpt</b> – tidsfrist passert, vises med ⏰</span></div>
@@ -1607,7 +1607,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   <div class="lg-row"><span class="lg-sw circle c-green"></span><span class="lg-txt"><b>Veldedighet</b> – gratis oppdrag</span></div>
   <div class="lg-row"><span class="lg-sw square c-purple"></span><span class="lg-txt"><b>Tjeneste</b> – noen tilbyr hjelp</span></div>
   <div class="lg-gtitle">Din status</div>
-  <div class="lg-row"><span class="lg-sw tri"></span><span class="lg-txt"><b>Mitt oppdrag</b> – vises som trekant</span></div>
+  <div class="lg-row"><span class="lg-sw tri"></span><span class="lg-txt"><b>Mitt oppdrag/tilbud</b> – vises som trekant</span></div>
   <div class="lg-row"><span class="lg-sw diamond c-teal"></span><span class="lg-txt"><b>Jobber med</b> – tildelt deg (rombe)</span></div>
   <div class="lg-row"><span class="lg-sw circle c-faded"></span><span class="lg-txt"><b>Søkt på</b> – merket «✓ Søkt»</span></div>
   <div class="lg-row"><span class="lg-sw circle c-grey"></span><span class="lg-txt"><b>Utløpt</b> – vises med ⏰</span></div>
@@ -2542,10 +2542,11 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
   const ownerClass = ownership === 'mine' ? 'mine' : ownership === 'working' ? 'working' : ownership === 'applied' ? 'applied' : '';
   const displayIcon = expired ? '⏰' : icon;
 
-  // Shape encodes type/ownership at a glance
-  const shape = type === 'service' ? 'square'
-    : ownership === 'mine' ? 'triangle'
+  // Shape encodes type/ownership at a glance.
+  // Eierskap (egen/jobber-på) vinner over type, så egne tjenester også blir trekant.
+  const shape = ownership === 'mine' ? 'triangle'
     : ownership === 'working' ? 'diamond'
+    : type === 'service' ? 'square'
     : 'circle';
 
   const triSvg = shape === 'triangle'
@@ -2764,12 +2765,15 @@ function loadDemoMarkers() {
 }
 
 function addServiceMarker(svc) {
+  let ownership = null;
+  if(currentUser && svc.raw?.user_id && svc.raw.user_id === currentUser.id) ownership = 'mine';
   const el = createMarkerEl({
     type: 'service',
     icon: markerIcon({ category: svc.category, title: svc.title, isService: true }),
     name: cleanName(svc.title),
     priceText: (svc.price != null ? svc.price + ' kr' : (svc.pay != null ? svc.pay + ' kr' : '')),
     imageUrl: svc.image || null,
+    ownership,
     onClick: () => showServicePanel(svc)
   });
   const coords = spreadCoords(svc.coords);
@@ -5802,6 +5806,13 @@ function showServicePanel(svc) {
   const recCta = document.getElementById('service-cta-recurring');
   if(recCta) recCta.style.display = svc.recurring ? 'block' : 'none';
 
+  // Egen tjeneste: skjul booking/kontakt, vis «Endre» – akkurat som egne oppdrag
+  const isOwnService = currentUser && svc.raw?.user_id && svc.raw.user_id === currentUser.id;
+  const svcCtaGroup = document.getElementById('service-cta-group');
+  const svcEditBtn = document.getElementById('service-edit-btn');
+  if(svcCtaGroup) svcCtaGroup.style.display = isOwnService ? 'none' : 'block';
+  if(svcEditBtn) svcEditBtn.style.display = isOwnService ? 'block' : 'none';
+
   // Tags
   document.getElementById('service-tags').innerHTML = [
     svc.category,
@@ -5831,6 +5842,12 @@ function closeServicePanel() {
   p.style.transform = 'none';
   document.getElementById('hero-tag').classList.remove('hidden');
   activeService = null;
+}
+
+function editOwnService() {
+  const svc = activeService;
+  closeServicePanel();
+  if(svc?.raw?.id) editServiceById(svc.raw.id);
 }
 
 async function contactService() {
@@ -7815,6 +7832,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <!-- Tags -->
     <div id="service-tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
 
+    <div id="service-cta-group">
     <button id="service-cta-recurring" onclick="openBookingRequest('recurring')" style="display:none;width:100%;background:linear-gradient(135deg,#3b6ff5,#6366f1);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-bottom:8px">
       🔄 Be om fast avtale
     </button>
@@ -7823,6 +7841,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </button>
     <button onclick="contactService()" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
       💬 Kontakt tilbyder
+    </button>
+    </div>
+    <button id="service-edit-btn" onclick="editOwnService()" style="display:none;width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">
+      ✏️ Endre tjenesten
     </button>
   </div>
 </div>
