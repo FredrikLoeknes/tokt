@@ -3278,9 +3278,11 @@ async function confirmPaymentReceived(convId, questId) {
     showRating(giverProfile?.full_name || 'Oppdragsgiver', convId, conv.giver_id, questId);
   }
 
+  await recomputeQuestsCompleted(currentUser.id);
   showToast('🎉 Betaling bekreftet og oppdrag fullført!');
   loadMyQuests();
   addMarkers();
+  if(currentUser) loadUserProfile(currentUser);
 }
 
 // Oppdragsgiver markerer at betaling er sendt (steg 2). Lukker IKKE oppdraget –
@@ -4036,7 +4038,12 @@ async function loadProfilePage(userId, isOwn) {
   const { data: ratings } = await sb.from('ratings').select('score').eq('rated_id', userId);
   const avgRating = ratings?.length ? (ratings.reduce((a,r)=>a+r.score,0) / ratings.length) : null;
 
-  const questsDone = doneAsTaker; // rang baseres på utførte oppdrag
+  // Fullførte tjeneste-avtaler (engangsavtaler + registrerte turer i faste avtaler)
+  const { count: serviceDone } = await sb.from('bookings')
+    .select('id', { count:'exact', head:true })
+    .eq('provider_id', userId).eq('status','completed');
+
+  const questsDone = doneAsTaker + (serviceDone || 0); // rang baseres på utførte oppdrag + tjeneste-avtaler
   const rank = getRank(questsDone);
   applyRankRing(document.getElementById('pp-avatar'), questsDone);
 
@@ -4074,7 +4081,7 @@ async function loadProfilePage(userId, isOwn) {
   renderRankLadder(questsDone);
 
   // Achievements
-  const stats = { applied: appliedCount, taken: takenCount, completed: doneAsTaker, posted: postedCount || 0, rating: avgRating || 0, charity: charityDone };
+  const stats = { applied: appliedCount, taken: takenCount, completed: questsDone, posted: postedCount || 0, rating: avgRating || 0, charity: charityDone };
   renderAchievements(stats);
 }
 
@@ -5874,6 +5881,22 @@ function formatDateShort(d) {
   catch(e) { return ''; }
 }
 
+// Oppdaterer profiles.quests_completed = utførte oppdrag (som taker) + fullførte tjeneste-avtaler
+// (som tilbyder). Kalles av den som fullfører (taker/tilbyder), som oppdaterer SIN egen rad (RLS-trygt).
+async function recomputeQuestsCompleted(userId) {
+  if(!userId) return;
+  try {
+    const { count: questCount } = await sb.from('conversations')
+      .select('id', { count:'exact', head:true })
+      .eq('taker_id', userId).eq('status','completed').not('quest_id','is',null);
+    const { count: bookingCount } = await sb.from('bookings')
+      .select('id', { count:'exact', head:true })
+      .eq('provider_id', userId).eq('status','completed');
+    const total = (questCount || 0) + (bookingCount || 0);
+    await sb.from('profiles').update({ quests_completed: total }).eq('id', userId);
+  } catch(e) { console.warn('recomputeQuestsCompleted failed:', e.message); }
+}
+
 function openBookingRequest(kind) {
   kind = kind || 'once';
   const recurring = kind === 'recurring';
@@ -6252,8 +6275,10 @@ async function sessionConfirmReceived(id) {
   if(!confirm('Bekrefte at du har mottatt betaling for denne turen?')) return;
   await sb.from('bookings').update({ status: 'completed', taker_confirmed_at: new Date().toISOString() }).eq('id', id);
   await sb.from('notifications').insert({ user_id: s.customer_id, type: 'booking_session', title: '✅ Tur gjort opp', body: `${s.service?.title || 'Fast avtale'} – tilbyder bekreftet betaling for turen.`, link_id: s.parent_id });
+  await recomputeQuestsCompleted(currentUser.id);
   showToast('🎉 Tur gjort opp!');
   loadBookings();
+  if(currentUser) loadUserProfile(currentUser);
 }
 
 async function pauseAgreement(id) {
@@ -6359,8 +6384,10 @@ async function bookingConfirmReceived(id) {
     title: '🏆 Avtale fullført!', body: `${b.service?.title || 'Avtalen'} er bekreftet fullført. Vurder tilbyderen?`,
     link_id: id
   });
+  await recomputeQuestsCompleted(currentUser.id);
   showToast('🎉 Betaling bekreftet og avtale fullført!');
   loadBookings();
+  if(currentUser) loadUserProfile(currentUser);
   const { data: cp } = await sb.from('profiles').select('full_name').eq('id', b.customer_id).single();
   showRating(cp?.full_name || 'Kunde', b.conversation_id, b.customer_id, '');
 }
