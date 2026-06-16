@@ -3257,7 +3257,7 @@ async function confirmPaymentReceived(convId, questId) {
   if(questId && questId !== 'null' && questId !== 'undefined') {
     await sb.from('quests').update({ status: 'completed' }).eq('id', questId);
   }
-  await sb.from('conversations').update({ status: 'completed' }).eq('id', convId);
+  await sb.from('conversations').update({ status: 'completed', taker_confirmed_at: new Date().toISOString() }).eq('id', convId);
 
   // Get quest and giver info for notification
   const { data: conv } = await sb.from('conversations')
@@ -3281,6 +3281,49 @@ async function confirmPaymentReceived(convId, questId) {
   showToast('🎉 Betaling bekreftet og oppdrag fullført!');
   loadMyQuests();
   addMarkers();
+}
+
+// Oppdragsgiver markerer at betaling er sendt (steg 2). Lukker IKKE oppdraget –
+// det er utføreren som bekrefter mottak og fullfører.
+async function markGiverPaid(convId, questId) {
+  const { data: conv } = await sb.from('conversations')
+    .select('giver_id, taker_id, status, quest:quest_id(title)').eq('id', convId).single();
+  if(!conv || conv.giver_id !== currentUser?.id) { showToast('⚠️ Kun oppdragsgiver kan markere betalt'); return; }
+  if(conv.status !== 'accepted') { showToast('⚠️ Oppdraget er ikke aktivt'); return; }
+  if(!confirm('Bekrefte at du har betalt utføreren via Vipps?')) return;
+
+  await sb.from('conversations').update({ giver_paid_at: new Date().toISOString() }).eq('id', convId);
+  await sb.from('notifications').insert({
+    user_id: conv.taker_id,
+    type: 'payment',
+    title: '💸 Betaling sendt',
+    body: `${conv.quest?.title || 'Oppdragsgiver'} – oppdragsgiver har markert betaling som sendt. Bekreft når du har mottatt den.`,
+    link_id: convId
+  });
+  showToast('✅ Markert som betalt. Venter på utførers bekreftelse.');
+  loadMyQuests();
+}
+
+// Utfører melder at oppdraget er utført (valgfritt steg). Varsler oppdragsgiver om at
+// det er klart for betaling. Lukker ikke oppdraget.
+async function markWorkDone(convId, questId) {
+  const { data: conv } = await sb.from('conversations')
+    .select('giver_id, taker_id, status, work_done_at, quest:quest_id(title)').eq('id', convId).single();
+  if(!conv || conv.taker_id !== currentUser?.id) { showToast('⚠️ Kun utfører kan melde oppdraget utført'); return; }
+  if(conv.status !== 'accepted') { showToast('⚠️ Oppdraget er ikke aktivt'); return; }
+  if(conv.work_done_at) { showToast('Allerede meldt utført'); return; }
+  if(!confirm('Melde oppdraget som utført? Oppdragsgiver får beskjed om å betale.')) return;
+
+  await sb.from('conversations').update({ work_done_at: new Date().toISOString() }).eq('id', convId);
+  await sb.from('notifications').insert({
+    user_id: conv.giver_id,
+    type: 'work_done',
+    title: '🔨 Oppdrag meldt utført',
+    body: `${conv.quest?.title || 'Oppdraget'} – utfører melder at jobben er gjort. Klar for betaling.`,
+    link_id: convId
+  });
+  showToast('🔨 Oppdragsgiver er varslet. Klar for betaling!');
+  loadMyQuests();
 }
 
 async function applyJob() {
@@ -4465,6 +4508,8 @@ async function handleNotifClick(notifId, type, linkId) {
   }
   if(type === 'message' && linkId) openChat(linkId, 'Melding');
   else if(type === 'application') openMyQuests();
+  else if(type === 'payment') openMyQuests();
+  else if(type === 'work_done') openMyQuests();
   else if(type === 'completed' && linkId) {
     // Taker can rate the giver
     openMyQuests();
@@ -4614,7 +4659,7 @@ async function loadMyQuests() {
 
   // Load quests I posted (no auth-join, fetch names separately)
   const { data: posted, error: postedErr } = await sb.from('quests')
-    .select('*, conversations(id,status,taker_id)')
+    .select('*, conversations(id,status,taker_id,giver_paid_at,taker_confirmed_at,work_done_at)')
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false });
 
@@ -4659,19 +4704,37 @@ async function loadMyQuests() {
       const q = c.quest;
       if(!q) return '';
       const safeTitle = (q.title||'Oppdrag').replace(/'/g,"\\'");
+      const paid = !!c.giver_paid_at;
+      const statusChip = c.status==='completed'?'🏆 Fullført':c.status==='accepted'?'🔥 Aktivt – ditt oppdrag!':c.status==='rejected'?'✕ Ikke valgt':'⏳ Venter svar';
+      const chipBg = c.status==='completed'?'rgba(59,111,245,0.1)':c.status==='accepted'?'rgba(15,169,104,0.1)':c.status==='rejected'?'rgba(107,114,128,0.1)':'rgba(249,115,22,0.1)';
+      const chipCol = c.status==='completed'?'var(--accent)':c.status==='accepted'?'var(--green)':c.status==='rejected'?'var(--muted)':'#f97316';
       return `<div style="background:var(--surface);border:1.5px solid ${active?'var(--green)':'var(--border)'};border-radius:14px;overflow:hidden${active?';box-shadow:0 2px 12px rgba(15,169,104,0.15)':''}">
         <div style="padding:14px 16px">
           <div style="font-size:15px;font-weight:700;margin-bottom:6px">${q.title}</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${active?'2px':'10px'}">
             <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">${q.category||'Annet'}</span>
             <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);font-weight:700">${q.pay} kr</span>
-            <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:${c.status==='completed'?'rgba(59,111,245,0.1)':c.status==='accepted'?'rgba(15,169,104,0.1)':c.status==='rejected'?'rgba(107,114,128,0.1)':'rgba(249,115,22,0.1)'};color:${c.status==='completed'?'var(--accent)':c.status==='accepted'?'var(--green)':c.status==='rejected'?'var(--muted)':'#f97316'};font-weight:700">${c.status==='completed'?'🏆 Fullført':c.status==='accepted'?'🔥 Aktivt – ditt oppdrag!':c.status==='rejected'?'✕ Ikke valgt':'⏳ Venter svar'}</span>
+            <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:${chipBg};color:${chipCol};font-weight:700">${statusChip}</span>
           </div>
-          <div style="display:flex;gap:8px">
-            <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
-            ${active ? `<button onclick="showChatPaymentInfoFor('${c.id}')" style="flex:1;background:#ff5b24;color:#fff;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💸 Betaling</button>` : ''}
-          </div>
-          ${active ? `<button onclick="if(confirm('Har du mottatt betalingen og er jobben ferdig?')) confirmPaymentReceived('${c.id}','${q.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">✅ Betaling mottatt – fullfør oppdrag</button>` : ''}
+          ${active ? `
+            ${completionTracker(paid, false)}
+            <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5">
+              <span>${paid?'💸':(c.work_done_at?'⏳':'ℹ️')}</span>
+              <div>${paid?'<b style="color:var(--text)">Oppdragsgiver har markert betalt.</b> Sjekk at beløpet er på Vipps, og bekreft under.':(c.work_done_at?'Du har meldt oppdraget utført. Venter på betaling fra oppdragsgiver.':'Meld fra når du er ferdig, så får oppdragsgiver beskjed om å betale.')}</div>
+            </div>
+            ${c.work_done_at
+              ? `<div style="display:flex;align-items:center;gap:7px;margin-top:12px;font-size:12px;font-weight:700;color:var(--green)">🔨 Du meldte oppdraget utført</div>`
+              : `<button onclick="markWorkDone('${c.id}','${q.id}')" style="width:100%;background:var(--surface);border:1.5px solid var(--green);color:var(--green);border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">🔨 Jeg er ferdig – gi beskjed</button>`}
+            <button onclick="if(confirm('Bekrefte at du har mottatt betaling? Dette fullfører oppdraget.')) confirmPaymentReceived('${c.id}','${q.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Jeg har mottatt betaling</button>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button onclick="showChatPaymentInfoFor('${c.id}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>
+              <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
+            </div>
+          ` : `
+            <div style="display:flex;gap:8px">
+              <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
+            </div>
+          `}
         </div>
       </div>`;
     };
@@ -4800,8 +4863,59 @@ async function showChatPaymentInfoFor(convId) {
   showPaymentInfoPopup(giverProfile, takerProfile, conv.id, conv.quest_id, role);
 }
 
+// ── Stegmåler for fullføring: 🤝 Godkjent → 💸 Betalt → ✅ Bekreftet ──
+function completionTracker(paid, done) {
+  const dotBase = 'width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0;';
+  const doneDot = c => `<div style="${dotBase}background:var(--green);color:#fff;border:2px solid var(--green)">${c}</div>`;
+  const curDot  = c => `<div style="${dotBase}background:var(--surface);color:var(--accent);border:2px solid var(--accent);box-shadow:0 0 0 4px rgba(59,111,245,.15)">${c}</div>`;
+  const idleDot = c => `<div style="${dotBase}background:var(--surface2);color:var(--muted);border:2px solid var(--border)">${c}</div>`;
+  const cap = (col, txt) => `<div style="font-size:10px;font-weight:700;margin-top:6px;color:${col};white-space:nowrap">${txt}</div>`;
+  const conn = on => `<div style="flex:1;height:3px;border-radius:3px;margin:15px 4px 0;background:${on?'var(--green)':'var(--border)'}"></div>`;
+  const step = (d, c) => `<div style="display:flex;flex-direction:column;align-items:center;flex:0 0 58px">${d}${c}</div>`;
+
+  const s1 = doneDot('🤝');
+  const s2 = (paid || done) ? doneDot('💸') : curDot('💸');
+  const s3 = done ? doneDot('✓') : (paid ? curDot('✓') : idleDot('✓'));
+  const c1 = cap('var(--green)', 'Godkjent');
+  const c2 = cap((paid || done) ? 'var(--green)' : 'var(--accent)', 'Betalt');
+  const c3 = cap(done ? 'var(--green)' : (paid ? 'var(--accent)' : 'var(--muted)'), 'Bekreftet');
+  return `<div style="display:flex;align-items:flex-start;margin:16px 0 2px">${step(s1,c1)}${conn(paid||done)}${step(s2,c2)}${conn(done)}${step(s3,c3)}</div>`;
+}
+
+// Oppdragsgiver sin handlingsboks når oppdraget er tildelt (status 'taken')
+function giverTakenBlock(q, conv) {
+  const paid = !!conv.giver_paid_at;
+  const workDone = !!conv.work_done_at;
+  const safeTitle = (q.title || 'Oppdrag').replace(/'/g, "\\'");
+  const tracker = completionTracker(paid, false);
+  const chatBtn = `<button onclick="openChat('${conv.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>`;
+  if (paid) {
+    return `${tracker}
+      <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Du har markert betalt. Venter på at utfører bekrefter mottatt betaling.</div></div>
+      <div style="margin-top:12px">
+        <button disabled style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:11px;padding:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:not-allowed">⏳ Venter på utførers bekreftelse</button>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="showChatPaymentInfoFor('${conv.id}')" style="flex:1;background:#ff5b24;color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">💸 Vipps</button>
+          ${chatBtn}
+        </div>
+      </div>`;
+  }
+  return `${tracker}
+    ${workDone
+      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>🔨</span><div><b>Utfører melder at oppdraget er utført</b> – klar for betaling. Betal via Vipps og marker «Jeg har betalt».</div></div>`
+      : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>Betal utfører via Vipps når jobben er gjort, og marker så <b style="color:var(--text)">«Jeg har betalt»</b>.</div></div>`}
+    <div style="margin-top:12px">
+      <button onclick="showChatPaymentInfoFor('${conv.id}')" style="width:100%;background:#ff5b24;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💸 Betal med Vipps</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="markGiverPaid('${conv.id}','${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>
+        ${chatBtn}
+      </div>
+    </div>`;
+}
+
 function questCard(q, type) {
   const applicants = q.conversations || [];
+  const activeConv = applicants.find(c => c.status === 'accepted');
 
   const statusLabel = q.status === 'completed' ? '🏆 Fullført'
     : q.status === 'taken' ? '🔒 Tildelt'
@@ -4848,15 +4962,15 @@ function questCard(q, type) {
           }).join('')}
         </div>
       ` : ''}
+      ${q.status==='taken' && activeConv ? giverTakenBlock(q, activeConv) : `
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${applicants.length > 0 ? `<button onclick="openChat('${applicants[0]?.id||''}','${q.title}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : ''}
-        ${q.status==='taken' ? `<button onclick="completeQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✅ Merk fullført</button>` : ''}
         ${(q.status==='open'||q.status==='paused') ? `<button onclick="sb.from('quests').select('*').eq('id','${q.id}').single().then(r=>r.data&&showEditQuestModal(r.data))" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✏️ Endre</button>` : ''}
         ${q.status==='open' ? `<button onclick="pauseQuest('${q.id}')" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⏸️ Pause</button>` : ''}
         ${q.status==='paused' ? `<button onclick="resumeQuest('${q.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">▶️ Gjenåpne</button>` : ''}
         ${(q.status==='open'||q.status==='paused') ? `<button onclick="closeQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button>` : ''}
         ${q.status==='expired' ? `<button onclick="repostQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔄 Legg ut på nytt</button>` : ''}
-      </div>
+      </div>`}
     </div>
   </div>`;
 }
@@ -5020,10 +5134,7 @@ function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, role)
         <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px">Nummeret kopieres – lim inn i Vipps-søket</div>` : ''}
 
       ${role === 'taker' ? `
-        <button onclick="confirmPaymentReceived('${convId}','${questId}');document.getElementById('payment-info-popup').remove()" 
-          style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">
-          ✅ Betaling mottatt – bekreft fullført
-        </button>` : ''}
+        <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:12px;padding:11px 13px;margin-bottom:10px;font-size:12px;color:var(--muted);line-height:1.5"><span>✅</span><div>Når pengene er på konto, gå til <b style="color:var(--text)">Mine oppdrag</b> og trykk «Jeg har mottatt betaling» for å fullføre.</div></div>` : ''}
 
       <button onclick="document.getElementById('payment-info-popup').remove()" 
         style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:12px;font-size:14px;cursor:pointer;font-family:inherit">
