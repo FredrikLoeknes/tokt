@@ -5910,7 +5910,7 @@ async function contactService() {
     body: `${myProfile.full_name || 'En bruker'} er interessert i «${svc.title}». Åpne chatten og avtal tid.`,
     link_id: conv.id
   });
-  if(contactNotifErr) { console.error('service contact notif error:', contactNotifErr); alert('⚠️ Varsel ble ikke sendt (kontakt):\n' + (contactNotifErr.message || JSON.stringify(contactNotifErr))); }
+  if(contactNotifErr) console.error('service contact notif error:', contactNotifErr);
 
   showToast('💬 Chat åpnet! Avtal tid med tilbyderen.');
   openChat(conv.id, svc.title);
@@ -6136,7 +6136,7 @@ async function submitBookingRequest() {
       : `${me?.full_name || 'En kunde'} ber om «${ctx.title}» – ${formatBookingWhen(scheduledAt)}, ${price} kr.`,
     link_id: bk.id
   });
-  if(notifErr) { console.error('booking_request notif error:', notifErr); alert('⚠️ Varsel ble ikke sendt (avtale):\n' + (notifErr.message || JSON.stringify(notifErr))); }
+  if(notifErr) console.error('booking_request notif error:', notifErr);
 
   closeBookingModal();
   showToast('📅 Forespørsel sendt! Du får beskjed når den bekreftes.');
