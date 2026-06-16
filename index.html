@@ -4747,6 +4747,7 @@ async function loadMyQuests() {
 
   const appliedEl = document.getElementById('mq-applied');
   if(!applied || applied.length === 0) {
+    const ab = document.getElementById('mq-applied-badge'); if(ab) ab.style.display = 'none';
     appliedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke søkt på noen oppdrag ennå.<br><br><button onclick="closeMyQuests()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Finn oppdrag på kartet</button></div>';
   } else {
     const appliedCard = (c, active) => {
@@ -4792,6 +4793,12 @@ async function loadMyQuests() {
     const active = applied.filter(c => c.status === 'accepted' && c.quest);
     const waiting = applied.filter(c => c.status === 'pending' && c.quest);
     const done = applied.filter(c => (c.status === 'completed' || c.status === 'rejected') && c.quest);
+
+    const appliedBadge = document.getElementById('mq-applied-badge');
+    if(appliedBadge) {
+      if(active.length) { appliedBadge.textContent = active.length; appliedBadge.style.display = 'inline-flex'; }
+      else { appliedBadge.style.display = 'none'; }
+    }
 
     const secHead = (badge, badgeBg, badgeCol, titleCol, title, sub) =>
       `<div style="display:flex;align-items:center;gap:8px;margin:0 2px 12px">
@@ -7737,7 +7744,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <!-- Tabs -->
     <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:20px;border:1px solid var(--border)">
       <button id="mq-tab-posted" onclick="switchMqTab('posted')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">📋 Lagt ut</button>
-      <button id="mq-tab-applied" onclick="switchMqTab('applied')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s">🙋 Søkt på</button>
+      <button id="mq-tab-applied" onclick="switchMqTab('applied')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:5px">Aktive &amp; søkt<span id="mq-applied-badge" style="display:none;font-size:10px;font-weight:800;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span></button>
       <button id="mq-tab-bookings" onclick="switchMqTab('bookings')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s">📅 Avtaler</button>
     </div>
 
