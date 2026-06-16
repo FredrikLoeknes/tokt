@@ -5718,6 +5718,8 @@ function showServicePanel(svc) {
     recEl.style.display = 'block';
     document.getElementById('service-recurring-text').textContent = svc.recurringInfo;
   } else { recEl.style.display = 'none'; }
+  const recCta = document.getElementById('service-cta-recurring');
+  if(recCta) recCta.style.display = svc.recurring ? 'block' : 'none';
 
   // Tags
   document.getElementById('service-tags').innerHTML = [
@@ -5826,7 +5828,55 @@ function formatBookingWhen(iso) {
   } catch(e) { return ''; }
 }
 
-function openBookingRequest() {
+const WEEKDAY_NAMES = ['søndag','mandag','tirsdag','onsdag','torsdag','fredag','lørdag'];
+
+function recurrenceLabel(rec) {
+  if(!rec) return 'Fast avtale';
+  const [type, arg] = rec.split(':');
+  if(type === 'weekly')   return 'Hver ' + (WEEKDAY_NAMES[parseInt(arg)] || 'uke');
+  if(type === 'biweekly') return 'Annenhver ' + (WEEKDAY_NAMES[parseInt(arg)] || 'uke');
+  if(type === 'monthly')  return 'Den ' + arg + '. hver måned';
+  if(type === 'weekdays') return 'Hverdager (man–fre)';
+  return 'Fast avtale';
+}
+
+function nextRecurrenceDate(rec, startISO) {
+  if(!rec) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const start = startISO ? new Date(startISO) : new Date(today); start.setHours(0,0,0,0);
+  const [type, arg] = rec.split(':');
+  const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+  const floor = today > start ? today : start;
+  if(type === 'weekly' || type === 'biweekly') {
+    const target = parseInt(arg), step = type === 'biweekly' ? 14 : 7;
+    let d = new Date(start);
+    while(d.getDay() !== target) d = addDays(d,1);
+    while(d < floor) d = addDays(d, step);
+    return d;
+  }
+  if(type === 'monthly') {
+    const day = parseInt(arg);
+    let d = new Date(today.getFullYear(), today.getMonth(), day);
+    if(d < floor) d = new Date(today.getFullYear(), today.getMonth()+1, day);
+    return d;
+  }
+  if(type === 'weekdays') {
+    let d = addDays(today,1);
+    while(d.getDay() === 0 || d.getDay() === 6) d = addDays(d,1);
+    return d;
+  }
+  return null;
+}
+
+function formatDateShort(d) {
+  if(!d) return '';
+  try { return new Date(d).toLocaleDateString('nb-NO', { weekday:'short', day:'numeric', month:'short' }); }
+  catch(e) { return ''; }
+}
+
+function openBookingRequest(kind) {
+  kind = kind || 'once';
+  const recurring = kind === 'recurring';
   const svc = activeService;
   if(!currentUser) { openAuth('login'); return; }
   if(!svc?.raw?.id || !svc?.raw?.user_id) { closeServicePanel(); showToast('💬 Dette er en demo-tjeneste – test med ekte tjenester!'); return; }
@@ -5835,10 +5885,31 @@ function openBookingRequest() {
   sb.from('profiles').select('phone').eq('id', currentUser.id).single().then(({ data: myProfile }) => {
     if(!myProfile?.phone) { showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) for å be om avtale.'); return; }
 
-    window._bookingCtx = { serviceId: svc.raw.id, providerId: svc.raw.user_id, title: svc.title, price: svc.price || 0, priceType: svc.priceType };
+    window._bookingCtx = { serviceId: svc.raw.id, providerId: svc.raw.user_id, title: svc.title, price: svc.price || 0, priceType: svc.priceType, kind };
     const priceTypes = { per_visit:'per besøk', per_time:'per time', per_tur:'per tur', per_mnd:'per mnd', per_stk:'per stk' };
     const ptLabel = priceTypes[svc.priceType] || '';
     const tomorrow = new Date(Date.now() + 864e5).toISOString().slice(0,10);
+    const todayDow = new Date().getDay();
+    const dayOpts = WEEKDAY_NAMES.map((n,i) => `<option value="${i}" ${i===((todayDow+1)%7)?'selected':''}>${n.charAt(0).toUpperCase()+n.slice(1)}</option>`).join('');
+
+    const whenFields = recurring ? `
+          <div style="margin-bottom:12px"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Hyppighet</label>
+            <select id="bk-freq" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none">
+              <option value="weekly">Hver uke</option><option value="biweekly">Annenhver uke</option><option value="monthly">Hver måned</option><option value="weekdays">Hverdager (man–fre)</option></select></div>
+          <div style="display:flex;gap:10px;margin-bottom:12px">
+            <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Ukedag</label>
+              <select id="bk-dow" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none">${dayOpts}</select></div>
+            <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Starter</label>
+              <input id="bk-date" type="date" min="${new Date().toISOString().slice(0,10)}" value="${tomorrow}" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
+          </div>
+          <div style="font-size:10.5px;color:var(--muted);margin:-6px 2px 12px">Ukedag brukes for ukentlig/annenhver. For «hver måned» brukes datoen i startdatoen.</div>`
+      : `
+          <div style="display:flex;gap:10px;margin-bottom:12px">
+            <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Dato</label>
+              <input id="bk-date" type="date" min="${new Date().toISOString().slice(0,10)}" value="${tomorrow}" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
+            <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Tid</label>
+              <input id="bk-time" type="time" value="12:00" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
+          </div>`;
 
     let m = document.getElementById('booking-modal');
     if(!m) { m = document.createElement('div'); m.id = 'booking-modal'; document.body.appendChild(m); }
@@ -5846,21 +5917,16 @@ function openBookingRequest() {
     m.innerHTML = `
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)">
         <div style="padding:16px 18px 12px;border-bottom:1px solid var(--border)">
-          <div style="font-family:'Skranji',cursive;font-size:18px">📅 Be om avtale</div>
+          <div style="font-family:'Skranji',cursive;font-size:18px">${recurring?'🔄 Be om fast avtale':'📅 Be om avtale'}</div>
           <div style="font-size:12.5px;color:var(--muted);margin-top:2px">${svc.title}</div>
         </div>
         <div style="padding:16px 18px">
-          <div style="display:flex;gap:10px;margin-bottom:12px">
-            <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Dato</label>
-              <input id="bk-date" type="date" min="${new Date().toISOString().slice(0,10)}" value="${tomorrow}" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
-            <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Tid</label>
-              <input id="bk-time" type="time" value="12:00" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
-          </div>
+          ${whenFields}
           <div style="margin-bottom:12px"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Melding til tilbyder (valgfritt)</label>
             <textarea id="bk-note" rows="2" placeholder="F.eks. adresse, portkode, ønsker…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;resize:none"></textarea></div>
-          <div style="margin-bottom:14px"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Avtalt pris ${ptLabel?'('+ptLabel+')':''}</label>
+          <div style="margin-bottom:14px"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Avtalt pris ${recurring?'(per gang)':(ptLabel?'('+ptLabel+')':'')}</label>
             <div style="display:flex;align-items:center;gap:8px"><input id="bk-price" type="number" value="${svc.price||0}" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"><span style="font-size:14px;font-weight:700;color:var(--muted)">kr</span></div></div>
-          <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>Tilbyder må bekrefte før avtalen er aktiv. Betaling skjer direkte via Vipps – Tokt tar ingen provisjon.</div></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>${recurring?'Tilbyder bekrefter avtalen. Hver gjennomført gang gjøres opp via Vipps – Tokt tar ingen provisjon.':'Tilbyder må bekrefte før avtalen er aktiv. Betaling skjer direkte via Vipps – Tokt tar ingen provisjon.'}</div></div>
           <div style="display:flex;gap:10px">
             <button onclick="closeBookingModal()" style="flex:0 0 auto;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Avbryt</button>
             <button id="bk-submit" onclick="submitBookingRequest()" style="flex:1;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(124,92,252,.3)">Send forespørsel →</button>
@@ -5881,16 +5947,26 @@ function closeBookingModal() {
 async function submitBookingRequest() {
   const ctx = window._bookingCtx;
   if(!ctx) return;
+  const recurring = ctx.kind === 'recurring';
   const date = document.getElementById('bk-date')?.value;
-  const time = document.getElementById('bk-time')?.value || '12:00';
+  const time = recurring ? '12:00' : (document.getElementById('bk-time')?.value || '12:00');
   const note = document.getElementById('bk-note')?.value?.trim() || null;
   const price = parseInt(document.getElementById('bk-price')?.value) || ctx.price || 0;
   if(!date) { showToast('⚠️ Velg en dato'); return; }
   const scheduledAt = new Date(date + 'T' + time).toISOString();
+
+  let recurrence = null;
+  if(recurring) {
+    const freq = document.getElementById('bk-freq')?.value || 'weekly';
+    const dow = document.getElementById('bk-dow')?.value || '1';
+    if(freq === 'weekly' || freq === 'biweekly') recurrence = `${freq}:${dow}`;
+    else if(freq === 'monthly') recurrence = `monthly:${new Date(date).getDate()}`;
+    else recurrence = 'weekdays';
+  }
+
   const btn = document.getElementById('bk-submit');
   if(btn) { btn.textContent = 'Sender…'; btn.disabled = true; }
 
-  // Reuse existing service conversation for this customer, else create one
   let convId;
   const { data: existing } = await sb.from('conversations').select('id').eq('service_id', ctx.serviceId).eq('giver_id', currentUser.id).limit(1);
   if(existing?.length) {
@@ -5906,7 +5982,8 @@ async function submitBookingRequest() {
   const { data: bk, error: bErr } = await sb.from('bookings').insert({
     service_id: ctx.serviceId, conversation_id: convId,
     customer_id: currentUser.id, provider_id: ctx.providerId,
-    kind: 'once', scheduled_at: scheduledAt, price, note, status: 'requested'
+    kind: recurring ? 'recurring' : 'once', recurrence,
+    scheduled_at: scheduledAt, price, note, status: 'requested'
   }).select().single();
 
   if(bErr) { showToast('❌ ' + bErr.message); if(btn){ btn.textContent='Send forespørsel →'; btn.disabled=false; } return; }
@@ -5914,8 +5991,10 @@ async function submitBookingRequest() {
   const { data: me } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
   await sb.from('notifications').insert({
     user_id: ctx.providerId, type: 'booking_request',
-    title: '📅 Ny avtaleforespørsel',
-    body: `${me?.full_name || 'En kunde'} ber om «${ctx.title}» – ${formatBookingWhen(scheduledAt)}, ${price} kr.`,
+    title: recurring ? '🔄 Forespørsel om fast avtale' : '📅 Ny avtaleforespørsel',
+    body: recurring
+      ? `${me?.full_name || 'En kunde'} ber om fast avtale på «${ctx.title}» – ${recurrenceLabel(recurrence)}, fra ${formatDateShort(scheduledAt)}, ${price} kr/gang.`
+      : `${me?.full_name || 'En kunde'} ber om «${ctx.title}» – ${formatBookingWhen(scheduledAt)}, ${price} kr.`,
     link_id: bk.id
   });
 
@@ -5931,7 +6010,6 @@ async function loadBookings() {
   const { data: bks, error } = await sb.from('bookings')
     .select('*, service:service_id(title)')
     .or(`customer_id.eq.${currentUser.id},provider_id.eq.${currentUser.id}`)
-    .is('parent_id', null)
     .order('created_at', { ascending: false });
 
   if(error) { console.error('loadBookings error:', error.message); el.innerHTML = '<div style="padding:16px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.3);border-radius:12px;font-size:12px;color:var(--red)">⚠️ Kunne ikke hente avtaler: ' + error.message + '</div>'; return; }
@@ -5940,16 +6018,22 @@ async function loadBookings() {
     return;
   }
 
-  const otherIds = [...new Set(bks.map(b => b.customer_id === currentUser.id ? b.provider_id : b.customer_id).filter(Boolean))];
+  const tops = bks.filter(b => !b.parent_id);
+  const sessionsByParent = {};
+  bks.filter(b => b.parent_id).forEach(s => { (sessionsByParent[s.parent_id] = sessionsByParent[s.parent_id] || []).push(s); });
+
+  const otherIds = [...new Set(tops.map(b => b.customer_id === currentUser.id ? b.provider_id : b.customer_id).filter(Boolean))];
   const nameMap = {};
   if(otherIds.length) {
     const { data: profs } = await sb.from('profiles').select('id, full_name').in('id', otherIds);
     (profs||[]).forEach(p => nameMap[p.id] = p.full_name);
   }
-  el.innerHTML = bks.map(b => bookingCard(b, nameMap)).join('');
+  el.innerHTML = tops.map(b => bookingCard(b, nameMap, sessionsByParent[b.id] || [])).join('');
 }
 
-function bookingCard(b, nameMap) {
+function bookingCard(b, nameMap, sessions) {
+  sessions = sessions || [];
+  if(b.kind === 'recurring') return recurringCard(b, nameMap, sessions);
   const isProvider = b.provider_id === currentUser.id;
   const otherName = (nameMap[isProvider ? b.customer_id : b.provider_id] || 'Bruker');
   const safeName = otherName.replace(/'/g, "\\'");
@@ -6020,18 +6104,202 @@ function bookingCard(b, nameMap) {
     <div style="padding:14px 16px">${head}${body}</div></div>`;
 }
 
+function sessionRow(s) {
+  let label, col, bg;
+  if(s.status === 'completed') { label = 'Gjort opp ✓'; col = 'var(--accent)'; bg = 'rgba(59,111,245,.1)'; }
+  else if(s.giver_paid_at) { label = 'Betalt – bekreftes'; col = 'var(--green)'; bg = 'rgba(15,169,104,.1)'; }
+  else { label = 'Venter betaling'; col = '#f97316'; bg = 'rgba(249,115,22,.12)'; }
+  return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+    <span style="flex:1;font-size:12.5px;font-weight:600">${formatDateShort(s.scheduled_at)}</span>
+    <span style="font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:50px;background:${bg};color:${col}">${label}</span></div>`;
+}
+
+function sessionHandshake(s, isProvider, convId, chatBtn) {
+  const paid = !!s.giver_paid_at;
+  const tracker = completionTracker(paid, false);
+  const dateTxt = formatDateShort(s.scheduled_at);
+  const wrap = inner => `<div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Åpen tur · ${dateTxt}</div>${tracker}${inner}</div>`;
+  if(isProvider) {
+    return wrap(`
+      <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:var(--muted);line-height:1.5"><span>${paid?'💸':'⏳'}</span><div>${paid?'<b style="color:var(--text)">Kunden har markert betalt.</b> Bekreft mottak for å gjøre opp turen.':'Venter på at kunden betaler for turen.'}</div></div>
+      <button onclick="sessionConfirmReceived('${s.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Bekreft mottatt betaling</button>
+      <div style="display:flex;gap:8px;margin-top:8px"><button onclick="showChatPaymentInfoFor('${convId}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>${chatBtn}</div>`);
+  }
+  return wrap(`
+    <div style="display:flex;gap:8px;align-items:flex-start;background:${paid?'var(--surface2)':'rgba(15,169,104,0.09)'};${paid?'':'border:1px solid rgba(15,169,104,0.25);'}border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:${paid?'var(--muted)':'var(--text)'};line-height:1.5"><span>${paid?'⏳':'🔨'}</span><div>${paid?'Du har markert betalt. Venter på tilbyders bekreftelse.':'<b>Tilbyder registrerte en tur.</b> Betal via Vipps og marker betalt.'}</div></div>
+    <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#ff5b24;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px">💸 Betal med Vipps</button>
+    <div style="display:flex;gap:8px;margin-top:8px">${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="sessionMarkPaid('${s.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}${chatBtn}</div>`);
+}
+
+function recurringCard(b, nameMap, sessions) {
+  const isProvider = b.provider_id === currentUser.id;
+  const otherName = (nameMap[isProvider ? b.customer_id : b.provider_id] || 'Bruker');
+  const safeName = otherName.replace(/'/g, "\\'");
+  const title = b.service?.title || 'Tjeneste';
+  const safeTitle = title.replace(/'/g, "\\'");
+  const convId = b.conversation_id || '';
+  const recLabel = recurrenceLabel(b.recurrence);
+  const chatBtn = convId ? `<button onclick="window._chatOtherName='${safeName}';openChat('${convId}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : '';
+
+  const statusMap = {
+    requested:['⏳ Forespurt','#f97316'], active:['🔄 Aktiv','var(--green)'],
+    paused:['⏸️ På pause','#f59e0b'], cancelled:['✕ Avsluttet','var(--muted)'], declined:['✕ Avslått','var(--muted)']
+  };
+  const [stLabel, stCol] = statusMap[b.status] || ['•','var(--muted)'];
+
+  const head = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+      <div style="font-size:15px;font-weight:700;flex:1;margin-right:8px">${title}</div>
+      <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px;background:${stCol}18;color:${stCol};border:1px solid ${stCol}44;white-space:nowrap">${stLabel}</span>
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:4px">
+      <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(124,92,252,0.12);color:var(--accent2);font-weight:700">🏪 ${isProvider?'Kunde: '+otherName:'Tjeneste'}</span>
+      <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(59,111,245,0.1);color:var(--accent);font-weight:700">🔄 ${recLabel}</span>
+      <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);font-weight:700">${b.price} kr/gang</span>
+    </div>`;
+
+  let body = '';
+  if(b.status === 'requested') {
+    body = isProvider
+      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>📩</span><div><b>Forespørsel om fast avtale fra ${otherName}</b> – ${recLabel}, fra ${formatDateShort(b.scheduled_at)}, ${b.price} kr/gang.${b.note?'<br>«'+b.note+'»':''}</div></div>
+         <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft fast avtale</button>
+         <div style="display:flex;gap:8px;margin-top:8px">${chatBtn}<button onclick="declineBooking('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslå</button></div>`
+      : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Venter på at ${otherName} bekrefter den faste avtalen (${recLabel}).</div></div>
+         <div style="display:flex;gap:8px;margin-top:12px">${chatBtn}</div>`;
+  } else if(b.status === 'active' || b.status === 'paused') {
+    const open = sessions.find(s => s.status !== 'completed');
+    const done = sessions.filter(s => s.status === 'completed');
+    const next = b.status === 'active' ? nextRecurrenceDate(b.recurrence, b.scheduled_at) : null;
+
+    const nextBlock = (b.status === 'active' && !open && next) ? `
+      <div style="display:flex;align-items:center;gap:12px;background:rgba(59,111,245,.07);border:1px solid rgba(59,111,245,.2);border-radius:12px;padding:12px 14px;margin-top:14px">
+        <div style="width:42px;height:46px;border-radius:9px;background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+          <div style="font-size:8px;font-weight:800;letter-spacing:.5px;background:var(--accent);color:#fff;width:100%;text-align:center;padding:1px 0">${next.toLocaleDateString('nb-NO',{month:'short'}).toUpperCase()}</div>
+          <div style="font-size:18px;font-weight:800;line-height:1.3">${next.getDate()}</div>
+        </div>
+        <div><div style="font-size:13px;font-weight:700">Neste: ${formatDateShort(next)}</div><div style="font-size:11.5px;color:var(--muted)">Beregnet automatisk fra avtalen</div></div>
+      </div>` : '';
+
+    const pauseBadge = b.status === 'paused'
+      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(245,158,11,0.09);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:10px 12px;margin-top:14px;font-size:12px;color:#b45309;line-height:1.5"><span>⏸️</span><div>Avtalen er på pause. ${isProvider?'Trykk gjenoppta for å fortsette.':'Tilbyder har satt avtalen på pause.'}</div></div>`
+      : '';
+
+    const rows = [];
+    if(open) rows.push(sessionRow(open));
+    done.forEach(s => rows.push(sessionRow(s)));
+    const log = `<div style="margin-top:14px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:2px">Logg · ${done.length} gjort opp</div>${rows.length?rows.join(''):'<div style="font-size:12px;color:var(--muted);padding:8px 0">Ingen turer registrert ennå.</div>'}</div>`;
+
+    const handshake = open ? sessionHandshake(open, isProvider, convId, chatBtn) : '';
+
+    let actions = '';
+    if(isProvider) {
+      const registerBtn = (b.status === 'active' && !open)
+        ? `<button onclick="registerSession('${b.id}')" style="width:100%;background:var(--surface);border:1.5px solid var(--green);color:var(--green);border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:14px">➕ Registrer utført tur</button>`
+        : '';
+      const pauseResume = b.status === 'active'
+        ? `<button onclick="pauseAgreement('${b.id}')" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">⏸️ Pause</button>`
+        : `<button onclick="resumeAgreement('${b.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">▶️ Gjenoppta</button>`;
+      actions = `${registerBtn}<div style="display:flex;gap:8px;margin-top:8px">${open?chatBtn:pauseResume}<button onclick="cancelAgreement('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button></div>${open?`<div style="display:flex;gap:8px;margin-top:8px">${pauseResume}</div>`:''}`;
+    } else {
+      actions = `<div style="display:flex;gap:8px;margin-top:14px">${chatBtn}<button onclick="cancelAgreement('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button></div>`;
+    }
+
+    body = `${pauseBadge}${nextBlock}${log}${handshake}${actions}`;
+  } else {
+    body = `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>•</span><div>${b.status==='declined'?'Forespørselen om fast avtale ble avslått.':'Den faste avtalen er avsluttet.'}</div></div>`;
+  }
+
+  const activeCard = b.status === 'active' || b.status === 'paused';
+  return `<div style="background:var(--surface);border:1.5px solid ${b.status==='active'?'var(--green)':'var(--border)'};border-radius:14px;overflow:hidden${b.status==='active'?';box-shadow:0 2px 12px rgba(15,169,104,0.15)':''}">
+    <div style="padding:14px 16px">${head}${body}</div></div>`;
+}
+
+async function registerSession(id) {
+  const { data: a } = await sb.from('bookings').select('provider_id, customer_id, status, price, service_id, conversation_id, service:service_id(title)').eq('id', id).single();
+  if(!a || a.provider_id !== currentUser?.id) { showToast('⚠️ Kun tilbyder kan registrere'); return; }
+  if(a.status !== 'active') { showToast('⚠️ Avtalen er ikke aktiv'); return; }
+  const { data: open } = await sb.from('bookings').select('id').eq('parent_id', id).neq('status','completed').limit(1);
+  if(open?.length) { showToast('Forrige tur er ikke gjort opp ennå'); return; }
+  if(!confirm('Registrere en utført tur? Kunden får beskjed om å betale.')) return;
+  const now = new Date().toISOString();
+  const { error } = await sb.from('bookings').insert({
+    parent_id: id, service_id: a.service_id, conversation_id: a.conversation_id,
+    customer_id: a.customer_id, provider_id: a.provider_id,
+    kind: 'session', scheduled_at: now, price: a.price, status: 'confirmed', work_done_at: now
+  });
+  if(error) { showToast('❌ ' + error.message); return; }
+  await sb.from('notifications').insert({ user_id: a.customer_id, type: 'booking_workdone', title: '🔨 Tur utført', body: `${a.service?.title || 'Fast avtale'} – tilbyder registrerte en utført tur. Klar for betaling.`, link_id: id });
+  showToast('🔨 Tur registrert. Kunden er varslet.');
+  loadBookings();
+}
+
+async function sessionMarkPaid(id) {
+  const { data: s } = await sb.from('bookings').select('provider_id, customer_id, status, parent_id, service:service_id(title)').eq('id', id).single();
+  if(!s || s.customer_id !== currentUser?.id) { showToast('⚠️ Kun kunden kan markere betalt'); return; }
+  if(s.status !== 'confirmed') { showToast('⚠️ Turen er allerede gjort opp'); return; }
+  if(!confirm('Bekrefte at du har betalt for denne turen?')) return;
+  await sb.from('bookings').update({ giver_paid_at: new Date().toISOString() }).eq('id', id);
+  await sb.from('notifications').insert({ user_id: s.provider_id, type: 'booking_paid', title: '💸 Betaling sendt', body: `${s.service?.title || 'Fast avtale'} – kunden har betalt for en tur. Bekreft mottak.`, link_id: s.parent_id });
+  showToast('✅ Markert som betalt. Venter på tilbyders bekreftelse.');
+  loadBookings();
+}
+
+async function sessionConfirmReceived(id) {
+  const { data: s } = await sb.from('bookings').select('provider_id, customer_id, status, parent_id, service:service_id(title)').eq('id', id).single();
+  if(!s || s.provider_id !== currentUser?.id) { showToast('⚠️ Kun tilbyder kan bekrefte'); return; }
+  if(s.status !== 'confirmed') { showToast('⚠️ Turen er allerede gjort opp'); return; }
+  if(!confirm('Bekrefte at du har mottatt betaling for denne turen?')) return;
+  await sb.from('bookings').update({ status: 'completed', taker_confirmed_at: new Date().toISOString() }).eq('id', id);
+  await sb.from('notifications').insert({ user_id: s.customer_id, type: 'booking_session', title: '✅ Tur gjort opp', body: `${s.service?.title || 'Fast avtale'} – tilbyder bekreftet betaling for turen.`, link_id: s.parent_id });
+  showToast('🎉 Tur gjort opp!');
+  loadBookings();
+}
+
+async function pauseAgreement(id) {
+  const { data: a } = await sb.from('bookings').select('provider_id, customer_id, status').eq('id', id).single();
+  if(!a || (a.provider_id !== currentUser?.id && a.customer_id !== currentUser?.id)) return;
+  if(a.status !== 'active') return;
+  await sb.from('bookings').update({ status: 'paused' }).eq('id', id);
+  showToast('⏸️ Avtale satt på pause');
+  loadBookings();
+}
+
+async function resumeAgreement(id) {
+  const { data: a } = await sb.from('bookings').select('provider_id, customer_id, status').eq('id', id).single();
+  if(!a || (a.provider_id !== currentUser?.id && a.customer_id !== currentUser?.id)) return;
+  if(a.status !== 'paused') return;
+  await sb.from('bookings').update({ status: 'active' }).eq('id', id);
+  showToast('▶️ Avtale gjenopptatt');
+  loadBookings();
+}
+
+async function cancelAgreement(id) {
+  if(!confirm('Avslutte den faste avtalen? Dette kan ikke angres.')) return;
+  const { data: a } = await sb.from('bookings').select('provider_id, customer_id, service:service_id(title)').eq('id', id).single();
+  if(!a || (a.provider_id !== currentUser?.id && a.customer_id !== currentUser?.id)) return;
+  await sb.from('bookings').update({ status: 'cancelled' }).eq('id', id);
+  const other = a.provider_id === currentUser.id ? a.customer_id : a.provider_id;
+  await sb.from('notifications').insert({ user_id: other, type: 'booking_cancelled', title: 'Fast avtale avsluttet', body: `${a.service?.title || 'Den faste avtalen'} er avsluttet.`, link_id: id });
+  showToast('Avtale avsluttet');
+  loadBookings();
+}
+
 async function confirmBooking(id) {
-  const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, scheduled_at, service:service_id(title)').eq('id', id).single();
+  const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, kind, recurrence, scheduled_at, service:service_id(title)').eq('id', id).single();
   if(!b || b.provider_id !== currentUser?.id) { showToast('⚠️ Kun tilbyder kan bekrefte'); return; }
   if(b.status !== 'requested') { showToast('Allerede behandlet'); return; }
-  await sb.from('bookings').update({ status: 'confirmed' }).eq('id', id);
+  const recurring = b.kind === 'recurring';
+  await sb.from('bookings').update({ status: recurring ? 'active' : 'confirmed' }).eq('id', id);
   await sb.from('notifications').insert({
     user_id: b.customer_id, type: 'booking_confirmed',
-    title: '🤝 Avtale bekreftet!',
-    body: `${b.service?.title || 'Avtalen'} er bekreftet – ${formatBookingWhen(b.scheduled_at)}.`,
+    title: recurring ? '🤝 Fast avtale bekreftet!' : '🤝 Avtale bekreftet!',
+    body: recurring
+      ? `${b.service?.title || 'Avtalen'} er aktiv – ${recurrenceLabel(b.recurrence)}.`
+      : `${b.service?.title || 'Avtalen'} er bekreftet – ${formatBookingWhen(b.scheduled_at)}.`,
     link_id: id
   });
-  showToast('🤝 Avtale bekreftet!');
+  showToast(recurring ? '🤝 Fast avtale aktivert!' : '🤝 Avtale bekreftet!');
   loadBookings();
 }
 
@@ -7312,7 +7580,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <!-- Tags -->
     <div id="service-tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
 
-    <button onclick="openBookingRequest()" style="width:100%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-bottom:8px">
+    <button id="service-cta-recurring" onclick="openBookingRequest('recurring')" style="display:none;width:100%;background:linear-gradient(135deg,#3b6ff5,#6366f1);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-bottom:8px">
+      🔄 Be om fast avtale
+    </button>
+    <button onclick="openBookingRequest('once')" style="width:100%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-bottom:8px">
       📅 Be om avtale
     </button>
     <button onclick="contactService()" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
