@@ -4727,13 +4727,14 @@ async function loadMyQuests() {
   }
 
   const postedEl = document.getElementById('mq-posted');
-  if(!posted || posted.length === 0) {
-    postedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke lagt ut noen oppdrag ennå.<br><span style="font-size:10px;opacity:0.6">(0 oppdrag funnet for denne kontoen)</span><br><br><button onclick="closeMyQuests();openModal()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Legg ut ditt første oppdrag</button></div>';
+  const visiblePosted = (posted || []).filter(q => q.status !== 'closed' && q.status !== 'deleted');
+  if(visiblePosted.length === 0) {
+    postedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke lagt ut noen oppdrag ennå.<br><span style="font-size:10px;opacity:0.6">(0 aktive oppdrag funnet for denne kontoen)</span><br><br><button onclick="closeMyQuests();openModal()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Legg ut ditt første oppdrag</button></div>';
   } else {
     try {
-      postedEl.innerHTML = posted.map(q => questCard(q, 'posted')).join('');
+      postedEl.innerHTML = visiblePosted.map(q => questCard(q, 'posted')).join('');
     } catch(renderErr) {
-      postedEl.innerHTML = '<div style="padding:20px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.3);border-radius:12px;font-size:12px;color:var(--red)"><strong>⚠️ Visningsfeil:</strong><br>' + renderErr.message + '<br><br>Fant ' + posted.length + ' oppdrag, men kunne ikke vise dem. Send denne meldingen til utvikleren.</div>';
+      postedEl.innerHTML = '<div style="padding:20px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.3);border-radius:12px;font-size:12px;color:var(--red)"><strong>⚠️ Visningsfeil:</strong><br>' + renderErr.message + '<br><br>Fant ' + visiblePosted.length + ' oppdrag, men kunne ikke vise dem. Send denne meldingen til utvikleren.</div>';
     }
   }
 
@@ -5019,7 +5020,7 @@ function questCard(q, type) {
         ${(q.status==='open'||q.status==='paused') ? `<button onclick="sb.from('quests').select('*').eq('id','${q.id}').single().then(r=>r.data&&showEditQuestModal(r.data))" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✏️ Endre</button>` : ''}
         ${q.status==='open' ? `<button onclick="pauseQuest('${q.id}')" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⏸️ Pause</button>` : ''}
         ${q.status==='paused' ? `<button onclick="resumeQuest('${q.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">▶️ Gjenåpne</button>` : ''}
-        ${(q.status==='open'||q.status==='paused') ? `<button onclick="closeQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button>` : ''}
+        ${((q.status==='open'||q.status==='paused') && !activeConv) ? `<button onclick="closeQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button>` : ''}
         ${q.status==='expired' ? `<button onclick="repostQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔄 Legg ut på nytt</button>` : ''}
       </div>`}
     </div>
@@ -5227,7 +5228,13 @@ async function resumeQuest(questId) {
 }
 
 async function closeQuest(questId) {
-  if(!confirm('Avslutte oppdraget? Det vil ikke lenger vises på kartet.')) return;
+  // Block closing if the quest is already assigned to someone (accepted applicant)
+  const { data: convs } = await sb.from('conversations').select('status').eq('quest_id', questId);
+  if((convs || []).some(c => c.status === 'accepted')) {
+    showToast('🔒 Kan ikke avslutte – oppdraget er allerede tildelt noen.');
+    return;
+  }
+  if(!confirm('Avslutte oppdraget? Det fjernes fra kartet og fra Mine oppdrag.')) return;
   await sb.from('quests').update({ status: 'closed' }).eq('id', questId);
   showToast('🔴 Oppdrag avsluttet');
   loadMyQuests();
