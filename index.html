@@ -4572,9 +4572,20 @@ async function handleNotifClick(notifId, type, linkId) {
 }
 
 async function markAllRead() {
-  await sb.from('notifications').update({ read: true }).eq('user_id', currentUser.id);
-  loadNotifications();
+  if(!currentUser) return;
+  const { data, error } = await sb.from('notifications')
+    .update({ read: true })
+    .eq('user_id', currentUser.id)
+    .eq('read', false)
+    .select('id');
+  if(error) {
+    console.error('markAllRead error:', error);
+    alert((currentLang === 'en' ? 'Could not mark all as read: ' : 'Kunne ikke merke alle som lest: ') + error.message);
+    return;
+  }
+  // Optimistisk: nullstill badge umiddelbart, så bekreft mot DB
   updateNotifBadge(0);
+  await loadNotifications();
 }
 
 function updateNotifBadge(count) {
