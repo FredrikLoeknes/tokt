@@ -5903,13 +5903,14 @@ async function contactService() {
   if(error) { showToast('❌ Feil: ' + error.message); return; }
 
   // Notify provider (also sends email via Edge Function)
-  await sb.from('notifications').insert({
+  const { error: contactNotifErr } = await sb.from('notifications').insert({
     user_id: svc.raw.user_id,
     type: 'application',
     title: '🏪 Ny henvendelse på tjenesten din!',
     body: `${myProfile.full_name || 'En bruker'} er interessert i «${svc.title}». Åpne chatten og avtal tid.`,
     link_id: conv.id
   });
+  if(contactNotifErr) console.error('service contact notif error:', contactNotifErr);
 
   showToast('💬 Chat åpnet! Avtal tid med tilbyderen.');
   openChat(conv.id, svc.title);
@@ -6127,7 +6128,7 @@ async function submitBookingRequest() {
   if(bErr) { showToast('❌ ' + bErr.message); if(btn){ btn.textContent='Send forespørsel →'; btn.disabled=false; } return; }
 
   const { data: me } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
-  await sb.from('notifications').insert({
+  const { error: notifErr } = await sb.from('notifications').insert({
     user_id: ctx.providerId, type: 'booking_request',
     title: recurring ? '🔄 Forespørsel om fast avtale' : '📅 Ny avtaleforespørsel',
     body: recurring
@@ -6135,6 +6136,7 @@ async function submitBookingRequest() {
       : `${me?.full_name || 'En kunde'} ber om «${ctx.title}» – ${formatBookingWhen(scheduledAt)}, ${price} kr.`,
     link_id: bk.id
   });
+  if(notifErr) console.error('booking_request notif error:', notifErr);
 
   closeBookingModal();
   showToast('📅 Forespørsel sendt! Du får beskjed når den bekreftes.');
