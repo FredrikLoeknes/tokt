@@ -3984,6 +3984,8 @@ async function loadProfilePage(userId, isOwn) {
   // Vis/skjul egne seksjoner
   document.getElementById('pp-edit-section').style.display = isOwn ? 'block' : 'none';
   document.getElementById('pp-quests-section').style.display = isOwn ? 'block' : 'none';
+  const ppQuick = document.getElementById('pp-quicknav');
+  if(ppQuick) ppQuick.style.display = isOwn ? 'block' : 'none';
   const ppLogout = document.getElementById('pp-logout-section');
   if(ppLogout) ppLogout.style.display = isOwn ? 'block' : 'none';
   document.getElementById('pp-header-title').textContent = isOwn ? 'Min profil' : 'Profil';
@@ -4656,11 +4658,13 @@ function subscribeToNotifications() {
 }
 
 // ── MY QUESTS ──
-function openMyQuests() {
+function openMyQuests(tab) {
   if(!currentUser) { openAuth('login'); return; }
+  try { closeProfilePage(); } catch(e) {}
   document.getElementById('myquests-panel').style.display = 'block';
   document.getElementById('profile-panel').style.display = 'none';
   loadMyQuests();
+  if(tab) switchMqTab(tab);
 }
 function closeMyQuests() {
   document.getElementById('myquests-panel').style.display = 'none';
@@ -7656,7 +7660,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
       </div>
     </div>
     <button onclick="document.getElementById('profile-panel').style.display='none';openProfilePage()" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">👤 Min profil</button>
-    <button onclick="openMyQuests()" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">📋 Mine oppdrag</button>
+    <button onclick="openMyQuests('posted')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">📋 Mine oppdrag</button>
+    <button onclick="openMyQuests('bookings')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">📅 Mine avtaler</button>
 <button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">Logg ut</button>
   </div>
 </div>
@@ -8056,6 +8061,18 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
     <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">
       <div id="pp-xp-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#f97316,#a855f7);border-radius:4px;transition:width .4s ease"></div>
+    </div>
+  </div>
+
+  <!-- Hurtigmeny (kun egen profil) -->
+  <div id="pp-quicknav" style="display:none;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
+    <div style="display:flex;gap:8px">
+      <button onclick="openMyQuests('posted')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span style="font-size:21px">📋</span><span style="font-size:11.5px;font-weight:700">Mine oppdrag</span></button>
+      <button onclick="openMyQuests('bookings')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span style="font-size:21px">📅</span><span style="font-size:11.5px;font-weight:700">Mine avtaler</span></button>
+      <button onclick="document.getElementById('pp-quests-section').scrollIntoView({behavior:'smooth',block:'start'})" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span style="font-size:21px">🏪</span><span style="font-size:11.5px;font-weight:700">Mine tjenester</span></button>
     </div>
   </div>
 
