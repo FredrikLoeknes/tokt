@@ -4510,6 +4510,19 @@ async function handleNotifClick(notifId, type, linkId) {
   else if(type === 'application') openMyQuests();
   else if(type === 'payment') openMyQuests();
   else if(type === 'work_done') openMyQuests();
+  else if(type && type.indexOf('booking') === 0) {
+    openMyQuests();
+    setTimeout(() => switchMqTab('bookings'), 80);
+    if(type === 'booking_done' && linkId) {
+      setTimeout(async () => {
+        const { data: b } = await sb.from('bookings').select('conversation_id, provider_id').eq('id', linkId).single();
+        if(b) {
+          const { data: pp } = await sb.from('profiles').select('full_name').eq('id', b.provider_id).single();
+          showRating(pp?.full_name || 'Tilbyder', b.conversation_id, b.provider_id, '');
+        }
+      }, 700);
+    }
+  }
   else if(type === 'completed' && linkId) {
     // Taker can rate the giver
     openMyQuests();
@@ -4648,10 +4661,12 @@ function closeMyQuests() {
 function switchMqTab(tab) {
   document.getElementById('mq-posted').style.display = tab==='posted' ? 'flex' : 'none';
   document.getElementById('mq-applied').style.display = tab==='applied' ? 'flex' : 'none';
+  const bk = document.getElementById('mq-bookings'); if(bk) bk.style.display = tab==='bookings' ? 'flex' : 'none';
   const activeStyle = 'background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)';
   const inactiveStyle = 'background:transparent;color:var(--muted);box-shadow:none';
   document.getElementById('mq-tab-posted').style.cssText += tab==='posted' ? activeStyle : inactiveStyle;
   document.getElementById('mq-tab-applied').style.cssText += tab==='applied' ? activeStyle : inactiveStyle;
+  const bt = document.getElementById('mq-tab-bookings'); if(bt) bt.style.cssText += tab==='bookings' ? activeStyle : inactiveStyle;
 }
 
 async function loadMyQuests() {
@@ -4749,6 +4764,8 @@ async function loadMyQuests() {
     if(done.length) html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:8px 0 2px">📜 Historikk</div>' + done.map(c => appliedCard(c, false)).join('');
     appliedEl.innerHTML = html || '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Ingen oppdrag ennå.</div>';
   }
+
+  loadBookings();
 }
 
 async function editQuestFromPanel() {
@@ -5796,6 +5813,288 @@ async function contactService() {
 
   showToast('💬 Chat åpnet! Avtal tid med tilbyderen.');
   openChat(conv.id, svc.title);
+}
+
+// ── BOOKINGS (avtaler) – Fase 1: engangsavtale ──
+function formatBookingWhen(iso) {
+  if(!iso) return '';
+  try {
+    const d = new Date(iso);
+    const date = d.toLocaleDateString('nb-NO', { weekday:'short', day:'numeric', month:'short' });
+    const time = d.toLocaleTimeString('nb-NO', { hour:'2-digit', minute:'2-digit' });
+    return `${date} kl ${time}`;
+  } catch(e) { return ''; }
+}
+
+function openBookingRequest() {
+  const svc = activeService;
+  if(!currentUser) { openAuth('login'); return; }
+  if(!svc?.raw?.id || !svc?.raw?.user_id) { closeServicePanel(); showToast('💬 Dette er en demo-tjeneste – test med ekte tjenester!'); return; }
+  if(svc.raw.user_id === currentUser.id) { showToast('⚠️ Dette er din egen tjeneste'); return; }
+
+  sb.from('profiles').select('phone').eq('id', currentUser.id).single().then(({ data: myProfile }) => {
+    if(!myProfile?.phone) { showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) for å be om avtale.'); return; }
+
+    window._bookingCtx = { serviceId: svc.raw.id, providerId: svc.raw.user_id, title: svc.title, price: svc.price || 0, priceType: svc.priceType };
+    const priceTypes = { per_visit:'per besøk', per_time:'per time', per_tur:'per tur', per_mnd:'per mnd', per_stk:'per stk' };
+    const ptLabel = priceTypes[svc.priceType] || '';
+    const tomorrow = new Date(Date.now() + 864e5).toISOString().slice(0,10);
+
+    let m = document.getElementById('booking-modal');
+    if(!m) { m = document.createElement('div'); m.id = 'booking-modal'; document.body.appendChild(m); }
+    m.style.cssText = 'position:fixed;inset:0;z-index:1150;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom));box-sizing:border-box';
+    m.innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)">
+        <div style="padding:16px 18px 12px;border-bottom:1px solid var(--border)">
+          <div style="font-family:'Skranji',cursive;font-size:18px">📅 Be om avtale</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px">${svc.title}</div>
+        </div>
+        <div style="padding:16px 18px">
+          <div style="display:flex;gap:10px;margin-bottom:12px">
+            <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Dato</label>
+              <input id="bk-date" type="date" min="${new Date().toISOString().slice(0,10)}" value="${tomorrow}" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
+            <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Tid</label>
+              <input id="bk-time" type="time" value="12:00" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
+          </div>
+          <div style="margin-bottom:12px"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Melding til tilbyder (valgfritt)</label>
+            <textarea id="bk-note" rows="2" placeholder="F.eks. adresse, portkode, ønsker…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;resize:none"></textarea></div>
+          <div style="margin-bottom:14px"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Avtalt pris ${ptLabel?'('+ptLabel+')':''}</label>
+            <div style="display:flex;align-items:center;gap:8px"><input id="bk-price" type="number" value="${svc.price||0}" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"><span style="font-size:14px;font-weight:700;color:var(--muted)">kr</span></div></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>Tilbyder må bekrefte før avtalen er aktiv. Betaling skjer direkte via Vipps – Tokt tar ingen provisjon.</div></div>
+          <div style="display:flex;gap:10px">
+            <button onclick="closeBookingModal()" style="flex:0 0 auto;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Avbryt</button>
+            <button id="bk-submit" onclick="submitBookingRequest()" style="flex:1;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(124,92,252,.3)">Send forespørsel →</button>
+          </div>
+        </div>
+      </div>`;
+    m.onclick = (e) => { if(e.target === m) closeBookingModal(); };
+    closeServicePanel();
+    m.style.display = 'flex';
+  });
+}
+
+function closeBookingModal() {
+  const m = document.getElementById('booking-modal');
+  if(m) m.style.display = 'none';
+}
+
+async function submitBookingRequest() {
+  const ctx = window._bookingCtx;
+  if(!ctx) return;
+  const date = document.getElementById('bk-date')?.value;
+  const time = document.getElementById('bk-time')?.value || '12:00';
+  const note = document.getElementById('bk-note')?.value?.trim() || null;
+  const price = parseInt(document.getElementById('bk-price')?.value) || ctx.price || 0;
+  if(!date) { showToast('⚠️ Velg en dato'); return; }
+  const scheduledAt = new Date(date + 'T' + time).toISOString();
+  const btn = document.getElementById('bk-submit');
+  if(btn) { btn.textContent = 'Sender…'; btn.disabled = true; }
+
+  // Reuse existing service conversation for this customer, else create one
+  let convId;
+  const { data: existing } = await sb.from('conversations').select('id').eq('service_id', ctx.serviceId).eq('giver_id', currentUser.id).limit(1);
+  if(existing?.length) {
+    convId = existing[0].id;
+  } else {
+    const { data: conv, error: cErr } = await sb.from('conversations')
+      .insert({ service_id: ctx.serviceId, giver_id: currentUser.id, taker_id: ctx.providerId, status: 'accepted' })
+      .select().single();
+    if(cErr) { showToast('❌ ' + cErr.message); if(btn){ btn.textContent='Send forespørsel →'; btn.disabled=false; } return; }
+    convId = conv.id;
+  }
+
+  const { data: bk, error: bErr } = await sb.from('bookings').insert({
+    service_id: ctx.serviceId, conversation_id: convId,
+    customer_id: currentUser.id, provider_id: ctx.providerId,
+    kind: 'once', scheduled_at: scheduledAt, price, note, status: 'requested'
+  }).select().single();
+
+  if(bErr) { showToast('❌ ' + bErr.message); if(btn){ btn.textContent='Send forespørsel →'; btn.disabled=false; } return; }
+
+  const { data: me } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
+  await sb.from('notifications').insert({
+    user_id: ctx.providerId, type: 'booking_request',
+    title: '📅 Ny avtaleforespørsel',
+    body: `${me?.full_name || 'En kunde'} ber om «${ctx.title}» – ${formatBookingWhen(scheduledAt)}, ${price} kr.`,
+    link_id: bk.id
+  });
+
+  closeBookingModal();
+  showToast('📅 Forespørsel sendt! Du får beskjed når den bekreftes.');
+  openMyQuests();
+  setTimeout(() => switchMqTab('bookings'), 60);
+}
+
+async function loadBookings() {
+  const el = document.getElementById('mq-bookings');
+  if(!el || !currentUser) return;
+  const { data: bks, error } = await sb.from('bookings')
+    .select('*, service:service_id(title)')
+    .or(`customer_id.eq.${currentUser.id},provider_id.eq.${currentUser.id}`)
+    .is('parent_id', null)
+    .order('created_at', { ascending: false });
+
+  if(error) { console.error('loadBookings error:', error.message); el.innerHTML = '<div style="padding:16px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.3);border-radius:12px;font-size:12px;color:var(--red)">⚠️ Kunne ikke hente avtaler: ' + error.message + '</div>'; return; }
+  if(!bks || bks.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Ingen avtaler ennå.<br>Be om en avtale fra en tjeneste på kartet 🏪</div>';
+    return;
+  }
+
+  const otherIds = [...new Set(bks.map(b => b.customer_id === currentUser.id ? b.provider_id : b.customer_id).filter(Boolean))];
+  const nameMap = {};
+  if(otherIds.length) {
+    const { data: profs } = await sb.from('profiles').select('id, full_name').in('id', otherIds);
+    (profs||[]).forEach(p => nameMap[p.id] = p.full_name);
+  }
+  el.innerHTML = bks.map(b => bookingCard(b, nameMap)).join('');
+}
+
+function bookingCard(b, nameMap) {
+  const isProvider = b.provider_id === currentUser.id;
+  const otherName = (nameMap[isProvider ? b.customer_id : b.provider_id] || 'Bruker');
+  const safeName = otherName.replace(/'/g, "\\'");
+  const title = b.service?.title || 'Tjeneste';
+  const safeTitle = title.replace(/'/g, "\\'");
+  const when = formatBookingWhen(b.scheduled_at);
+  const convId = b.conversation_id || '';
+  const paid = !!b.giver_paid_at;
+
+  const statusMap = {
+    requested:['⏳ Forespurt','#f97316'], confirmed:['🤝 Bekreftet','var(--green)'],
+    completed:['🏆 Fullført','var(--accent)'], declined:['✕ Avslått','var(--muted)'], cancelled:['✕ Avlyst','var(--muted)']
+  };
+  const [stLabel, stCol] = statusMap[b.status] || ['•','var(--muted)'];
+  const chatBtn = convId ? `<button onclick="window._chatOtherName='${safeName}';openChat('${convId}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : '';
+
+  const head = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+      <div style="font-size:15px;font-weight:700;flex:1;margin-right:8px">${title}</div>
+      <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px;background:${stCol}18;color:${stCol};border:1px solid ${stCol}44;white-space:nowrap">${stLabel}</span>
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:4px">
+      <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(124,92,252,0.12);color:var(--accent2);font-weight:700">🏪 ${isProvider?'Kunde: '+otherName:'Tjeneste'}</span>
+      <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);font-weight:700">${b.price} kr</span>
+      ${when?`<span style="font-size:11px;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">📅 ${when}</span>`:''}
+    </div>`;
+
+  let body = '';
+  if(b.status === 'requested') {
+    body = isProvider
+      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>📩</span><div><b>Ny forespørsel fra ${otherName}</b> – ${when}, ${b.price} kr.${b.note?'<br>«'+b.note+'»':''}</div></div>
+         <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft avtale</button>
+         <div style="display:flex;gap:8px;margin-top:8px">${chatBtn}<button onclick="declineBooking('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslå</button></div>`
+      : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Venter på at ${otherName} bekrefter tid og pris.</div></div>
+         <div style="display:flex;gap:8px;margin-top:12px">${chatBtn}</div>`;
+  } else if(b.status === 'confirmed') {
+    const tracker = completionTracker(paid, false);
+    if(isProvider) {
+      // provider = utfører (taker)
+      body = `${tracker}
+        <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>${b.work_done_at?'⏳':'ℹ️'}</span><div>${b.work_done_at?'Du har meldt avtalen utført. Venter på betaling fra kunden.':'Meld fra når jobben er gjort, så får kunden beskjed om å betale.'}</div></div>
+        ${b.work_done_at
+          ? `<div style="display:flex;align-items:center;gap:7px;margin-top:12px;font-size:12px;font-weight:700;color:var(--green)">🔨 Du meldte avtalen utført</div>`
+          : `<button onclick="bookingMarkDone('${b.id}')" style="width:100%;background:var(--surface);border:1.5px solid var(--green);color:var(--green);border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">🔨 Jeg er ferdig – gi beskjed</button>`}
+        <button onclick="bookingConfirmReceived('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Jeg har mottatt betaling</button>
+        <div style="display:flex;gap:8px;margin-top:8px"><button onclick="showChatPaymentInfoFor('${convId}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>${chatBtn}</div>`;
+    } else {
+      // customer = betaler (giver)
+      body = `${tracker}
+        <div style="display:flex;gap:8px;align-items:flex-start;background:${b.work_done_at?'rgba(15,169,104,0.09)':'var(--surface2)'};${b.work_done_at?'border:1px solid rgba(15,169,104,0.25);':''}border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:${b.work_done_at?'var(--text)':'var(--muted)'};line-height:1.5"><span>${b.work_done_at?'🔨':'📅'}</span><div>${b.work_done_at?'<b>Tilbyder melder utført.</b> Betal via Vipps og marker betalt.':'Avtale bekreftet. Møt opp til avtalt tid.'}</div></div>
+        <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#ff5b24;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">💸 Betal med Vipps</button>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          ${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="bookingMarkPaid('${b.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}
+          ${chatBtn}
+        </div>`;
+    }
+  } else if(b.status === 'completed') {
+    body = `<div style="display:flex;align-items:center;gap:10px;background:rgba(59,111,245,0.07);border:1px solid rgba(59,111,245,0.22);border-radius:12px;padding:13px 15px;margin-top:12px">
+      <span style="font-size:22px">🏆</span>
+      <div style="font-size:13px;font-weight:700;color:var(--accent)">Avtale fullført${isProvider?' – betaling bekreftet':' – du betalte'}<small style="display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px">${isProvider?'Vurder kunden fra varselet, om du vil.':'Vil du vurdere tilbyderen?'}</small></div></div>
+      ${!isProvider && convId?`<button onclick="showRating('${safeName}','${convId}','${b.provider_id}','')" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">⭐ Gi vurdering</button>`:''}`;
+  } else {
+    body = `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>•</span><div>${b.status==='declined'?'Forespørselen ble avslått.':'Avtalen er avlyst.'}</div></div>`;
+  }
+
+  const active = b.status === 'confirmed';
+  return `<div style="background:var(--surface);border:1.5px solid ${active?'var(--green)':'var(--border)'};border-radius:14px;overflow:hidden${active?';box-shadow:0 2px 12px rgba(15,169,104,0.15)':''}">
+    <div style="padding:14px 16px">${head}${body}</div></div>`;
+}
+
+async function confirmBooking(id) {
+  const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, scheduled_at, service:service_id(title)').eq('id', id).single();
+  if(!b || b.provider_id !== currentUser?.id) { showToast('⚠️ Kun tilbyder kan bekrefte'); return; }
+  if(b.status !== 'requested') { showToast('Allerede behandlet'); return; }
+  await sb.from('bookings').update({ status: 'confirmed' }).eq('id', id);
+  await sb.from('notifications').insert({
+    user_id: b.customer_id, type: 'booking_confirmed',
+    title: '🤝 Avtale bekreftet!',
+    body: `${b.service?.title || 'Avtalen'} er bekreftet – ${formatBookingWhen(b.scheduled_at)}.`,
+    link_id: id
+  });
+  showToast('🤝 Avtale bekreftet!');
+  loadBookings();
+}
+
+async function declineBooking(id) {
+  if(!confirm('Avslå denne forespørselen?')) return;
+  const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, service:service_id(title)').eq('id', id).single();
+  if(!b || b.provider_id !== currentUser?.id) return;
+  await sb.from('bookings').update({ status: 'declined' }).eq('id', id);
+  await sb.from('notifications').insert({
+    user_id: b.customer_id, type: 'booking_declined',
+    title: 'Avtale avslått', body: `Tilbyder kunne dessverre ikke ta «${b.service?.title || 'avtalen'}» denne gangen.`,
+    link_id: id
+  });
+  showToast('Forespørsel avslått');
+  loadBookings();
+}
+
+async function bookingMarkDone(id) {
+  const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, work_done_at, service:service_id(title)').eq('id', id).single();
+  if(!b || b.provider_id !== currentUser?.id) { showToast('⚠️ Kun tilbyder kan melde utført'); return; }
+  if(b.status !== 'confirmed') { showToast('⚠️ Avtalen er ikke bekreftet'); return; }
+  if(b.work_done_at) { showToast('Allerede meldt utført'); return; }
+  if(!confirm('Melde avtalen som utført? Kunden får beskjed om å betale.')) return;
+  await sb.from('bookings').update({ work_done_at: new Date().toISOString() }).eq('id', id);
+  await sb.from('notifications').insert({
+    user_id: b.customer_id, type: 'booking_workdone',
+    title: '🔨 Tjeneste utført', body: `${b.service?.title || 'Avtalen'} – tilbyder melder at jobben er gjort. Klar for betaling.`,
+    link_id: id
+  });
+  showToast('🔨 Kunden er varslet. Klar for betaling!');
+  loadBookings();
+}
+
+async function bookingMarkPaid(id) {
+  const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, service:service_id(title)').eq('id', id).single();
+  if(!b || b.customer_id !== currentUser?.id) { showToast('⚠️ Kun kunden kan markere betalt'); return; }
+  if(b.status !== 'confirmed') { showToast('⚠️ Avtalen er ikke bekreftet'); return; }
+  if(!confirm('Bekrefte at du har betalt tilbyder via Vipps?')) return;
+  await sb.from('bookings').update({ giver_paid_at: new Date().toISOString() }).eq('id', id);
+  await sb.from('notifications').insert({
+    user_id: b.provider_id, type: 'booking_paid',
+    title: '💸 Betaling sendt', body: `${b.service?.title || 'Avtalen'} – kunden har markert betaling som sendt. Bekreft når du har mottatt den.`,
+    link_id: id
+  });
+  showToast('✅ Markert som betalt. Venter på tilbyders bekreftelse.');
+  loadBookings();
+}
+
+async function bookingConfirmReceived(id) {
+  const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, conversation_id, service:service_id(title)').eq('id', id).single();
+  if(!b || b.provider_id !== currentUser?.id) { showToast('⚠️ Kun tilbyder kan bekrefte betaling'); return; }
+  if(b.status !== 'confirmed') { showToast('⚠️ Avtalen er ikke aktiv'); return; }
+  if(!confirm('Bekrefte at du har mottatt betaling? Dette fullfører avtalen.')) return;
+  await sb.from('bookings').update({ status: 'completed', taker_confirmed_at: new Date().toISOString() }).eq('id', id);
+  await sb.from('notifications').insert({
+    user_id: b.customer_id, type: 'booking_done',
+    title: '🏆 Avtale fullført!', body: `${b.service?.title || 'Avtalen'} er bekreftet fullført. Vurder tilbyderen?`,
+    link_id: id
+  });
+  showToast('🎉 Betaling bekreftet og avtale fullført!');
+  loadBookings();
+  const { data: cp } = await sb.from('profiles').select('full_name').eq('id', b.customer_id).single();
+  showRating(cp?.full_name || 'Kunde', b.conversation_id, b.customer_id, '');
 }
 
 function openServiceModal() {
@@ -6958,10 +7257,12 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:20px;border:1px solid var(--border)">
       <button id="mq-tab-posted" onclick="switchMqTab('posted')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">📋 Lagt ut</button>
       <button id="mq-tab-applied" onclick="switchMqTab('applied')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s">🙋 Søkt på</button>
+      <button id="mq-tab-bookings" onclick="switchMqTab('bookings')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s">📅 Avtaler</button>
     </div>
 
     <div id="mq-posted" style="display:flex;flex-direction:column;gap:12px"></div>
     <div id="mq-applied" style="display:none;flex-direction:column;gap:12px"></div>
+    <div id="mq-bookings" style="display:none;flex-direction:column;gap:12px"></div>
   </div>
 </div>
 
@@ -7011,7 +7312,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <!-- Tags -->
     <div id="service-tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
 
-    <button onclick="contactService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#3b6ff5);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">
+    <button onclick="openBookingRequest()" style="width:100%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-bottom:8px">
+      📅 Be om avtale
+    </button>
+    <button onclick="contactService()" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
       💬 Kontakt tilbyder
     </button>
   </div>
