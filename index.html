@@ -360,11 +360,11 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   box-shadow:var(--shadow); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
 }
 .qp-icon { position:relative; z-index:1; pointer-events:none; }
-.qp-img  { position:absolute; inset:0; z-index:1; width:100%; height:100%; border-radius:50%; object-fit:cover; }
+.qp-img  { position:absolute; inset:2.5px; z-index:1; border-radius:50%; object-fit:cover; }
 
 /* shape variants */
 .shape-square  .qp-shape { border-radius:11px; }
-.shape-square  .qp-img   { border-radius:9px; }
+.shape-square  .qp-img   { border-radius:8px; }
 .shape-diamond .qp-shape { inset:auto; top:6px; left:6px; width:30px; height:30px; border-radius:7px; transform:rotate(45deg); }
 .shape-diamond .qp-img   { border-radius:0; clip-path:polygon(50% 2%,98% 50%,50% 98%,2% 50%); }
 .shape-triangle .qp-shape svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; filter:drop-shadow(var(--shadow-sm)); }
@@ -4817,9 +4817,9 @@ function showEditQuestModal(q) {
   const cats = ['🏠 Hjem og hage','🚗 Kjøring og transport','🛒 Handel og ærend','🐕 Dyr','🔧 Håndverk og montering','👴 Eldre og selskap','📦 Bære og flytte','🧹 Rengjøring','🗑️ Dynga','🤝 Dugnad','💻 Teknologi og IT','🚘 Bil og kjøretøy','👶 Barn og familie','🎉 Fest og arrangement','🍕 Mat og matlaging','📸 Foto og video','💇 Hår og skjønnhet','🐾 Dyrepass','🌿 Hagearbeid','🔑 Nøkler og ærend','🛠️ Småfiks','🎓 Undervisning og leksehjelp','✨ Annet'];
   const overlay = document.createElement('div');
   overlay.id = 'edit-quest-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom));box-sizing:border-box';
   overlay.innerHTML = `
-    <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90svh;overflow-y:auto;padding:24px 20px 80px;box-sizing:border-box">
+    <div style="background:var(--surface);border-radius:20px;width:100%;max-width:520px;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);max-height:calc(100svh - 40px);overflow-y:auto;padding:24px 20px;box-sizing:border-box">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
         <div style="font-size:18px;font-weight:800">✏️ Endre oppdrag</div>
         <button onclick="document.getElementById('edit-quest-overlay').remove()" style="background:var(--surface2);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--muted)">✕</button>
@@ -4860,9 +4860,9 @@ async function editServiceById(serviceId) {
   if(existing) existing.remove();
   const overlay = document.createElement('div');
   overlay.id = 'edit-svc-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom));box-sizing:border-box';
   overlay.innerHTML = `
-    <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90svh;overflow-y:auto;padding:24px 20px 80px;box-sizing:border-box">
+    <div style="background:var(--surface);border-radius:20px;width:100%;max-width:520px;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);max-height:calc(100svh - 40px);overflow-y:auto;padding:24px 20px;box-sizing:border-box">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
         <div style="font-size:18px;font-weight:800">✏️ Endre tjeneste</div>
         <button onclick="document.getElementById('edit-svc-overlay').remove()" style="background:var(--surface2);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--muted)">✕</button>
