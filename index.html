@@ -5026,6 +5026,13 @@ async function loadMyQuests() {
       </div>`;
 
     let html = '';
+    if(active.length || waiting.length || done.length) {
+      html += countStrip([
+        { n: active.length, col: 'var(--green)', lab: '🔥 Aktive' },
+        { n: waiting.length, col: '#f97316', lab: '🙋 Søkt' },
+        { n: done.length, col: 'var(--muted)', lab: '🏆 Historikk' }
+      ]);
+    }
     if(active.length) {
       html += `<div style="background:linear-gradient(180deg,rgba(15,169,104,.07),rgba(15,169,104,.02));border:1px solid rgba(15,169,104,.22);border-radius:18px;padding:14px 12px;margin-bottom:20px">`
         + secHead(active.length, 'var(--green)', '#fff', 'var(--green)', '🔥 Aktive oppdrag', '— du har fått disse')
@@ -5204,6 +5211,15 @@ function giverTakenBlock(q, conv) {
         ${chatBtn}
       </div>
     </div>`;
+}
+
+// Felles tellestripe – brukes på flere faner
+function countStrip(cards) {
+  return `<div style="display:flex;gap:6px;margin-bottom:16px">` +
+    cards.map(c => `<div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 4px;text-align:center">
+      <div style="font-size:17px;font-weight:800;line-height:1;color:${c.col}">${c.n}</div>
+      <div style="font-size:9.5px;color:var(--muted);font-weight:600;margin-top:3px">${c.lab}</div>
+    </div>`).join('') + `</div>`;
 }
 
 // Klassifiser et eget oppdrag i en gruppe for «Lagt ut»-fanen
@@ -6508,7 +6524,32 @@ async function renderTilbud() {
     el.innerHTML = '<div style="text-align:center;padding:36px 20px;color:var(--muted);font-size:13px">Du tilbyr ingen tjenester ennå.<br>Legg ut det du kan hjelpe andre med 🏪</div>' + addBtn;
     return;
   }
-  el.innerHTML = services.map(s => tilbudRow(s)).join('') + addBtn;
+
+  const activeS = services.filter(s => s.status !== 'paused');
+  const pausedS = services.filter(s => s.status === 'paused');
+
+  const secHeadT = (n, bg, col, title, sub) =>
+    `<div style="display:flex;align-items:center;gap:8px;margin:0 2px 11px">
+      <span style="font-size:11px;font-weight:800;min-width:20px;height:20px;padding:0 6px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;background:${bg};color:${col}">${n}</span>
+      <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:${col}">${title}</span>
+      ${sub ? `<span style="font-size:11px;color:var(--muted);font-weight:500">${sub}</span>` : ''}
+    </div>`;
+
+  let html = countStrip([
+    { n: activeS.length, col: 'var(--green)', lab: '🟢 Aktive' },
+    { n: pausedS.length, col: '#f59e0b', lab: '⏸️ Pausede' }
+  ]);
+
+  if(activeS.length) {
+    html += secHeadT(activeS.length, 'var(--green)', 'var(--green)', '🟢 Aktive tilbud', '— synlig på kartet')
+      + `<div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px">` + activeS.map(s => tilbudRow(s)).join('') + `</div>`;
+  }
+  if(pausedS.length) {
+    html += secHeadT(pausedS.length, 'rgba(245,158,11,0.14)', '#f59e0b', '⏸️ Pausede tilbud', '— skjult fra kartet')
+      + `<div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px">` + pausedS.map(s => tilbudRow(s)).join('') + `</div>`;
+  }
+  html += addBtn;
+  el.innerHTML = '<div>' + html + '</div>';
 }
 
 function tilbudRow(s) {
@@ -6617,6 +6658,14 @@ async function renderBookingsGrouped() {
   const eDone   = oneoff.filter(b => ['completed','declined','cancelled'].includes(b.status));
 
   let eHtml = '';
+  if(eReqIn.length || eReqOut.length || eActive.length || eDone.length) {
+    eHtml += countStrip([
+      { n: eReqIn.length,  col: 'var(--green)', lab: '📩 Til deg' },
+      { n: eReqOut.length, col: '#f97316',      lab: '🙋 Søkt' },
+      { n: eActive.length, col: 'var(--green)', lab: '🤝 Aktive' },
+      { n: eDone.length,   col: 'var(--muted)', lab: '🏆 Ferdig' }
+    ]);
+  }
   if(eReqIn.length)  eHtml += tjSec('green',  eReqIn.length,  '📩 Forespørsler til deg', '— svar kunden')   + tjWrap(eReqIn.map(b => bookingCard(b, nameMap, [])).join(''));
   if(eReqOut.length) eHtml += tjSec('orange', eReqOut.length, '🙋 Søkt på', '— venter på svar')             + tjWrap(eReqOut.map(b => bookingCard(b, nameMap, [])).join(''));
   if(eActive.length) eHtml += tjSec('green',  eActive.length, '🤝 Godkjent', '— avtale i gang')             + tjWrap(eActive.map(b => bookingCard(b, nameMap, [])).join(''));
