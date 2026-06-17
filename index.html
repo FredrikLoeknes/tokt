@@ -4120,6 +4120,9 @@ async function loadProfilePage(userId, isOwn) {
   // Achievements
   const stats = { applied: appliedCount, taken: takenCount, completed: questsDone, posted: postedCount || 0, rating: avgRating || 0, charity: charityDone };
   renderAchievements(stats);
+
+  // Anmeldelser (vises for både egen og andres profil)
+  loadProfileReviews(userId);
 }
 
 function renderRankLadder(questsDone) {
@@ -4148,6 +4151,183 @@ function renderAchievements(stats) {
       ${unlocked ? '<span style="font-size:11px;font-weight:700;color:var(--green)">✓ Låst opp</span>' : ''}
     </div>`;
   }).join('');
+}
+
+/* ===================== ANMELDELSER ===================== */
+const REVIEW_TAGS = new Set(['⚡ Rask','💬 God kommunikasjon','🤝 Pålitelig','✨ Over forventning','🔄 Ville brukt igjen','💪 Grundig','🐢 Treg','💬 Dårlig kommunikasjon','❌ Upålitelig','😐 Under forventning']);
+
+function parseReview(comment) {
+  if(!comment) return { tags: [], text: '' };
+  const lines = String(comment).split('\n');
+  const firstPieces = lines[0].split(',').map(s => s.trim()).filter(Boolean);
+  const isTagLine = firstPieces.length > 0 && firstPieces.every(p => REVIEW_TAGS.has(p));
+  if(isTagLine) return { tags: firstPieces, text: lines.slice(1).join('\n').trim() };
+  return { tags: [], text: String(comment).trim() };
+}
+
+function reviewDate(iso) {
+  if(!iso) return '';
+  const d = new Date(iso);
+  if(isNaN(d)) return '';
+  return d.toLocaleDateString('nb-NO', { day:'numeric', month:'long', year:'numeric' });
+}
+
+async function loadProfileReviews(userId) {
+  const wrap = document.getElementById('pp-reviews');
+  if(!wrap) return;
+
+  const { data: ratings, error } = await sb.from('ratings')
+    .select('*').eq('rated_id', userId)
+    .order('created_at', { ascending: false });
+
+  if(error) {
+    wrap.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0">Kunne ikke hente vurderinger.</div>';
+    console.error('loadProfileReviews error:', error.message);
+    return;
+  }
+  if(!ratings || ratings.length === 0) {
+    wrap.innerHTML = '<div style="text-align:center;padding:22px 12px;color:var(--muted);font-size:13px">Ingen vurderinger ennå.<br><span style="font-size:11px;opacity:.7">Vurderinger dukker opp her etter fullførte oppdrag og avtaler.</span></div>';
+    return;
+  }
+
+  // Sammendrag + fordeling
+  const count = ratings.length;
+  const sum = ratings.reduce((a, r) => a + (r.score || 0), 0);
+  const avg = sum / count;
+  const dist = [0,0,0,0,0]; // index 0 = 1 stjerne ... index 4 = 5 stjerner
+  ratings.forEach(r => { if(r.score >= 1 && r.score <= 5) dist[r.score - 1]++; });
+
+  // Navn på anmeldere
+  const raterIds = [...new Set(ratings.map(r => r.rater_id).filter(Boolean))];
+  const nameMap = {};
+  if(raterIds.length) {
+    const { data: profs } = await sb.from('profiles').select('id, full_name').in('id', raterIds);
+    (profs||[]).forEach(p => nameMap[p.id] = p.full_name);
+  }
+
+  // Emne (hva gjaldt det) + fast-avtale-flagg
+  const questIds = [...new Set(ratings.map(r => r.quest_id).filter(Boolean))];
+  const convIds  = [...new Set(ratings.map(r => r.conversation_id).filter(Boolean))];
+  const questTitle = {}, convSvcId = {}, svcTitle = {}, recurringConvs = new Set();
+  if(questIds.length) {
+    const { data: qs } = await sb.from('quests').select('id, title').in('id', questIds);
+    (qs||[]).forEach(q => questTitle[q.id] = q.title);
+  }
+  if(convIds.length) {
+    const { data: cs } = await sb.from('conversations').select('id, service_id').in('id', convIds);
+    (cs||[]).forEach(c => { if(c.service_id) convSvcId[c.id] = c.service_id; });
+    const svcIds = [...new Set(Object.values(convSvcId))];
+    if(svcIds.length) {
+      const { data: ss } = await sb.from('services').select('id, title').in('id', svcIds);
+      (ss||[]).forEach(s => svcTitle[s.id] = s.title);
+    }
+    const { data: bks } = await sb.from('bookings').select('conversation_id, kind').in('conversation_id', convIds).eq('kind','recurring');
+    (bks||[]).forEach(b => { if(b.conversation_id) recurringConvs.add(b.conversation_id); });
+  }
+
+  const subjectOf = r => {
+    if(r.quest_id && questTitle[r.quest_id]) return { icon:'📋', text: questTitle[r.quest_id], recurring:false };
+    if(r.conversation_id && convSvcId[r.conversation_id] && svcTitle[convSvcId[r.conversation_id]])
+      return { icon:'🏪', text: svcTitle[convSvcId[r.conversation_id]], recurring: recurringConvs.has(r.conversation_id) };
+    return null;
+  };
+
+  const stars = n => '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n);
+  const avatarGrads = ['linear-gradient(135deg,#0ea5e9,#6366f1)','linear-gradient(135deg,#f97316,#a855f7)','linear-gradient(135deg,#0fa968,#3b6ff5)','linear-gradient(135deg,#ec4899,#8b5cf6)'];
+
+  // Sammendrag-HTML
+  const distRows = [5,4,3,2,1].map(star => {
+    const c = dist[star - 1];
+    const pct = count ? Math.round(c / count * 100) : 0;
+    return `<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)">
+      <span style="width:26px;text-align:right;font-weight:600">${star} ★</span>
+      <span style="flex:1;height:6px;border-radius:3px;background:var(--surface2);overflow:hidden"><span style="display:block;height:100%;background:var(--gold);border-radius:3px;width:${pct}%"></span></span>
+      <span style="width:18px">${c}</span>
+    </div>`;
+  }).join('');
+
+  const summary = `
+    <div style="display:flex;gap:18px;align-items:center;margin-bottom:16px">
+      <div style="text-align:center;flex-shrink:0">
+        <div style="font-size:40px;font-weight:800;line-height:1">${avg.toFixed(1)}</div>
+        <div style="color:var(--gold);font-size:13px;letter-spacing:1px;margin-top:3px">${stars(Math.round(avg))}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">${count} ${count===1?'vurdering':'vurderinger'}</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:5px">${distRows}</div>
+    </div>`;
+
+  // Liste – kun de med skriftlig innhold (tags eller tekst)
+  const withText = ratings.map(r => ({ r, parsed: parseReview(r.comment) }))
+    .filter(x => x.parsed.tags.length || x.parsed.text);
+
+  let listHtml;
+  if(!withText.length) {
+    listHtml = '<div style="font-size:12px;color:var(--muted);padding:6px 0">Ingen skriftlige anmeldelser ennå.</div>';
+  } else {
+    const shown = withText.slice(0, 5);
+    listHtml = shown.map((x, i) => {
+      const r = x.r, p = x.parsed;
+      const name = nameMap[r.rater_id] || 'Bruker';
+      const init = name.split(' ').map(s=>s[0]).join('').toUpperCase().slice(0,2) || '?';
+      const subj = subjectOf(r);
+      const dateTxt = reviewDate(r.created_at);
+      const metaBits = [dateTxt, subj && subj.recurring ? '🔄 Fast avtale' : ''].filter(Boolean).join(' · ');
+      const tagsHtml = p.tags.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:${p.text?'8':'2'}px">${p.tags.map(t=>`<span style="font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">${t}</span>`).join('')}</div>` : '';
+      return `<div style="padding:15px 0;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:${subj?'7':'9'}px">
+          <div style="width:40px;height:40px;border-radius:50%;background:${avatarGrads[i % avatarGrads.length]};color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0">${init}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:700">${name}</div>
+            ${metaBits?`<div style="font-size:11.5px;color:var(--muted);margin-top:1px">${metaBits}</div>`:''}
+          </div>
+          <div style="color:var(--gold);font-size:13px;letter-spacing:1px;white-space:nowrap">${stars(r.score||0)}</div>
+        </div>
+        ${subj?`<div style="font-size:11px;color:var(--accent2);font-weight:600;margin-bottom:7px">${subj.icon} ${subj.text}</div>`:''}
+        ${tagsHtml}
+        ${p.text?`<div style="font-size:13px;line-height:1.55">${p.text.replace(/</g,'&lt;')}</div>`:''}
+      </div>`;
+    }).join('');
+    if(withText.length > shown.length) {
+      listHtml += `<button onclick="expandAllReviews(this)" data-uid="${userId}" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--accent);border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">Vis alle ${withText.length} vurderinger</button>`;
+    }
+  }
+
+  wrap.innerHTML = summary + listHtml;
+  wrap._allReviews = withText; // for utvidelse
+  wrap._reviewCtx = { nameMap, subjectOf, stars, avatarGrads };
+}
+
+function expandAllReviews(btn) {
+  const wrap = document.getElementById('pp-reviews');
+  if(!wrap || !wrap._allReviews) return;
+  const { nameMap, subjectOf, stars, avatarGrads } = wrap._reviewCtx;
+  const all = wrap._allReviews;
+  const html = all.map((x, i) => {
+    const r = x.r, p = x.parsed;
+    const name = nameMap[r.rater_id] || 'Bruker';
+    const init = name.split(' ').map(s=>s[0]).join('').toUpperCase().slice(0,2) || '?';
+    const subj = subjectOf(r);
+    const dateTxt = reviewDate(r.created_at);
+    const metaBits = [dateTxt, subj && subj.recurring ? '🔄 Fast avtale' : ''].filter(Boolean).join(' · ');
+    const tagsHtml = p.tags.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:${p.text?'8':'2'}px">${p.tags.map(t=>`<span style="font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">${t}</span>`).join('')}</div>` : '';
+    return `<div style="padding:15px 0;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:${subj?'7':'9'}px">
+        <div style="width:40px;height:40px;border-radius:50%;background:${avatarGrads[i % avatarGrads.length]};color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0">${init}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:700">${name}</div>
+          ${metaBits?`<div style="font-size:11.5px;color:var(--muted);margin-top:1px">${metaBits}</div>`:''}
+        </div>
+        <div style="color:var(--gold);font-size:13px;letter-spacing:1px;white-space:nowrap">${stars(r.score||0)}</div>
+      </div>
+      ${subj?`<div style="font-size:11px;color:var(--accent2);font-weight:600;margin-bottom:7px">${subj.icon} ${subj.text}</div>`:''}
+      ${tagsHtml}
+      ${p.text?`<div style="font-size:13px;line-height:1.55">${p.text.replace(/</g,'&lt;')}</div>`:''}
+    </div>`;
+  }).join('');
+  // behold sammendraget (alt før første anmeldelse), bytt ut listen
+  const summaryEnd = wrap.innerHTML.indexOf('<div style="padding:15px 0;border-top');
+  const summaryHtml = summaryEnd > -1 ? wrap.innerHTML.slice(0, summaryEnd) : '';
+  wrap.innerHTML = summaryHtml + html;
 }
 
 
@@ -6618,11 +6798,32 @@ async function sessionConfirmReceived(id) {
   if(s.status !== 'confirmed') { showToast('⚠️ Økten er allerede gjort opp'); return; }
   if(!confirm('Bekrefte at du har mottatt betaling for denne økten?')) return;
   await sb.from('bookings').update({ status: 'completed', taker_confirmed_at: new Date().toISOString() }).eq('id', id);
-  await sb.from('notifications').insert({ user_id: s.customer_id, type: 'booking_session', title: '✅ Økt gjort opp', body: `${s.service?.title || 'Fast avtale'} – tilbyder bekreftet betaling for økten.`, link_id: s.parent_id });
+
+  // Er dette den første fullførte økten på avtalen? (denne er nettopp satt completed)
+  const { count: doneCount } = await sb.from('bookings')
+    .select('id', { count:'exact', head:true })
+    .eq('parent_id', s.parent_id).eq('status', 'completed');
+  const firstDone = (doneCount || 0) <= 1;
+
+  if(firstDone) {
+    // Kunden bes vurdere tilbyder (rating-flyt via booking_done, lenket til avtalen)
+    await sb.from('notifications').insert({ user_id: s.customer_id, type: 'booking_done', title: '🏆 Første økt fullført!', body: `${s.service?.title || 'Fast avtale'} – vil du vurdere tilbyderen?`, link_id: s.parent_id });
+  } else {
+    await sb.from('notifications').insert({ user_id: s.customer_id, type: 'booking_session', title: '✅ Økt gjort opp', body: `${s.service?.title || 'Fast avtale'} – tilbyder bekreftet betaling for økten.`, link_id: s.parent_id });
+  }
+
   await recomputeQuestsCompleted(currentUser.id);
   showToast('🎉 Økt gjort opp!');
   loadBookings();
   if(currentUser) loadUserProfile(currentUser);
+
+  // Tilbyder vurderer kunden – kun ved første fullførte økt (én anmeldelse per fast avtale)
+  if(firstDone) {
+    const { data: parent } = await sb.from('bookings').select('conversation_id').eq('id', s.parent_id).single();
+    const convId = parent?.conversation_id || null;
+    const { data: cp } = await sb.from('profiles').select('full_name').eq('id', s.customer_id).single();
+    showRating(cp?.full_name || 'Kunde', convId, s.customer_id, '');
+  }
 }
 
 async function pauseAgreement(id) {
@@ -8319,6 +8520,12 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <input id="pp-edit-phone" class="form-input" type="tel" placeholder="8 siffer" maxlength="8" style="width:100%;box-sizing:border-box">
     </div>
     <button onclick="saveProfileEdits()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">💾 Lagre endringer</button>
+  </div>
+
+  <!-- Anmeldelser -->
+  <div style="padding:18px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px">⭐ Vurderinger</div>
+    <div id="pp-reviews"><div style="font-size:13px;color:var(--muted);padding:8px 0">Laster vurderinger…</div></div>
   </div>
 
   <!-- Rangstige -->
