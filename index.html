@@ -3999,17 +3999,11 @@ function closeProfilePage() {
   document.getElementById('profile-page').style.display = 'none';
 }
 
-function ppShowTab(tab) {
-  document.getElementById('pp-tab-posted').classList.toggle('active', tab === 'posted');
-  document.getElementById('pp-tab-taken').classList.toggle('active', tab === 'taken');
-  document.getElementById('pp-quests-posted').style.display = tab === 'posted' ? 'block' : 'none';
-  document.getElementById('pp-quests-taken').style.display = tab === 'taken' ? 'block' : 'none';
-}
+function ppShowTab() { /* fjernet – oppdrag/tjenester ligger nå i egne paneler */ }
 
 async function loadProfilePage(userId, isOwn) {
   // Vis/skjul egne seksjoner
   document.getElementById('pp-edit-section').style.display = isOwn ? 'block' : 'none';
-  document.getElementById('pp-quests-section').style.display = isOwn ? 'block' : 'none';
   const ppQuick = document.getElementById('pp-quicknav');
   if(ppQuick) ppQuick.style.display = isOwn ? 'block' : 'none';
   const ppLogout = document.getElementById('pp-logout-section');
@@ -4102,7 +4096,6 @@ async function loadProfilePage(userId, isOwn) {
   if(isOwn) {
     document.getElementById('pp-edit-name').value = profile.full_name || '';
     document.getElementById('pp-edit-phone').value = profile.phone || '';
-    loadProfileQuests(userId);
   }
 
   // Rangstige
@@ -4141,61 +4134,6 @@ function renderAchievements(stats) {
   }).join('');
 }
 
-async function loadProfileQuests(userId) {
-  const seeAllBtn = `<button onclick="closeProfilePage();openMyQuests()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--accent);border-radius:10px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px">Se alle i Mine oppdrag →</button>`;
-
-  // Lagt ut (5 siste)
-  const { data: posted, error: pErr } = await sb.from('quests')
-    .select('*').eq('user_id', userId)
-    .order('created_at', { ascending:false }).limit(5);
-  if(pErr) console.error('Profile posted quests error:', pErr.message);
-  const postedEl = document.getElementById('pp-quests-posted');
-  postedEl.innerHTML = (posted?.length)
-    ? posted.map(q => ppQuestRow(q)).join('')
-    : '<div style="font-size:12px;color:var(--muted);padding:8px 4px">Ingen oppdrag lagt ut ennå.</div>';
-
-  // Tjenester (5 siste)
-  const { data: services, error: sErr } = await sb.from('services')
-    .select('*').eq('user_id', userId)
-    .neq('status', 'deleted')
-    .order('created_at', { ascending:false }).limit(5);
-  if(sErr) console.error('Profile services error:', sErr.message);
-  if(services?.length) {
-    postedEl.innerHTML += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:12px 0 8px">🏪 Mine tjenester</div>' +
-      services.map(s => `<div onclick="editServiceById('${s.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.2);border-radius:10px;margin-bottom:6px;cursor:pointer">
-        <span style="font-size:16px">🏪</span>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.title}</div>
-          <div style="font-size:11px;color:var(--muted)">${s.category || ''} · ${s.price} kr</div>
-        </div>
-        <span style="font-size:13px;color:var(--muted)">✏️</span>
-      </div>`).join('');
-  }
-  if(posted?.length || services?.length) postedEl.innerHTML += seeAllBtn;
-
-  // Tar / utført (5 siste)
-  const { data: taken, error: tErr } = await sb.from('conversations')
-    .select('status, quest:quest_id(*)')
-    .eq('taker_id', userId)
-    .limit(5);
-  if(tErr) console.error('Profile taken quests error:', tErr.message);
-  const takenEl = document.getElementById('pp-quests-taken');
-  const takenQuests = (taken || []).filter(c => c.quest).map(c => c.quest);
-  takenEl.innerHTML = takenQuests.length
-    ? takenQuests.map(q => ppQuestRow(q)).join('') + seeAllBtn
-    : '<div style="font-size:12px;color:var(--muted);padding:8px 4px">Ingen oppdrag tatt ennå.</div>';
-}
-
-function ppQuestRow(q) {
-  const statusLabel = q.status === 'completed' ? '🏆' : q.status === 'taken' ? '🔒' : q.status === 'open' ? '🟢' : q.status === 'paused' ? '⏸️' : q.status === 'expired' ? '⏰' : '🔴';
-  return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:6px">
-    <span style="font-size:16px">${statusLabel}</span>
-    <div style="flex:1;min-width:0">
-      <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.title}</div>
-      <div style="font-size:11px;color:var(--muted)">${q.category || ''} · ${q.pay} kr</div>
-    </div>
-  </div>`;
-}
 
 async function saveProfileEdits() {
   const name = document.getElementById('pp-edit-name')?.value?.trim();
@@ -4546,8 +4484,12 @@ async function handleNotifClick(notifId, type, linkId) {
   else if(type === 'payment') openMyQuests();
   else if(type === 'work_done') openMyQuests();
   else if(type && type.indexOf('booking') === 0) {
-    openMyQuests();
-    setTimeout(() => switchMqTab('bookings'), 80);
+    openTjenester('engangs');
+    if(linkId) {
+      sb.from('bookings').select('kind, parent_id').eq('id', linkId).single().then(({ data: bb }) => {
+        if(bb && (bb.kind === 'recurring' || bb.parent_id)) switchTjTab('faste');
+      });
+    }
     if(type === 'booking_done' && linkId) {
       setTimeout(async () => {
         const { data: b } = await sb.from('bookings').select('conversation_id, provider_id').eq('id', linkId).single();
@@ -4711,14 +4653,13 @@ function backFromMyQuests() {
   openProfilePage();
 }
 function switchMqTab(tab) {
+  if(tab === 'bookings') { openTjenester('engangs'); return; } // bakoverkompatibel: gamle kall
   document.getElementById('mq-posted').style.display = tab==='posted' ? 'flex' : 'none';
   document.getElementById('mq-applied').style.display = tab==='applied' ? 'flex' : 'none';
-  const bk = document.getElementById('mq-bookings'); if(bk) bk.style.display = tab==='bookings' ? 'flex' : 'none';
   const activeStyle = 'background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)';
   const inactiveStyle = 'background:transparent;color:var(--muted);box-shadow:none';
   document.getElementById('mq-tab-posted').style.cssText += tab==='posted' ? activeStyle : inactiveStyle;
   document.getElementById('mq-tab-applied').style.cssText += tab==='applied' ? activeStyle : inactiveStyle;
-  const bt = document.getElementById('mq-tab-bookings'); if(bt) bt.style.cssText += tab==='bookings' ? activeStyle : inactiveStyle;
 }
 
 async function loadMyQuests() {
@@ -4843,8 +4784,6 @@ async function loadMyQuests() {
     }
     appliedEl.innerHTML = html || '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Ingen oppdrag ennå.</div>';
   }
-
-  loadBookings();
 }
 
 async function editQuestFromPanel() {
@@ -4937,7 +4876,7 @@ async function saveServiceEdits(serviceId) {
   document.getElementById('edit-svc-overlay')?.remove();
   showToast('✅ Tjeneste oppdatert!');
   await addMarkers();
-  if(document.getElementById('profile-page').style.display === 'block') loadProfileQuests(currentUser.id);
+  if(document.getElementById('tjenester-panel')?.style.display === 'block') renderTilbud();
 }
 
 async function deleteService(serviceId) {
@@ -4946,7 +4885,7 @@ async function deleteService(serviceId) {
   document.getElementById('edit-svc-overlay')?.remove();
   showToast('🗑️ Tjeneste slettet');
   await addMarkers();
-  if(document.getElementById('profile-page').style.display === 'block') loadProfileQuests(currentUser.id);
+  if(document.getElementById('tjenester-panel')?.style.display === 'block') renderTilbud();
 }
 
 async function showChatPaymentInfoFor(convId) {
@@ -6140,27 +6079,148 @@ async function submitBookingRequest() {
 
   closeBookingModal();
   showToast('📅 Forespørsel sendt! Du får beskjed når den bekreftes.');
-  openMyQuests();
-  setTimeout(() => switchMqTab('bookings'), 60);
+  openTjenester(recurring ? 'faste' : 'engangs');
 }
 
 async function loadBookings() {
-  const el = document.getElementById('mq-bookings');
-  if(!el || !currentUser) return;
+  // Beholdt navn – kalt av booking-handlinger. Oppdaterer Tjenester-panelet.
+  return loadTjenester();
+}
+
+/* ===================== TJENESTER-PANEL ===================== */
+function openTjenester(tab) {
+  if(!currentUser) { openAuth('login'); return; }
+  try { closeProfilePage(); } catch(e) {}
+  try { closeMyQuests(); } catch(e) {}
+  document.getElementById('tjenester-panel').style.display = 'block';
+  const pp = document.getElementById('profile-panel'); if(pp) pp.style.display = 'none';
+  switchTjTab(tab || 'tilbud');
+  loadTjenester();
+}
+function closeTjenester() {
+  document.getElementById('tjenester-panel').style.display = 'none';
+}
+function backFromTjenester() {
+  closeTjenester();
+  openProfilePage();
+}
+function switchTjTab(tab) {
+  ['tilbud','engangs','faste'].forEach(t => {
+    const c = document.getElementById('tj-'+t); if(c) c.style.display = (t===tab) ? 'flex' : 'none';
+  });
+  const activeStyle = 'background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)';
+  const inactiveStyle = 'background:transparent;color:var(--muted);box-shadow:none';
+  ['tilbud','engangs','faste'].forEach(t => {
+    const b = document.getElementById('tj-tab-'+t); if(b) b.style.cssText += (t===tab) ? activeStyle : inactiveStyle;
+  });
+}
+
+async function loadTjenester() {
+  if(!currentUser) return;
+  await Promise.all([ renderTilbud(), renderBookingsGrouped() ]);
+}
+
+/* ---- Fane 1: Mine tilbud ---- */
+async function renderTilbud() {
+  const el = document.getElementById('tj-tilbud');
+  if(!el) return;
+  const { data: services, error } = await sb.from('services')
+    .select('*').eq('user_id', currentUser.id)
+    .neq('status','deleted')
+    .order('created_at', { ascending:false });
+  const addBtn = `<button onclick="closeTjenester();openServiceModal()" style="width:100%;background:linear-gradient(135deg,rgba(124,92,252,.1),rgba(59,111,245,.1));border:1px dashed rgba(124,92,252,0.4);color:var(--accent2);border-radius:13px;padding:13px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px">+ Legg ut ny tjeneste</button>`;
+  if(error) { el.innerHTML = '<div style="padding:16px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.3);border-radius:12px;font-size:12px;color:var(--red)">⚠️ Kunne ikke hente tjenester: '+error.message+'</div>' + addBtn; return; }
+  if(!services || services.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:36px 20px;color:var(--muted);font-size:13px">Du tilbyr ingen tjenester ennå.<br>Legg ut det du kan hjelpe andre med 🏪</div>' + addBtn;
+    return;
+  }
+  el.innerHTML = services.map(s => tilbudRow(s)).join('') + addBtn;
+}
+
+function tilbudRow(s) {
+  const paused = s.status === 'paused';
+  const rec = s.is_recurring ? ' · 🔄 Tilbys fast' : '';
+  const statusPill = paused
+    ? '<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:50px;background:rgba(245,158,11,0.14);color:#b45309;white-space:nowrap">⏸ Pauset</span>'
+    : '<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:50px;background:rgba(15,169,104,0.12);color:var(--green);white-space:nowrap">● Aktiv</span>';
+  const leftBorder = paused ? '#f59e0b' : 'var(--accent2)';
+  const toggleBtn = paused
+    ? `<button onclick="event.stopPropagation();resumeService('${s.id}')" style="background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:9px;padding:7px 10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">▶️ Start</button>`
+    : `<button onclick="event.stopPropagation();pauseService('${s.id}')" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:9px;padding:7px 10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⏸ Pause</button>`;
+  return `<div onclick="editServiceById('${s.id}')" style="display:flex;align-items:center;gap:10px;padding:13px;background:var(--surface);border:1px solid var(--border);border-left:3px solid ${leftBorder};border-radius:13px;box-shadow:var(--shadow-sm);cursor:pointer">
+    <div style="flex:1;min-width:0">
+      <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.title}</div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:2px">${s.category || ''}${s.category?' · ':''}${s.price} kr${rec}</div>
+    </div>
+    ${statusPill}
+    ${toggleBtn}
+    <span style="font-size:15px;color:var(--muted)">✏️</span>
+  </div>`;
+}
+
+async function pauseService(id) {
+  const { error } = await sb.from('services').update({ status: 'paused' }).eq('id', id);
+  if(error) { showToast('❌ ' + error.message); return; }
+  showToast('⏸ Tjeneste satt på pause – skjult fra kartet');
+  await addMarkers();
+  renderTilbud();
+}
+async function resumeService(id) {
+  const { error } = await sb.from('services').update({ status: 'active' }).eq('id', id);
+  if(error) { showToast('❌ ' + error.message); return; }
+  showToast('▶️ Tjeneste aktiv igjen');
+  await addMarkers();
+  renderTilbud();
+}
+
+/* ---- Fane 2+3: bookinger gruppert ---- */
+function tjBadge(id, n) {
+  const el = document.getElementById(id); if(!el) return;
+  if(n > 0) { el.textContent = n; el.style.display = 'inline-flex'; }
+  else el.style.display = 'none';
+}
+function tjWrap(inner) {
+  return `<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:6px">${inner}</div>`;
+}
+function tjEmpty(title, sub) {
+  return `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">${title}<br>${sub||''}</div>`;
+}
+function tjSec(kind, count, title, sub) {
+  const map = {
+    green:  ['var(--green)', '#fff', 'var(--green)'],
+    orange: ['rgba(249,115,22,.14)', '#f97316', '#f97316'],
+    accent: ['rgba(59,111,245,0.12)', 'var(--accent)', 'var(--accent)'],
+    muted:  ['var(--surface2)', 'var(--muted)', 'var(--muted)']
+  };
+  const [badgeBg, badgeCol, titleCol] = map[kind] || map.muted;
+  return `<div style="display:flex;align-items:center;gap:8px;margin:18px 2px 11px">
+    <span style="font-size:11px;font-weight:800;min-width:20px;height:20px;padding:0 6px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;background:${badgeBg};color:${badgeCol}">${count}</span>
+    <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:${titleCol}">${title}</span>
+    ${sub?`<span style="font-size:11px;color:var(--muted);font-weight:500">${sub}</span>`:''}
+  </div>`;
+}
+
+async function renderBookingsGrouped() {
+  const engEl = document.getElementById('tj-engangs');
+  const fasEl = document.getElementById('tj-faste');
+  if(!engEl || !fasEl || !currentUser) return;
+
   const { data: bks, error } = await sb.from('bookings')
     .select('*, service:service_id(title)')
     .or(`customer_id.eq.${currentUser.id},provider_id.eq.${currentUser.id}`)
     .order('created_at', { ascending: false });
 
-  if(error) { console.error('loadBookings error:', error.message); el.innerHTML = '<div style="padding:16px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.3);border-radius:12px;font-size:12px;color:var(--red)">⚠️ Kunne ikke hente avtaler: ' + error.message + '</div>'; return; }
-  if(!bks || bks.length === 0) {
-    el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Ingen avtaler ennå.<br>Be om en avtale fra en tjeneste på kartet 🏪</div>';
+  if(error) {
+    console.error('renderBookingsGrouped error:', error.message);
+    engEl.innerHTML = '<div style="padding:16px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.3);border-radius:12px;font-size:12px;color:var(--red)">⚠️ Kunne ikke hente avtaler: ' + error.message + '</div>';
+    fasEl.innerHTML = '';
     return;
   }
 
-  const tops = bks.filter(b => !b.parent_id);
+  const all = bks || [];
+  const tops = all.filter(b => !b.parent_id);
   const sessionsByParent = {};
-  bks.filter(b => b.parent_id).forEach(s => { (sessionsByParent[s.parent_id] = sessionsByParent[s.parent_id] || []).push(s); });
+  all.filter(b => b.parent_id).forEach(s => { (sessionsByParent[s.parent_id] = sessionsByParent[s.parent_id] || []).push(s); });
 
   const otherIds = [...new Set(tops.map(b => b.customer_id === currentUser.id ? b.provider_id : b.customer_id).filter(Boolean))];
   const nameMap = {};
@@ -6168,18 +6228,46 @@ async function loadBookings() {
     const { data: profs } = await sb.from('profiles').select('id, full_name').in('id', otherIds);
     (profs||[]).forEach(p => nameMap[p.id] = p.full_name);
   }
+  const isProv = b => b.provider_id === currentUser.id;
 
-  // Tilbyder-oversikt: aktive/pausede faste avtaler der jeg er tilbyder
-  const isOverviewAgr = b => b.kind === 'recurring' && b.provider_id === currentUser.id && (b.status === 'active' || b.status === 'paused');
-  const overviewHtml = providerOverview(tops.filter(isOverviewAgr), sessionsByParent, nameMap);
-  const cardTops = tops.filter(b => !isOverviewAgr(b));
+  // ---------- ENGANGSAVTALER ----------
+  const oneoff  = tops.filter(b => b.kind !== 'recurring');
+  const eReqIn  = oneoff.filter(b => b.status === 'requested' && isProv(b));
+  const eReqOut = oneoff.filter(b => b.status === 'requested' && !isProv(b));
+  const eActive = oneoff.filter(b => b.status === 'confirmed');
+  const eDone   = oneoff.filter(b => ['completed','declined','cancelled'].includes(b.status));
 
-  let html = overviewHtml;
-  if(cardTops.length) {
-    if(overviewHtml) html += `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:4px 4px 8px">Andre avtaler</div>`;
-    html += cardTops.map(b => bookingCard(b, nameMap, sessionsByParent[b.id] || [])).join('');
-  }
-  el.innerHTML = html;
+  let eHtml = '';
+  if(eReqIn.length)  eHtml += tjSec('green',  eReqIn.length,  '📩 Forespørsler til deg', '— svar kunden')   + tjWrap(eReqIn.map(b => bookingCard(b, nameMap, [])).join(''));
+  if(eReqOut.length) eHtml += tjSec('orange', eReqOut.length, '🙋 Søkt på', '— venter på svar')             + tjWrap(eReqOut.map(b => bookingCard(b, nameMap, [])).join(''));
+  if(eActive.length) eHtml += tjSec('green',  eActive.length, '🤝 Godkjent', '— avtale i gang')             + tjWrap(eActive.map(b => bookingCard(b, nameMap, [])).join(''));
+  if(eDone.length)   eHtml += tjSec('muted',  eDone.length,   '📜 Historikk', '')                          + tjWrap(eDone.map(b => bookingCard(b, nameMap, [])).join(''));
+  engEl.innerHTML = eHtml || tjEmpty('Ingen engangsavtaler ennå.', 'Be om en avtale fra en tjeneste på kartet 🏪');
+  tjBadge('tj-eng-badge-g', eReqIn.length);
+  tjBadge('tj-eng-badge-o', eReqOut.length);
+
+  // ---------- FASTE AVTALER ----------
+  const recurring = tops.filter(b => b.kind === 'recurring');
+  const fReqIn  = recurring.filter(b => b.status === 'requested' && isProv(b));
+  const fReqOut = recurring.filter(b => b.status === 'requested' && !isProv(b));
+  const provAgr = recurring.filter(b => (b.status === 'active' || b.status === 'paused') && isProv(b));
+  const custAgr = recurring.filter(b => (b.status === 'active' || b.status === 'paused') && !isProv(b));
+  const fDone   = recurring.filter(b => ['completed','declined','cancelled'].includes(b.status));
+
+  let fHtml = '';
+  if(fReqIn.length)  fHtml += tjSec('green',  fReqIn.length,  '📩 Forespørsel om fast avtale', '— svar kunden') + tjWrap(fReqIn.map(b => recurringCard(b, nameMap, sessionsByParent[b.id]||[])).join(''));
+  if(fReqOut.length) fHtml += tjSec('orange', fReqOut.length, '🙋 Søkt på', '— venter på svar')                  + tjWrap(fReqOut.map(b => recurringCard(b, nameMap, sessionsByParent[b.id]||[])).join(''));
+  if(provAgr.length) fHtml += providerOverview(provAgr, sessionsByParent, nameMap);
+  if(custAgr.length) fHtml += tjSec('accent', custAgr.length, '🔄 Faste avtaler — som kunde', '')               + tjWrap(custAgr.map(b => recurringCard(b, nameMap, sessionsByParent[b.id]||[])).join(''));
+  if(fDone.length)   fHtml += tjSec('muted',  fDone.length,   '📜 Historikk', '')                               + tjWrap(fDone.map(b => recurringCard(b, nameMap, sessionsByParent[b.id]||[])).join(''));
+  fasEl.innerHTML = fHtml || tjEmpty('Ingen faste avtaler ennå.', 'Faste avtaler dukker opp her når du eller en kunde starter en gjentagende tjeneste 🔄');
+
+  // Faste-badges: grønn = handling som tilbyder, oransje = handling som kunde
+  let fG = fReqIn.length, fO = fReqOut.length;
+  provAgr.forEach(a => { const open = (sessionsByParent[a.id]||[]).find(s => s.status!=='completed'); if(open && open.giver_paid_at) fG++; });
+  custAgr.forEach(a => { const open = (sessionsByParent[a.id]||[]).find(s => s.status!=='completed'); if(open && !open.giver_paid_at) fO++; });
+  tjBadge('tj-fast-badge-g', fG);
+  tjBadge('tj-fast-badge-o', fO);
 }
 
 function bookingCard(b, nameMap, sessions) {
@@ -6251,7 +6339,10 @@ function bookingCard(b, nameMap, sessions) {
   }
 
   const active = b.status === 'confirmed';
-  return `<div style="background:var(--surface);border:1.5px solid ${active?'var(--green)':'var(--border)'};border-radius:14px;overflow:hidden${active?';box-shadow:0 2px 12px rgba(15,169,104,0.15)':''}">
+  const waiting = b.status === 'requested' && b.provider_id !== currentUser.id; // søkt på (venter)
+  const cardBorder = active ? 'var(--green)' : waiting ? '#f97316' : 'var(--border)';
+  const cardShadow = active ? ';box-shadow:0 2px 12px rgba(15,169,104,0.15)' : waiting ? ';box-shadow:0 2px 12px rgba(249,115,22,0.13)' : '';
+  return `<div style="background:var(--surface);border:1.5px solid ${cardBorder};border-radius:14px;overflow:hidden${cardShadow}">
     <div style="padding:14px 16px">${head}${body}</div></div>`;
 }
 
@@ -6371,8 +6462,12 @@ function recurringCard(b, nameMap, sessions) {
     body = `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>•</span><div>${b.status==='declined'?'Forespørselen om fast avtale ble avslått.':'Den faste avtalen er avsluttet.'}</div></div>`;
   }
 
-  const activeCard = b.status === 'active' || b.status === 'paused';
-  return `<div style="background:var(--surface);border:1.5px solid ${b.status==='active'?'var(--green)':'var(--border)'};border-radius:14px;overflow:hidden${b.status==='active'?';box-shadow:0 2px 12px rgba(15,169,104,0.15)':''}">
+  const recWaiting = b.status === 'requested' && b.provider_id !== currentUser.id; // søkt på fast (venter)
+  const recBorder = b.status === 'active' ? 'var(--green)' : b.status === 'paused' ? '#f59e0b' : recWaiting ? '#f97316' : 'var(--border)';
+  const recShadow = b.status === 'active' ? ';box-shadow:0 2px 12px rgba(15,169,104,0.15)'
+                  : b.status === 'paused' ? ';box-shadow:0 2px 12px rgba(245,158,11,0.13)'
+                  : recWaiting ? ';box-shadow:0 2px 12px rgba(249,115,22,0.13)' : '';
+  return `<div style="background:var(--surface);border:1.5px solid ${recBorder};border-radius:14px;overflow:hidden${recShadow}">
     <div style="padding:14px 16px">${head}${body}</div></div>`;
 }
 
@@ -6385,7 +6480,7 @@ function toggleAgrDetail(id) {
 function providerOverview(agreements, sessionsByParent, nameMap) {
   const list = agreements.filter(a => a.status === 'active' || a.status === 'paused');
   if(!list.length) return '';
-  const dotColors = { owe:'#f97316', ok:'var(--green)', due:'var(--accent)', muted:'var(--muted)' };
+  const dotColors = { owe:'#f97316', ok:'var(--green)', due:'var(--accent)', paused:'#f59e0b', muted:'var(--muted)' };
   const qBtn = (onclick, label, kind) => {
     const styles = {
       green:  'background:var(--surface);border:1.5px solid var(--green);color:var(--green)',
@@ -6409,7 +6504,7 @@ function providerOverview(agreements, sessionsByParent, nameMap) {
 
     let dot, meta, btn;
     if(paused) {
-      dot = 'muted'; meta = `<span style="color:#b45309;font-weight:700">⏸️ På pause</span>`;
+      dot = 'paused'; meta = `<span style="color:#b45309;font-weight:700">⏸️ På pause</span>`;
       btn = qBtn(`resumeAgreement('${a.id}')`, '▶️ Start', 'green');
     } else if(open && open.giver_paid_at) {
       oweCount++; dot = 'owe'; meta = `<span style="color:#f97316;font-weight:700">Betalt – bekreft mottak</span>`;
@@ -7750,7 +7845,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
     <button onclick="document.getElementById('profile-panel').style.display='none';openProfilePage()" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">👤 Min profil</button>
     <button onclick="openMyQuests('posted')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">📋 Mine oppdrag</button>
-    <button onclick="openMyQuests('bookings')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">📅 Mine avtaler</button>
+    <button onclick="openTjenester('tilbud')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">🏪 Tjenester</button>
 <button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">Logg ut</button>
   </div>
 </div>
@@ -7779,12 +7874,31 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:20px;border:1px solid var(--border)">
       <button id="mq-tab-posted" onclick="switchMqTab('posted')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">📋 Lagt ut</button>
       <button id="mq-tab-applied" onclick="switchMqTab('applied')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:5px">Aktive &amp; søkt<span id="mq-applied-badge" style="display:none;font-size:10px;font-weight:800;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span></button>
-      <button id="mq-tab-bookings" onclick="switchMqTab('bookings')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s">📅 Avtaler</button>
     </div>
 
     <div id="mq-posted" style="display:flex;flex-direction:column;gap:12px"></div>
     <div id="mq-applied" style="display:none;flex-direction:column;gap:12px"></div>
-    <div id="mq-bookings" style="display:none;flex-direction:column;gap:12px"></div>
+  </div>
+</div>
+
+<!-- TJENESTER PANEL -->
+<div id="tjenester-panel" style="display:none;position:fixed;left:0;right:0;top:0;bottom:0;z-index:450;background:var(--bg);overflow-y:auto;animation:slideIn .2s ease">
+  <div style="max-width:600px;margin:0 auto;padding:20px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-top:10px">
+      <button onclick="backFromTjenester()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">←</button>
+      <div style="font-size:20px;font-weight:700">Tjenester</div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:20px;border:1px solid var(--border)">
+      <button id="tj-tab-tilbud" onclick="switchTjTab('tilbud')" style="flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">🏪 Mine tilbud</button>
+      <button id="tj-tab-engangs" onclick="switchTjTab('engangs')" style="flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:4px">📅 Engangs<span id="tj-eng-badge-g" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span><span id="tj-eng-badge-o" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:#f97316;color:#fff;align-items:center;justify-content:center">0</span></button>
+      <button id="tj-tab-faste" onclick="switchTjTab('faste')" style="flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:4px">🔄 Faste<span id="tj-fast-badge-g" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span><span id="tj-fast-badge-o" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:#f97316;color:#fff;align-items:center;justify-content:center">0</span></button>
+    </div>
+
+    <div id="tj-tilbud" style="display:flex;flex-direction:column;gap:9px"></div>
+    <div id="tj-engangs" style="display:none;flex-direction:column;gap:0"></div>
+    <div id="tj-faste" style="display:none;flex-direction:column;gap:0"></div>
   </div>
 </div>
 
@@ -8163,10 +8277,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div style="display:flex;gap:8px">
       <button onclick="openMyQuests('posted')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <span style="font-size:21px">📋</span><span style="font-size:11.5px;font-weight:700">Mine oppdrag</span></button>
-      <button onclick="openMyQuests('bookings')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <span style="font-size:21px">📅</span><span style="font-size:11.5px;font-weight:700">Mine avtaler</span></button>
-      <button onclick="document.getElementById('pp-quests-section').scrollIntoView({behavior:'smooth',block:'start'})" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <span style="font-size:21px">🏪</span><span style="font-size:11.5px;font-weight:700">Mine tjenester</span></button>
+      <button onclick="openTjenester('tilbud')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span style="font-size:21px">🏪</span><span style="font-size:11.5px;font-weight:700">Tjenester</span></button>
     </div>
   </div>
 
@@ -8182,19 +8294,6 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <input id="pp-edit-phone" class="form-input" type="tel" placeholder="8 siffer" maxlength="8" style="width:100%;box-sizing:border-box">
     </div>
     <button onclick="saveProfileEdits()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">💾 Lagre endringer</button>
-  </div>
-
-  <!-- Oppdrag-tabs (kun egen profil) -->
-  <div id="pp-quests-section" style="background:var(--surface);border-bottom:1px solid var(--border)">
-    <div style="padding:16px 20px 0">
-      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px">⚔️ Mine oppdrag</div>
-      <div style="display:flex;gap:6px;margin-bottom:14px">
-        <div class="pp-tab active" id="pp-tab-posted" onclick="ppShowTab('posted')">📋 Lagt ut</div>
-        <div class="pp-tab" id="pp-tab-taken" onclick="ppShowTab('taken')">🔨 Tar/Utført</div>
-      </div>
-    </div>
-    <div id="pp-quests-posted" style="padding:0 16px 16px"></div>
-    <div id="pp-quests-taken" style="display:none;padding:0 16px 16px"></div>
   </div>
 
   <!-- Rangstige -->
