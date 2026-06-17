@@ -5186,8 +5186,8 @@ function questCard(q, type) {
             const name = (window.takerNameMap||{})[c.taker_id] || 'Bruker';
             const init = name[0].toUpperCase();
             return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
-              <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">${init}</div>
-              <div style="flex:1;font-size:13px;font-weight:500">${name}</div>
+              <div onclick="event.stopPropagation();viewOtherProfile('${c.taker_id}')" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;cursor:pointer;flex-shrink:0">${init}</div>
+              <div onclick="event.stopPropagation();viewOtherProfile('${c.taker_id}')" style="flex:1;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:3px">${name} <span style="font-size:11px;color:var(--muted)">›</span></div>
               ${c.status==='pending' ? `
                 <button onclick="acceptApplicant('${c.id}','${q.id}')" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✓ Godkjenn</button>
                 <button onclick="rejectApplicant('${c.id}')" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">✕</button>
@@ -6570,6 +6570,7 @@ function bookingCard(b, nameMap, sessions) {
   if(b.kind === 'recurring') return recurringCard(b, nameMap, sessions);
   const isProvider = b.provider_id === currentUser.id;
   const otherName = (nameMap[isProvider ? b.customer_id : b.provider_id] || 'Bruker');
+  const otherId = isProvider ? b.customer_id : b.provider_id;
   const safeName = otherName.replace(/'/g, "\\'");
   const title = b.service?.title || 'Tjeneste';
   const safeTitle = title.replace(/'/g, "\\'");
@@ -6590,7 +6591,7 @@ function bookingCard(b, nameMap, sessions) {
       <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px;background:${stCol}18;color:${stCol};border:1px solid ${stCol}44;white-space:nowrap">${stLabel}</span>
     </div>
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:4px">
-      <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(124,92,252,0.12);color:var(--accent2);font-weight:700">🏪 ${isProvider?'Kunde: '+otherName:'Tjeneste'}</span>
+      <span onclick="event.stopPropagation();viewOtherProfile('${otherId}')" style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(124,92,252,0.12);color:var(--accent2);font-weight:700;cursor:pointer">${isProvider?'👤 Kunde: ':'🏪 Tilbyder: '}${otherName} ›</span>
       <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);font-weight:700">${b.price} kr</span>
       ${when?`<span style="font-size:11px;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">📅 ${when}</span>`:''}
     </div>`;
@@ -6598,7 +6599,7 @@ function bookingCard(b, nameMap, sessions) {
   let body = '';
   if(b.status === 'requested') {
     body = isProvider
-      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>📩</span><div><b>Ny forespørsel fra ${otherName}</b> – ${when}, ${b.price} kr.${b.note?'<br>«'+b.note+'»':''}</div></div>
+      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>📩</span><div><b>Ny forespørsel fra <span onclick="event.stopPropagation();viewOtherProfile('${otherId}')" style="color:var(--accent);cursor:pointer;text-decoration:underline">${otherName} ›</span></b> – ${when}, ${b.price} kr.${b.note?'<br>«'+b.note+'»':''}</div></div>
          <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft avtale</button>
          <div style="display:flex;gap:8px;margin-top:8px">${chatBtn}<button onclick="declineBooking('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslå</button></div>`
       : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Venter på at ${otherName} bekrefter tid og pris.</div></div>
@@ -6673,6 +6674,7 @@ function sessionHandshake(s, isProvider, convId, chatBtn) {
 function recurringCard(b, nameMap, sessions) {
   const isProvider = b.provider_id === currentUser.id;
   const otherName = (nameMap[isProvider ? b.customer_id : b.provider_id] || 'Bruker');
+  const otherId = isProvider ? b.customer_id : b.provider_id;
   const safeName = otherName.replace(/'/g, "\\'");
   const title = b.service?.title || 'Tjeneste';
   const safeTitle = title.replace(/'/g, "\\'");
@@ -6692,7 +6694,7 @@ function recurringCard(b, nameMap, sessions) {
       <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px;background:${stCol}18;color:${stCol};border:1px solid ${stCol}44;white-space:nowrap">${stLabel}</span>
     </div>
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:4px">
-      <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(124,92,252,0.12);color:var(--accent2);font-weight:700">🏪 ${isProvider?'Kunde: '+otherName:'Tjeneste'}</span>
+      <span onclick="event.stopPropagation();viewOtherProfile('${otherId}')" style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(124,92,252,0.12);color:var(--accent2);font-weight:700;cursor:pointer">${isProvider?'👤 Kunde: ':'🏪 Tilbyder: '}${otherName} ›</span>
       <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(59,111,245,0.1);color:var(--accent);font-weight:700">🔄 ${recLabel}</span>
       <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);font-weight:700">${b.price} kr/gang</span>
     </div>`;
@@ -6700,7 +6702,7 @@ function recurringCard(b, nameMap, sessions) {
   let body = '';
   if(b.status === 'requested') {
     body = isProvider
-      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>📩</span><div><b>Forespørsel om fast avtale fra ${otherName}</b> – ${recLabel}, fra ${formatDateShort(b.scheduled_at)}, ${b.price} kr/gang.${b.note?'<br>«'+b.note+'»':''}</div></div>
+      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>📩</span><div><b>Forespørsel om fast avtale fra <span onclick="event.stopPropagation();viewOtherProfile('${otherId}')" style="color:var(--accent);cursor:pointer;text-decoration:underline">${otherName} ›</span></b> – ${recLabel}, fra ${formatDateShort(b.scheduled_at)}, ${b.price} kr/gang.${b.note?'<br>«'+b.note+'»':''}</div></div>
          <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft fast avtale</button>
          <div style="display:flex;gap:8px;margin-top:8px">${chatBtn}<button onclick="declineBooking('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslå</button></div>`
       : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Venter på at ${otherName} bekrefter den faste avtalen (${recLabel}).</div></div>
@@ -6825,9 +6827,9 @@ function providerOverview(agreements, sessionsByParent, nameMap) {
     }
     return `
       <div style="display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--border)">
-        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;position:relative">${init}<span style="position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;border:2px solid var(--surface);background:${dotColors[dot]}"></span></div>
+        <div onclick="event.stopPropagation();viewOtherProfile('${a.customer_id}')" style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;position:relative;cursor:pointer">${init}<span style="position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;border:2px solid var(--surface);background:${dotColors[dot]}"></span></div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+          <div onclick="event.stopPropagation();viewOtherProfile('${a.customer_id}')" style="font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer">${name} <span style="font-size:11px;color:var(--muted);font-weight:400">›</span></div>
           <div style="font-size:11.5px;color:var(--muted);margin-top:1px">${meta}</div>
           <div onclick="toggleAgrDetail('${a.id}')" style="font-size:11px;color:var(--accent);font-weight:600;cursor:pointer;margin-top:3px;display:inline-block">Detaljer ›</div>
         </div>
