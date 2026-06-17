@@ -360,7 +360,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   box-shadow:var(--shadow); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
 }
 .qp-icon { position:relative; z-index:1; pointer-events:none; }
-.qp-img  { position:absolute; inset:2.5px; z-index:1; border-radius:50%; object-fit:cover; }
+.qp-img  { position:absolute; top:2.5px; left:2.5px; width:calc(100% - 5px); height:calc(100% - 5px); z-index:1; border-radius:50%; object-fit:cover; }
 
 /* shape variants */
 .shape-square  .qp-shape { border-radius:11px; }
