@@ -3999,6 +3999,21 @@ function closeProfilePage() {
   document.getElementById('profile-page').style.display = 'none';
 }
 
+async function updateProfileNavBadges() {
+  if(!currentUser) return;
+  const setB = (id, n) => { const el = document.getElementById(id); if(!el) return; if(n > 0) { el.textContent = n; el.style.display = 'inline-flex'; } else el.style.display = 'none'; };
+  // Aktive oppdrag = mine oppdrag som er åpne eller tatt
+  const { count: questCount } = await sb.from('quests')
+    .select('id', { count:'exact', head:true })
+    .eq('user_id', currentUser.id).in('status', ['open','taken']);
+  setB('pp-nav-quests-badge', questCount || 0);
+  // Aktive tjenester = mine tilbud som er aktive på kartet
+  const { count: svcCount } = await sb.from('services')
+    .select('id', { count:'exact', head:true })
+    .eq('user_id', currentUser.id).eq('status', 'active');
+  setB('pp-nav-tjenester-badge', svcCount || 0);
+}
+
 function ppShowTab() { /* fjernet – oppdrag/tjenester ligger nå i egne paneler */ }
 
 async function loadProfilePage(userId, isOwn) {
@@ -4096,6 +4111,7 @@ async function loadProfilePage(userId, isOwn) {
   if(isOwn) {
     document.getElementById('pp-edit-name').value = profile.full_name || '';
     document.getElementById('pp-edit-phone').value = profile.phone || '';
+    updateProfileNavBadges();
   }
 
   // Rangstige
@@ -8275,9 +8291,11 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <!-- Hurtigmeny (kun egen profil) -->
   <div id="pp-quicknav" style="display:none;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
     <div style="display:flex;gap:8px">
-      <button onclick="openMyQuests('posted')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      <button onclick="openMyQuests('posted')" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span id="pp-nav-quests-badge" style="display:none;position:absolute;top:8px;right:10px;background:var(--green);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;padding:0 5px;border-radius:999px;align-items:center;justify-content:center">0</span>
         <span style="font-size:21px">📋</span><span style="font-size:11.5px;font-weight:700">Mine oppdrag</span></button>
-      <button onclick="openTjenester('tilbud')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      <button onclick="openTjenester('tilbud')" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span id="pp-nav-tjenester-badge" style="display:none;position:absolute;top:8px;right:10px;background:var(--green);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;padding:0 5px;border-radius:999px;align-items:center;justify-content:center">0</span>
         <span style="font-size:21px">🏪</span><span style="font-size:11.5px;font-weight:700">Tjenester</span></button>
     </div>
   </div>
