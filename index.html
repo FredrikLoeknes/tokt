@@ -6159,11 +6159,12 @@ function tilbudRow(s) {
   const statusPill = paused
     ? '<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:50px;background:rgba(245,158,11,0.14);color:#b45309;white-space:nowrap">⏸ Pauset</span>'
     : '<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:50px;background:rgba(15,169,104,0.12);color:var(--green);white-space:nowrap">● Aktiv</span>';
-  const leftBorder = paused ? '#f59e0b' : 'var(--accent2)';
+  const ringCol = paused ? '#f59e0b' : 'var(--green)';
+  const ringShadow = paused ? '0 2px 12px rgba(245,158,11,0.13)' : '0 2px 12px rgba(15,169,104,0.13)';
   const toggleBtn = paused
-    ? `<button onclick="event.stopPropagation();resumeService('${s.id}')" style="background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:9px;padding:7px 10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">▶️ Start</button>`
+    ? `<button onclick="event.stopPropagation();resumeService('${s.id}')" style="background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:9px;padding:7px 10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">▶️ Aktiver</button>`
     : `<button onclick="event.stopPropagation();pauseService('${s.id}')" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:9px;padding:7px 10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⏸ Pause</button>`;
-  return `<div onclick="editServiceById('${s.id}')" style="display:flex;align-items:center;gap:10px;padding:13px;background:var(--surface);border:1px solid var(--border);border-left:3px solid ${leftBorder};border-radius:13px;box-shadow:var(--shadow-sm);cursor:pointer">
+  return `<div onclick="editServiceById('${s.id}')" style="display:flex;align-items:center;gap:10px;padding:13px;background:var(--surface);border:1.5px solid ${ringCol};border-radius:13px;box-shadow:${ringShadow};cursor:pointer">
     <div style="flex:1;min-width:0">
       <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.title}</div>
       <div style="font-size:11.5px;color:var(--muted);margin-top:2px">${s.category || ''}${s.category?' · ':''}${s.price} kr${rec}</div>
@@ -6175,18 +6176,22 @@ function tilbudRow(s) {
 }
 
 async function pauseService(id) {
-  const { error } = await sb.from('services').update({ status: 'paused' }).eq('id', id);
+  const { data, error } = await sb.from('services').update({ status: 'paused' }).eq('id', id).select();
   if(error) { showToast('❌ ' + error.message); return; }
+  if(!data || !data.length) { showToast('❌ Fikk ikke pauset – mangler tilgang?'); return; }
   showToast('⏸ Tjeneste satt på pause – skjult fra kartet');
-  await addMarkers();
-  renderTilbud();
+  renderTilbud();              // oppdater listen umiddelbart
+  updateProfileNavBadges();    // oppdater aktiv-teller
+  try { await addMarkers(); } catch(e) { console.error('addMarkers etter pause:', e); }
 }
 async function resumeService(id) {
-  const { error } = await sb.from('services').update({ status: 'active' }).eq('id', id);
+  const { data, error } = await sb.from('services').update({ status: 'active' }).eq('id', id).select();
   if(error) { showToast('❌ ' + error.message); return; }
-  showToast('▶️ Tjeneste aktiv igjen');
-  await addMarkers();
+  if(!data || !data.length) { showToast('❌ Fikk ikke aktivert – mangler tilgang?'); return; }
+  showToast('▶️ Tjeneste aktiv igjen – synlig på kartet');
   renderTilbud();
+  updateProfileNavBadges();
+  try { await addMarkers(); } catch(e) { console.error('addMarkers etter aktivering:', e); }
 }
 
 /* ---- Fane 2+3: bookinger gruppert ---- */
@@ -6355,9 +6360,10 @@ function bookingCard(b, nameMap, sessions) {
   }
 
   const active = b.status === 'confirmed';
-  const waiting = b.status === 'requested' && b.provider_id !== currentUser.id; // søkt på (venter)
-  const cardBorder = active ? 'var(--green)' : waiting ? '#f97316' : 'var(--border)';
-  const cardShadow = active ? ';box-shadow:0 2px 12px rgba(15,169,104,0.15)' : waiting ? ';box-shadow:0 2px 12px rgba(249,115,22,0.13)' : '';
+  const incoming = b.status === 'requested' && b.provider_id === currentUser.id;  // forespørsel til deg → grønn ring
+  const waiting = b.status === 'requested' && b.provider_id !== currentUser.id;    // søkt på (venter) → oransje ring
+  const cardBorder = (active || incoming) ? 'var(--green)' : waiting ? '#f97316' : 'var(--border)';
+  const cardShadow = (active || incoming) ? ';box-shadow:0 2px 12px rgba(15,169,104,0.15)' : waiting ? ';box-shadow:0 2px 12px rgba(249,115,22,0.13)' : '';
   return `<div style="background:var(--surface);border:1.5px solid ${cardBorder};border-radius:14px;overflow:hidden${cardShadow}">
     <div style="padding:14px 16px">${head}${body}</div></div>`;
 }
@@ -6478,9 +6484,10 @@ function recurringCard(b, nameMap, sessions) {
     body = `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>•</span><div>${b.status==='declined'?'Forespørselen om fast avtale ble avslått.':'Den faste avtalen er avsluttet.'}</div></div>`;
   }
 
-  const recWaiting = b.status === 'requested' && b.provider_id !== currentUser.id; // søkt på fast (venter)
-  const recBorder = b.status === 'active' ? 'var(--green)' : b.status === 'paused' ? '#f59e0b' : recWaiting ? '#f97316' : 'var(--border)';
-  const recShadow = b.status === 'active' ? ';box-shadow:0 2px 12px rgba(15,169,104,0.15)'
+  const recIncoming = b.status === 'requested' && b.provider_id === currentUser.id; // forespørsel til deg → grønn
+  const recWaiting = b.status === 'requested' && b.provider_id !== currentUser.id;   // søkt på fast (venter) → oransje
+  const recBorder = (b.status === 'active' || recIncoming) ? 'var(--green)' : b.status === 'paused' ? '#f59e0b' : recWaiting ? '#f97316' : 'var(--border)';
+  const recShadow = (b.status === 'active' || recIncoming) ? ';box-shadow:0 2px 12px rgba(15,169,104,0.15)'
                   : b.status === 'paused' ? ';box-shadow:0 2px 12px rgba(245,158,11,0.13)'
                   : recWaiting ? ';box-shadow:0 2px 12px rgba(249,115,22,0.13)' : '';
   return `<div style="background:var(--surface);border:1.5px solid ${recBorder};border-radius:14px;overflow:hidden${recShadow}">
