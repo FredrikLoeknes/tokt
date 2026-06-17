@@ -4879,6 +4879,20 @@ async function loadMyQuests() {
     return;
   }
 
+  // Selvhealing: oppdrag med godkjent søker men status 'open'/'paused' skal være 'taken'
+  // (retter gammel/feilaktig data så de forsvinner fra kartet og havner under «Tildelt»)
+  const needFix = (posted || []).filter(q =>
+    (q.status === 'open' || q.status === 'paused') &&
+    (q.conversations || []).some(c => c.status === 'accepted')
+  );
+  if(needFix.length) {
+    for(const q of needFix) {
+      await sb.from('quests').update({ status: 'taken' }).eq('id', q.id);
+      q.status = 'taken';
+    }
+    try { addMarkers(); } catch(e) {}
+  }
+
   // Fetch applicant names from profiles in one batch
   const takerIds = [...new Set((posted||[]).flatMap(q => (q.conversations||[]).map(c => c.taker_id)).filter(Boolean))];
   window.takerNameMap = {};
@@ -4893,7 +4907,50 @@ async function loadMyQuests() {
     postedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke lagt ut noen oppdrag ennå.<br><span style="font-size:10px;opacity:0.6">(0 aktive oppdrag funnet for denne kontoen)</span><br><br><button onclick="closeMyQuests();openModal()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Legg ut ditt første oppdrag</button></div>';
   } else {
     try {
-      postedEl.innerHTML = visiblePosted.map(q => questCard(q, 'posted')).join('');
+      const grp = { tildelt:[], aktive:[], pauset:[], historikk:[] };
+      visiblePosted.forEach(q => grp[classifyPosted(q)].push(q));
+
+      const stripCard = (n, col, lab) =>
+        `<div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 4px;text-align:center">
+          <div style="font-size:17px;font-weight:800;line-height:1;color:${col}">${n}</div>
+          <div style="font-size:9.5px;color:var(--muted);font-weight:600;margin-top:3px">${lab}</div>
+        </div>`;
+
+      const secHeadP = (n, bg, col, title) =>
+        `<div style="display:flex;align-items:center;gap:8px;margin:0 2px 11px">
+          <span style="font-size:11px;font-weight:800;min-width:20px;height:20px;padding:0 6px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;background:${bg};color:${col}">${n}</span>
+          <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:${col}">${title}</span>
+        </div>`;
+
+      const group = (arr) =>
+        `<div style="display:flex;flex-direction:column;gap:11px;margin-bottom:20px">` + arr.map(q => questCard(q, 'posted')).join('') + `</div>`;
+
+      let html = '';
+
+      // Tellestripe – raskt overblikk
+      html += `<div style="display:flex;gap:6px;margin-bottom:16px">
+        ${stripCard(grp.aktive.length, 'var(--green)', '🟢 Aktive')}
+        ${stripCard(grp.tildelt.length, 'var(--accent)', '🔒 Tildelt')}
+        ${stripCard(grp.pauset.length, '#f59e0b', '⏸️ Pauset')}
+        ${stripCard(grp.historikk.length, 'var(--muted)', '🏆 Fullført')}
+      </div>`;
+
+      if(grp.tildelt.length) {
+        html += secHeadP(grp.tildelt.length, 'var(--accent)', 'var(--accent)', '🔒 Tildelt – pågår') + group(grp.tildelt);
+      }
+      if(grp.aktive.length) {
+        html += secHeadP(grp.aktive.length, 'var(--green)', 'var(--green)', '🟢 Aktive på kartet') + group(grp.aktive);
+      }
+      if(grp.pauset.length) {
+        html += secHeadP(grp.pauset.length, 'rgba(245,158,11,0.14)', '#f59e0b', '⏸️ På pause') + group(grp.pauset);
+      }
+      if(grp.historikk.length) {
+        html += `<button onclick="var c=this.nextElementSibling;c.style.display=c.style.display==='none'?'flex':'none';this.querySelector('.hist-ar').textContent=c.style.display==='none'?'▾':'▴'" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;color:var(--muted);cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <span>📜 Historikk · ${grp.historikk.length} fullført${grp.historikk.length!==1?'e':''}</span><span class="hist-ar">▾</span></button>
+          <div style="display:none;flex-direction:column;gap:11px;margin-top:11px">` + grp.historikk.map(q => questCard(q, 'posted')).join('') + `</div>`;
+      }
+
+      postedEl.innerHTML = html;
     } catch(renderErr) {
       postedEl.innerHTML = '<div style="padding:20px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.3);border-radius:12px;font-size:12px;color:var(--red)"><strong>⚠️ Visningsfeil:</strong><br>' + renderErr.message + '<br><br>Fant ' + visiblePosted.length + ' oppdrag, men kunne ikke vise dem. Send denne meldingen til utvikleren.</div>';
     }
@@ -5149,27 +5206,43 @@ function giverTakenBlock(q, conv) {
     </div>`;
 }
 
+// Klassifiser et eget oppdrag i en gruppe for «Lagt ut»-fanen
+function classifyPosted(q) {
+  const accepted = (q.conversations || []).some(c => c.status === 'accepted');
+  if(q.status === 'completed' || q.status === 'expired') return 'historikk';
+  if(accepted || q.status === 'taken') return 'tildelt';
+  if(q.status === 'paused') return 'pauset';
+  return 'aktive';
+}
+
 function questCard(q, type) {
   const applicants = q.conversations || [];
   const activeConv = applicants.find(c => c.status === 'accepted');
+  const pendingCount = applicants.filter(c => c.status === 'pending').length;
+  const isCompleted = q.status === 'completed';
+  const isExpired = q.status === 'expired';
+  // Tildelt = noen er godkjent ELLER status er taken (og oppdraget er ikke ferdig)
+  const taken = !isCompleted && !isExpired && (!!activeConv || q.status === 'taken');
 
-  const statusLabel = q.status === 'completed' ? '🏆 Fullført'
-    : q.status === 'taken' ? '🔒 Tildelt'
-    : q.status === 'open' ? '🟢 Åpen'
-    : q.status === 'paused' ? '⏸️ På pause'
-    : q.status === 'expired' ? '⏰ Utløpt'
-    : q.status === 'closed' ? '🔴 Avsluttet'
-    : '🗑️ Slettet';
-  const statusColor = q.status === 'completed' ? 'var(--accent)'
-    : q.status === 'taken' ? '#f97316'
-    : q.status === 'open' ? 'var(--green)'
-    : q.status === 'paused' ? '#f59e0b'
-    : q.status === 'expired' ? 'var(--muted)'
-    : q.status === 'closed' ? 'var(--red)'
-    : 'var(--muted)';
+  let statusLabel, statusColor;
+  if(isCompleted) { statusLabel = '🏆 Fullført'; statusColor = 'var(--accent)'; }
+  else if(taken) { statusLabel = '🔒 Tildelt'; statusColor = 'var(--accent)'; }
+  else if(q.status === 'paused') { statusLabel = '⏸️ På pause'; statusColor = '#f59e0b'; }
+  else if(isExpired) { statusLabel = '⏰ Utløpt'; statusColor = 'var(--muted)'; }
+  else if(q.status === 'closed') { statusLabel = '🔴 Avsluttet'; statusColor = 'var(--red)'; }
+  else if(q.status === 'open') { statusLabel = '🟢 Åpen'; statusColor = 'var(--green)'; }
+  else { statusLabel = '🗑️ Slettet'; statusColor = 'var(--muted)'; }
 
-  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px">
-    <div style="padding:14px 16px">
+  // Farge rundt kortet – som på «Aktive & søkt»
+  let cardBorder = '1px solid var(--border)';
+  let cardShadow = '';
+  if(taken) { cardBorder = '1.5px solid var(--accent)'; cardShadow = ';box-shadow:0 2px 12px rgba(59,111,245,0.15)'; }
+  else if(q.status === 'open') { cardBorder = '1.5px solid var(--green)'; cardShadow = ';box-shadow:0 2px 12px rgba(15,169,104,0.13)'; }
+  else if(q.status === 'paused') { cardBorder = '1.5px solid rgba(245,158,11,0.45)'; }
+  const dim = (isCompleted || isExpired) ? ';opacity:.82' : '';
+
+  return `<div style="background:var(--surface);border:${cardBorder};border-radius:14px;overflow:hidden${cardShadow}">
+    <div style="padding:14px 16px${dim}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div style="font-size:15px;font-weight:700;flex:1;margin-right:8px">${q.title}</div>
         <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px;background:${statusColor}18;color:${statusColor};border:1px solid ${statusColor}44;white-space:nowrap">${statusLabel}</span>
@@ -5179,6 +5252,7 @@ function questCard(q, type) {
         <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);font-weight:700">${q.pay} kr</span>
         <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">👤 ${applicants.length} søker${applicants.length!==1?'e':''}</span>
       </div>
+      ${(!taken && !isCompleted && !isExpired && pendingCount > 0) ? `<div style="background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:9px 11px;margin-bottom:11px;font-size:11.5px;font-weight:700;color:#d97a30">🔔 ${pendingCount} ny${pendingCount!==1?'e':''} søker${pendingCount!==1?'e':''} venter på svar</div>` : ''}
       ${applicants.length > 0 ? `
         <div style="border-top:1px solid var(--border);padding-top:10px;margin-bottom:10px">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px">Søkere</div>
@@ -5193,19 +5267,19 @@ function questCard(q, type) {
                 <button onclick="rejectApplicant('${c.id}')" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">✕</button>
               ` : c.status==='rejected' ? `<span style="font-size:11px;font-weight:700;color:var(--muted)">✕ Avvist</span>`
                 : c.status==='completed' ? `<span style="font-size:11px;font-weight:700;color:var(--accent)">🏆 Fullført</span>`
-                : `<span style="font-size:11px;font-weight:700;color:var(--green)">✅ Godkjent</span>`}
+                : `<span style="font-size:11px;font-weight:700;color:var(--green)">✅ Utfører</span>`}
             </div>`;
           }).join('')}
         </div>
       ` : ''}
-      ${q.status==='taken' && activeConv ? giverTakenBlock(q, activeConv) : `
+      ${activeConv ? giverTakenBlock(q, activeConv) : `
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${applicants.length > 0 ? `<button onclick="openChat('${applicants[0]?.id||''}','${q.title}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : ''}
         ${(q.status==='open'||q.status==='paused') ? `<button onclick="sb.from('quests').select('*').eq('id','${q.id}').single().then(r=>r.data&&showEditQuestModal(r.data))" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✏️ Endre</button>` : ''}
         ${q.status==='open' ? `<button onclick="pauseQuest('${q.id}')" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⏸️ Pause</button>` : ''}
-        ${q.status==='paused' ? `<button onclick="resumeQuest('${q.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">▶️ Gjenåpne</button>` : ''}
+        ${q.status==='paused' ? `<button onclick="resumeQuest('${q.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">▶️ Aktiver</button>` : ''}
         ${((q.status==='open'||q.status==='paused') && !activeConv) ? `<button onclick="closeQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button>` : ''}
-        ${q.status==='expired' ? `<button onclick="repostQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔄 Legg ut på nytt</button>` : ''}
+        ${isExpired ? `<button onclick="repostQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔄 Legg ut på nytt</button>` : ''}
       </div>`}
     </div>
   </div>`;
@@ -5398,15 +5472,25 @@ async function rejectApplicant(convId) {
 }
 
 async function pauseQuest(questId) {
-  await sb.from('quests').update({ status: 'paused' }).eq('id', questId);
-  showToast('⏸️ Oppdrag satt på pause');
+  // Sperr pause hvis oppdraget allerede er tildelt noen
+  const { data: convs } = await sb.from('conversations').select('status').eq('quest_id', questId);
+  if((convs || []).some(c => c.status === 'accepted')) {
+    showToast('🔒 Kan ikke pause – oppdraget er tildelt noen.');
+    return;
+  }
+  const { data, error } = await sb.from('quests').update({ status: 'paused' }).eq('id', questId).select();
+  if(error) { showToast('❌ Kunne ikke pause: ' + error.message); return; }
+  if(!data || !data.length) { showToast('❌ Fikk ikke pauset – mangler tilgang?'); return; }
+  showToast('⏸️ Oppdrag satt på pause – skjult fra kartet');
   loadMyQuests();
   addMarkers();
 }
 
 async function resumeQuest(questId) {
-  await sb.from('quests').update({ status: 'open' }).eq('id', questId);
-  showToast('▶️ Oppdrag gjenåpnet!');
+  const { data, error } = await sb.from('quests').update({ status: 'open' }).eq('id', questId).select();
+  if(error) { showToast('❌ Kunne ikke aktivere: ' + error.message); return; }
+  if(!data || !data.length) { showToast('❌ Fikk ikke aktivert – mangler tilgang?'); return; }
+  showToast('▶️ Oppdrag aktivert igjen!');
   loadMyQuests();
   addMarkers();
 }
