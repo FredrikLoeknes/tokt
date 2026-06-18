@@ -422,8 +422,32 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .pp-tab.active { border-color:var(--accent); color:var(--accent); background:rgba(59,111,245,0.08); }
 .pp-rank-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
 .pp-rank-row:last-child { border-bottom:none; }
-.pp-ach-row { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:12px; }
-.pp-ach-row.locked { opacity:0.45; filter:grayscale(0.8); }
+/* ── BRAGDER (achievements – rolig liste) ── */
+.bgd-summary { margin-bottom:18px; }
+.bgd-summary-row { display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:8px; }
+.bgd-summary-big { font-size:15px; font-weight:700; }
+.bgd-summary-next { font-size:12.5px; color:var(--muted); text-align:right; white-space:nowrap; }
+.bgd-summary-next b { color:var(--text); font-weight:700; }
+.bgd-thinbar { height:5px; border-radius:50px; background:var(--surface2); overflow:hidden; }
+.bgd-thinbar i { display:block; height:100%; border-radius:50px; background:var(--gold); transition:width .4s; }
+.bgd-grp { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin:18px 0 2px; }
+.bgd-grp.first { margin-top:0; }
+.bgd-list { display:flex; flex-direction:column; }
+.bgd-row { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); }
+.bgd-row:last-child { border-bottom:none; }
+.bgd-ic { flex-shrink:0; width:42px; height:42px; display:grid; place-items:center; border-radius:13px; }
+.bgd-ic svg { width:21px; height:21px; stroke-width:1.7; }
+.bgd-row.on .bgd-ic { background:rgba(201,144,10,0.10); color:var(--gold); }
+.bgd-row.off .bgd-ic { background:var(--surface2); color:var(--muted); }
+body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
+.bgd-mid { flex:1; min-width:0; }
+.bgd-tt { font-size:14px; font-weight:700; line-height:1.25; }
+.bgd-row.off .bgd-tt { color:var(--muted); }
+.bgd-dd { font-size:12.5px; color:var(--muted); margin-top:2px; }
+.bgd-st { flex-shrink:0; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; }
+.bgd-st.done { color:var(--green); }
+.bgd-st.prog { color:var(--muted); }
+.bgd-st svg { width:17px; height:17px; stroke-width:2; }
 
 /* ── VIEW TOGGLE ── */
 .vt-btn { border:none; background:none; padding:7px 13px; border-radius:50px; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; font-family:inherit; white-space:nowrap; transition:all .15s; }
@@ -4454,18 +4478,43 @@ function toggleProfile() {
 }
 
 // ═══════════ PROFILSIDE ═══════════
+// Strek-ikoner (Feather/Lucide-stil) for bragder
+const BRAGD_ICONS = {
+  award:'<circle cx="12" cy="8" r="6"/><path d="M15.5 13 17 22l-5-3-5 3 1.5-9"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
+  star:'<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9Z"/>',
+  crown:'<path d="M3 6l4 4 5-6 5 6 4-4-1.5 12.5h-15Z"/><path d="M4.5 18.5h15"/>',
+  send:'<path d="M14.5 21.7a.5.5 0 0 0 .9 0l6.5-19a.5.5 0 0 0-.63-.63l-19 6.5a.5.5 0 0 0 0 .94l7.9 3.18a2 2 0 0 1 1.11 1.1Z"/><path d="m21.9 2.1-10.9 11"/>',
+  clipboard:'<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/>',
+  usercheck:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/>',
+  heart:'<path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5c0 2.1 1.5 4 3 5.5l7 7Z"/>',
+  check:'<path d="m20 6-11 11-5-5"/>',
+  lock:'<rect width="14" height="9" x="5" y="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'
+};
+function bragdSvg(name){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">${BRAGD_ICONS[name]||''}</svg>`;
+}
+
+// cat: 'mil' = Milepæler, 'trust' = Tillit, 'act' = Aktivitet & bidrag
+// prog (valgfri): returnerer {cur,max} for tellbar fremgang
 const ACHIEVEMENTS = [
-  { id:'first_apply',  icon:'📨', title:'Første søknad',       desc:'Søk på ditt første oppdrag',          check: s => s.applied >= 1 },
-  { id:'first_quest',  icon:'⚡', title:'Første oppdrag',       desc:'Få tildelt ditt første oppdrag',      check: s => s.taken >= 1 },
-  { id:'first_done',   icon:'🏆', title:'Fullført!',            desc:'Fullfør ditt første oppdrag',         check: s => s.completed >= 1 },
-  { id:'first_post',   icon:'📋', title:'Oppdragsgiver',        desc:'Legg ut ditt første oppdrag',         check: s => s.posted >= 1 },
-  { id:'five_done',    icon:'🛡️', title:'Pålitelig',            desc:'Fullfør 5 oppdrag',                   check: s => s.completed >= 5 },
-  { id:'ten_done',     icon:'⚔️', title:'Kriger',               desc:'Fullfør 10 oppdrag',                  check: s => s.completed >= 10 },
-  { id:'rating_45',    icon:'⭐', title:'Stjerneutfører',       desc:'Oppnå 4.5+ i snittvurdering',         check: s => s.rating >= 4.5 },
-  { id:'charity',      icon:'💚', title:'Hjertegod',            desc:'Fullfør et veldedighetsoppdrag',      check: s => s.charity >= 1 },
-  { id:'twentyfive',   icon:'🪓', title:'Veteran',              desc:'Fullfør 25 oppdrag',                  check: s => s.completed >= 25 },
-  { id:'fifty',        icon:'👑', title:'Jarlens verdighet',    desc:'Fullfør 50 oppdrag',                  check: s => s.completed >= 50 },
-  { id:'hundred',      icon:'🌟', title:'Valkyrjens utvalgte',  desc:'Fullfør 100 oppdrag',                 check: s => s.completed >= 100 }
+  { id:'first_done',   icon:'award',     cat:'mil',   title:'Fullført!',           desc:'Fullfør ditt første oppdrag',     check: s => s.completed >= 1 },
+  { id:'five_done',    icon:'shield',    cat:'mil',   title:'Pålitelig',           desc:'Fullfør 5 oppdrag',               check: s => s.completed >= 5,   prog: s => ({cur:s.completed, max:5}) },
+  { id:'ten_done',     icon:'award',     cat:'mil',   title:'Kriger',              desc:'Fullfør 10 oppdrag',              check: s => s.completed >= 10,  prog: s => ({cur:s.completed, max:10}) },
+  { id:'twentyfive',   icon:'award',     cat:'mil',   title:'Veteran',             desc:'Fullfør 25 oppdrag',              check: s => s.completed >= 25,  prog: s => ({cur:s.completed, max:25}) },
+  { id:'fifty',        icon:'crown',     cat:'mil',   title:'Jarlens verdighet',   desc:'Fullfør 50 oppdrag',              check: s => s.completed >= 50,  prog: s => ({cur:s.completed, max:50}) },
+  { id:'hundred',      icon:'star',      cat:'mil',   title:'Valkyrjens utvalgte', desc:'Fullfør 100 oppdrag',             check: s => s.completed >= 100, prog: s => ({cur:s.completed, max:100}) },
+  { id:'rating_45',    icon:'star',      cat:'trust', title:'Stjerneutfører',      desc:'Oppnå 4,5+ i snittvurdering',     check: s => s.rating >= 4.5 },
+  { id:'first_apply',  icon:'send',      cat:'act',   title:'Første søknad',       desc:'Søk på ditt første oppdrag',      check: s => s.applied >= 1 },
+  { id:'first_post',   icon:'clipboard', cat:'act',   title:'Oppdragsgiver',       desc:'Legg ut ditt første oppdrag',     check: s => s.posted >= 1 },
+  { id:'first_quest',  icon:'usercheck', cat:'act',   title:'Første tildelt',      desc:'Få tildelt ditt første oppdrag',  check: s => s.taken >= 1 },
+  { id:'charity',      icon:'heart',     cat:'act',   title:'Hjertegod',           desc:'Fullfør et veldedighetsoppdrag',  check: s => s.charity >= 1 }
+];
+
+const BRAGD_GROUPS = [
+  { cat:'mil',   label:'Milepæler' },
+  { cat:'trust', label:'Tillit' },
+  { cat:'act',   label:'Aktivitet & bidrag' }
 ];
 
 function openProfilePage() {
@@ -4645,17 +4694,55 @@ function renderRankLadder(questsDone) {
 
 function renderAchievements(stats) {
   const el = document.getElementById('pp-achievements');
-  el.innerHTML = ACHIEVEMENTS.map(a => {
-    const unlocked = a.check(stats);
-    return `<div class="pp-ach-row ${unlocked ? '' : 'locked'}">
-      <div style="font-size:26px;flex-shrink:0">${unlocked ? a.icon : '🔒'}</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700">${a.title}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:1px">${a.desc}</div>
-      </div>
-      ${unlocked ? '<span style="font-size:11px;font-weight:700;color:var(--green)">✓ Låst opp</span>' : ''}
-    </div>`;
-  }).join('');
+  const total = ACHIEVEMENTS.length;
+  const unlockedCount = ACHIEVEMENTS.filter(a => a.check(stats)).length;
+  const pct = total ? Math.round(unlockedCount / total * 100) : 0;
+
+  // Nærmeste låste bragd (minst gjenstående)
+  let next = null, nextRemaining = Infinity;
+  ACHIEVEMENTS.forEach(a => {
+    if (a.check(stats)) return;
+    let remaining = 1;
+    if (a.prog) { const p = a.prog(stats); remaining = Math.max(p.max - p.cur, 1); }
+    if (remaining < nextRemaining) { nextRemaining = remaining; next = a; }
+  });
+  const nextHtml = next
+    ? `<span class="bgd-summary-next">Neste: <b>${next.title}</b>${next.prog ? ` · ${nextRemaining} igjen` : ''}</span>`
+    : `<span class="bgd-summary-next">Alle låst opp 🎉</span>`;
+
+  let html = `<div class="bgd-summary">
+    <div class="bgd-summary-row">
+      <span class="bgd-summary-big">${unlockedCount} av ${total} fullført</span>
+      ${nextHtml}
+    </div>
+    <div class="bgd-thinbar"><i style="width:${Math.max(pct, 2)}%"></i></div>
+  </div>`;
+
+  BRAGD_GROUPS.forEach((g, gi) => {
+    const items = ACHIEVEMENTS.filter(a => a.cat === g.cat);
+    if (!items.length) return;
+    html += `<div class="bgd-grp${gi === 0 ? ' first' : ''}">${g.label}</div><div class="bgd-list">`;
+    items.forEach(a => {
+      const unlocked = a.check(stats);
+      let st;
+      if (unlocked) {
+        st = `<span class="bgd-st done">${bragdSvg('check')} Fullført</span>`;
+      } else if (a.prog) {
+        const p = a.prog(stats);
+        st = `<span class="bgd-st prog">${Math.min(p.cur, p.max)} / ${p.max}</span>`;
+      } else {
+        st = `<span class="bgd-st prog">${bragdSvg('lock')}</span>`;
+      }
+      html += `<div class="bgd-row ${unlocked ? 'on' : 'off'}">
+        <span class="bgd-ic">${bragdSvg(a.icon)}</span>
+        <div class="bgd-mid"><div class="bgd-tt">${a.title}</div><div class="bgd-dd">${a.desc}</div></div>
+        ${st}
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  el.innerHTML = html;
 }
 
 /* ===================== ANMELDELSER ===================== */
@@ -9311,10 +9398,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div id="pp-reviews"><div style="font-size:13px;color:var(--muted);padding:8px 0">Laster vurderinger…</div></div>
   </div>
 
-  <!-- Achievements -->
+  <!-- Bragder -->
   <div style="padding:16px 20px 24px;background:var(--surface)">
-    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px">🏅 Achievements</div>
-    <div id="pp-achievements" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px">Bragder</div>
+    <div id="pp-achievements"></div>
   </div>
 
   <!-- Logg ut (kun egen profil) -->
