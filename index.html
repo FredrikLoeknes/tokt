@@ -327,6 +327,16 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   padding:7px 13px; border-radius:50px; cursor:pointer; white-space:nowrap;
 }
 .lv-sortpill.on { background:var(--text); color:#fff; border-color:var(--text); }
+.lv-catrow {
+  display:flex; gap:7px; padding:10px 16px 0; overflow-x:auto;
+  background:var(--surface);
+}
+.lv-catchip {
+  flex-shrink:0; border:1px solid var(--border); background:var(--surface);
+  color:var(--text); font-family:inherit; font-weight:700; font-size:12px;
+  padding:7px 12px; border-radius:50px; cursor:pointer; white-space:nowrap;
+}
+.lv-catchip.on { background:rgba(59,111,245,.1); color:var(--accent); border-color:var(--accent); }
 .lv-rows { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:24px; }
 .lv-card {
   display:flex; gap:12px; align-items:center; padding:13px 16px;
@@ -1693,6 +1703,20 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
       <div class="lv-headtitle">Resultater</div>
       <div class="lv-headcount" id="list-view-count">0 treff</div>
     </div>
+  </div>
+  <div class="lv-catrow" id="lv-catrow">
+    <button class="lv-catchip on" data-lvcat="all" onclick="pickListCategory('all')">🗺️ Alle</button>
+    <button class="lv-catchip" data-lvcat="rengjøring" onclick="pickListCategory('rengjøring')">🧹 Rengjøring</button>
+    <button class="lv-catchip" data-lvcat="hjem" onclick="pickListCategory('hjem')">🏠 Hjem</button>
+    <button class="lv-catchip" data-lvcat="hagearbeid" onclick="pickListCategory('hagearbeid')">🌿 Hage</button>
+    <button class="lv-catchip" data-lvcat="bære" onclick="pickListCategory('bære')">📦 Bære</button>
+    <button class="lv-catchip" data-lvcat="kjøring" onclick="pickListCategory('kjøring')">🚗 Kjøring</button>
+    <button class="lv-catchip" data-lvcat="handel" onclick="pickListCategory('handel')">🛒 Handel</button>
+    <button class="lv-catchip" data-lvcat="dyr" onclick="pickListCategory('dyr')">🐕 Dyr</button>
+    <button class="lv-catchip" data-lvcat="håndverk" onclick="pickListCategory('håndverk')">🔧 Håndverk</button>
+    <button class="lv-catchip" data-lvcat="teknologi" onclick="pickListCategory('teknologi')">💻 Teknologi</button>
+    <button class="lv-catchip" data-lvcat="barn" onclick="pickListCategory('barn')">👶 Barn</button>
+    <button class="lv-catchip" data-lvcat="eldre" onclick="pickListCategory('eldre')">👴 Eldre</button>
   </div>
   <div class="lv-sortrow">
     <button class="lv-sortpill on" data-lvsort="rec" onclick="setListSort('rec')">✨ Anbefalt</button>
@@ -4051,19 +4075,25 @@ function getOriginCoords() {
   }
   return null;
 }
-// Tillit-score: rating × erfaring × verifisering (~3–11)
+// Tillit-score, normalisert 0..1: rating (60%) + erfaring (30%) + verifisert (10%)
 function trustScore(m) {
-  const r = (m.rating != null) ? m.rating : 3.0;
-  const done = m.questsCompleted || 0;
-  const ver = m.verified ? 1.1 : 0.9;
-  return r * Math.min(1 + done / 20, 2) * ver;
+  const rating = (m.rating != null) ? m.rating : 3.6;          // nøytral baseline for nye
+  const ratingN = Math.max(0, Math.min(1, (rating - 2) / 3));  // 2★→0, 5★→1
+  const expN = Math.min((m.questsCompleted || 0) / 15, 1);     // 15+ fullførte = full erfaring
+  const ver = m.verified ? 1 : 0;
+  return 0.6 * ratingN + 0.3 * expN + 0.1 * ver;
 }
-// «Anbefalt»: tillit (70%) balansert mot nærhet (30%)
+// Nærhet-score 0..1 med mild avstandsdemping (0 km→1, 3 km≈0.37, 6 km≈0.14)
+function proximityScore(d) {
+  if(d == null) return 0.4;                                    // ukjent avstand = middels
+  return Math.exp(-d / 3);
+}
+// «Anbefalt»: tillit (62%) balansert mot nærhet (38%)
 function recScore(m, origin) {
-  const trust = trustScore(m);
+  const t = trustScore(m);
   const d = (origin && m.lng != null) ? getDistanceKm(origin, [m.lng, m.lat]) : null;
-  const near = (d == null) ? 0.3 : 1 / (1 + d);
-  return trust * 0.7 + near * 6 * 0.3;
+  const p = proximityScore(d);
+  return 0.62 * t + 0.38 * p;
 }
 // Felles rangeringsmotor – brukes av kartet nå og lista senere
 function computeResults() {
@@ -4090,8 +4120,26 @@ function openListView() {
   // synk liste-sortering med aktiv filter-sortering
   const active = document.querySelector('.sort-pill.active')?.dataset.sort || 'rec';
   document.querySelectorAll('.lv-sortpill').forEach(p => p.classList.toggle('on', p.dataset.lvsort === active));
+  syncListCatChips();
   renderListView();
   lv.classList.add('open');
+}
+// Kategori-chips i lista – ett-valg over samme kategori-filter som kartet bruker
+function pickListCategory(cat) {
+  const allItem = document.querySelector('.fcat-item[data-cat="all"]');
+  const target = document.querySelector('.fcat-item[data-cat="' + cat + '"]');
+  const already = cat !== 'all' && target && target.classList.contains('active');
+  document.querySelectorAll('.fcat-item').forEach(i => i.classList.remove('active'));
+  if(cat === 'all' || already) { if(allItem) allItem.classList.add('active'); }
+  else if(target) { target.classList.add('active'); }
+  updateFilterCount();
+  applyFilters();            // filtrerer kartmarkører + re-rendrer åpen liste
+  syncListCatChips();
+}
+function syncListCatChips() {
+  const active = document.querySelector('.fcat-item.active:not([data-cat="all"])');
+  const cat = active ? active.dataset.cat : 'all';
+  document.querySelectorAll('.lv-catchip').forEach(c => c.classList.toggle('on', c.dataset.lvcat === cat));
 }
 function closeListView() {
   const lv = document.getElementById('list-view');
