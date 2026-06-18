@@ -290,6 +290,70 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .lb-mine .lb-nm { font-weight:800; }
 .lb-you { font-size:9px; font-weight:800; background:var(--accent); color:#fff; padding:2px 7px; border-radius:20px; }
 .lb-empty { padding:26px 18px; text-align:center; font-size:13px; color:var(--muted); line-height:1.6; }
+
+/* ── LIST VIEW (kart ⇄ liste) ── */
+#list-toggle-btn {
+  position:fixed; left:50%; bottom:76px; transform:translateX(-50%); z-index:92;
+  background:var(--text); color:#fff; border:none; border-radius:50px;
+  padding:11px 20px; font-family:inherit; font-size:13px; font-weight:800;
+  box-shadow:0 6px 20px rgba(0,0,0,.28); cursor:pointer; display:flex; align-items:center; gap:7px;
+}
+#list-toggle-btn:active { transform:translateX(-50%) scale(.96); }
+#list-view {
+  position:fixed; inset:0; z-index:120; background:var(--bg);
+  display:none; flex-direction:column;
+}
+#list-view.open { display:flex; }
+.lv-head {
+  display:flex; align-items:center; gap:12px; padding:14px 16px 10px;
+  background:var(--surface); border-bottom:1px solid var(--border);
+  padding-top:calc(14px + env(safe-area-inset-top));
+}
+.lv-back {
+  background:var(--surface2); border:1px solid var(--border); color:var(--text);
+  font-family:inherit; font-weight:800; font-size:13px; padding:9px 15px;
+  border-radius:50px; cursor:pointer; flex-shrink:0;
+}
+.lv-headinfo { flex:1; min-width:0; }
+.lv-headtitle { font-size:16px; font-weight:800; }
+.lv-headcount { font-size:11px; color:var(--muted); font-weight:600; margin-top:1px; }
+.lv-sortrow {
+  display:flex; gap:7px; padding:10px 16px; overflow-x:auto;
+  background:var(--surface); border-bottom:1px solid var(--border);
+}
+.lv-sortpill {
+  flex-shrink:0; border:1px solid var(--border); background:var(--surface);
+  color:var(--muted); font-family:inherit; font-weight:700; font-size:12px;
+  padding:7px 13px; border-radius:50px; cursor:pointer; white-space:nowrap;
+}
+.lv-sortpill.on { background:var(--text); color:#fff; border-color:var(--text); }
+.lv-rows { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:24px; }
+.lv-card {
+  display:flex; gap:12px; align-items:center; padding:13px 16px;
+  border-bottom:1px solid var(--border); cursor:pointer; position:relative; background:var(--surface);
+}
+.lv-card:active { background:var(--surface2); }
+.lv-card.rec { background:linear-gradient(90deg,rgba(15,169,104,.06),rgba(59,111,245,.04)); }
+.lv-thumb {
+  width:48px; height:48px; border-radius:13px; background:var(--surface2);
+  display:flex; align-items:center; justify-content:center; font-size:22px;
+  flex-shrink:0; position:relative;
+}
+.lv-em { position:absolute; bottom:-4px; right:-4px; border:2px solid var(--surface); }
+.lv-info { flex:1; min-width:0; }
+.lv-title { font-size:14.5px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:5px; }
+.lv-vchk { width:14px; height:14px; fill:#2563eb; flex-shrink:0; }
+.lv-meta { font-size:11.5px; color:var(--muted); margin-top:3px; }
+.lv-star { color:var(--gold); font-weight:700; }
+.lv-new { color:var(--orange); font-weight:700; }
+.lv-price { font-size:13.5px; font-weight:800; text-align:right; flex-shrink:0; }
+.lv-recbadge {
+  position:absolute; top:10px; right:14px; font-size:9px; font-weight:800;
+  text-transform:uppercase; letter-spacing:.5px;
+  background:linear-gradient(135deg,#0fa968,#3b6ff5); color:#fff;
+  padding:3px 9px; border-radius:20px;
+}
+.lv-empty { padding:40px 24px; text-align:center; font-size:13px; color:var(--muted); line-height:1.6; }
 .lb-badge {
   font-size:9px; font-weight:700; padding:2px 5px;
   border-radius:4px; white-space:nowrap;
@@ -1618,6 +1682,28 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   <div class="lb-mine" id="lb-mine" style="display:none"></div>
 </div>
 
+<!-- LIST TOGGLE (floating, on map) -->
+<button id="list-toggle-btn" onclick="openListView()">☰ Liste · <span id="list-toggle-count">0</span></button>
+
+<!-- LIST VIEW (overlay, dismissible to full map) -->
+<div id="list-view">
+  <div class="lv-head">
+    <button class="lv-back" onclick="closeListView()">🗺️ Kart</button>
+    <div class="lv-headinfo">
+      <div class="lv-headtitle">Resultater</div>
+      <div class="lv-headcount" id="list-view-count">0 treff</div>
+    </div>
+  </div>
+  <div class="lv-sortrow">
+    <button class="lv-sortpill on" data-lvsort="rec" onclick="setListSort('rec')">✨ Anbefalt</button>
+    <button class="lv-sortpill" data-lvsort="near" onclick="setListSort('near')">📍 Nærmest</button>
+    <button class="lv-sortpill" data-lvsort="rated" onclick="setListSort('rated')">⭐ Best vurdert</button>
+    <button class="lv-sortpill" data-lvsort="pay" onclick="setListSort('pay')">💰 Betaling</button>
+    <button class="lv-sortpill" data-lvsort="new" onclick="setListSort('new')">🆕 Nyeste</button>
+  </div>
+  <div class="lv-rows" id="list-view-rows"></div>
+</div>
+
 <!-- CORNER WIDGETS -->
 <div id="corner-widgets">
   <div id="week-worker" style="display:none" onclick="showUserProfile('Jonas S.','JS','#f5c518',47,4.97,'Valkyrje')" title="Se profil">
@@ -2712,6 +2798,7 @@ function setViewMode(mode) {
     m.el.style.display = show ? '' : 'none';
   });
   clusterMarkers();
+  updateListToggleCount();
   showToast(mode === 'all' ? '🗺️ Viser alt' : mode === 'quests' ? '📋 Viser kun oppdrag' : '🏪 Viser kun tilbud');
 }
 
@@ -2744,6 +2831,8 @@ function addQuestMarker(q) {
     isFirstCome: !!q.is_first_come,
     userId: q.user_id || null,
     createdAt: q.created_at || null,
+    title: cleanName(q.title),
+    open: () => showPanel(job),
     lng: coords && coords[0], lat: coords && coords[1]
   });
   new mapboxgl.Marker({ element: el, anchor: 'bottom' })
@@ -2830,6 +2919,7 @@ async function addMarkers() {
 
   await enrichMarkerTrust();
   clusterMarkers();
+  updateListToggleCount();
 }
 
 // Hent rating/fullført/verifisert for alle markør-eiere (batch) og fest på markørene
@@ -2897,6 +2987,10 @@ function loadDemoMarkers() {
       isUrgent: job.type === 'haste',
       isCharity: job.type === 'charity',
       isFirstCome: !!job.firstCome,
+      userId: null,
+      createdAt: null,
+      title: cleanName(job.title),
+      open: () => showPanel(job),
       lng: coords && coords[0], lat: coords && coords[1]
     });
     new mapboxgl.Marker({ element: el, anchor: 'bottom' })
@@ -2926,6 +3020,8 @@ function addServiceMarker(svc) {
     isUrgent: false, isCharity: false, isFirstCome: false,
     userId: svc.raw?.user_id || null,
     createdAt: svc.raw?.created_at || null,
+    title: cleanName(svc.title),
+    open: () => showServicePanel(svc),
     lng: coords && coords[0], lat: coords && coords[1]
   });
   new mapboxgl.Marker({ element: el, anchor: 'bottom' })
@@ -3940,6 +4036,8 @@ function applyFilters() {
 
   closeFilters();
   updateFilterCount();
+  updateListToggleCount();
+  if(document.getElementById('list-view')?.classList.contains('open')) renderListView();
   showToast(visible === 0
     ? '🔍 Ingen treff – prøv å justere filteret'
     : `🔍 ${visible} treff · ${sortLabel}`);
@@ -3984,6 +4082,76 @@ function computeResults() {
   const labels = { rec: 'Anbefalt', near: 'Nærmest', pay: 'Høyest betalt', new: 'Nyeste', rated: 'Best vurdert' };
   return { results: arr, sort, sortLabel: labels[sort] || 'Anbefalt' };
 }
+
+// ── LIST VIEW (kart ⇄ liste) ──
+function openListView() {
+  const lv = document.getElementById('list-view');
+  if(!lv) return;
+  // synk liste-sortering med aktiv filter-sortering
+  const active = document.querySelector('.sort-pill.active')?.dataset.sort || 'rec';
+  document.querySelectorAll('.lv-sortpill').forEach(p => p.classList.toggle('on', p.dataset.lvsort === active));
+  renderListView();
+  lv.classList.add('open');
+}
+function closeListView() {
+  const lv = document.getElementById('list-view');
+  if(lv) lv.classList.remove('open');
+}
+function setListSort(key) {
+  // filter-pillene er kilde til sannhet → speil valget dit
+  document.querySelectorAll('.sort-pill').forEach(p => p.classList.toggle('active', p.dataset.sort === key));
+  document.querySelectorAll('.lv-sortpill').forEach(p => p.classList.toggle('on', p.dataset.lvsort === key));
+  renderListView();
+  // oppdater «beste treff»-glød på kartet under
+  (window.mapMarkers || []).forEach(m => m.el && m.el.classList.remove('marker-top'));
+  const { results } = computeResults();
+  if(results[0] && results[0].el) results[0].el.classList.add('marker-top');
+}
+function renderListView() {
+  const rowsEl = document.getElementById('list-view-rows');
+  const cntEl = document.getElementById('list-view-count');
+  if(!rowsEl) return;
+  const { results, sort, sortLabel } = computeResults();
+  if(cntEl) cntEl.textContent = `${results.length} treff · ${sortLabel}`;
+  updateListToggleCount();
+  if(!results.length) {
+    rowsEl.innerHTML = '<div class="lv-empty">Ingen treff her.<br>Juster filteret, zoom ut eller flytt kartet.</div>';
+    return;
+  }
+  const vchk = '<svg class="lv-vchk" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+  rowsEl.innerHTML = results.map((m, i) => {
+    const isSvc = m.kind === 'service';
+    const icon = isSvc ? '🏪' : '📋';
+    const ri = RANKS.indexOf(getRank(m.questsCompleted || 0));
+    const ratingTxt = (m.rating != null)
+      ? `<span class="lv-star">★ ${m.rating.toFixed(1)}</span>`
+      : `<span class="lv-new">Ny</span>`;
+    const dist = (m.distKm != null) ? ` · 📍 ${formatDistance(m.distKm)}` : '';
+    const ver = m.verified ? ' ' + vchk : '';
+    const rec = (sort === 'rec' && i === 0);
+    const medal = `<div class="medal xs ${rankMetalClass(ri)} lv-em"><span class="sym">${rankSym(RANKS[ri].name)}</span></div>`;
+    const price = m.pay ? `${m.pay} kr` : (isSvc ? '' : 'Gratis');
+    return `<div class="lv-card ${rec ? 'rec' : ''}" onclick="openListResult(${i})">
+      ${rec ? '<div class="lv-recbadge">✨ Anbefalt</div>' : ''}
+      <div class="lv-thumb">${icon}${medal}</div>
+      <div class="lv-info">
+        <div class="lv-title">${m.title || 'Uten tittel'}${ver}</div>
+        <div class="lv-meta">${ratingTxt}${dist} · ${RANKS[ri].name}</div>
+      </div>
+      <div class="lv-price">${price}</div>
+    </div>`;
+  }).join('');
+}
+function openListResult(i) {
+  const m = (window.lastResults || [])[i];
+  if(m && typeof m.open === 'function') { closeListView(); m.open(); }
+}
+function updateListToggleCount() {
+  const c = document.getElementById('list-toggle-count');
+  if(!c) return;
+  const n = (window.mapMarkers || []).filter(m => m.el && m.el.style.display !== 'none' && m.lng != null).length;
+  c.textContent = n;
+}
 function clearFilters() {
   document.querySelectorAll('.fcat-item').forEach((el,i) => el.classList.toggle('active', i===0));
   document.querySelectorAll('.fpill').forEach((el,i) => el.classList.toggle('active', i===0 && el.closest('.fsection') && el.closest('.fsection').querySelector('.fsection-title').textContent.includes('Sort')));
@@ -3997,6 +4165,8 @@ function clearFilters() {
   (window.mapMarkers || []).forEach(m => { m.el.style.display = ''; m.el.classList.remove('marker-top'); });
   applyTrustStyling();
   clusterMarkers();
+  updateListToggleCount();
+  if(document.getElementById('list-view')?.classList.contains('open')) renderListView();
 }
 function updateFilterCount() {
   const urgentOn = document.getElementById('tog-urgent')?.classList.contains('on');
@@ -7925,6 +8095,7 @@ function goToMap() {
   if(typeof closePanel === 'function') closePanel();
   if(typeof closeServicePanel === 'function') closeServicePanel();
   if(typeof closeLeaderboard === 'function') closeLeaderboard();
+  if(typeof closeListView === 'function') closeListView();
   if(typeof closeFilters === 'function') closeFilters();
 }
 
@@ -9132,6 +9303,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     ['service-modal-overlay', shown,   function(){ try{ closeServiceModal(); }catch(e){} }],
     ['modal-overlay',         hasOpen, function(){ try{ closeModal(); }catch(e){} }],
     ['rating-panel',          function(el){ return !!el; }, function(el){ el.remove(); }],
+    ['list-view',             hasOpen, function(){ try{ closeListView(); }catch(e){} }],
     ['profile-page',          shown,   function(){ try{ closeProfilePage(); }catch(e){} }],
     ['myquests-panel',        shown,   function(){ try{ closeMyQuests(); }catch(e){} }],
     ['chat-panel',            shown,   function(){ try{ closeChat(); }catch(e){} }],
