@@ -399,6 +399,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 /* ── PROFIL: avatar-emblem, reise-kort, mini-stige ── */
 .pp-avwrap{position:relative;display:inline-block;margin:0 auto 11px}
 .pp-medal-emblem{position:absolute;bottom:-5px;right:-5px;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.pp-star-badge{position:absolute;top:-3px;right:-3px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f5c518,#c9900a);border:2.5px solid #fff;box-shadow:0 2px 7px rgba(201,144,10,.45);display:none;align-items:center;justify-content:center;color:#fff}
+.pp-star-badge svg{width:17px;height:17px}
 .pp-journey{margin:-30px 14px 0;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:16px;padding:16px;position:relative;box-shadow:var(--shadow-lg)}
 .pp-jhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .pp-jhead .rk{font-size:19px;font-weight:800;letter-spacing:-.2px}
@@ -4480,14 +4482,27 @@ function toggleProfile() {
 // ═══════════ PROFILSIDE ═══════════
 // Strek-ikoner (Feather/Lucide-stil) for bragder
 const BRAGD_ICONS = {
-  award:'<circle cx="12" cy="8" r="6"/><path d="M15.5 13 17 22l-5-3-5 3 1.5-9"/>',
+  flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1Z"/><path d="M4 22v-7"/>',
+  seedling:'<path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8Z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2Z"/>',
+  trend:'<path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/>',
+  medal:'<circle cx="12" cy="8" r="6"/><path d="M15.5 13 17 22l-5-3-5 3 1.5-9"/>',
   shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
-  star:'<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9Z"/>',
-  crown:'<path d="M3 6l4 4 5-6 5 6 4-4-1.5 12.5h-15Z"/><path d="M4.5 18.5h15"/>',
-  send:'<path d="M14.5 21.7a.5.5 0 0 0 .9 0l6.5-19a.5.5 0 0 0-.63-.63l-19 6.5a.5.5 0 0 0 0 .94l7.9 3.18a2 2 0 0 1 1.11 1.1Z"/><path d="m21.9 2.1-10.9 11"/>',
+  crown:'<path d="M11.6 3.3a.5.5 0 0 1 .9 0l3 5.6a1 1 0 0 0 1.5.3l4.3-3.7a.5.5 0 0 1 .8.5l-2.8 10.2a1 1 0 0 1-1 .7H5.8a1 1 0 0 1-1-.7L2 6a.5.5 0 0 1 .8-.5l4.3 3.7a1 1 0 0 0 1.5-.3z"/><path d="M5 21h14"/>',
   clipboard:'<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/>',
-  usercheck:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/>',
+  briefcase:'<rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+  handshake:'<path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.9-3.9a2 2 0 0 0-2.8 0l-.5.5a2 2 0 0 1-2.8 0L7 7.5a1 1 0 0 0-1.4 0L3 10a2 2 0 0 0 0 3l4 4"/><path d="M16 8 21 3"/><path d="M3 21 8 16"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/>',
+  store:'<path d="M2 7l2.5-4h15L22 7"/><path d="M4 7v12a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7"/><path d="M4 7a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/>',
+  package:'<path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+  repeat:'<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+  verified:'<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>',
+  idcard:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="11" r="2"/><path d="M5 16c0-1.5 1.4-2.5 3-2.5s3 1 3 2.5"/><path d="M14 9h5M14 13h5"/>',
+  grid:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  flame:'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.4-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  zap:'<path d="M4 14a1 1 0 0 1-.8-1.6l9.9-10.2a.5.5 0 0 1 .9.5l-1.9 6a1 1 0 0 0 .9 1.3h7a1 1 0 0 1 .8 1.6l-9.9 10.2a.5.5 0 0 1-.9-.5l1.9-6A1 1 0 0 0 11 14z"/>',
   heart:'<path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5c0 2.1 1.5 4 3 5.5l7 7Z"/>',
+  gift:'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/>',
+  star:'<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9Z"/>',
   check:'<path d="m20 6-11 11-5-5"/>',
   lock:'<rect width="14" height="9" x="5" y="11" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'
 };
@@ -4495,26 +4510,42 @@ function bragdSvg(name){
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">${BRAGD_ICONS[name]||''}</svg>`;
 }
 
-// cat: 'mil' = Milepæler, 'trust' = Tillit, 'act' = Aktivitet & bidrag
+// cat: mil = Milepæler, giver = Oppdragsgiver, svc = Tilbyder, trust = Tillit & bidrag
 // prog (valgfri): returnerer {cur,max} for tellbar fremgang
 const ACHIEVEMENTS = [
-  { id:'first_done',   icon:'award',     cat:'mil',   title:'Fullført!',           desc:'Fullfør ditt første oppdrag',     check: s => s.completed >= 1 },
-  { id:'five_done',    icon:'shield',    cat:'mil',   title:'Pålitelig',           desc:'Fullfør 5 oppdrag',               check: s => s.completed >= 5,   prog: s => ({cur:s.completed, max:5}) },
-  { id:'ten_done',     icon:'award',     cat:'mil',   title:'Kriger',              desc:'Fullfør 10 oppdrag',              check: s => s.completed >= 10,  prog: s => ({cur:s.completed, max:10}) },
-  { id:'twentyfive',   icon:'award',     cat:'mil',   title:'Veteran',             desc:'Fullfør 25 oppdrag',              check: s => s.completed >= 25,  prog: s => ({cur:s.completed, max:25}) },
-  { id:'fifty',        icon:'crown',     cat:'mil',   title:'Jarlens verdighet',   desc:'Fullfør 50 oppdrag',              check: s => s.completed >= 50,  prog: s => ({cur:s.completed, max:50}) },
-  { id:'hundred',      icon:'star',      cat:'mil',   title:'Valkyrjens utvalgte', desc:'Fullfør 100 oppdrag',             check: s => s.completed >= 100, prog: s => ({cur:s.completed, max:100}) },
-  { id:'rating_45',    icon:'star',      cat:'trust', title:'Stjerneutfører',      desc:'Oppnå 4,5+ i snittvurdering',     check: s => s.rating >= 4.5 },
-  { id:'first_apply',  icon:'send',      cat:'act',   title:'Første søknad',       desc:'Søk på ditt første oppdrag',      check: s => s.applied >= 1 },
-  { id:'first_post',   icon:'clipboard', cat:'act',   title:'Oppdragsgiver',       desc:'Legg ut ditt første oppdrag',     check: s => s.posted >= 1 },
-  { id:'first_quest',  icon:'usercheck', cat:'act',   title:'Første tildelt',      desc:'Få tildelt ditt første oppdrag',  check: s => s.taken >= 1 },
-  { id:'charity',      icon:'heart',     cat:'act',   title:'Hjertegod',           desc:'Fullfør et veldedighetsoppdrag',  check: s => s.charity >= 1 }
+  // Milepæler — completed = utførte oppdrag + tjeneste-avtaler
+  { id:'m1',   icon:'flag',      cat:'mil',   title:'Kom i gang',         desc:'Fullfør ditt første oppdrag',          check: s => s.completed >= 1 },
+  { id:'m5',   icon:'seedling',  cat:'mil',   title:'God start',          desc:'Fullfør 5 oppdrag',                    check: s => s.completed >= 5,   prog: s => ({cur:s.completed, max:5}) },
+  { id:'m10',  icon:'trend',     cat:'mil',   title:'Erfaren',            desc:'Fullfør 10 oppdrag',                   check: s => s.completed >= 10,  prog: s => ({cur:s.completed, max:10}) },
+  { id:'m25',  icon:'medal',     cat:'mil',   title:'Rutinert',           desc:'Fullfør 25 oppdrag',                   check: s => s.completed >= 25,  prog: s => ({cur:s.completed, max:25}) },
+  { id:'m50',  icon:'shield',    cat:'mil',   title:'Veteran',            desc:'Fullfør 50 oppdrag',                   check: s => s.completed >= 50,  prog: s => ({cur:s.completed, max:50}) },
+  { id:'m100', icon:'crown',     cat:'mil',   title:'Mester',             desc:'Fullfør 100 oppdrag',                  check: s => s.completed >= 100, prog: s => ({cur:s.completed, max:100}) },
+  // Oppdragsgiver
+  { id:'g1',   icon:'clipboard', cat:'giver', title:'Oppdragsgiver',      desc:'Legg ut ditt første oppdrag',          check: s => s.posted >= 1 },
+  { id:'g10',  icon:'briefcase', cat:'giver', title:'Fast oppdragsgiver', desc:'Legg ut 10 oppdrag',                   check: s => s.posted >= 10, prog: s => ({cur:s.posted, max:10}) },
+  { id:'gm1',  icon:'handshake', cat:'giver', title:'God match',          desc:'Et oppdrag du la ut ble fullført',     check: s => s.given >= 1 },
+  { id:'gm10', icon:'users',     cat:'giver', title:'Ettertraktet',       desc:'10 av dine oppdrag ble fullført',      check: s => s.given >= 10,  prog: s => ({cur:s.given, max:10}) },
+  // Tilbyder
+  { id:'t1',   icon:'store',     cat:'svc',   title:'Tilbyder',           desc:'Legg ut din første tjeneste',          check: s => s.servicesPosted >= 1 },
+  { id:'td1',  icon:'package',   cat:'svc',   title:'Leveringsdyktig',    desc:'Fullfør din første tjeneste-avtale',   check: s => s.serviceDone >= 1 },
+  { id:'td10', icon:'repeat',    cat:'svc',   title:'Stamkunder',         desc:'Fullfør 10 tjeneste-avtaler',          check: s => s.serviceDone >= 10, prog: s => ({cur:s.serviceDone, max:10}) },
+  // Tillit & bidrag
+  { id:'ver',  icon:'verified',  cat:'trust', title:'Verifisert',         desc:'Bekreft e-postadressen din',           check: s => s.verified },
+  { id:'prof', icon:'idcard',    cat:'trust', title:'Komplett profil',    desc:'Navn, telefon og verifisert e-post',   check: s => s.profileComplete },
+  { id:'vary', icon:'grid',      cat:'trust', title:'Allsidig',           desc:'Fullfør oppdrag i 3 ulike kategorier', check: s => s.categoriesCompleted >= 3, prog: s => ({cur:s.categoriesCompleted, max:3}) },
+  { id:'urg',  icon:'flame',     cat:'trust', title:'Brannmann',          desc:'Fullfør et hasteoppdrag',              check: s => s.urgentDone >= 1 },
+  { id:'fc',   icon:'zap',       cat:'trust', title:'Førstemann',         desc:'Fullfør et «førstemann til mølla»-oppdrag', check: s => s.firstComeDone >= 1 },
+  { id:'char', icon:'heart',     cat:'trust', title:'Hjertegod',          desc:'Fullfør et veldedighetsoppdrag',       check: s => s.charity >= 1 },
+  { id:'cpost',icon:'gift',      cat:'trust', title:'Initiativtaker',     desc:'Legg ut et veldedighetsoppdrag',       check: s => s.charityPosted >= 1 },
+  { id:'both', icon:'handshake', cat:'trust', title:'Dugnadsånd',         desc:'Både legg ut og fullfør oppdrag',      check: s => s.posted >= 1 && s.completed >= 1 },
+  { id:'star', icon:'star',      cat:'trust', title:'Stjerneutfører',     desc:'20 oppdrag eller tjenester (gjort/gitt) + 4,5★ — gir en gullstjerne på profilbildet ditt', check: s => (s.completed + s.given) >= 20 && s.rating >= 4.5, prog: s => ({cur:s.completed + s.given, max:20}) }
 ];
 
 const BRAGD_GROUPS = [
   { cat:'mil',   label:'Milepæler' },
-  { cat:'trust', label:'Tillit' },
-  { cat:'act',   label:'Aktivitet & bidrag' }
+  { cat:'giver', label:'Oppdragsgiver' },
+  { cat:'svc',   label:'Tilbyder' },
+  { cat:'trust', label:'Tillit & bidrag' }
 ];
 
 function openProfilePage() {
@@ -4596,22 +4627,33 @@ async function loadProfilePage(userId, isOwn) {
     .eq('user_id', userId);
 
   const { data: takenConvs } = await sb.from('conversations')
-    .select('id, status, quest:quest_id(status, is_charity)')
+    .select('id, status, quest:quest_id(status, is_charity, is_urgent, is_first_come, category)')
     .eq('taker_id', userId);
 
   const appliedCount = takenConvs?.length || 0;
   const takenCount = takenConvs?.filter(c => c.status === 'accepted' || c.status === 'completed').length || 0;
-  const doneAsTaker = takenConvs?.filter(c => c.quest?.status === 'completed').length || 0;
-  const charityDone = takenConvs?.filter(c => c.quest?.status === 'completed' && c.quest?.is_charity).length || 0;
+  const completedConvs = takenConvs?.filter(c => c.quest?.status === 'completed') || [];
+  const doneAsTaker = completedConvs.length;
+  const charityDone = completedConvs.filter(c => c.quest?.is_charity).length;
+  const urgentDone = completedConvs.filter(c => c.quest?.is_urgent).length;
+  const firstComeDone = completedConvs.filter(c => c.quest?.is_first_come).length;
+  const categoriesCompleted = new Set(completedConvs.map(c => c.quest?.category).filter(Boolean)).size;
 
   // Snittvurdering
   const { data: ratings } = await sb.from('ratings').select('score').eq('rated_id', userId);
   const avgRating = ratings?.length ? (ratings.reduce((a,r)=>a+r.score,0) / ratings.length) : null;
 
-  // Fullførte tjeneste-avtaler (engangsavtaler + registrerte turer i faste avtaler)
-  const { count: serviceDone } = await sb.from('bookings')
+  // Fullførte tjeneste-avtaler (teller via trygg RPC – virker også på andres profiler)
+  const { data: serviceDone } = await sb.rpc('provider_completed_count', { uid: userId });
+
+  // Tjenester lagt ut + veldedighetsoppdrag lagt ut (for bragder)
+  const { count: servicesPosted } = await sb.from('services')
     .select('id', { count:'exact', head:true })
-    .eq('provider_id', userId).eq('status','completed');
+    .eq('user_id', userId);
+  const { count: charityPosted } = await sb.from('quests')
+    .select('id', { count:'exact', head:true })
+    .eq('user_id', userId).eq('is_charity', true);
+  const profileComplete = !!(profile.full_name && profile.phone && profile.verified);
 
   const questsDone = doneAsTaker + (serviceDone || 0); // rang baseres på utførte oppdrag + tjeneste-avtaler
   const rank = getRank(questsDone);
@@ -4671,9 +4713,32 @@ async function loadProfilePage(userId, isOwn) {
     updateProfileNavBadges();
   }
 
-  // Achievements
-  const stats = { applied: appliedCount, taken: takenCount, completed: questsDone, posted: postedCount || 0, rating: avgRating || 0, charity: charityDone };
+  // Bragder
+  const stats = {
+    applied: appliedCount,
+    taken: takenCount,
+    completed: questsDone,
+    posted: postedCount || 0,
+    given: completedCount || 0,
+    serviceDone: serviceDone || 0,
+    servicesPosted: servicesPosted || 0,
+    charity: charityDone,
+    charityPosted: charityPosted || 0,
+    urgentDone: urgentDone,
+    firstComeDone: firstComeDone,
+    categoriesCompleted: categoriesCompleted,
+    rating: avgRating || 0,
+    verified: !!profile.verified,
+    profileComplete: profileComplete
+  };
   renderAchievements(stats);
+
+  // Stjerne-badge på profilbildet når Stjerneutfører er låst opp
+  const starBadge = document.getElementById('pp-star-badge');
+  if (starBadge) {
+    const starAch = ACHIEVEMENTS.find(a => a.id === 'star');
+    starBadge.style.display = (starAch && starAch.check(stats)) ? 'flex' : 'none';
+  }
 
   // Anmeldelser (vises for både egen og andres profil)
   loadProfileReviews(userId);
@@ -9325,6 +9390,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div class="pp-avwrap">
       <div id="pp-avatar" style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.25);border:3px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800">?</div>
       <div id="pp-medal-emblem" class="medal sm pp-medal-emblem m-iron"><span class="sym">TR</span></div>
+      <div id="pp-star-badge" class="pp-star-badge" title="Stjerneutfører"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5L12 18.9 6.2 21l1.1-6.5L2.6 9.9l6.5-.95z"/></svg></div>
     </div>
     <div id="pp-name" style="font-size:23px;font-weight:800;letter-spacing:-.3px">Laster…</div>
     <div id="pp-verified" style="display:none;margin-top:9px"></div>
