@@ -3046,6 +3046,7 @@ function addServiceMarker(svc) {
     createdAt: svc.raw?.created_at || null,
     title: cleanName(svc.title),
     open: () => showServicePanel(svc),
+    contact: () => { activeService = svc; contactService(); },
     lng: coords && coords[0], lat: coords && coords[1]
   });
   new mapboxgl.Marker({ element: el, anchor: 'bottom' })
@@ -4192,7 +4193,30 @@ function renderListView() {
 }
 function openListResult(i) {
   const m = (window.lastResults || [])[i];
-  if(m && typeof m.open === 'function') { closeListView(); m.open(); }
+  if(!m) return;
+  // Alternativ 3: tjenester åpner tilbyderens profil først (vurder → handle).
+  // Oppdrag går rett til detaljer (der skal man bare dit).
+  if(m.kind === 'service' && m.userId) {
+    closeListView();
+    viewOtherProfile(m.userId, { kind: 'service', lng: m.lng, lat: m.lat, open: m.open, contact: m.contact });
+  } else if(typeof m.open === 'function') {
+    closeListView();
+    m.open();
+  }
+}
+// «Vis på kart» fra profil: lukk profil/liste, fly til markøren, åpne detaljer
+function ppContextShowOnMap() {
+  const c = window.profileContext; if(!c) return;
+  closeProfilePage();
+  closeListView();
+  if(window.map && c.lng != null) window.map.flyTo({ center: [c.lng, c.lat], zoom: 15, speed: 1.6 });
+  setTimeout(() => { if(typeof c.open === 'function') c.open(); }, 300);
+}
+// «Kontakt» fra profil: start samtale om tjenesten direkte
+function ppContextContact() {
+  const c = window.profileContext; if(!c) return;
+  closeProfilePage();
+  if(typeof c.contact === 'function') c.contact();
 }
 function updateListToggleCount() {
   const c = document.getElementById('list-toggle-count');
@@ -4485,6 +4509,10 @@ async function loadProfilePage(userId, isOwn) {
   if(ppReport) ppReport.style.display = isOwn ? 'none' : 'inline-block';
   const ppPage = document.getElementById('profile-page');
   if(ppPage) ppPage.dataset.viewUserId = userId;
+
+  // Kontekst-handlinger vises kun når andres profil åpnes fra et søketreff
+  const ctxBar = document.getElementById('pp-context-actions');
+  if(ctxBar) ctxBar.style.display = (!isOwn && window.profileContext) ? 'flex' : 'none';
 
   // Hent profildata
   const { data: profile } = await sb.from('profiles').select('*').eq('id', userId).single();
@@ -4823,8 +4851,9 @@ async function saveProfileEdits() {
 }
 
 // Åpne andres profil (fra toppliste eller oppdrag)
-async function viewOtherProfile(userId) {
+async function viewOtherProfile(userId, context) {
   if(!userId) return;
+  window.profileContext = context || null;
   document.getElementById('profile-page').style.display = 'block';
   closeLeaderboard();
   closePanel();
@@ -9212,6 +9241,12 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
     <div id="pp-name" style="font-size:23px;font-weight:800;letter-spacing:-.3px">Laster…</div>
     <div id="pp-verified" style="display:none;margin-top:9px"></div>
+  </div>
+
+  <!-- Kontekst-handlinger (vises når profilen åpnes fra et søketreff) -->
+  <div id="pp-context-actions" style="display:none;gap:10px;padding:14px 20px 0">
+    <button onclick="ppContextShowOnMap()" style="flex:1;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📍 Vis på kart</button>
+    <button onclick="ppContextContact()" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">💬 Kontakt</button>
   </div>
 
   <!-- Reise-kort (rang nedtonet: progresjon + mini-stige + topplisteplass) -->
