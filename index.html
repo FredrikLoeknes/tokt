@@ -368,6 +368,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   pointer-events: auto !important;
 }
 .mapbox-marker:hover { transform: scale(1.1) translateY(-2px); }
+/* Tillit/rangering: grønn glød = godt vurdert + verifisert, blå = beste treff */
+.mapbox-marker.marker-trusted { filter: drop-shadow(0 0 4px rgba(15,169,104,.85)); }
+.mapbox-marker.marker-top { filter: drop-shadow(0 0 8px rgba(59,111,245,.95)); z-index: 6 !important; }
+.mapbox-marker.marker-top.marker-trusted { filter: drop-shadow(0 0 5px rgba(15,169,104,.9)) drop-shadow(0 0 8px rgba(59,111,245,.95)); }
 /* Force ALL Mapbox markers to allow clicks */
 .mapboxgl-marker,
 .mapboxgl-marker *,
@@ -1402,9 +1406,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <!-- DISTANCE -->
     <div class="fsection">
       <div class="fsection-title"><span id="fsec-distance">Distance</span>
-        <span class="fsection-val" id="dist-display">5 km</span>
+        <span class="fsection-val" id="dist-display">Alle</span>
       </div>
-      <input type="range" min="1" max="5" value="3" oninput="updateDist(this.value)" style="-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:var(--surface2);outline:none">
+      <input type="range" id="range-dist" min="1" max="5" value="5" oninput="updateDist(this.value)" style="-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:var(--surface2);outline:none">
       <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px">
         <span>500m</span><span>1km</span><span>2km</span><span>5km</span><span>10km</span>
       </div>
@@ -1449,10 +1453,11 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     <div class="fsection">
       <div class="fsection-title"><span id="fsec-sortby">Sort by</span></div>
       <div class="fpill-row">
-        <div class="fpill sort-pill active" onclick="togglePillSingle(this,'sort')">📍 Nærmest</div>
-        <div class="fpill sort-pill" onclick="togglePillSingle(this,'sort')">💰 Høyest betalt</div>
-        <div class="fpill sort-pill" onclick="togglePillSingle(this,'sort')">🆕 Nyeste</div>
-        <div class="fpill sort-pill" onclick="togglePillSingle(this,'sort')">⭐ Best vurdert</div>
+        <div class="fpill sort-pill active" data-sort="rec" onclick="togglePillSingle(this,'sort')">✨ Anbefalt</div>
+        <div class="fpill sort-pill" data-sort="near" onclick="togglePillSingle(this,'sort')">📍 Nærmest</div>
+        <div class="fpill sort-pill" data-sort="pay" onclick="togglePillSingle(this,'sort')">💰 Høyest betalt</div>
+        <div class="fpill sort-pill" data-sort="new" onclick="togglePillSingle(this,'sort')">🆕 Nyeste</div>
+        <div class="fpill sort-pill" data-sort="rated" onclick="togglePillSingle(this,'sort')">⭐ Best vurdert</div>
       </div>
     </div>
 
@@ -1995,7 +2000,7 @@ const LANGUAGES = {
     dur1: '⚡ Under 30 min', dur2: '🕐 30–60 min', dur3: '🕑 1–2 timer',
     dur4: '🕓 2–4 timer', dur5: '☀️ Halvdag', dur6: '🌅 Heldags',
     // Sort
-    sortNearest: '📍 Nærmest', sortPay: '💰 Høyest betalt',
+    sortRecommended: '✨ Anbefalt', sortNearest: '📍 Nærmest', sortPay: '💰 Høyest betalt',
     sortNewest: '🆕 Nyeste', sortRated: '⭐ Best vurdert',
     // Show only toggles
     urgentLabel: '🔴 Hasteoppdragt', urgentSub: 'Vis kun røde prioritetsoppdrag',
@@ -2014,7 +2019,7 @@ const LANGUAGES = {
     firstComeLabel: '⚡ Kun førstemann til mølla', firstComeSub: 'Ingen godkjenning nødvendig',
     openLabel: '🟢 Kun ledige oppdrag', openSub: 'Skjul oppdrag som er tatt',
     // Sort
-    sortNearest: '📍 Nærmest', sortPay: '💰 Høyest betalt',
+    sortRecommended: '✨ Anbefalt', sortNearest: '📍 Nærmest', sortPay: '💰 Høyest betalt',
     sortNewest: '🆕 Nyeste', sortRated: '⭐ Best vurdert',
     // Job panel
     rewardLabel: 'Betaling', ratingLabel: 'Vurdering', applicantsLabel: 'Søkere',
@@ -2101,7 +2106,7 @@ const LANGUAGES = {
     dur1: '⚡ Under 30 min', dur2: '🕐 30–60 min', dur3: '🕑 1–2 hours',
     dur4: '🕓 2–4 hours', dur5: '☀️ Half day', dur6: '🌅 Full day',
     // Sort
-    sortNearest: '📍 Nearest', sortPay: '💰 Highest pay',
+    sortRecommended: '✨ Recommended', sortNearest: '📍 Nearest', sortPay: '💰 Highest pay',
     sortNewest: '🆕 Newest', sortRated: '⭐ Top rated',
     // Show only toggles
     urgentLabel: '🔴 Urgent quests', urgentSub: 'Only show red priority quests',
@@ -2118,7 +2123,7 @@ const LANGUAGES = {
     charityLabel: '💚 Charity quests', charitySub: 'Earn achievements for free',
     firstComeLabel: '⚡ First come only', firstComeSub: 'No approval needed',
     openLabel: '🟢 Open quests only', openSub: 'Hide quests already taken',
-    sortNearest: '📍 Nearest', sortPay: '💰 Highest pay',
+    sortRecommended: '✨ Recommended', sortNearest: '📍 Nearest', sortPay: '💰 Highest pay',
     sortNewest: '🆕 Newest', sortRated: '⭐ Top rated',
     rewardLabel: 'Reward', ratingLabel: 'Rating', applicantsLabel: 'Applicants',
     giverLabel: 'Posted by', newUserLabel: 'New user', questsDoneShort: 'quests completed', newProviderLabel: 'New provider',
@@ -2247,7 +2252,7 @@ function applyLanguage() {
   safeText('tog-open-label', L.openLabel); safeText('tog-open-sub', L.openSub);
 
   // Sort pills
-  const sortKeys = ['sortNearest','sortPay','sortNewest','sortRated'];
+  const sortKeys = ['sortRecommended','sortNearest','sortPay','sortNewest','sortRated'];
   document.querySelectorAll('.sort-pill').forEach((el,i) => { if(sortKeys[i]) el.textContent = L[sortKeys[i]]; });
 
   // Filter sheet titles
@@ -2737,6 +2742,8 @@ function addQuestMarker(q) {
     isUrgent: !!q.is_urgent,
     isCharity: !!q.is_charity,
     isFirstCome: !!q.is_first_come,
+    userId: q.user_id || null,
+    createdAt: q.created_at || null,
     lng: coords && coords[0], lat: coords && coords[1]
   });
   new mapboxgl.Marker({ element: el, anchor: 'bottom' })
@@ -2821,7 +2828,37 @@ async function addMarkers() {
     services.forEach(s => addServiceMarker(serviceToSvc(s)));
   }
 
+  await enrichMarkerTrust();
   clusterMarkers();
+}
+
+// Hent rating/fullført/verifisert for alle markør-eiere (batch) og fest på markørene
+async function enrichMarkerTrust() {
+  const ids = [...new Set((window.mapMarkers||[]).map(m => m.userId).filter(Boolean))];
+  if(!ids.length) { applyTrustStyling(); return; }
+  try {
+    const { data: profs } = await sb.from('profiles')
+      .select('id, rating, quests_completed, verified')
+      .in('id', ids);
+    const map = {};
+    (profs||[]).forEach(p => { map[p.id] = p; });
+    (window.mapMarkers||[]).forEach(m => {
+      const p = m.userId && map[m.userId];
+      m.rating = p && p.rating != null ? Number(p.rating) : null;
+      m.questsCompleted = p ? (p.quests_completed || 0) : 0;
+      m.verified = p ? !!p.verified : false;
+    });
+  } catch(e) { console.error('enrichMarkerTrust:', e?.message); }
+  applyTrustStyling();
+}
+
+// Grønn glød på markører fra godt vurderte/verifiserte tilbydere
+function applyTrustStyling() {
+  (window.mapMarkers||[]).forEach(m => {
+    if(!m.el) return;
+    const trusted = m.verified && m.rating != null && m.rating >= 4.5;
+    m.el.classList.toggle('marker-trusted', !!trusted);
+  });
 }
 
 function serviceToSvc(s) {
@@ -2887,6 +2924,8 @@ function addServiceMarker(svc) {
     matchText: ((svc.title||'') + ' ' + (svc.category||'') + ' ' + (svc.tags||[]).map(t=>t.t||t).join(' ')).toLowerCase(),
     pay: svc.price || svc.pay || 0,
     isUrgent: false, isCharity: false, isFirstCome: false,
+    userId: svc.raw?.user_id || null,
+    createdAt: svc.raw?.created_at || null,
     lng: coords && coords[0], lat: coords && coords[1]
   });
   new mapboxgl.Marker({ element: el, anchor: 'bottom' })
@@ -3860,6 +3899,8 @@ function applyFilters() {
   const firstOn = document.getElementById('tog-firstcome')?.classList.contains('on');
   const minPay = parseInt(document.getElementById('range-min')?.value) || 0;
   const maxPay = parseInt(document.getElementById('range-max')?.value) || 50000;
+  const origin = getOriginCoords();
+  const maxDist = window.maxDistKm; // 10/undefined = ingen grense
 
   let visible = 0;
   const mode = window.viewMode || 'all';
@@ -3879,14 +3920,69 @@ function applyFilters() {
     if(show && firstOn && m.kind === 'quest' && !m.isFirstCome) show = false;
     // Price range
     if(show && (m.pay < minPay || m.pay > maxPay)) show = false;
+    // Distance (kun når en grense < 10 km er valgt og vi har et utgangspunkt)
+    if(show && maxDist && maxDist < 10 && origin && m.lng != null) {
+      const d = getDistanceKm(origin, [m.lng, m.lat]);
+      m.distKm = d;
+      if(d != null && d > maxDist) show = false;
+    }
     m.el.style.display = show ? '' : 'none';
     if(show) visible++;
   });
 
   clusterMarkers();
+  applyTrustStyling();
+
+  // Rangér de synlige treffene etter valgt sortering + fremhev beste treff
+  const { results, sortLabel } = computeResults();
+  (window.mapMarkers || []).forEach(m => m.el && m.el.classList.remove('marker-top'));
+  if(results[0] && results[0].el) results[0].el.classList.add('marker-top');
+
   closeFilters();
   updateFilterCount();
-  showToast(visible === 0 ? '🔍 Ingen treff – prøv å justere filteret' : `🔍 Viser ${visible} treff på kartet`);
+  showToast(visible === 0
+    ? '🔍 Ingen treff – prøv å justere filteret'
+    : `🔍 ${visible} treff · ${sortLabel}`);
+}
+
+// Utgangspunkt for avstand: brukerens posisjon, ellers kartsenter
+function getOriginCoords() {
+  if(window.userLngLat) return window.userLngLat;
+  if(window.map && typeof window.map.getCenter === 'function') {
+    const c = window.map.getCenter(); return [c.lng, c.lat];
+  }
+  return null;
+}
+// Tillit-score: rating × erfaring × verifisering (~3–11)
+function trustScore(m) {
+  const r = (m.rating != null) ? m.rating : 3.0;
+  const done = m.questsCompleted || 0;
+  const ver = m.verified ? 1.1 : 0.9;
+  return r * Math.min(1 + done / 20, 2) * ver;
+}
+// «Anbefalt»: tillit (70%) balansert mot nærhet (30%)
+function recScore(m, origin) {
+  const trust = trustScore(m);
+  const d = (origin && m.lng != null) ? getDistanceKm(origin, [m.lng, m.lat]) : null;
+  const near = (d == null) ? 0.3 : 1 / (1 + d);
+  return trust * 0.7 + near * 6 * 0.3;
+}
+// Felles rangeringsmotor – brukes av kartet nå og lista senere
+function computeResults() {
+  const origin = getOriginCoords();
+  const vis = (window.mapMarkers || []).filter(m => m.el && m.el.style.display !== 'none' && m.lng != null);
+  vis.forEach(m => { m.distKm = origin ? getDistanceKm(origin, [m.lng, m.lat]) : null; });
+  const sort = document.querySelector('.sort-pill.active')?.dataset.sort || 'rec';
+  const byDist = (a, b) => (a.distKm == null ? 1e9 : a.distKm) - (b.distKm == null ? 1e9 : b.distKm);
+  const arr = vis.slice();
+  if(sort === 'near') arr.sort(byDist);
+  else if(sort === 'pay') arr.sort((a, b) => (b.pay || 0) - (a.pay || 0));
+  else if(sort === 'new') arr.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  else if(sort === 'rated') arr.sort((a, b) => ((b.rating || 0) - (a.rating || 0)) || byDist(a, b));
+  else arr.sort((a, b) => recScore(b, origin) - recScore(a, origin)); // 'rec'
+  window.lastResults = arr;
+  const labels = { rec: 'Anbefalt', near: 'Nærmest', pay: 'Høyest betalt', new: 'Nyeste', rated: 'Best vurdert' };
+  return { results: arr, sort, sortLabel: labels[sort] || 'Anbefalt' };
 }
 function clearFilters() {
   document.querySelectorAll('.fcat-item').forEach((el,i) => el.classList.toggle('active', i===0));
@@ -3894,10 +3990,12 @@ function clearFilters() {
   document.querySelectorAll('.toggle').forEach(el => { if(el.id==='tog-open') el.classList.add('on'); else el.classList.remove('on'); });
   document.getElementById('range-min').value = 39;
   document.getElementById('range-max').value = 50000;
+  const distEl = document.getElementById('range-dist'); if(distEl) { distEl.value = 5; updateDist(5); }
   updateRange();
   updateFilterCount();
   // Show all markers again
-  (window.mapMarkers || []).forEach(m => m.el.style.display = '');
+  (window.mapMarkers || []).forEach(m => { m.el.style.display = ''; m.el.classList.remove('marker-top'); });
+  applyTrustStyling();
   clusterMarkers();
 }
 function updateFilterCount() {
@@ -3951,9 +4049,10 @@ function updateRangeInputs() {
 // Keep old function name as alias
 function updateRange() { updateRangeInputs(); }
 function updateDist(v) {
-  const labels = ['500m','1km','2km','5km','10km'];
+  const km = [0.5, 1, 2, 5, 10][(v|0) - 1];
+  window.maxDistKm = km;
   const el = document.getElementById('dist-display');
-  if(el) el.textContent = labels[Math.round((v-1)/4*4)] || labels[v-1] || v+'km';
+  if(el) el.textContent = km >= 10 ? 'Alle' : (km < 1 ? (km*1000) + ' m' : km + ' km');
 }
 // Init range on load
 setTimeout(updateRange, 100);
