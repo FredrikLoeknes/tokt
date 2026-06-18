@@ -254,34 +254,42 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 #leaderboard {
   position:fixed; left:18px; bottom:24px; z-index:90;
   background:var(--surface); border:1px solid var(--border);
-  border-radius:var(--radius); width:196px;
-  box-shadow:var(--shadow);
-  overflow:hidden;
+  border-radius:18px; width:340px; max-width:calc(100vw - 36px);
+  max-height:72vh; overflow-y:auto;
+  box-shadow:var(--shadow-lg);
 }
 .lb-header {
-  padding:10px 14px 8px;
-  display:flex; align-items:center; gap:6px;
-  border-bottom:1px solid var(--border);
+  padding:14px 16px 10px;
+  display:flex; align-items:center; gap:11px;
+  position:sticky; top:0; background:var(--surface); z-index:3;
 }
-.lb-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); flex:1; }
-.lb-trophy { font-size:14px; }
-.lb-row {
-  display:flex; align-items:center; gap:8px;
-  padding:7px 14px;
-  border-bottom:1px solid var(--border);
-  transition:background .15s;
-  cursor:pointer;
-}
-.lb-row:last-child { border-bottom:none; }
+.lb-trophy { font-size:24px; }
+.lb-title { font-size:17px; font-weight:800; }
+.lb-sub { font-size:11px; color:var(--muted); font-weight:500; margin-top:1px; }
+.lb-close { background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer; line-height:1; flex-shrink:0; }
+.lb-seg { display:flex; gap:5px; padding:0 16px 10px; position:sticky; top:54px; background:var(--surface); z-index:3; }
+.lb-seg-btn { flex:1; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-family:inherit; font-weight:700; font-size:11px; padding:7px 4px; border-radius:9px; cursor:pointer; line-height:1.15; transition:.15s; }
+.lb-seg-btn.on { background:var(--text); color:#fff; border-color:var(--text); }
+.lb-soon { display:block; font-size:8px; opacity:.7; font-weight:700; }
+.lb-listhead { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); padding:10px 16px 6px; border-top:1px solid var(--border); }
+.lb-list { }
+.lb-row { display:flex; align-items:center; gap:11px; padding:9px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s; }
 .lb-row:hover { background:var(--surface2); }
-.lb-rank { font-size:11px; font-weight:800; color:var(--muted); width:16px; text-align:center; }
-.lb-rank.gold { color:var(--gold); }
-.lb-rank.silver { color:#9aa0b0; }
-.lb-rank.bronze { color:#c87533; }
-.lb-avatar { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; flex-shrink:0; }
-.lb-info { flex:1; min-width:0; }
-.lb-name { font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.lb-quests { font-size:10px; color:var(--muted); }
+.lb-pos { width:24px; text-align:center; font-size:13px; font-weight:800; color:var(--muted); flex-shrink:0; }
+.lb-pos.gold { color:var(--gold); } .lb-pos.silver { color:#8c97a6; } .lb-pos.bronze { color:#c87a3c; }
+.lb-av { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#5b7cfa,#9b6ef5); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#fff; flex-shrink:0; }
+.lb-who { flex:1; min-width:0; }
+.lb-nm { font-size:13.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:5px; }
+.lb-meta { font-size:10.5px; color:var(--muted); margin-top:1px; }
+.lb-right { text-align:right; flex-shrink:0; }
+.lb-cnt { font-size:15px; font-weight:800; color:var(--accent); line-height:1.1; }
+.lb-cntl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+.lb-mine { position:sticky; bottom:0; z-index:2; display:flex; align-items:center; gap:11px; padding:11px 16px; background-color:var(--surface); background-image:linear-gradient(90deg,rgba(59,111,245,.10),rgba(124,92,252,.10)); border-top:2px solid var(--accent); cursor:pointer; }
+.lb-mine .lb-pos { color:var(--accent); font-size:14px; }
+.lb-mine .lb-av { background:linear-gradient(135deg,#f97316,#a855f7); }
+.lb-mine .lb-nm { font-weight:800; }
+.lb-you { font-size:9px; font-weight:800; background:var(--accent); color:#fff; padding:2px 7px; border-radius:20px; }
+.lb-empty { padding:26px 18px; text-align:center; font-size:13px; color:var(--muted); line-height:1.6; }
 .lb-badge {
   font-size:9px; font-weight:700; padding:2px 5px;
   border-radius:4px; white-space:nowrap;
@@ -298,6 +306,42 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .rank-jarl       { background:rgba(201,144,10,0.15); color:var(--gold); border-color:var(--gold); }
 .rank-konge      { background:linear-gradient(135deg,rgba(201,144,10,0.2),rgba(124,92,252,0.2)); color:var(--gold); border-color:var(--gold); }
 .rank-valkyrje   { background:linear-gradient(135deg,rgba(233,30,140,0.15),rgba(124,92,252,0.2)); color:#e91e8c; border-color:#e91e8c; font-style:italic; }
+
+/* ── METALLISKE MEDALJER (rang) ── */
+.medal{position:relative;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  background:radial-gradient(circle at 34% 26%,rgba(255,255,255,.85),transparent 42%),
+            conic-gradient(from 218deg,var(--m1),var(--m2) 25%,var(--m1) 50%,var(--m2) 75%,var(--m1));
+  box-shadow:inset 0 2px 5px rgba(255,255,255,.55),inset 0 -4px 8px rgba(0,0,0,.35),0 4px 10px rgba(0,0,0,.22);}
+.medal::before{content:'';position:absolute;inset:14%;border-radius:50%;
+  background:radial-gradient(circle at 38% 30%,rgba(255,255,255,.4),transparent 55%),linear-gradient(160deg,var(--m2),var(--m1));
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.5),inset 0 -2px 4px rgba(0,0,0,.4);}
+.medal .sym{position:relative;z-index:2;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45);letter-spacing:.4px}
+.medal.sm{width:34px;height:34px}.medal.sm .sym{font-size:9px}
+.medal.xs{width:30px;height:30px}.medal.xs .sym{font-size:8px}
+.m-iron{--m1:#52585f;--m2:#8b929b}.m-bronze{--m1:#7c4a22;--m2:#c98c52}
+.m-silver{--m1:#7d8794;--m2:#d3dae3}.m-gold{--m1:#b8860b;--m2:#ffd66b}
+.m-master{--m1:#7c3aed;--m2:#d8b4fe}.m-legend{--m1:#9d174d;--m2:#f0abfc}
+
+/* ── PROFIL: avatar-emblem, reise-kort, mini-stige ── */
+.pp-avwrap{position:relative;display:inline-block;margin:0 auto 11px}
+.pp-medal-emblem{position:absolute;bottom:-5px;right:-5px;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.pp-journey{margin:-30px 14px 0;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:16px;padding:16px;position:relative;box-shadow:var(--shadow-lg)}
+.pp-jhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.pp-jhead .rk{font-size:19px;font-weight:800;letter-spacing:-.2px}
+.pp-jhead .lv{font-size:11.5px;color:var(--muted);font-weight:600}
+.pp-prog{margin-top:12px}
+.pp-prog .bar{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.pp-prog .f{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--m1,#7d8794),var(--m2,#d3dae3));transition:width .4s ease}
+.pp-prog .lbl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:6px;font-weight:600}.pp-prog .lbl b{color:var(--text)}
+.pp-mladder{display:flex;align-items:center;gap:7px;justify-content:center;margin-top:16px}
+.pp-mladder .step{display:flex;flex-direction:column;align-items:center;gap:5px;width:58px;text-align:center}
+.pp-mladder .step .nm{font-size:9.5px;font-weight:700}
+.pp-mladder .step.dim{opacity:.45;filter:grayscale(.5)}
+.pp-mladder .step.cur .nm{color:var(--accent)}
+.pp-mladder .ar{color:var(--muted);font-size:12px;margin-top:11px}
+.pp-lbpos{display:flex;align-items:center;gap:11px;background:rgba(201,144,10,.07);border:1px solid rgba(201,144,10,.25);border-radius:12px;padding:11px 13px;margin-top:15px}
+.pp-lbpos .r{font-size:18px;font-weight:800;color:var(--gold);white-space:nowrap}
+.pp-lbpos .tx{flex:1;font-size:11.5px;color:var(--muted);line-height:1.4}.pp-lbpos .tx b{color:var(--text)}
 
 /* ── PROFILSIDE ── */
 .pp-tab { flex:1; padding:9px 8px; border:1.5px solid var(--border); border-radius:10px; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); background:var(--surface2); text-align:center; transition:all .15s; }
@@ -1191,9 +1235,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   </div>
 
   <div class="logo-xp">
-    <div class="xp-rank">⚡ Høvding · Nivå 4</div>
+    <div class="xp-rank">⚡ Din rang</div>
     <div class="xp-track"><div class="xp-fill" id="xp-fill"></div></div>
-    <div class="xp-label">620 / 1000 XP</div>
+    <div class="xp-label"></div>
   </div>
 
   <div id="searchbox">
@@ -1544,38 +1588,29 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 </div>
 
 <!-- LEADERBOARD TRIGGER BUTTON -->
-<button id="lb-trigger-btn" onclick="toggleLeaderboard()" style="position:fixed;bottom:24px;left:18px;z-index:90;max-width:180px;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:0 16px;height:38px;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:var(--shadow);font-family:inherit;font-size:13px;font-weight:600;color:var(--text);transition:all .2s">
+<button id="lb-trigger-btn" onclick="toggleLeaderboard()" style="position:fixed;bottom:24px;left:18px;z-index:90;max-width:160px;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:0 16px;height:38px;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:var(--shadow);font-family:inherit;font-size:13px;font-weight:600;color:var(--text);transition:all .2s">
   <span>🏆</span>
   <span id="lb-btn-text">Toppliste</span>
-  <span id="lb-tagline-text" style="font-size:10px;color:var(--gold);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px">XP som betaler!</span>
 </button>
 
 <!-- LEADERBOARD POPUP -->
 <div id="leaderboard" class="lb-popup" style="display:none">
   <div class="lb-header">
     <span class="lb-trophy">🏆</span>
-    <div style="display:flex;flex-direction:column;gap:2px;flex:1">
-      <span class="lb-title" id="lb-title-text">Toppliste</span>
-      <span style="font-size:9px;color:var(--gold);font-style:italic;font-weight:500">XP som faktisk betaler husleien.</span>
+    <div style="flex:1;min-width:0">
+      <div class="lb-title" id="lb-title-text">Toppliste</div>
+      <div class="lb-sub" id="lb-sub-text">Rangert etter fullførte oppdrag</div>
     </div>
-    <button onclick="closeLeaderboard()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1">×</button>
+    <button onclick="closeLeaderboard()" class="lb-close">×</button>
   </div>
-  <div class="lb-ranks-info">
-    <div id="lb-rank-ladder-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:10px 14px 6px">Rangstige</div>
-    <div class="rank-ladder">
-      <span class="lb-badge rank-trell">Trell</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-bonde">Bonde</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-varjager">Varjager</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-hovding">Høvding</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-gode">Gode</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-vaering">Væring</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-jarl">Jarl</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-konge">Konge</span><span class="rank-arrow">→</span>
-      <span class="lb-badge rank-valkyrje">Valkyrje</span>
-    </div>
+  <div class="lb-seg">
+    <button class="lb-seg-btn on" id="lbseg-all" onclick="switchLbScope('all')">Alle</button>
+    <button class="lb-seg-btn" onclick="lbScopeSoon()">Lokalt<span class="lb-soon">kommer</span></button>
+    <button class="lb-seg-btn" onclick="lbScopeSoon()">Denne uka<span class="lb-soon">kommer</span></button>
   </div>
-  <div id="lb-top-questers-title" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:10px 14px 6px;border-top:1px solid var(--border)">Topp-utførere</div>
-  <div class="lb-empty" style="padding:18px 14px;text-align:center;font-size:12px;color:var(--muted);line-height:1.6">Ingen rangerte utførere ennå.<br>Fullfør et oppdrag og bli den første! ⚔️</div>
+  <div class="lb-listhead" id="lb-top-questers-title">Topp-utførere</div>
+  <div class="lb-list" id="lb-list"></div>
+  <div class="lb-mine" id="lb-mine" style="display:none"></div>
 </div>
 
 <!-- CORNER WIDGETS -->
@@ -2012,7 +2047,7 @@ const LANGUAGES = {
     publishQuest: 'Publiser oppdrag',
     // Leaderboard
     lbTitle: 'Toppliste',
-    lbTagline: 'XP som faktisk betaler husleien.',
+    lbTagline: 'Rangert etter fullførte oppdrag',
     rankLadder: 'Rangstige',
     topQuesters: 'Topp-utførere',
     // Week worker
@@ -2113,7 +2148,7 @@ const LANGUAGES = {
     disclaimer: '<strong>Important:</strong> Tokt is a platform-only service. All payments are made directly between quest giver and taker via Vipps. Tokt is not party to any agreement and accepts no responsibility for quality, damages or disputes. By publishing you agree to our <u>terms of service</u>. Never pay strangers in advance. Quests over 10,000 NOK require a signed contract.',
     publishQuest: 'Publiser oppdrag',
     lbTitle: 'Leaderboard',
-    lbTagline: 'Finally, XP that pays the rent.',
+    lbTagline: 'Ranked by completed quests',
     rankLadder: 'Rank ladder',
     topQuesters: 'Top questers',
     questOfWeek: 'Quest of the week',
@@ -2261,7 +2296,7 @@ function applyLanguage() {
 
   // Leaderboard
   safeText('lb-title-text', L.lbTitle);
-  safeText('lb-tagline-text', L.lbTagline);
+  safeText('lb-sub-text', L.lbTagline);
   safeText('lb-rank-ladder-title', L.rankLadder);
   safeText('lb-top-questers-title', L.topQuesters);
 
@@ -2357,6 +2392,59 @@ function applyRankRing(el, quests) {
   if(!el) return;
   el.classList.remove('rank-ring-start','rank-ring-bronze','rank-ring-silver','rank-ring-gold','rank-ring-legend');
   el.classList.add('rank-ring-' + rankTier(quests));
+}
+
+// ── Medalje-mapping for rang (jern→bronse→sølv→gull→ametyst→legend) ──
+const RANK_METAL = ['m-iron','m-iron','m-bronze','m-silver','m-silver','m-gold','m-gold','m-master','m-legend'];
+const RANK_SYM = { 'Trell':'TR','Bonde':'BO','Varjager':'VA','Høvding':'HØ','Gode':'GO','Væring':'VÆ','Jarl':'JA','Konge':'KO','Valkyrje':'VK' };
+function rankMetalClass(idx){ return RANK_METAL[Math.max(0, Math.min(idx, RANK_METAL.length-1))]; }
+function rankSym(name){ return RANK_SYM[name] || (name||'?').slice(0,2).toUpperCase(); }
+function rankMetalVars(idx){
+  const map = {'m-iron':['#52585f','#8b929b'],'m-bronze':['#7c4a22','#c98c52'],'m-silver':['#7d8794','#d3dae3'],'m-gold':['#b8860b','#ffd66b'],'m-master':['#7c3aed','#d8b4fe'],'m-legend':['#9d174d','#f0abfc']};
+  return map[rankMetalClass(idx)] || map['m-iron'];
+}
+// Bygg en liten medalje (sym) som HTML
+function medalHTML(idx, sizeClass){
+  return `<div class="medal ${sizeClass||'sm'} ${rankMetalClass(idx)}"><span class="sym">${rankSym(RANKS[idx].name)}</span></div>`;
+}
+// Render mini-stige: nåværende rang + de to neste
+function renderMiniLadder(curIdx){
+  const el = document.getElementById('pp-mini-ladder');
+  if(!el) return;
+  let idxs = [curIdx, curIdx+1, curIdx+2].filter(i => i < RANKS.length);
+  // hvis på topp, vis de tre øverste så det ikke blir tomt
+  if(idxs.length < 2) idxs = [RANKS.length-3, RANKS.length-2, RANKS.length-1].filter(i => i >= 0);
+  el.innerHTML = idxs.map((i, n) => {
+    const cur = i === curIdx;
+    const step = `<div class="step ${cur ? 'cur' : 'dim'}">${medalHTML(i,'sm')}<div class="nm">${RANKS[i].name}${cur ? ' ◄' : ''}</div></div>`;
+    return n < idxs.length-1 ? step + '<div class="ar">→</div>' : step;
+  }).join('');
+}
+
+// Topplisteplass på profilen – ekte tall fra profiles.quests_completed
+async function renderLeaderboardPosition(myDone){
+  const el = document.getElementById('pp-lbpos');
+  if(!el) return;
+  const rankEl = document.getElementById('pp-lbpos-rank');
+  const txtEl = document.getElementById('pp-lbpos-text');
+  if(!myDone || myDone < 1){
+    el.style.display = 'flex';
+    rankEl.textContent = '–';
+    txtEl.innerHTML = '<b>Ikke på topplista ennå</b><br>Fullfør ditt første oppdrag for å klatre inn.';
+    return;
+  }
+  try {
+    const { count: better } = await sb.from('profiles').select('id', { count:'exact', head:true }).gt('quests_completed', myDone);
+    const { count: total }  = await sb.from('profiles').select('id', { count:'exact', head:true }).gte('quests_completed', 1);
+    const pos = (better || 0) + 1;
+    const tot = Math.max(total || 0, pos);
+    el.style.display = 'flex';
+    rankEl.textContent = '#' + pos;
+    txtEl.innerHTML = `<b>av ${tot} på topplista</b><br>${pos > 1 ? 'Fullfør flere for å klatre høyere.' : 'Du leder topplista! 🏆'}`;
+  } catch(e){
+    console.error('renderLeaderboardPosition:', e?.message);
+    el.style.display = 'none';
+  }
 }
 
 // Ensure mapbox loads before init
@@ -3891,19 +3979,19 @@ function toggleLeaderboard() {
 }
 
 async function loadLeaderboard() {
-  const { data: profiles } = await sb.from('profiles')
-    .select('id, full_name, quests_completed, rating, level')
-    .order('quests_completed', { ascending: false })
-    .limit(10);
-
   const lb = document.getElementById('leaderboard');
   if(!lb) return;
+  const listEl = document.getElementById('lb-list');
+  const mineEl = document.getElementById('lb-mine');
 
-  // Fjern eksisterende rader + evt. tom-tilstand (behold header-seksjonene over)
-  lb.querySelectorAll('.lb-row').forEach(r => r.remove());
-  const oldEmpty = lb.querySelector('.lb-empty'); if(oldEmpty) oldEmpty.remove();
+  // Alternativ 2: alle med minst 1 fullført – hele lista
+  const { data: profiles } = await sb.from('profiles')
+    .select('id, full_name, quests_completed, rating')
+    .gte('quests_completed', 1)
+    .order('quests_completed', { ascending: false })
+    .order('rating', { ascending: false });
 
-  // Mix real users with demo users so the list feels alive until enough real users join
+  // Demo-rader for å gjøre lista levende (av som standard)
   const DEMO_LB = [
     { name:'Jonas S.', quests:47, rating:4.97, demo:true },
     { name:'Anders K.', quests:31, rating:4.9, demo:true },
@@ -3911,73 +3999,105 @@ async function loadLeaderboard() {
     { name:'Tone H.', quests:11, rating:5.0, demo:true },
     { name:'Per L.', quests:4, rating:4.7, demo:true }
   ];
-  const realRows = profiles.map(p => ({
-    id: p.id,
-    name: p.full_name || 'Bruker',
-    quests: p.quests_completed || 0,
-    rating: p.rating || null,
-    demo: false
-  }));
+  const realRows = (profiles||[]).map(p => ({ id:p.id, name:p.full_name||'Bruker', quests:p.quests_completed||0, rating:p.rating||null, demo:false }));
   const demoRows = window.SHOW_DEMO_LEADERBOARD ? DEMO_LB : [];
-  const combined = [...realRows, ...demoRows].sort((a,b) => b.quests - a.quests).slice(0, 10);
+  const combined = [...realRows, ...demoRows].sort((a,b) => (b.quests - a.quests) || ((b.rating||0) - (a.rating||0)));
 
   const ww0 = document.getElementById('week-worker');
-  if(combined.length === 0) {
-    // Ingen ekte rangerte ennå – ærlig tom-tilstand, skjul «Ukens utfører»
-    const empty = document.createElement('div');
-    empty.className = 'lb-empty';
-    empty.style.cssText = 'padding:18px 14px;text-align:center;font-size:12px;color:var(--muted);line-height:1.6';
-    empty.innerHTML = 'Ingen rangerte utførere ennå.<br>Fullfør et oppdrag og bli den første! ⚔️';
-    lb.appendChild(empty);
+
+  // Tom-tilstand
+  if(!combined.length) {
+    if(listEl) listEl.innerHTML = '<div class="lb-empty">Ingen rangerte utførere ennå.<br>Fullfør et oppdrag og bli den første! ⚔️</div>';
+    if(mineEl) mineEl.style.display = 'none';
     if(ww0) ww0.style.display = 'none';
+    // «Din plass» selv om lista er tom (oppmuntring)
+    renderMyLeaderboardRow(combined, mineEl);
     return;
   }
   if(ww0) ww0.style.display = '';
 
-  const rankColors = ['#f5c518','#9aa0b0','#c87533'];
-  const rankCls = ['gold','silver','bronze'];
+  const posCls = ['gold','silver','bronze'];
+  const ini = n => (n||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
+  const lbRowInner = (p, i, isMe) => {
+    const rating = p.rating ? '★ ' + Number(p.rating).toFixed(1) : '★ –';
+    const ri = RANKS.indexOf(getRank(p.quests));
+    const crown = i === 0 ? ' 👑' : '';
+    return `
+      <div class="lb-pos ${posCls[i]||''}">${i+1}</div>
+      <div class="lb-av">${ini(p.name)}</div>
+      <div class="lb-who"><div class="lb-nm">${p.name}${crown}${isMe?' <span class="lb-you">DEG</span>':''}</div><div class="lb-meta">${rating}</div></div>
+      ${medalHTML(ri,'xs')}
+      <div class="lb-right"><div class="lb-cnt">${p.quests}</div><div class="lb-cntl">fullført</div></div>`;
+  };
 
-  combined.forEach((p, i) => {
-    const initials = p.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-    const rating = p.rating ? Number(p.rating).toFixed(1) : '–';
-    const rank = getRank(p.quests);
-    const col = rankColors[i] || 'var(--muted)';
-    const rankCl = rankCls[i] || '';
-    const row = document.createElement('div');
-    row.className = 'lb-row';
-    row.style.cursor = 'pointer';
-    row.onclick = p.demo
-      ? () => showUserProfile(p.name, initials, col, p.quests, p.rating, rank.name)
-      : () => viewOtherProfile(p.id);
-    row.innerHTML = `
-      <div class="lb-rank ${rankCl}">${i+1}</div>
-      <div class="lb-avatar" style="background:${col}20;color:${col}">${initials}</div>
-      <div class="lb-info"><div class="lb-name">${p.name}</div><div class="lb-quests">${p.quests} oppdrag · ★ ${rating}</div></div>
-      <span class="lb-badge ${rank.cls}">${rank.name}</span>`;
-    lb.appendChild(row);
-  });
-
-  // Also update week-worker widget with #1 from the combined list
-  if(combined[0]) {
-    const top = combined[0];
-    const topName = top.name;
-    const topInit = topName.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-    const topQuests = top.quests;
-    const topRating = top.rating ? Number(top.rating).toFixed(2) : '–';
-    const topRank = getRank(topQuests);
-    const ww = document.getElementById('week-worker');
-    if(ww) {
-      ww.onclick = top.demo
-        ? () => showUserProfile(topName, topInit, '#f5c518', topQuests, top.rating, topRank.name)
-        : () => viewOtherProfile(top.id);
-      const wwAvatar = ww.querySelector('.ww-avatar');
-      if(wwAvatar) wwAvatar.textContent = topInit;
-      const wwName = ww.querySelector('.ww-name');
-      if(wwName) wwName.textContent = topName;
-      const wwStat = ww.querySelector('.ww-stat');
-      if(wwStat) wwStat.textContent = `${topQuests} oppdrag · ★ ${topRating}`;
-    }
+  if(listEl) {
+    listEl.innerHTML = '';
+    combined.forEach((p, i) => {
+      const isMe = currentUser && p.id === currentUser.id;
+      const row = document.createElement('div');
+      row.className = 'lb-row';
+      row.innerHTML = lbRowInner(p, i, isMe);
+      row.onclick = p.demo
+        ? () => showUserProfile(p.name, ini(p.name), '#f5c518', p.quests, p.rating, getRank(p.quests).name)
+        : () => { closeLeaderboard(); viewOtherProfile(p.id); };
+      listEl.appendChild(row);
+    });
   }
+
+  renderMyLeaderboardRow(combined, mineEl);
+  updateWeekWorker(combined[0]);
+}
+
+// «Din plass» festet nederst – alltid synlig
+async function renderMyLeaderboardRow(combined, mineEl) {
+  if(!mineEl) return;
+  if(!currentUser) { mineEl.style.display = 'none'; return; }
+  const ini = n => (n||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
+  const myIdx = combined.findIndex(p => p.id === currentUser.id);
+  if(myIdx >= 0) {
+    const me = combined[myIdx];
+    const rank = getRank(me.quests);
+    const rating = me.rating ? ' · ★ ' + Number(me.rating).toFixed(1) : '';
+    mineEl.style.display = 'flex';
+    mineEl.innerHTML = `
+      <div class="lb-pos">#${myIdx+1}</div>
+      <div class="lb-av">${ini(me.name)}</div>
+      <div class="lb-who"><div class="lb-nm">${me.name} <span class="lb-you">DEG</span></div><div class="lb-meta">${rank.name}${rating}</div></div>
+      <div class="lb-right"><div class="lb-cnt" style="color:var(--accent2)">${me.quests}</div><div class="lb-cntl">fullført</div></div>`;
+    mineEl.onclick = () => { closeLeaderboard(); openProfilePage(); };
+    return;
+  }
+  // Ikke rangert ennå
+  const { data: me } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
+  const name = me?.full_name || 'Deg';
+  mineEl.style.display = 'flex';
+  mineEl.innerHTML = `
+    <div class="lb-pos">–</div>
+    <div class="lb-av">${ini(name)}</div>
+    <div class="lb-who"><div class="lb-nm">${name} <span class="lb-you">DEG</span></div><div class="lb-meta">Ikke på lista ennå</div></div>
+    <div class="lb-right"><div class="lb-cnt" style="color:var(--muted);font-size:12px">Fullfør 1</div><div class="lb-cntl">for å bli med</div></div>`;
+  mineEl.onclick = () => { closeLeaderboard(); openProfilePage(); };
+}
+
+// Oppdater «Ukens utfører»-widget med #1
+function updateWeekWorker(top) {
+  const ww = document.getElementById('week-worker');
+  if(!ww || !top) return;
+  const ini = (top.name||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
+  ww.onclick = top.demo
+    ? () => showUserProfile(top.name, ini, '#f5c518', top.quests, top.rating, getRank(top.quests).name)
+    : () => viewOtherProfile(top.id);
+  const a = ww.querySelector('.ww-avatar'); if(a) a.textContent = ini;
+  const n = ww.querySelector('.ww-name'); if(n) n.textContent = top.name;
+  const s = ww.querySelector('.ww-stat'); if(s) s.textContent = `${top.quests} oppdrag · ★ ${top.rating ? Number(top.rating).toFixed(2) : '–'}`;
+}
+
+// Segment (kun «Alle» aktiv foreløpig)
+function switchLbScope(scope) {
+  loadLeaderboard();
+}
+function lbScopeSoon() {
+  showToast('🔒 Kommer snart – lokale og ukentlige topplister er på vei!');
 }
 
 function toggleProfile() {
@@ -4069,9 +4189,8 @@ async function loadProfilePage(userId, isOwn) {
       ppVer.innerHTML = '';
     }
   }
-  // Medlem siden
-  const ppMem = document.getElementById('pp-member-since');
-  if(ppMem) ppMem.textContent = memberSinceText(profile.created_at);
+  // Medlem siden (vises i tillit-stripa lenger ned)
+  const memberSince = memberSinceText(profile.created_at);
 
   // Hent statistikk
   const { count: completedCount } = await sb.from('quests')
@@ -4102,30 +4221,54 @@ async function loadProfilePage(userId, isOwn) {
 
   const questsDone = doneAsTaker + (serviceDone || 0); // rang baseres på utførte oppdrag + tjeneste-avtaler
   const rank = getRank(questsDone);
-  applyRankRing(document.getElementById('pp-avatar'), questsDone);
+  const rankIdx0 = RANKS.indexOf(rank);          // 0-basert indeks
+  const rankIndex = rankIdx0 + 1;                 // «Nivå» = indeks+1
 
-  // Hero
-  const rankIndex = RANKS.indexOf(rank) + 1;
-  document.getElementById('pp-rank-badge').textContent = `${rank.name} · nivå ${rankIndex} av ${RANKS.length}`;
-  document.getElementById('pp-rank-desc').textContent = rank.desc || '';
+  // Avatar-emblem (liten medalje nederst til høyre)
+  const emblem = document.getElementById('pp-medal-emblem');
+  if(emblem) {
+    emblem.className = 'medal sm pp-medal-emblem ' + rankMetalClass(rankIdx0);
+    emblem.innerHTML = `<span class="sym">${rankSym(rank.name)}</span>`;
+  }
 
-  // Stats
+  // Reise-kort: rang + nivå
+  document.getElementById('pp-rank-name').textContent = rank.name;
+  document.getElementById('pp-rank-level').textContent = `Nivå ${rankIndex} av ${RANKS.length}`;
+
+  // Tillit-stripe
   document.getElementById('pp-stat-quests').textContent = questsDone;
   document.getElementById('pp-stat-rating').textContent = avgRating ? '★ ' + avgRating.toFixed(1) : '–';
-  document.getElementById('pp-stat-level').textContent = rankIndex;
+  const ratLabel = document.getElementById('pp-stat-rating-label');
+  if(ratLabel) ratLabel.textContent = ratings?.length ? `${ratings.length} vurdering${ratings.length===1?'':'er'}` : 'Vurdering';
+  const memShort = profile.created_at
+    ? new Date(profile.created_at).toLocaleDateString(currentLang==='en'?'en-US':'nb-NO', { month:'short', year:'numeric' })
+    : '–';
+  document.getElementById('pp-stat-member').textContent = memShort;
 
-  // XP til neste rang
+  // Reise: progresjon til neste rang (medalje-farget fyll)
+  const [mc1, mc2] = rankMetalVars(rankIdx0);
+  const progEl = document.getElementById('pp-prog');
+  if(progEl) { progEl.style.setProperty('--m1', mc1); progEl.style.setProperty('--m2', mc2); }
   const nextRank = RANKS.find(r => r.min > questsDone);
   if(nextRank) {
     const prevMin = rank.min;
     const progress = ((questsDone - prevMin) / (nextRank.min - prevMin)) * 100;
     const remaining = Math.max(nextRank.min - questsDone, 0);
-    document.getElementById('pp-xp-label').textContent = `${remaining} oppdrag igjen til ${nextRank.name}`;
-    document.getElementById('pp-xp-fill').style.width = Math.max(progress, 2) + '%';
+    document.getElementById('pp-prog-fill').style.width = Math.max(progress, 3) + '%';
+    document.getElementById('pp-prog-left').innerHTML = `<b>${questsDone} / ${nextRank.min}</b> oppdrag til ${nextRank.name}`;
+    document.getElementById('pp-prog-right').textContent = `${remaining} igjen ⚔️`;
   } else {
-    document.getElementById('pp-xp-label').textContent = 'Høyeste rang oppnådd! 🌟';
-    document.getElementById('pp-xp-fill').style.width = '100%';
+    document.getElementById('pp-prog-fill').style.width = '100%';
+    document.getElementById('pp-prog-left').innerHTML = '<b>Høyeste rang oppnådd!</b> 🌟';
+    document.getElementById('pp-prog-right').textContent = '';
   }
+
+  // Mini-stige (nåværende + de to neste)
+  renderMiniLadder(rankIdx0);
+
+  // Topplisteplass (ekte tall fra quests_completed; gated)
+  renderLeaderboardPosition(questsDone);
+
 
   // Rediger-felter (kun egen)
   if(isOwn) {
@@ -4133,9 +4276,6 @@ async function loadProfilePage(userId, isOwn) {
     document.getElementById('pp-edit-phone').value = profile.phone || '';
     updateProfileNavBadges();
   }
-
-  // Rangstige
-  renderRankLadder(questsDone);
 
   // Achievements
   const stats = { applied: appliedCount, taken: takenCount, completed: questsDone, posted: postedCount || 0, rating: avgRating || 0, charity: charityDone };
@@ -8139,17 +8279,21 @@ async function loadUserProfile(user) {
     document.getElementById('profile-rank-badge').textContent = `${rank.name} · nivå ${RANKS.indexOf(rank)+1} av ${RANKS.length}`;
     const rankDescEl = document.getElementById('profile-rank-desc');
     if(rankDescEl) rankDescEl.textContent = rank.desc || '';
-    // XP bar
-    const xpNeeded = [1,2,4,8,16];
-    const lvl = (profile.level || 1) - 1;
-    const xpMax = xpNeeded[Math.min(lvl, xpNeeded.length-1)] || 1;
-    const xpCur = profile.xp_current || 0;
-    document.getElementById('profile-xp').textContent = xpCur + ' / ' + xpMax + ' XP';
-    document.getElementById('profile-xp-bar').style.width = Math.min(100,(xpCur/xpMax)*100) + '%';
-    // Topbar XP
-    const xpFill = document.getElementById('xp-fill');
-    if(xpFill) xpFill.style.width = Math.min(100,(xpCur/xpMax)*100) + '%';
-    document.querySelector('.xp-rank') && (document.querySelector('.xp-rank').textContent = '⚡ ' + rank.name + ' · Nivå ' + rankLevel);
+    // Rang-fremgang (oppdrag til neste rang) – erstatter gammelt XP-system
+    const nextR = RANKS.find(r => r.min > quests);
+    let progPct, progTxt;
+    if(nextR) {
+      progPct = Math.min(100, Math.max(((quests - rank.min) / (nextR.min - rank.min)) * 100, 3));
+      progTxt = quests + ' / ' + nextR.min + ' oppdrag';
+    } else {
+      progPct = 100;
+      progTxt = 'Høyeste rang 🌟';
+    }
+    const profXp = document.getElementById('profile-xp'); if(profXp) profXp.textContent = progTxt;
+    const profXpBar = document.getElementById('profile-xp-bar'); if(profXpBar) profXpBar.style.width = progPct + '%';
+    const xpFill = document.getElementById('xp-fill'); if(xpFill) xpFill.style.width = progPct + '%';
+    const xpLbl = document.querySelector('.xp-label'); if(xpLbl) xpLbl.textContent = progTxt;
+    const xpRankEl = document.querySelector('.xp-rank'); if(xpRankEl) xpRankEl.textContent = '⚡ ' + rank.name + ' · Nivå ' + rankLevel;
   }
   updateUIForAuth(user);
   applyMinorUIRestrictions();
@@ -8344,8 +8488,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
     <div style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
-        <span style="color:var(--muted)">XP fremgang</span>
-        <span id="profile-xp" style="color:var(--accent);font-weight:600">0 / 1 XP</span>
+        <span style="color:var(--muted)">Fremgang til neste rang</span>
+        <span id="profile-xp" style="color:var(--accent);font-weight:600">0 / 2 oppdrag</span>
       </div>
       <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden">
         <div id="profile-xp-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#f97316,#a855f7);border-radius:3px;transition:width .5s ease"></div>
@@ -8742,40 +8886,43 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <button id="pp-report-btn" onclick="reportUserFromProfile()" style="display:none;margin-left:auto;background:none;border:1px solid var(--border);border-radius:50px;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;padding:6px 12px">⚠️ Rapporter</button>
   </div>
 
-  <!-- Hero: avatar, navn, rang -->
-  <div style="background:linear-gradient(135deg,#f97316,#a855f7);padding:28px 20px 24px;text-align:center;color:#fff">
-    <div id="pp-avatar" style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,0.25);border:3px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;margin:0 auto 12px">?</div>
-    <div id="pp-name" style="font-size:22px;font-weight:800">Laster…</div>
-    <div id="pp-verified" style="display:none;margin-top:6px"></div>
-    <div id="pp-rank-badge" style="display:inline-block;background:rgba(255,255,255,0.22);font-size:12px;font-weight:700;padding:4px 14px;border-radius:50px;margin-top:8px">Trell</div>
-    <div id="pp-rank-desc" style="font-size:12px;opacity:0.85;margin-top:8px;line-height:1.5;font-style:italic;max-width:300px;margin-left:auto;margin-right:auto"></div>
-    <div id="pp-member-since" style="font-size:11px;opacity:0.8;margin-top:6px"></div>
+  <!-- Hero: identitet + tillit -->
+  <div style="background:linear-gradient(135deg,#f97316,#a855f7);padding:24px 20px 44px;text-align:center;color:#fff">
+    <div class="pp-avwrap">
+      <div id="pp-avatar" style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.25);border:3px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800">?</div>
+      <div id="pp-medal-emblem" class="medal sm pp-medal-emblem m-iron"><span class="sym">TR</span></div>
+    </div>
+    <div id="pp-name" style="font-size:23px;font-weight:800;letter-spacing:-.3px">Laster…</div>
+    <div id="pp-verified" style="display:none;margin-top:9px"></div>
   </div>
 
-  <!-- Stats -->
-  <div style="display:flex;gap:1px;background:var(--border);border-bottom:1px solid var(--border)">
-    <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
-      <div id="pp-stat-quests" style="font-size:22px;font-weight:800;color:var(--accent)">0</div>
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Oppdrag</div>
+  <!-- Reise-kort (rang nedtonet: progresjon + mini-stige + topplisteplass) -->
+  <div id="pp-journey" class="pp-journey">
+    <div class="pp-jhead">
+      <div class="rk" id="pp-rank-name">Trell</div>
+      <div class="lv" id="pp-rank-level">Nivå 1 av 9</div>
     </div>
-    <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
-      <div id="pp-stat-rating" style="font-size:22px;font-weight:800;color:var(--gold)">–</div>
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Vurdering</div>
+    <div class="pp-prog" id="pp-prog">
+      <div class="bar"><div class="f" id="pp-prog-fill" style="width:0%"></div></div>
+      <div class="lbl"><span id="pp-prog-left"><b>0 / 2</b> oppdrag til neste</span><span id="pp-prog-right"></span></div>
     </div>
-    <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
-      <div id="pp-stat-level" style="font-size:22px;font-weight:800;color:var(--green)">1</div>
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Nivå</div>
-    </div>
+    <div class="pp-mladder" id="pp-mini-ladder"></div>
+    <div class="pp-lbpos" id="pp-lbpos" style="display:none"><div class="r" id="pp-lbpos-rank">–</div><div class="tx" id="pp-lbpos-text"></div></div>
   </div>
 
-  <!-- XP-bar -->
-  <div id="pp-xp-section" style="padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
-    <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">
-      <span>Fremgang til neste rang</span>
-      <span id="pp-xp-label">0 / 2 oppdrag</span>
+  <!-- Tillit-stripe -->
+  <div style="display:flex;gap:1px;background:var(--border);border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:14px">
+    <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
+      <div id="pp-stat-quests" style="font-size:20px;font-weight:800;color:var(--accent)">0</div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Fullført</div>
     </div>
-    <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">
-      <div id="pp-xp-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#f97316,#a855f7);border-radius:4px;transition:width .4s ease"></div>
+    <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
+      <div id="pp-stat-rating" style="font-size:20px;font-weight:800;color:var(--gold)">–</div>
+      <div id="pp-stat-rating-label" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Vurdering</div>
+    </div>
+    <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
+      <div id="pp-stat-member" style="font-size:20px;font-weight:800;color:var(--green)">–</div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Medlem siden</div>
     </div>
   </div>
 
@@ -8809,12 +8956,6 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <div style="padding:18px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
     <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px">⭐ Vurderinger</div>
     <div id="pp-reviews"><div style="font-size:13px;color:var(--muted);padding:8px 0">Laster vurderinger…</div></div>
-  </div>
-
-  <!-- Rangstige -->
-  <div style="padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
-    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px">🪓 Rangstige</div>
-    <div id="pp-rank-ladder"></div>
   </div>
 
   <!-- Achievements -->
