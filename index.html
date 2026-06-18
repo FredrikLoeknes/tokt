@@ -776,6 +776,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   .btn-primary { display: none !important; } /* Legg ut is in bottom nav on mobile */
   #inbox-btn { display: none !important; } /* Innboks is in bottom nav on mobile */
   .btn-myquests-desktop { display: none !important; } /* Mine oppdrag is in bottom nav on mobile */
+  .btn-tjenester-desktop { display: none !important; } /* Tjenester lives in the hub on mobile */
   #rank-topbar-btn { display: flex !important; } /* Toppliste moves next to bell on mobile */
   /* Ensure search is hidden on mobile */
   #searchbox { display: none !important; }
@@ -1207,6 +1208,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
     </button>
     <button class="btn btn-ghost btn-tilby-desktop" onclick="openServiceModal()" style="border-color:var(--accent2);color:var(--accent2)">🏪 Tilby</button>
     <button class="btn btn-ghost btn-myquests-desktop" onclick="openMyQuests('posted')" style="position:relative;gap:7px"><span>📋</span><span id="btn-myquests-label">Mine oppdrag</span><span id="mq-badge-desktop" style="display:none;background:var(--red);color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;padding:0 4px">0</span></button>
+    <button class="btn btn-ghost btn-tjenester-desktop" onclick="openTjenester('tilbud')" style="position:relative;gap:7px;border-color:var(--accent2);color:var(--accent2)"><span>🏪</span><span id="btn-tjenester-label">Tjenester</span><span id="tj-badge-desktop" style="display:none;background:var(--red);color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;padding:0 4px">0</span></button>
     <button class="btn btn-ghost btn-login-only" onclick="openAuth('login')"><span id="btn-login">Logg inn</span></button>
     <div class="avatar-wrap" onclick="toggleProfile()" title="Din profil" style="display:none">
       <div class="avatar">You</div>
@@ -2016,7 +2018,7 @@ const LANGUAGES = {
     // Week worker
     questOfWeek: 'Ukens utfører',
     // Bottom nav
-    navMap: 'Kart', navPost: 'Legg ut', navRanks: 'Toppliste', navProfile: 'Profil', navMyQuests: 'Mine oppdrag',
+    navMap: 'Kart', navPost: 'Legg ut', navRanks: 'Toppliste', navProfile: 'Profil', navMyQuests: 'Mine oppdrag', navActivity: 'Aktivitet', navOppdrag: 'Oppdrag', navTjenester: 'Tjenester',
     // Toasts
     toastLocation: '📍 Viser oppdrag nær deg!',
     toastApplied: '✦ Søknad sendt! Du varsles når bekreftet.',
@@ -2115,7 +2117,7 @@ const LANGUAGES = {
     rankLadder: 'Rank ladder',
     topQuesters: 'Top questers',
     questOfWeek: 'Quest of the week',
-    navMap: 'Map', navPost: 'Post', navRanks: 'Ranks', navProfile: 'Profile', navMyQuests: 'My quests',
+    navMap: 'Map', navPost: 'Post', navRanks: 'Ranks', navProfile: 'Profile', navMyQuests: 'My quests', navActivity: 'Activity', navOppdrag: 'Quests', navTjenester: 'Services',
     toastLocation: '📍 Showing quests near you!',
     toastApplied: '✦ Application sent! You will be notified when confirmed.',
     toastPosted: '✅ Quest published on the map!',
@@ -2270,8 +2272,11 @@ function applyLanguage() {
   safeText('nav-map-label', L.navMap);
   safeText('nav-post-label', L.navPost);
   safeText('nav-ranks-label', L.navRanks);
-  safeText('nav-myquests-label', L.navMyQuests);
+  safeText('nav-myquests-label', L.navActivity);
   safeText('btn-myquests-label', L.navMyQuests);
+  safeText('btn-tjenester-label', L.navTjenester);
+  safeText('act-seg-oppdrag-label', L.navOppdrag);
+  safeText('act-seg-tjenester-label', L.navTjenester);
   safeText('nav-profile-label', L.navProfile);
 
   // Panel
@@ -4840,7 +4845,7 @@ function subscribeToNotifications() {
       checkUnreadNotifs();
       const n = payload.new;
       if(n) {
-        if(n.type === 'application') updateMyQuestsBadge();
+        updateMyQuestsBadge();
         showBrowserNotification(n.title, n.body);
         showToast('🔔 ' + n.title);
       }
@@ -4848,14 +4853,14 @@ function subscribeToNotifications() {
     .subscribe();
 }
 
-// ── MY QUESTS ──
+// ── MIN AKTIVITET (hub: oppdrag + tjenester) ──
 function openMyQuests(tab) {
   if(!currentUser) { openAuth('login'); return; }
   try { closeProfilePage(); } catch(e) {}
   document.getElementById('myquests-panel').style.display = 'block';
-  document.getElementById('profile-panel').style.display = 'none';
-  loadMyQuests();
-  if(tab) switchMqTab(tab);
+  const pp = document.getElementById('profile-panel'); if(pp) pp.style.display = 'none';
+  switchActivitySide('oppdrag');
+  switchMqTab(tab || 'posted');
 }
 function closeMyQuests() {
   document.getElementById('myquests-panel').style.display = 'none';
@@ -4863,6 +4868,21 @@ function closeMyQuests() {
 function backFromMyQuests() {
   closeMyQuests();
   openProfilePage();
+}
+// Bytt mellom Oppdrag- og Tjenester-siden i hub-panelet
+function switchActivitySide(side) {
+  const isOpp = side === 'oppdrag';
+  const so = document.getElementById('act-side-oppdrag');
+  const st = document.getElementById('act-side-tjenester');
+  if(so) so.style.display = isOpp ? 'block' : 'none';
+  if(st) st.style.display = isOpp ? 'none' : 'block';
+  const onStyle  = 'background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)';
+  const offStyle = 'background:transparent;color:var(--muted);box-shadow:none';
+  const bo = document.getElementById('act-seg-oppdrag');
+  const bt = document.getElementById('act-seg-tjenester');
+  if(bo) bo.style.cssText += isOpp ? onStyle : offStyle;
+  if(bt) bt.style.cssText += isOpp ? offStyle : onStyle;
+  if(isOpp) loadMyQuests(); else loadTjenester();
 }
 function switchMqTab(tab) {
   if(tab === 'bookings') { openTjenester('engangs'); return; } // bakoverkompatibel: gamle kall
@@ -5153,7 +5173,7 @@ async function saveServiceEdits(serviceId) {
   document.getElementById('edit-svc-overlay')?.remove();
   showToast('✅ Tjeneste oppdatert!');
   await addMarkers();
-  if(document.getElementById('tjenester-panel')?.style.display === 'block') renderTilbud();
+  if(document.getElementById('myquests-panel')?.style.display === 'block' && document.getElementById('act-side-tjenester')?.style.display !== 'none') renderTilbud();
 }
 
 async function deleteService(serviceId) {
@@ -5162,7 +5182,7 @@ async function deleteService(serviceId) {
   document.getElementById('edit-svc-overlay')?.remove();
   showToast('🗑️ Tjeneste slettet');
   await addMarkers();
-  if(document.getElementById('tjenester-panel')?.style.display === 'block') renderTilbud();
+  if(document.getElementById('myquests-panel')?.style.display === 'block' && document.getElementById('act-side-tjenester')?.style.display !== 'none') renderTilbud();
 }
 
 async function showChatPaymentInfoFor(convId) {
@@ -5915,21 +5935,25 @@ function updateInboxBadge(count) {
   });
 }
 
-// ── MINE OPPDRAG badge: antall nye søkere som venter på godkjenning ──
-function setMyQuestsBadge(count) {
-  ['mq-badge-desktop','mobile-mq-badge'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) { el.textContent = count; el.style.display = count > 0 ? 'flex' : 'none'; }
-  });
+// ── AKTIVITET-badges: oppdrag (nye søkere) + tjenester (bookingforespørsler) ──
+function setActivityBadges(opp, tj) {
+  const set = (id, n) => { const el = document.getElementById(id); if(el){ el.textContent = n; el.style.display = n > 0 ? 'flex' : 'none'; } };
+  set('mq-badge-desktop', opp);      // desktop «Mine oppdrag»
+  set('tj-badge-desktop', tj);       // desktop «Tjenester»
+  set('act-badge-oppdrag', opp);     // hub-bryter
+  set('act-badge-tjenester', tj);    // hub-bryter
+  set('mobile-mq-badge', opp + tj);  // bunnmeny (sum)
 }
 async function updateMyQuestsBadge() {
-  if(!currentUser) { setMyQuestsBadge(0); return; }
+  if(!currentUser) { setActivityBadges(0, 0); return; }
   try {
-    const { count } = await sb.from('conversations')
-      .select('id', { count: 'exact', head: true })
-      .eq('giver_id', currentUser.id)
-      .eq('status', 'pending');
-    setMyQuestsBadge(count || 0);
+    const [oppRes, tjRes] = await Promise.all([
+      sb.from('conversations').select('id', { count: 'exact', head: true })
+        .eq('giver_id', currentUser.id).eq('status', 'pending'),
+      sb.from('bookings').select('id', { count: 'exact', head: true })
+        .eq('provider_id', currentUser.id).eq('status', 'requested').is('parent_id', null)
+    ]);
+    setActivityBadges(oppRes.count || 0, tjRes.count || 0);
   } catch(e) { console.error('updateMyQuestsBadge:', e?.message); }
 }
 
@@ -6507,21 +6531,20 @@ async function loadBookings() {
   return loadTjenester();
 }
 
-/* ===================== TJENESTER-PANEL ===================== */
+/* ===================== TJENESTER (samme hub-panel) ===================== */
 function openTjenester(tab) {
   if(!currentUser) { openAuth('login'); return; }
   try { closeProfilePage(); } catch(e) {}
-  try { closeMyQuests(); } catch(e) {}
-  document.getElementById('tjenester-panel').style.display = 'block';
+  document.getElementById('myquests-panel').style.display = 'block';
   const pp = document.getElementById('profile-panel'); if(pp) pp.style.display = 'none';
+  switchActivitySide('tjenester');
   switchTjTab(tab || 'tilbud');
-  loadTjenester();
 }
 function closeTjenester() {
-  document.getElementById('tjenester-panel').style.display = 'none';
+  closeMyQuests();
 }
 function backFromTjenester() {
-  closeTjenester();
+  closeMyQuests();
   openProfilePage();
 }
 function switchTjTab(tab) {
@@ -6538,6 +6561,7 @@ function switchTjTab(tab) {
 async function loadTjenester() {
   if(!currentUser) return;
   await Promise.all([ renderTilbud(), renderBookingsGrouped() ]);
+  updateMyQuestsBadge();
 }
 
 /* ---- Fane 1: Mine tilbud ---- */
@@ -8346,43 +8370,41 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
 </div>
 
-<!-- MY QUESTS PANEL -->
+<!-- MIN AKTIVITET PANEL (oppdrag + tjenester slått sammen) -->
 <div id="myquests-panel" style="display:none;position:fixed;left:0;right:0;top:0;bottom:0;z-index:450;background:var(--bg);overflow-y:auto;animation:slideIn .2s ease">
   <div style="max-width:600px;margin:0 auto;padding:20px">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-top:10px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-top:10px">
       <button onclick="backFromMyQuests()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">←</button>
-      <div style="font-size:20px;font-weight:700">Mine oppdrag</div>
+      <div style="font-size:20px;font-weight:700" id="activity-title">Min aktivitet</div>
     </div>
 
-    <!-- Tabs -->
-    <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:20px;border:1px solid var(--border)">
-      <button id="mq-tab-posted" onclick="switchMqTab('posted')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">📋 Lagt ut</button>
-      <button id="mq-tab-applied" onclick="switchMqTab('applied')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:5px">Aktive &amp; søkt<span id="mq-applied-badge" style="display:none;font-size:10px;font-weight:800;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span></button>
+    <!-- TOPP-BRYTER: Oppdrag / Tjenester -->
+    <div style="display:flex;background:var(--surface2);border-radius:14px;padding:4px;margin-bottom:16px;border:1px solid var(--border)">
+      <button id="act-seg-oppdrag" onclick="switchActivitySide('oppdrag')" style="flex:1;padding:11px 6px;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px">📋 <span id="act-seg-oppdrag-label">Oppdrag</span><span id="act-badge-oppdrag" style="display:none;min-width:17px;height:17px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:800;align-items:center;justify-content:center;padding:0 4px">0</span></button>
+      <button id="act-seg-tjenester" onclick="switchActivitySide('tjenester')" style="flex:1;padding:11px 6px;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px">🏪 <span id="act-seg-tjenester-label">Tjenester</span><span id="act-badge-tjenester" style="display:none;min-width:17px;height:17px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:800;align-items:center;justify-content:center;padding:0 4px">0</span></button>
     </div>
 
-    <div id="mq-posted" style="display:flex;flex-direction:column;gap:12px"></div>
-    <div id="mq-applied" style="display:none;flex-direction:column;gap:12px"></div>
-  </div>
-</div>
-
-<!-- TJENESTER PANEL -->
-<div id="tjenester-panel" style="display:none;position:fixed;left:0;right:0;top:0;bottom:0;z-index:450;background:var(--bg);overflow-y:auto;animation:slideIn .2s ease">
-  <div style="max-width:600px;margin:0 auto;padding:20px">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-top:10px">
-      <button onclick="backFromTjenester()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">←</button>
-      <div style="font-size:20px;font-weight:700">Tjenester</div>
+    <!-- ===== OPPDRAG-SIDE ===== -->
+    <div id="act-side-oppdrag">
+      <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:20px;border:1px solid var(--border)">
+        <button id="mq-tab-posted" onclick="switchMqTab('posted')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">📋 Lagt ut</button>
+        <button id="mq-tab-applied" onclick="switchMqTab('applied')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:5px">Aktive &amp; søkt<span id="mq-applied-badge" style="display:none;font-size:10px;font-weight:800;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span></button>
+      </div>
+      <div id="mq-posted" style="display:flex;flex-direction:column;gap:12px"></div>
+      <div id="mq-applied" style="display:none;flex-direction:column;gap:12px"></div>
     </div>
 
-    <!-- Tabs -->
-    <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:20px;border:1px solid var(--border)">
-      <button id="tj-tab-tilbud" onclick="switchTjTab('tilbud')" style="flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">🏪 Mine tilbud</button>
-      <button id="tj-tab-engangs" onclick="switchTjTab('engangs')" style="flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:4px">📅 Engangs<span id="tj-eng-badge-g" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span><span id="tj-eng-badge-o" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:#f97316;color:#fff;align-items:center;justify-content:center">0</span></button>
-      <button id="tj-tab-faste" onclick="switchTjTab('faste')" style="flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:4px">🔄 Faste<span id="tj-fast-badge-g" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span><span id="tj-fast-badge-o" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:#f97316;color:#fff;align-items:center;justify-content:center">0</span></button>
+    <!-- ===== TJENESTER-SIDE ===== -->
+    <div id="act-side-tjenester" style="display:none">
+      <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:20px;border:1px solid var(--border)">
+        <button id="tj-tab-tilbud" onclick="switchTjTab('tilbud')" style="flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">🏪 Mine tilbud</button>
+        <button id="tj-tab-engangs" onclick="switchTjTab('engangs')" style="flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:4px">📅 Engangs<span id="tj-eng-badge-g" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span><span id="tj-eng-badge-o" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:#f97316;color:#fff;align-items:center;justify-content:center">0</span></button>
+        <button id="tj-tab-faste" onclick="switchTjTab('faste')" style="flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:4px">🔄 Faste<span id="tj-fast-badge-g" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span><span id="tj-fast-badge-o" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:#f97316;color:#fff;align-items:center;justify-content:center">0</span></button>
+      </div>
+      <div id="tj-tilbud" style="display:flex;flex-direction:column;gap:9px"></div>
+      <div id="tj-engangs" style="display:none;flex-direction:column;gap:0"></div>
+      <div id="tj-faste" style="display:none;flex-direction:column;gap:0"></div>
     </div>
-
-    <div id="tj-tilbud" style="display:flex;flex-direction:column;gap:9px"></div>
-    <div id="tj-engangs" style="display:none;flex-direction:column;gap:0"></div>
-    <div id="tj-faste" style="display:none;flex-direction:column;gap:0"></div>
   </div>
 </div>
 
@@ -8823,7 +8845,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
   <div class="nav-item" onclick="openMyQuests('posted')">
     <div class="nav-icon" style="position:relative">📋<span id="mobile-mq-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:8px;font-weight:800;min-width:14px;height:14px;border-radius:7px;align-items:center;justify-content:center;padding:0 3px">0</span></div>
-    <div class="nav-label" id="nav-myquests-label">Mine oppdrag</div>
+    <div class="nav-label" id="nav-myquests-label">Aktivitet</div>
   </div>
   <div class="nav-item" onclick="openProfilePage()">
     <div class="nav-icon">👤</div>
