@@ -393,6 +393,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .lv-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:5px; }
 .lv-tag { font-size:10.5px; font-weight:800; padding:2px 7px; border-radius:999px; letter-spacing:.2px; }
 .lv-tag-exp { background:rgba(120,120,120,.16); color:var(--muted); }
+.lv-tag-paused { background:rgba(71,85,105,.18); color:#64748b; }
 .lv-tag-mine { background:rgba(168,85,247,.16); color:#a855f7; }
 .lv-tag-work { background:rgba(20,184,166,.16); color:#14b8a6; }
 .lv-tag-app { background:rgba(245,158,11,.16); color:var(--orange); }
@@ -613,6 +614,8 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 }
 .quest-pin.applied { opacity:.62; filter:saturate(.6); }
 .quest-pin.applied .qp-badge { background:var(--surface); color:var(--muted); border:1px solid var(--border); }
+.quest-pin.paused { opacity:.7; filter:grayscale(.55); }
+.quest-pin.paused .qp-badge { background:#475569; color:#fff; border:1px solid rgba(255,255,255,.25); }
 
 /* live preview card in the "Legg ut" modal */
 .qpreview-card { background:var(--surface2); border:1px solid var(--border); border-radius:14px; padding:12px 12px 6px; margin-bottom:18px; }
@@ -2900,7 +2903,7 @@ function cleanName(str) {
   return String(str || '').replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim();
 }
 
-function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = '', imageUrl = null, expired = false, ownership = null, onClick } = {}) {
+function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = '', imageUrl = null, expired = false, paused = false, ownership = null, onClick } = {}) {
   const el = document.createElement('div');
   el.className = 'mapbox-marker';
 
@@ -2911,6 +2914,7 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
     : '';
 
   const ownerClass = ownership === 'mine' ? 'mine' : ownership === 'working' ? 'working' : ownership === 'applied' ? 'applied' : '';
+  const pausedClass = paused ? 'paused' : '';
   const displayIcon = expired ? '⏰' : icon;
   const _mkKey = expired ? null : catKeyFromEmoji(displayIcon);
   const _mkIcon = _mkKey ? catIconSvg(_mkKey, {size:22, stroke:2}) : displayIcon;
@@ -2926,9 +2930,13 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
     ? `<svg viewBox="0 0 42 42" preserveAspectRatio="none"><path class="qp-tri-path" d="M21 3.5 L37.5 35 Q39.5 38.5 35 38.5 L7 38.5 Q2.5 38.5 4.5 35 Z"/></svg>`
     : '';
 
+  const badge = paused ? `<div class="qp-badge">⏸ Pauset</div>`
+    : ownership === 'applied' ? `<div class="qp-badge">✓ Søkt</div>`
+    : '';
+
   el.innerHTML = `
-    <div class="quest-pin ${typeClass} ${ownerClass} shape-${shape}">
-      ${ownership === 'applied' ? `<div class="qp-badge">✓ Søkt</div>` : ''}
+    <div class="quest-pin ${typeClass} ${ownerClass} ${pausedClass} shape-${shape}">
+      ${badge}
       <div class="qp-emblem">
         <div class="qp-shape">${triSvg}</div>
         <span class="qp-icon">${_mkIcon}</span>
@@ -2990,6 +2998,7 @@ function setViewMode(mode) {
 function addQuestMarker(q) {
   const job = questToJob(q);
   const expired = q.status === 'expired';
+  const paused = q.status === 'paused';
   let ownership = null;
   if(currentUser) {
     if(q.user_id && q.user_id === currentUser.id) ownership = 'mine';
@@ -3003,6 +3012,7 @@ function addQuestMarker(q) {
     priceText: (q.is_charity ? 'Gratis' : (q.pay != null ? q.pay + ' kr' : '')),
     imageUrl: job.image || null,
     expired,
+    paused,
     ownership,
     onClick: () => showPanel(job)
   });
@@ -3019,6 +3029,7 @@ function addQuestMarker(q) {
     createdAt: q.created_at || null,
     title: cleanName(q.title),
     expired,                    // brukes av lista for «Utløpt»-merke
+    paused,                     // brukes av lista for «Pauset»-merke
     listOnly: expired,          // utløpte: kun i lista, aldri på kartet
     ownership,                  // mine / working / applied
     open: () => showPanel(job),
@@ -3102,15 +3113,14 @@ async function addMarkers() {
   // I tillegg: oppdrag den innloggede er involvert i – uansett at de har blitt «taken»/«paused».
   // Uten dette forsvinner egne oppdrag og oppdrag man jobber på fra kartet i det de blir tatt.
   if(currentUser) {
-    const involvedStatuses = ['open', 'taken', 'paused', 'expired'];
-    // Egne oppdrag
+    // Egne oppdrag: eier ser også sine pausede (pauset = skjult for ANDRE, ikke for eier)
     const { data: mine } = await sb.from('quests').select('*')
-      .eq('user_id', currentUser.id).in('status', involvedStatuses);
+      .eq('user_id', currentUser.id).in('status', ['open', 'taken', 'paused', 'expired']);
     (mine || []).forEach(q => byId.set(q.id, q));
-    // Oppdrag man jobber på / har søkt på
+    // Oppdrag man jobber på / har søkt på: aldri pausede (de skal ikke vises for andre enn eier)
     if(involvedIds.size) {
       const { data: inv } = await sb.from('quests').select('*')
-        .in('id', [...involvedIds]).in('status', involvedStatuses);
+        .in('id', [...involvedIds]).in('status', ['open', 'taken', 'expired']);
       (inv || []).forEach(q => byId.set(q.id, q));
     }
   }
@@ -4451,6 +4461,7 @@ function renderListView() {
     const seeLabel = isSvc ? 'Se tilbyder →' : 'Se oppdrag →';
     const tags = [];
     if(m.expired) tags.push('<span class="lv-tag lv-tag-exp">⏰ Utløpt</span>');
+    else if(m.paused) tags.push('<span class="lv-tag lv-tag-paused">⏸ Pauset</span>');
     else if(m.ownership === 'mine') tags.push('<span class="lv-tag lv-tag-mine">Mitt</span>');
     else if(m.ownership === 'working') tags.push('<span class="lv-tag lv-tag-work">Jobber på</span>');
     else if(m.ownership === 'applied') tags.push('<span class="lv-tag lv-tag-app">Søkt</span>');
