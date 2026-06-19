@@ -1062,8 +1062,15 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   #desktop-filter-btn { display: none !important; }
   #desktop-search { display: none !important; }
   #searchbox { display: none !important; }
-  #notif-btn { width:34px; height:34px; font-size:14px; }
-  #inbox-btn { width:34px; height:34px; font-size:14px; }
+  #notif-btn { width:34px !important; height:34px !important; font-size:14px; }
+  #inbox-btn { width:34px !important; height:34px !important; font-size:14px; }
+  /* Lag plass til install-knappen i topbaren – behold alle ikonene synlige */
+  #rank-topbar-btn { width:34px !important; height:34px !important; }
+  #app-install-topbar-btn { width:34px !important; height:34px !important; }
+  #theme-toggle { width:34px !important; height:34px !important; }
+  .top-actions { gap:6px !important; }
+  #lang-btn { min-width:0 !important; padding:0 9px !important; }
+  #lang-current span { display:none; } /* skjul "NO"-tekst på mobil – flagg + pil er nok */
   .btn-tilby-desktop { display: none !important; }
 
   /* JOB PANEL – slide up from bottom like a native app */
