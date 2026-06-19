@@ -1489,6 +1489,11 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   <span id="inbox-badge" style="display:none;position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center;border:2px solid var(--surface)">0</span>
 </button>
 
+<!-- LAST NED APP (topbar – kun synlig når installerbar) -->
+<button id="app-install-topbar-btn" onclick="triggerInstall()" title="Last ned appen" style="display:none;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);border:none;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(168,85,247,.3)">
+  <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2.5"/><path d="M12 7v6M9.5 10.5 12 13l2.5-2.5"/></svg>
+</button>
+
 <!-- LANGUAGE SELECTOR -->
 <div id="lang-selector" style="position:relative;flex-shrink:0">
   <button id="lang-btn" onclick="toggleLangDropdown()" style="display:flex;align-items:center;gap:6px;padding:0 12px;height:38px;background:var(--surface);border:1px solid var(--border);border-radius:50px;cursor:pointer;font-size:18px;color:var(--text);font-family:inherit;transition:all .15s;min-width:80px;justify-content:center">
@@ -2630,7 +2635,7 @@ const manifestData = {
   orientation: "portrait-primary",
   icons: [
     { src: "/icon192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-    { src: "/icon192.png", sizes: "512x512", type: "image/png", purpose: "any" }
+    { src: "/icon512.png", sizes: "512x512", type: "image/png", purpose: "any" }
   ]
 };
 const blob = new Blob([JSON.stringify(manifestData)], {type:'application/json'});
@@ -2679,6 +2684,15 @@ function refreshInstallText() {
   safeHTML('iis-step2', t('iosStep2'));
   safeHTML('iis-step3', t('iosStep3'));
   safeText('iis-done', t('iosSheetDone'));
+}
+
+// Vis/skjul topbar-install-ikonet (kun når appen kan installeres)
+function updateTopbarInstallBtn() {
+  const btn = document.getElementById('app-install-topbar-btn');
+  if(!btn) return;
+  const show = canInstallApp();
+  btn.style.display = show ? 'flex' : 'none';
+  if(show) btn.title = t('installTitle');
 }
 
 // Hovedhandling: native prompt (Android) eller guide (iPhone)
@@ -2730,12 +2744,15 @@ function hideAllInstallUI() {
   closeIosInstallSheet();
   const card = document.getElementById('pp-install-section');
   if(card) card.style.display = 'none';
+  const tb = document.getElementById('app-install-topbar-btn');
+  if(tb) tb.style.display = 'none';
 }
 
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredInstallPrompt = e;
   refreshInstallText();
+  updateTopbarInstallBtn();
   // Vis banner litt etter at brukeren har rukket å se seg rundt
   setTimeout(showInstallBanner, 6000);
 });
@@ -2749,6 +2766,7 @@ window.addEventListener('appinstalled', () => {
 // iPhone-banner: ingen beforeinstallprompt finnes, så vis selv etter litt tid
 document.addEventListener('DOMContentLoaded', () => {
   refreshInstallText();
+  updateTopbarInstallBtn();
   if(isIOSSafari() && !isStandalone()) setTimeout(showInstallBanner, 7000);
 });
 // ── /APP-INSTALL ──
