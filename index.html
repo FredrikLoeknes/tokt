@@ -2340,6 +2340,11 @@ const LANGUAGES = {
     iosStep2: 'Bla ned og velg <b>«Legg til på Hjem-skjerm»</b>',
     iosStep3: 'Trykk <b>«Legg til»</b> – ferdig!',
     iosSheetDone: 'Skjønner',
+    androidSheetTitle: 'Installer Tokt på Android',
+    androidSheetSub: 'Tre steg i nettleseren',
+    androidStep1: 'Trykk på <b>meny-knappen (⋮)</b> øverst til høyre',
+    androidStep2: 'Velg <b>«Installer app»</b> eller <b>«Legg til på startskjerm»</b>',
+    androidStep3: 'Bekreft – så ligger Tokt på hjemskjermen!',
   },
 
   en: {
@@ -2448,6 +2453,11 @@ const LANGUAGES = {
     iosStep2: 'Scroll down and choose <b>“Add to Home Screen”</b>',
     iosStep3: 'Tap <b>“Add”</b> – done!',
     iosSheetDone: 'Got it',
+    androidSheetTitle: 'Install Tokt on Android',
+    androidSheetSub: 'Three steps in your browser',
+    androidStep1: 'Tap the <b>menu button (⋮)</b> at the top right',
+    androidStep2: 'Choose <b>“Install app”</b> or <b>“Add to Home screen”</b>',
+    androidStep3: 'Confirm – Tokt will be on your home screen!',
   }
 
 };
@@ -2635,7 +2645,8 @@ const manifestData = {
   orientation: "portrait-primary",
   icons: [
     { src: "/icon192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-    { src: "/icon512.png", sizes: "512x512", type: "image/png", purpose: "any" }
+    { src: "/icon512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='23' fill='%23f97316'/><rect x='28' y='30' width='44' height='11' rx='5.5' fill='%23fff'/><rect x='44.5' y='46' width='11' height='28' rx='5.5' fill='%23fff'/></svg>", sizes: "any", type: "image/svg+xml", purpose: "any" }
   ]
 };
 const blob = new Blob([JSON.stringify(manifestData)], {type:'application/json'});
@@ -2653,9 +2664,9 @@ document.head.appendChild(manifestLink);
 let deferredInstallPrompt = null;
 
 function isStandalone() {
+  // Kun TRUE når vi faktisk kjører som installert app (ikke et klistret flagg)
   return window.matchMedia('(display-mode: standalone)').matches
-      || window.navigator.standalone === true
-      || localStorage.getItem('tokt-installed') === '1';
+      || window.navigator.standalone === true;
 }
 function isIOS() {
   return /iphone|ipad|ipod/i.test(navigator.userAgent)
@@ -2665,10 +2676,16 @@ function isIOSSafari() {
   // A2HS funker kun i Safari på iOS – utelukk Chrome/Firefox/Edge på iOS
   return isIOS() && !/crios|fxios|edgios|opios/i.test(navigator.userAgent);
 }
-// Kan vi tilby installasjon i det hele tatt?
+function isAndroid() {
+  return /android/i.test(navigator.userAgent);
+}
+// Kan vi tilby installasjon? Vis i nettleser på mobil uansett (native prompt ELLER guide).
 function canInstallApp() {
-  if(isStandalone()) return false;
-  return !!deferredInstallPrompt || isIOSSafari();
+  if(isStandalone()) return false;        // kjører allerede som installert app
+  if(deferredInstallPrompt) return true;  // klar for native installasjon
+  if(isIOSSafari()) return true;          // iPhone Safari → guide
+  if(isAndroid()) return true;            // Android-nettleser → native eller guide
+  return false;                           // desktop uten prompt: kan ikke installeres
 }
 
 function refreshInstallText() {
@@ -2706,7 +2723,7 @@ async function triggerInstall() {
     else dismissInstallBanner();
     return;
   }
-  if(isIOSSafari()) { openIosInstallSheet(); return; }
+  openInstallGuide(); // ingen native prompt → vis steg-for-steg guide (iPhone/Android)
 }
 
 function showInstallBanner() {
@@ -2746,11 +2763,19 @@ function dismissInstallBanner() {
   document.body.classList.remove('app-banner-open');
   localStorage.setItem('tokt-banner-dismissed', '1');
 }
-function openIosInstallSheet() {
-  refreshInstallText();
+function openInstallGuide() {
+  // Velg riktig framgangsmåte for plattformen
+  const ios = isIOSSafari() || (isIOS() && !deferredInstallPrompt);
+  safeText('iis-title', ios ? t('iosSheetTitle') : t('androidSheetTitle'));
+  safeText('iis-sub',   ios ? t('iosSheetSub')   : t('androidSheetSub'));
+  safeHTML('iis-step1', ios ? t('iosStep1') : t('androidStep1'));
+  safeHTML('iis-step2', ios ? t('iosStep2') : t('androidStep2'));
+  safeHTML('iis-step3', ios ? t('iosStep3') : t('androidStep3'));
+  safeText('iis-done',  t('iosSheetDone'));
   const ov = document.getElementById('ios-install-overlay');
   if(ov) ov.classList.add('show');
 }
+function openIosInstallSheet() { openInstallGuide(); } // bakoverkompat
 function closeIosInstallSheet() {
   const ov = document.getElementById('ios-install-overlay');
   if(ov) ov.classList.remove('show');
@@ -2779,11 +2804,11 @@ window.addEventListener('appinstalled', () => {
   try { showToast(t('installToast')); } catch(e) {}
 });
 
-// iPhone-banner: ingen beforeinstallprompt finnes, så vis selv etter litt tid
+// Vis banner i alle installerbare nettleser-kontekster (iPhone + Android uten prompt)
 document.addEventListener('DOMContentLoaded', () => {
   refreshInstallText();
   updateTopbarInstallBtn();
-  if(isIOSSafari() && !isStandalone()) setTimeout(showInstallBanner, 7000);
+  if(canInstallApp()) setTimeout(showInstallBanner, 6500);
 });
 // ── /APP-INSTALL ──
 
