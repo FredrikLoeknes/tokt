@@ -1426,9 +1426,9 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 
 <!-- TIPS BAR -->
 <div id="tips-bar" style="position:fixed;top:62px;left:0;right:0;z-index:89;background:linear-gradient(135deg,rgba(249,115,22,0.92),rgba(168,85,247,0.92));-webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);padding:4px 16px;min-height:30px;box-sizing:border-box;display:flex;align-items:center;gap:10px;cursor:pointer;transition:opacity .3s" onclick="nextTip()">
+  <button onclick="closeTipsBar(event)" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
   <span style="font-size:16px;flex-shrink:0" id="tip-icon">💡</span>
   <span id="tip-text" style="font-size:12px;color:#fff;font-weight:500;flex:1;line-height:1.4;text-align:center"></span>
-  <button onclick="closeTipsBar(event)" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
 </div>
 
 <!-- HERO TAGLINE on map -->
@@ -2720,9 +2720,25 @@ function showInstallBanner() {
   const banner = document.getElementById('app-install-banner');
   if(!banner) return;
   refreshInstallText();
+  positionInstallBanner();
   banner.classList.add('show');
   document.body.classList.add('app-banner-open');
   sessionStorage.setItem('tokt-banner-shown', '1');
+}
+// På mobil ligger tips-baren nederst – legg banneret rett over den så de ikke overlapper
+function positionInstallBanner() {
+  const banner = document.getElementById('app-install-banner');
+  if(!banner) return;
+  if(window.innerWidth > 768) { banner.style.bottom = ''; return; }
+  const tips = document.getElementById('tips-bar');
+  const tipsVisible = tips && getComputedStyle(tips).display !== 'none' && tips.offsetParent !== null;
+  if(tipsVisible) {
+    const r = tips.getBoundingClientRect();
+    const aboveTips = Math.max(0, window.innerHeight - r.top) + 10;
+    banner.style.bottom = aboveTips + 'px';
+  } else {
+    banner.style.bottom = ''; // bruk CSS-standard (rett over bunn-nav)
+  }
 }
 function dismissInstallBanner() {
   const banner = document.getElementById('app-install-banner');
@@ -8671,6 +8687,8 @@ function showTip(index) {
     textEl.style.transition = 'opacity .4s';
     iconEl.style.opacity = '1';
     textEl.style.opacity = '1';
+    const b = document.getElementById('app-install-banner');
+    if(b && b.classList.contains('show')) { try { positionInstallBanner(); } catch(e){} }
   }, 200);
 }
 
@@ -8697,6 +8715,8 @@ function closeTipsBar(e) {
     const ds = document.getElementById('desktop-search');
     if(fb) fb.style.top = '74px';
     if(ds) ds.style.top = '74px';
+    const b = document.getElementById('app-install-banner');
+    if(b && b.classList.contains('show')) { try { positionInstallBanner(); } catch(e){} }
   }, 300);
   localStorage.setItem('tokt-tips-closed', '1');
 }
