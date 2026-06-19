@@ -709,7 +709,8 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 /* Skjul zoom-kontrollene når et bunn-ark dekker kartet, så de ikke overlapper */
 body:has(#leaderboard.open) #corner-widgets,
 body:has(#list-view.open) #corner-widgets,
-body:has(#filter-sheet.open) #corner-widgets { opacity:0; pointer-events:none; transform:translateY(8px); }
+body:has(#filter-sheet.open) #corner-widgets,
+body.lb-open #corner-widgets { opacity:0; pointer-events:none; transform:translateY(8px); }
 
 #week-worker {
   background:var(--surface); border:1px solid var(--border);
@@ -4616,6 +4617,7 @@ function toggleLeaderboard() {
   } else {
     lb.style.display = 'block';
     setTimeout(() => lb.classList.add('open'), 10);
+    document.body.classList.add('lb-open');
     closePanel();
     const pp = document.getElementById('profile-panel');
     if(pp) pp.style.display = 'none';
@@ -5299,6 +5301,7 @@ function closeLeaderboard() {
   const lb = document.getElementById('leaderboard');
   if(!lb) return;
   lb.classList.remove('open');
+  document.body.classList.remove('lb-open');
   setTimeout(() => {
     if(!lb.classList.contains('open')) lb.style.display = 'none';
   }, 200);
@@ -9125,6 +9128,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const pp = document.getElementById('profile-panel');
         pp.style.display = pp.style.display === 'none' ? 'block' : 'none';
         document.getElementById('leaderboard').classList.remove('open');
+        document.body.classList.remove('lb-open');
       } else {
         openAuth('login');
       }
