@@ -22,10 +22,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Tokt">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon192.png">
+<link rel="apple-touch-icon" href="icon192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
@@ -711,6 +710,49 @@ body:has(#leaderboard.open) #corner-widgets,
 body:has(#list-view.open) #corner-widgets,
 body:has(#filter-sheet.open) #corner-widgets,
 body.lb-open #corner-widgets { opacity:0; pointer-events:none; transform:translateY(8px); }
+
+/* ── APP-INSTALL BANNER (A) ── */
+#app-install-banner{
+  position:fixed; left:10px; right:10px; bottom:calc(66px + env(safe-area-inset-bottom,0px)); z-index:96;
+  background:var(--surface); border:1px solid var(--border); border-radius:16px;
+  box-shadow:var(--shadow-lg); padding:12px 12px 12px 13px;
+  display:flex; align-items:center; gap:11px;
+  transform:translateY(180%); opacity:0; pointer-events:none;
+  transition:transform .38s cubic-bezier(.32,.72,0,1), opacity .25s;
+}
+#app-install-banner.show{ transform:translateY(0); opacity:1; pointer-events:auto; }
+@media(min-width:769px){ #app-install-banner{ left:auto; right:18px; width:380px; bottom:24px; } }
+#app-install-banner .aib-ico{ width:40px; height:40px; border-radius:11px; background:linear-gradient(135deg,#f97316,#a855f7); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+#app-install-banner .aib-tx{ flex:1; min-width:0; }
+#app-install-banner .aib-tx b{ font-size:12.5px; font-weight:800; display:block; }
+#app-install-banner .aib-tx small{ font-size:10.5px; color:var(--muted); }
+#app-install-banner .aib-go{ background:linear-gradient(135deg,#f97316,#a855f7); color:#fff; border:none; border-radius:10px; padding:9px 14px; font-size:12px; font-weight:800; font-family:inherit; flex-shrink:0; cursor:pointer; }
+#app-install-x{ position:absolute; top:5px; right:9px; font-size:16px; line-height:1; color:var(--muted); background:none; border:none; cursor:pointer; }
+/* Hold de andre bunn-kontrollene unna mens banneret vises */
+body.app-banner-open #corner-widgets,
+body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
+
+/* ── iPhone-INSTALL-GUIDE (D) ── */
+#ios-install-overlay{
+  position:fixed; inset:0; z-index:1100; background:rgba(0,0,0,.5);
+  -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+  display:none; align-items:flex-end; justify-content:center;
+}
+#ios-install-overlay.show{ display:flex; }
+#ios-install-sheet{
+  background:var(--surface); width:100%; max-width:480px;
+  border-radius:22px 22px 0 0; box-shadow:0 -10px 40px rgba(0,0,0,.25);
+  padding:8px 20px calc(24px + env(safe-area-inset-bottom,0px));
+  transform:translateY(100%); transition:transform .35s cubic-bezier(.32,.72,0,1);
+}
+#ios-install-overlay.show #ios-install-sheet{ transform:translateY(0); }
+.iis-grab{ width:36px; height:4px; background:var(--border); border-radius:2px; margin:6px auto 14px; }
+#ios-install-sheet h3{ font-size:16px; font-weight:800; text-align:center; margin-bottom:4px; }
+.iis-sub{ font-size:12px; color:var(--muted); text-align:center; margin-bottom:18px; }
+.iis-step{ display:flex; align-items:center; gap:12px; margin-bottom:13px; }
+.iis-step .n{ width:26px; height:26px; border-radius:50%; background:linear-gradient(135deg,#f97316,#a855f7); color:#fff; font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.iis-step .txt{ font-size:13px; line-height:1.4; }
+.iis-done{ width:100%; background:linear-gradient(135deg,#f97316,#a855f7); color:#fff; border:none; border-radius:12px; padding:12px; font-size:14px; font-weight:800; font-family:inherit; margin-top:8px; cursor:pointer; }
 
 #week-worker {
   background:var(--surface); border:1px solid var(--border);
@@ -2281,6 +2323,18 @@ const LANGUAGES = {
     // Achievement
     firstQuestTitle: 'Første oppdrag',
     firstQuestDesc: 'Du søkte på ditt første oppdrag. Eventyret begynner!',
+    // App install
+    installTitle: 'Last ned Tokt-appen',
+    installCardSub: 'Legg den på hjemskjermen – åpne raskere, få varsler',
+    installBannerSub: 'Åpne raskere – som en vanlig app',
+    installBtn: 'Installer',
+    installToast: '🎉 Tokt er lagt til på hjemskjermen!',
+    iosSheetTitle: 'Installer Tokt på iPhone',
+    iosSheetSub: 'Tre enkle steg i Safari',
+    iosStep1: 'Trykk på <b>Del-knappen</b> nederst i Safari',
+    iosStep2: 'Bla ned og velg <b>«Legg til på Hjem-skjerm»</b>',
+    iosStep3: 'Trykk <b>«Legg til»</b> – ferdig!',
+    iosSheetDone: 'Skjønner',
   },
 
   en: {
@@ -2377,6 +2431,18 @@ const LANGUAGES = {
     rateLabels: ['','😕 Poor','😐 OK','🙂 Good','😊 Great','🤩 Amazing!'],
     firstQuestTitle: 'First Quest',
     firstQuestDesc: 'You applied for your first quest. The adventure begins!',
+    // App install
+    installTitle: 'Get the Tokt app',
+    installCardSub: 'Add it to your home screen – open faster, get alerts',
+    installBannerSub: 'Open faster – just like a regular app',
+    installBtn: 'Install',
+    installToast: '🎉 Tokt was added to your home screen!',
+    iosSheetTitle: 'Install Tokt on iPhone',
+    iosSheetSub: 'Three quick steps in Safari',
+    iosStep1: 'Tap the <b>Share button</b> at the bottom of Safari',
+    iosStep2: 'Scroll down and choose <b>“Add to Home Screen”</b>',
+    iosStep3: 'Tap <b>“Add”</b> – done!',
+    iosSheetDone: 'Got it',
   }
 
 };
@@ -2529,6 +2595,9 @@ function applyLanguage() {
   safeText('panel-applicants-label', L.applicantsLabel);
   safeText('panel-accept-btn', L.acceptQuest);
   safeHTML('panel-payment-note', L.paymentNote);
+
+  // App-install (begge elementer)
+  try { refreshInstallText(); } catch(e) {}
 }
 
 function safeText(id, val) { const el = document.getElementById(id); if(el && val !== undefined) el.textContent = val; }
@@ -2560,16 +2629,129 @@ const manifestData = {
   theme_color: "#f97316",
   orientation: "portrait-primary",
   icons: [
-    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23f97316'/><text y='.9em' font-size='80' x='10'>⚡</text></svg>", sizes: "192x192", type: "image/svg+xml" },
-    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23f97316'/><text y='.9em' font-size='80' x='10'>⚡</text></svg>", sizes: "512x512", type: "image/svg+xml" }
+    { src: "/icon192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+    { src: "/icon192.png", sizes: "512x512", type: "image/png", purpose: "any" }
   ]
 };
 const blob = new Blob([JSON.stringify(manifestData)], {type:'application/json'});
 const manifestUrl = URL.createObjectURL(blob);
+// Fjern evt. eksisterende manifest-lenke (statisk manifest.json) så vårt blir brukt
+document.querySelectorAll('link[rel="manifest"]').forEach(l => l.remove());
 const manifestLink = document.createElement('link');
 manifestLink.rel = 'manifest';
 manifestLink.href = manifestUrl;
 document.head.appendChild(manifestLink);
+
+// ── APP-INSTALL (PWA) ──
+// Android/desktop: fanger beforeinstallprompt og trigger native installasjon.
+// iPhone (Safari): kan ikke installeres automatisk – vi viser en bruksanvisning.
+let deferredInstallPrompt = null;
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true
+      || localStorage.getItem('tokt-installed') === '1';
+}
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS
+}
+function isIOSSafari() {
+  // A2HS funker kun i Safari på iOS – utelukk Chrome/Firefox/Edge på iOS
+  return isIOS() && !/crios|fxios|edgios|opios/i.test(navigator.userAgent);
+}
+// Kan vi tilby installasjon i det hele tatt?
+function canInstallApp() {
+  if(isStandalone()) return false;
+  return !!deferredInstallPrompt || isIOSSafari();
+}
+
+function refreshInstallText() {
+  safeText('aib-title', t('installTitle'));
+  safeText('aib-sub', t('installBannerSub'));
+  safeText('aib-go', t('installBtn'));
+  safeText('pp-install-title', t('installTitle'));
+  safeText('pp-install-sub', t('installCardSub'));
+  safeText('pp-install-btn', t('installBtn'));
+  safeText('iis-title', t('iosSheetTitle'));
+  safeText('iis-sub', t('iosSheetSub'));
+  safeHTML('iis-step1', t('iosStep1'));
+  safeHTML('iis-step2', t('iosStep2'));
+  safeHTML('iis-step3', t('iosStep3'));
+  safeText('iis-done', t('iosSheetDone'));
+}
+
+// Hovedhandling: native prompt (Android) eller guide (iPhone)
+async function triggerInstall() {
+  if(deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    let outcome = 'dismissed';
+    try { ({ outcome } = await deferredInstallPrompt.userChoice); } catch(e) {}
+    deferredInstallPrompt = null;
+    if(outcome === 'accepted') hideAllInstallUI();
+    else dismissInstallBanner();
+    return;
+  }
+  if(isIOSSafari()) { openIosInstallSheet(); return; }
+}
+
+function showInstallBanner() {
+  if(!canInstallApp()) return;
+  if(localStorage.getItem('tokt-banner-dismissed') === '1') return;
+  if(sessionStorage.getItem('tokt-banner-shown') === '1') return;
+  // Ikke avbryt velkomst eller åpne ark/paneler
+  const welcome = document.getElementById('welcome-overlay');
+  if(welcome && welcome.style.display === 'flex') return;
+  if(document.querySelector('#leaderboard.open, #list-view.open, #filter-sheet.open')) return;
+  const banner = document.getElementById('app-install-banner');
+  if(!banner) return;
+  refreshInstallText();
+  banner.classList.add('show');
+  document.body.classList.add('app-banner-open');
+  sessionStorage.setItem('tokt-banner-shown', '1');
+}
+function dismissInstallBanner() {
+  const banner = document.getElementById('app-install-banner');
+  if(banner) banner.classList.remove('show');
+  document.body.classList.remove('app-banner-open');
+  localStorage.setItem('tokt-banner-dismissed', '1');
+}
+function openIosInstallSheet() {
+  refreshInstallText();
+  const ov = document.getElementById('ios-install-overlay');
+  if(ov) ov.classList.add('show');
+}
+function closeIosInstallSheet() {
+  const ov = document.getElementById('ios-install-overlay');
+  if(ov) ov.classList.remove('show');
+}
+function hideAllInstallUI() {
+  dismissInstallBanner();
+  closeIosInstallSheet();
+  const card = document.getElementById('pp-install-section');
+  if(card) card.style.display = 'none';
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  refreshInstallText();
+  // Vis banner litt etter at brukeren har rukket å se seg rundt
+  setTimeout(showInstallBanner, 6000);
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  localStorage.setItem('tokt-installed', '1');
+  hideAllInstallUI();
+  try { showToast(t('installToast')); } catch(e) {}
+});
+
+// iPhone-banner: ingen beforeinstallprompt finnes, så vis selv etter litt tid
+document.addEventListener('DOMContentLoaded', () => {
+  refreshInstallText();
+  if(isIOSSafari() && !isStandalone()) setTimeout(showInstallBanner, 7000);
+});
+// ── /APP-INSTALL ──
 
 // Rank system – global so all functions can access it
 const RANKS = [
@@ -4868,6 +5050,8 @@ async function loadProfilePage(userId, isOwn) {
   if(ppQuick) ppQuick.style.display = isOwn ? 'block' : 'none';
   const ppLogout = document.getElementById('pp-logout-section');
   if(ppLogout) ppLogout.style.display = isOwn ? 'block' : 'none';
+  const ppInstall = document.getElementById('pp-install-section');
+  if(ppInstall) ppInstall.style.display = (isOwn && canInstallApp()) ? 'block' : 'none';
   document.getElementById('pp-header-title').textContent = isOwn ? 'Min profil' : 'Profil';
   const ppReport = document.getElementById('pp-report-btn');
   if(ppReport) ppReport.style.display = isOwn ? 'none' : 'inline-block';
@@ -5748,8 +5932,8 @@ function showBrowserNotification(title, body, url='/') {
   if(Notification.permission === 'granted') {
     const n = new Notification(title, {
       body,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: '/icon192.png',
+      badge: '/icon192.png',
       tag: 'tokt-' + Date.now()
     });
     n.onclick = () => { window.focus(); n.close(); };
@@ -9744,6 +9928,18 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
   </div>
 
+  <!-- Last ned app (kun egen profil, kun når installerbar) -->
+  <div id="pp-install-section" style="display:none;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
+    <div onclick="triggerInstall()" style="display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,rgba(249,115,22,.10),rgba(168,85,247,.10));border:1px solid rgba(168,85,247,.22);border-radius:16px;padding:13px 14px;cursor:pointer">
+      <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;box-shadow:0 4px 14px rgba(168,85,247,.3)">📲</div>
+      <div style="flex:1;min-width:0">
+        <div id="pp-install-title" style="font-size:13.5px;font-weight:800">Last ned Tokt-appen</div>
+        <div id="pp-install-sub" style="font-size:11px;color:var(--muted);line-height:1.4;margin-top:1px">Legg den på hjemskjermen – åpne raskere, få varsler</div>
+      </div>
+      <button onclick="event.stopPropagation();triggerInstall()" id="pp-install-btn" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:11px;padding:10px 15px;font-size:12.5px;font-weight:800;font-family:inherit;flex-shrink:0;box-shadow:0 4px 12px rgba(168,85,247,.28);cursor:pointer">Installer</button>
+    </div>
+  </div>
+
   <!-- Rediger profil (kun egen profil) -->
   <div id="pp-edit-section" style="padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
     <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px">⚙️ Rediger profil</div>
@@ -9775,6 +9971,30 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">🚪 Logg ut</button>
   </div>
 
+</div>
+
+<!-- APP-INSTALL BUNN-BANNER (A) -->
+<div id="app-install-banner">
+  <button onclick="dismissInstallBanner()" id="app-install-x" aria-label="Lukk">×</button>
+  <div class="aib-ico">📲</div>
+  <div class="aib-tx">
+    <b id="aib-title">Last ned Tokt-appen</b>
+    <small id="aib-sub">Åpne raskere – som en vanlig app</small>
+  </div>
+  <button onclick="triggerInstall()" id="aib-go" class="aib-go">Installer</button>
+</div>
+
+<!-- iPhone-INSTALL-GUIDE (D) -->
+<div id="ios-install-overlay" onclick="if(event.target===this)closeIosInstallSheet()">
+  <div id="ios-install-sheet">
+    <div class="iis-grab"></div>
+    <h3 id="iis-title">Installer Tokt på iPhone</h3>
+    <div class="iis-sub" id="iis-sub">Tre enkle steg i Safari</div>
+    <div class="iis-step"><div class="n">1</div><div class="txt" id="iis-step1">Trykk på <b>Del-knappen</b> nederst i Safari</div></div>
+    <div class="iis-step"><div class="n">2</div><div class="txt" id="iis-step2">Bla ned og velg <b>«Legg til på Hjem-skjerm»</b></div></div>
+    <div class="iis-step"><div class="n">3</div><div class="txt" id="iis-step3">Trykk <b>«Legg til»</b> – ferdig!</div></div>
+    <button onclick="closeIosInstallSheet()" id="iis-done" class="iis-done">Skjønner</button>
+  </div>
 </div>
 
 <div id="bottom-nav">
