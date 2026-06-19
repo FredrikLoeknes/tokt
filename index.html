@@ -45,6 +45,7 @@
   --green: #0fa968;
   --red: #e53935;
   --gold: #c9900a;
+  --t-warn:#e08c0b; --t-error:#e5484d;
   --gold-light: #f5c518;
   --text: #0f1523;
   --muted: #6b7280;
@@ -68,6 +69,7 @@ body.dark {
   --green: #2de08a;
   --red: #ff4f4f;
   --gold: #f5c518;
+  --t-warn:#f5b342; --t-error:#ff6b6b;
   --gold-light: #ffe066;
   --text: #eef0ff;
   --muted: #7a80a0;
@@ -827,7 +829,20 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 .achieve-desc { font-size:11px; color:var(--muted); }
 
 /* ── TOAST ── */
-#toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); z-index:99999; background:var(--surface); border:1px solid var(--green); color:var(--green); padding:11px 20px; border-radius:50px; font-size:13px; font-weight:600; display:none; white-space:nowrap; box-shadow:var(--shadow); }
+#toast {
+  position:fixed; bottom:80px; left:50%; transform:translateX(-50%); z-index:99999;
+  display:none; align-items:center; gap:11px;
+  background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent);
+  color:var(--text); padding:13px 16px; border-radius:14px;
+  font-size:13.5px; font-weight:600; line-height:1.35;
+  max-width:min(440px,92vw); box-shadow:var(--shadow-lg);
+  animation:toastIn .26s cubic-bezier(.32,.72,0,1);
+}
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+#toast.t-success { border-left-color:var(--green); background:linear-gradient(0deg,rgba(15,169,104,.07),rgba(15,169,104,.07)),var(--surface); }
+#toast.t-info { border-left-color:var(--accent); background:linear-gradient(0deg,rgba(59,111,245,.06),rgba(59,111,245,.06)),var(--surface); }
+#toast.t-warn { border-left-color:var(--t-warn); background:linear-gradient(0deg,rgba(224,140,11,.09),rgba(224,140,11,.09)),var(--surface); }
+#toast.t-error { border-left-color:var(--t-error); background:linear-gradient(0deg,rgba(229,72,77,.08),rgba(229,72,77,.08)),var(--surface); }
 
 /* mapbox */
 .mapboxgl-ctrl-logo,.mapboxgl-ctrl-attrib,.mapboxgl-ctrl-group { display:none!important; }
@@ -8336,11 +8351,25 @@ function closeTipsBar(e) {
   localStorage.setItem('tokt-tips-closed', '1');
 }
 
-function showToast(msg) {
+function showToast(msg, type) {
   const t = document.getElementById('toast');
-  t.textContent = msg; t.style.display = 'block';
+  if(!t) return;
+  t.textContent = msg;
+  const k = type || toastType(msg);
+  t.classList.remove('t-success','t-info','t-warn','t-error');
+  t.classList.add('t-' + k);
+  t.style.display = 'flex';
+  t.style.animation = 'none'; void t.offsetWidth; t.style.animation = ''; // spill av animasjonen på nytt hver gang
   clearTimeout(t._t);
   t._t = setTimeout(() => t.style.display = 'none', 3000);
+}
+// Utled toast-type fra emojien meldingen starter med (så de 137 kall-stedene ikke må endres)
+function toastType(msg) {
+  const s = String(msg || '').trim();
+  if(/^❌/.test(s)) return 'error';
+  if(/^(⚠️|🔞)/.test(s)) return 'warn';
+  if(/^(✅|🎉|⚡|✦|🔨|🎊|🏆)/.test(s)) return 'success';
+  return 'info';
 }
 
 function showAchievement(icon, title, desc) {
