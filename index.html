@@ -298,6 +298,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:50px;
   padding:11px 20px; font-family:inherit; font-size:13px; font-weight:800;
   box-shadow:var(--shadow); cursor:pointer; display:flex; align-items:center; gap:7px;
+  transition:opacity .2s ease;
 }
 #list-toggle-count { color:var(--accent); }
 #list-toggle-btn:active { transform:translateX(-50%) scale(.96); }
@@ -710,6 +711,10 @@ body:has(#leaderboard.open) #corner-widgets,
 body:has(#list-view.open) #corner-widgets,
 body:has(#filter-sheet.open) #corner-widgets,
 body.lb-open #corner-widgets { opacity:0; pointer-events:none; transform:translateY(8px); }
+/* Skjul også Liste-knappen når et bunn-ark dekker kartet (samme som zoom) */
+body:has(#leaderboard.open) #list-toggle-btn,
+body:has(#filter-sheet.open) #list-toggle-btn,
+body.lb-open #list-toggle-btn { opacity:0; pointer-events:none; }
 
 /* ── APP-INSTALL BANNER (A) ── */
 #app-install-banner{
@@ -1146,7 +1151,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 
   /* LEGEND – flyttes til høyre kant på mobil (under view-toggle, klar av bunn-nav) */
   #legend-toggle {
-    bottom:auto; top:119px; left:auto; right:12px; transform:none;
+    bottom:auto; top:124px; left:auto; right:12px; transform:none;
     width:36px; height:36px; padding:0; justify-content:center; border-radius:50%; font-size:15px;
   }
   #legend-toggle:active { transform:scale(0.96); }
