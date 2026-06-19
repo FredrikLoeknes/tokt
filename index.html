@@ -390,6 +390,12 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .lv-meta { font-size:11.5px; color:var(--muted); margin-top:3px; }
 .lv-star { color:var(--gold); font-weight:700; }
 .lv-new { color:var(--orange); font-weight:700; }
+.lv-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:5px; }
+.lv-tag { font-size:10.5px; font-weight:800; padding:2px 7px; border-radius:999px; letter-spacing:.2px; }
+.lv-tag-exp { background:rgba(120,120,120,.16); color:var(--muted); }
+.lv-tag-mine { background:rgba(168,85,247,.16); color:#a855f7; }
+.lv-tag-work { background:rgba(20,184,166,.16); color:#14b8a6; }
+.lv-tag-app { background:rgba(245,158,11,.16); color:var(--orange); }
 .lv-price { font-size:13.5px; font-weight:800; text-align:right; flex-shrink:0; }
 .lv-recbadge {
   position:absolute; top:10px; right:14px; font-size:9px; font-weight:800;
@@ -2964,17 +2970,20 @@ function registerMarker(el, info) {
   const mode = window.viewMode || 'all';
   if(mode === 'quests' && info.kind !== 'quest') el.style.display = 'none';
   if(mode === 'services' && info.kind !== 'service') el.style.display = 'none';
+  if(info.listOnly) el.style.display = 'none'; // utløpte vises kun i lista, ikke på kartet
 }
 
 function setViewMode(mode) {
   window.viewMode = mode;
   ['all','quests','services'].forEach(m => document.getElementById('vt-'+m)?.classList.toggle('active', m === mode));
   (window.mapMarkers || []).forEach(m => {
-    const show = mode === 'all' || (mode === 'quests' && m.kind === 'quest') || (mode === 'services' && m.kind === 'service');
-    m.el.style.display = show ? '' : 'none';
+    const kindOk = mode === 'all' || (mode === 'quests' && m.kind === 'quest') || (mode === 'services' && m.kind === 'service');
+    m._listPass = kindOk;                                  // lista: inkluderer utløpte
+    m.el.style.display = (kindOk && !m.listOnly) ? '' : 'none'; // kartet: utløpte skjult
   });
   clusterMarkers();
   updateListToggleCount();
+  if(document.getElementById('list-view')?.classList.contains('open')) renderListView();
   showToast(mode === 'all' ? '🗺️ Viser alt' : mode === 'quests' ? '📋 Viser kun oppdrag' : '🏪 Viser kun tilbud');
 }
 
@@ -3009,6 +3018,9 @@ function addQuestMarker(q) {
     userId: q.user_id || null,
     createdAt: q.created_at || null,
     title: cleanName(q.title),
+    expired,                    // brukes av lista for «Utløpt»-merke
+    listOnly: expired,          // utløpte: kun i lista, aldri på kartet
+    ownership,                  // mine / working / applied
     open: () => showPanel(job),
     lng: coords && coords[0], lat: coords && coords[1]
   });
@@ -3059,11 +3071,13 @@ async function addMarkers() {
   // This only affects the logged-in user's own view of the map.
   window._workingQuestIds = new Set();
   window._appliedQuestIds = new Set();
+  const involvedIds = new Set(); // oppdrag brukeren er part i via samtale
   if(currentUser) {
     const { data: myConvs } = await sb.from('conversations')
       .select('quest_id, status').eq('taker_id', currentUser.id).in('status', ['pending', 'accepted']);
     (myConvs || []).forEach(c => {
       if(!c.quest_id) return;
+      involvedIds.add(c.quest_id);
       if(c.status === 'accepted') window._workingQuestIds.add(c.quest_id);
       else if(c.status === 'pending') window._appliedQuestIds.add(c.quest_id);
     });
@@ -3075,17 +3089,35 @@ async function addMarkers() {
   // Check and expire any overdue quests first
   await checkAndExpireQuests();
 
-  // Load open + recently expired (within 24h) quests
+  // Open + recently expired (within 24h) quests for everyone
   const { data: quests, error } = await sb.from('quests')
     .select('*')
     .in('status', ['open', 'expired'])
     .order('created_at', { ascending: false });
 
-  if(!error && quests && quests.length > 0) {
-    quests
-      .filter(q => !isQuestHidden(q) && !isQuestHiddenForMinor(q)) // skjul utløpte + 18+ for mindreårige
-      .forEach(q => addQuestMarker(q));
+  // Samle alt deduplisert på id (én markør per oppdrag uansett hvor mange spørringer det dukker opp i)
+  const byId = new Map();
+  if(!error && quests) quests.forEach(q => byId.set(q.id, q));
+
+  // I tillegg: oppdrag den innloggede er involvert i – uansett at de har blitt «taken»/«paused».
+  // Uten dette forsvinner egne oppdrag og oppdrag man jobber på fra kartet i det de blir tatt.
+  if(currentUser) {
+    const involvedStatuses = ['open', 'taken', 'paused', 'expired'];
+    // Egne oppdrag
+    const { data: mine } = await sb.from('quests').select('*')
+      .eq('user_id', currentUser.id).in('status', involvedStatuses);
+    (mine || []).forEach(q => byId.set(q.id, q));
+    // Oppdrag man jobber på / har søkt på
+    if(involvedIds.size) {
+      const { data: inv } = await sb.from('quests').select('*')
+        .in('id', [...involvedIds]).in('status', involvedStatuses);
+      (inv || []).forEach(q => byId.set(q.id, q));
+    }
   }
+
+  [...byId.values()]
+    .filter(q => !isQuestHidden(q) && !isQuestHiddenForMinor(q)) // skjul gamle utløpte + 18+ for mindreårige
+    .forEach(q => addQuestMarker(q));
 
   // Load real services
   const { data: services } = await sb.from('services')
@@ -3095,8 +3127,9 @@ async function addMarkers() {
   }
 
   await enrichMarkerTrust();
-  clusterMarkers();
+  computeMarkerVisibility(); // setter kart/liste-synlighet (utløpte havner kun i lista)
   updateListToggleCount();
+  if(document.getElementById('list-view')?.classList.contains('open')) renderListView();
 }
 
 // Hent rating/fullført/verifisert for alle markør-eiere (batch) og fest på markørene
@@ -4164,8 +4197,10 @@ function closeFilters() {
   document.getElementById('filter-sheet').classList.remove('open');
   document.getElementById('filter-overlay').classList.remove('open');
 }
-function applyFilters() {
-  // Active categories (mapped: læring matches undervisning)
+// Kjerne: regn ut hvilke markører som matcher filteret.
+// Setter m._listPass (med i lista) og kartets display. Utløpte/list-only er med i
+// lista, men skjules på kartet. Ingen toast/sideeffekter her – det gjør wrapperne.
+function computeMarkerVisibility() {
   const catMap = { 'læring': 'undervisning' };
   const activeCats = [...document.querySelectorAll('.fcat-item.active:not([data-cat="all"])')]
     .map(el => catMap[el.dataset.cat] || el.dataset.cat);
@@ -4177,50 +4212,58 @@ function applyFilters() {
   const maxPay = parseInt(document.getElementById('range-max')?.value) || 50000;
   const origin = getOriginCoords();
   const maxDist = window.maxDistKm; // 10/undefined = ingen grense
-
-  let visible = 0;
   const mode = window.viewMode || 'all';
-  const questOnlyFilter = urgentOn || charityOn || firstOn; // disse gjelder kun oppdrag
+  const questOnlyFilter = urgentOn || charityOn || firstOn; // gjelder kun oppdrag
+
+  let mapVisible = 0, listVisible = 0;
   (window.mapMarkers || []).forEach(m => {
-    let show = true;
+    let pass = true;
     // View mode (Alt / Oppdrag / Tjenester)
-    if(mode === 'quests' && m.kind !== 'quest') show = false;
-    if(mode === 'services' && m.kind !== 'service') show = false;
+    if(mode === 'quests' && m.kind !== 'quest') pass = false;
+    if(mode === 'services' && m.kind !== 'service') pass = false;
     // Oppdrag-spesifikke filtre (haste/veldedighet/førstemann): skjul tjenester helt
-    if(show && questOnlyFilter && m.kind !== 'quest') show = false;
+    if(pass && questOnlyFilter && m.kind !== 'quest') pass = false;
     // Category match (any active category must appear in matchText)
-    if(show && activeCats.length && !activeCats.some(c => m.matchText.includes(c))) show = false;
+    if(pass && activeCats.length && !activeCats.some(c => m.matchText.includes(c))) pass = false;
     // Toggles apply to quests only
-    if(show && urgentOn && m.kind === 'quest' && !m.isUrgent) show = false;
-    if(show && charityOn && m.kind === 'quest' && !m.isCharity) show = false;
-    if(show && firstOn && m.kind === 'quest' && !m.isFirstCome) show = false;
+    if(pass && urgentOn && m.kind === 'quest' && !m.isUrgent) pass = false;
+    if(pass && charityOn && m.kind === 'quest' && !m.isCharity) pass = false;
+    if(pass && firstOn && m.kind === 'quest' && !m.isFirstCome) pass = false;
     // Price range
-    if(show && (m.pay < minPay || m.pay > maxPay)) show = false;
+    if(pass && (m.pay < minPay || m.pay > maxPay)) pass = false;
     // Distance (kun når en grense < 10 km er valgt og vi har et utgangspunkt)
-    if(show && maxDist && maxDist < 10 && origin && m.lng != null) {
+    if(pass && maxDist && maxDist < 10 && origin && m.lng != null) {
       const d = getDistanceKm(origin, [m.lng, m.lat]);
       m.distKm = d;
-      if(d != null && d > maxDist) show = false;
+      if(d != null && d > maxDist) pass = false;
     }
-    m.el.style.display = show ? '' : 'none';
-    if(show) visible++;
+    m._listPass = pass;                    // lista: inkluderer utløpte
+    const onMap = pass && !m.listOnly;     // kartet: utløpte/list-only skjules
+    m.el.style.display = onMap ? '' : 'none';
+    if(onMap) mapVisible++;
+    if(pass) listVisible++;
   });
 
   clusterMarkers();
   applyTrustStyling();
 
-  // Rangér de synlige treffene etter valgt sortering + fremhev beste treff
-  const { results, sortLabel } = computeResults();
+  // Rangér de synlige treffene + fremhev beste treff på kartet
+  const cr = computeResults();
   (window.mapMarkers || []).forEach(m => m.el && m.el.classList.remove('marker-top'));
-  if(results[0] && results[0].el) results[0].el.classList.add('marker-top');
+  if(cr.results[0] && cr.results[0].el) cr.results[0].el.classList.add('marker-top');
 
+  return { mapVisible, listVisible, sortLabel: cr.sortLabel };
+}
+
+function applyFilters() {
+  const { listVisible, sortLabel } = computeMarkerVisibility();
   closeFilters();
   updateFilterCount();
   updateListToggleCount();
   if(document.getElementById('list-view')?.classList.contains('open')) renderListView();
-  showToast(visible === 0
+  showToast(listVisible === 0
     ? '🔍 Ingen treff – prøv å justere filteret'
-    : `🔍 ${visible} treff · ${sortLabel}`);
+    : `🔍 ${listVisible} treff · ${sortLabel}`);
 }
 
 // Utgangspunkt for avstand: brukerens posisjon, ellers kartsenter
@@ -4254,7 +4297,9 @@ function recScore(m, origin) {
 // Felles rangeringsmotor – brukes av kartet nå og lista senere
 function computeResults() {
   const origin = getOriginCoords();
-  const vis = (window.mapMarkers || []).filter(m => m.el && m.el.style.display !== 'none' && m.lng != null);
+  const vis = (window.mapMarkers || []).filter(m =>
+    (m._listPass !== undefined ? m._listPass : (m.el && m.el.style.display !== 'none'))
+    && m.lng != null);
   vis.forEach(m => { m.distKm = origin ? getDistanceKm(origin, [m.lng, m.lat]) : null; });
   const sort = document.querySelector('.sort-pill.active')?.dataset.sort || 'rec';
   const byDist = (a, b) => (a.distKm == null ? 1e9 : a.distKm) - (b.distKm == null ? 1e9 : b.distKm);
@@ -4404,12 +4449,19 @@ function renderListView() {
     const medal = `<div class="medal xs ${rankMetalClass(ri)} lv-em"><span class="sym">${rankSym(RANKS[ri].name)}</span></div>`;
     const price = m.pay ? `${m.pay} kr` : (isSvc ? '' : 'Gratis');
     const seeLabel = isSvc ? 'Se tilbyder →' : 'Se oppdrag →';
+    const tags = [];
+    if(m.expired) tags.push('<span class="lv-tag lv-tag-exp">⏰ Utløpt</span>');
+    else if(m.ownership === 'mine') tags.push('<span class="lv-tag lv-tag-mine">Mitt</span>');
+    else if(m.ownership === 'working') tags.push('<span class="lv-tag lv-tag-work">Jobber på</span>');
+    else if(m.ownership === 'applied') tags.push('<span class="lv-tag lv-tag-app">Søkt</span>');
+    const tagsHtml = tags.length ? `<div class="lv-tags">${tags.join('')}</div>` : '';
     return `<div class="lv-card ${rec ? 'rec' : ''}" id="lv-card-${i}" onclick="locateListResult(${i})">
       ${rec ? '<div class="lv-recbadge">✨ Anbefalt</div>' : ''}
       <div class="lv-thumb">${icon}${medal}</div>
       <div class="lv-info">
         <div class="lv-title">${m.title || 'Uten tittel'}${ver}</div>
         <div class="lv-meta">${ratingTxt}${dist} · ${RANKS[ri].name}</div>
+        ${tagsHtml}
         <button class="lv-see" onclick="event.stopPropagation();openListResult(${i})">${seeLabel}</button>
       </div>
       <div class="lv-price">${price}</div>
@@ -4466,7 +4518,9 @@ function ppContextContact() {
 function updateListToggleCount() {
   const c = document.getElementById('list-toggle-count');
   if(!c) return;
-  const n = (window.mapMarkers || []).filter(m => m.el && m.el.style.display !== 'none' && m.lng != null).length;
+  const n = (window.mapMarkers || []).filter(m =>
+    (m._listPass !== undefined ? m._listPass : (m.el && m.el.style.display !== 'none'))
+    && m.lng != null).length;
   c.textContent = n;
 }
 function clearFilters() {
@@ -4478,10 +4532,8 @@ function clearFilters() {
   const distEl = document.getElementById('range-dist'); if(distEl) { distEl.value = 5; updateDist(5); }
   updateRange();
   updateFilterCount();
-  // Show all markers again
-  (window.mapMarkers || []).forEach(m => { m.el.style.display = ''; m.el.classList.remove('marker-top'); });
-  applyTrustStyling();
-  clusterMarkers();
+  // Tilbakestill til full synlighet via felles kjerne (utløpte forblir kun i lista)
+  computeMarkerVisibility();
   updateListToggleCount();
   if(document.getElementById('list-view')?.classList.contains('open')) renderListView();
 }
