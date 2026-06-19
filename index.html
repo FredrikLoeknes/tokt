@@ -299,20 +299,47 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   box-shadow:0 6px 20px rgba(0,0,0,.28); cursor:pointer; display:flex; align-items:center; gap:7px;
 }
 #list-toggle-btn:active { transform:translateX(-50%) scale(.96); }
+/* Drabar resultat-skuff over et levende kart (Finn-stil) */
 #list-view {
-  position:fixed; inset:0; z-index:120; background:var(--bg);
-  display:none; flex-direction:column;
+  position:fixed; left:0; right:0; bottom:0; z-index:120;
+  height:88svh; max-height:88vh;
+  background:var(--surface);
+  border-radius:22px 22px 0 0;
+  box-shadow:0 -8px 40px rgba(0,0,0,.20);
+  display:flex; flex-direction:column;
+  transform:translateY(100%);
+  transition:transform .35s cubic-bezier(.32,.72,0,1);
+  will-change:transform;
 }
-#list-view.open { display:flex; }
+@media(min-width:769px){
+  #list-view { left:auto; right:18px; width:400px; border-radius:18px 18px 0 0; }
+}
+.lv-handle { flex-shrink:0; padding:10px 0 4px; display:flex; justify-content:center; cursor:grab; touch-action:none; }
+.lv-handle .lv-bar { width:38px; height:4px; border-radius:2px; background:var(--border); }
+.lv-avgrens {
+  display:flex; align-items:center; gap:6px; flex-shrink:0;
+  padding:7px 12px; border:1.5px solid var(--accent); background:rgba(59,111,245,.08);
+  color:var(--accent); font-family:inherit; font-weight:800; font-size:12.5px;
+  border-radius:50px; cursor:pointer;
+}
+.lv-avgrens svg { width:15px; height:15px; stroke:var(--accent); fill:none; stroke-width:2.3; stroke-linecap:round; }
+.lv-avgrens .lv-acount { background:var(--accent); color:#fff; border-radius:50px; padding:0 6px; font-size:10.5px; font-weight:800; }
+.lv-close {
+  flex-shrink:0; width:30px; height:30px; border-radius:50%;
+  background:var(--surface2); border:1px solid var(--border); color:var(--muted);
+  font-family:inherit; font-size:18px; line-height:1; cursor:pointer;
+}
+.lv-see {
+  margin-top:6px; background:none; border:none; padding:0;
+  color:var(--accent); font-family:inherit; font-weight:800; font-size:11.5px; cursor:pointer;
+}
+.lv-card.active { background:linear-gradient(90deg,rgba(249,115,22,.10),transparent); }
+.lv-card.active::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--orange); }
+.mapbox-marker.marker-focus { filter:drop-shadow(0 0 6px rgba(249,115,22,.95)); z-index:7 !important; }
+.mapbox-marker.marker-focus .quest-pin { transform:scale(1.12); }
 .lv-head {
-  display:flex; align-items:center; gap:12px; padding:14px 16px 10px;
+  display:flex; align-items:center; gap:10px; padding:2px 16px 8px;
   background:var(--surface); border-bottom:1px solid var(--border);
-  padding-top:calc(14px + env(safe-area-inset-top));
-}
-.lv-back {
-  background:var(--surface2); border:1px solid var(--border); color:var(--text);
-  font-family:inherit; font-weight:800; font-size:13px; padding:9px 15px;
-  border-radius:50px; cursor:pointer; flex-shrink:0;
 }
 .lv-headinfo { flex:1; min-width:0; }
 .lv-headtitle { font-size:16px; font-weight:800; }
@@ -337,7 +364,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   padding:7px 12px; border-radius:50px; cursor:pointer; white-space:nowrap;
 }
 .lv-catchip.on { background:rgba(59,111,245,.1); color:var(--accent); border-color:var(--accent); }
-.lv-rows { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:24px; }
+.lv-rows { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(24px + env(safe-area-inset-bottom)); overscroll-behavior:contain; }
 .lv-card {
   display:flex; gap:12px; align-items:center; padding:13px 16px;
   border-bottom:1px solid var(--border); cursor:pointer; position:relative; background:var(--surface);
@@ -1406,12 +1433,6 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
   <input id="search-input-mobile" type="text" placeholder="Søk på oppdrag, type, sted…" oninput="handleSearch(this.value)" autocomplete="off" style="caret-color:var(--accent)">
 </div>
 
-<!-- FILTER BUTTON (both mobile + desktop) -->
-<button id="filter-btn" onclick="openFilters()">
-  <span>⚙️</span>
-  <span id="filter-count-badge" style="display:none;background:var(--accent);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;align-items:center;justify-content:center">0</span>
-</button>
-
 <!-- SEARCH RESULTS DROPDOWN -->
 <div id="search-results" style="display:none;position:fixed;top:108px;left:50%;transform:translateX(-50%);width:min(500px,90vw);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);z-index:200;overflow:hidden;max-height:400px;overflow-y:auto;animation:popIn .15s ease"></div>
 
@@ -1721,14 +1742,20 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 <!-- LIST TOGGLE (floating, on map) -->
 <button id="list-toggle-btn" onclick="openListView()">☰ Liste · <span id="list-toggle-count">0</span></button>
 
-<!-- LIST VIEW (overlay, dismissible to full map) -->
+<!-- LIST VIEW (drabar skuff over kartet, dismissible til fullt kart) -->
 <div id="list-view">
+  <div class="lv-handle" id="lv-handle"><div class="lv-bar"></div></div>
   <div class="lv-head">
-    <button class="lv-back" onclick="closeListView()">🗺️ Kart</button>
     <div class="lv-headinfo">
       <div class="lv-headtitle">Resultater</div>
       <div class="lv-headcount" id="list-view-count">0 treff</div>
     </div>
+    <button class="lv-avgrens" onclick="openFilters()">
+      <svg viewBox="0 0 24 24"><circle cx="8" cy="7" r="2.4"/><line x1="11" y1="7" x2="20" y2="7"/><line x1="4" y1="7" x2="5.6" y2="7"/><circle cx="16" cy="17" r="2.4"/><line x1="4" y1="17" x2="13" y2="17"/><line x1="18.4" y1="17" x2="20" y2="17"/></svg>
+      <span id="lv-avgrens-label">Avgrens</span>
+      <span class="lv-acount" id="lv-avgrens-count" style="display:none">0</span>
+    </button>
+    <button class="lv-close" onclick="closeListView()" aria-label="Lukk">⌄</button>
   </div>
   <div class="lv-catrow" id="lv-catrow">
     <button class="lv-catchip on" data-lvcat="all" onclick="pickListCategory('all')">🗺️ Alle</button>
@@ -2834,6 +2861,11 @@ function spreadCoords(coords) {
 
 function registerMarker(el, info) {
   window.mapMarkers.push({ el, ...info });
+  const m = window.mapMarkers[window.mapMarkers.length - 1];
+  // Pin-trykk markerer tilhørende kort når resultat-skuffen er åpen
+  el.addEventListener('click', () => {
+    if(document.getElementById('list-view')?.classList.contains('open')) highlightListCard(m, true);
+  });
   // Respect active view mode immediately
   const mode = window.viewMode || 'all';
   if(mode === 'quests' && info.kind !== 'quest') el.style.display = 'none';
@@ -4149,7 +4181,66 @@ function openListView() {
   document.querySelectorAll('.lv-sortpill').forEach(p => p.classList.toggle('on', p.dataset.lvsort === active));
   syncListCatChips();
   renderListView();
+  initListDrag();
   lv.classList.add('open');
+  requestAnimationFrame(() => setListSnap('half'));
+}
+
+// Snap-hakk for resultat-skuffen: full / delt (half) / kart-peek / lukket
+window.lvSnap = 'closed';
+function lvSnapOffset(state, H) {
+  if(state === 'full') return 0;
+  if(state === 'peek') return Math.max(0, H - 180);
+  if(state === 'closed') return H;
+  return Math.round(window.innerHeight * 0.46); // delt
+}
+function setListSnap(state) {
+  const lv = document.getElementById('list-view');
+  if(!lv) return;
+  const H = lv.offsetHeight || Math.round(window.innerHeight * 0.88);
+  window.lvSnap = state;
+  lv.style.transition = 'transform .32s cubic-bezier(.32,.72,0,1)';
+  lv.style.transform = `translateY(${lvSnapOffset(state, H)}px)`;
+}
+function initListDrag() {
+  const lv = document.getElementById('list-view');
+  const handle = document.getElementById('lv-handle');
+  if(!lv || !handle || handle.dataset.bound) return;
+  handle.dataset.bound = '1';
+  let startY = 0, startOff = 0, dragging = false, H = 0;
+  const curOff = () => {
+    const m = /translateY\(([-\d.]+)px\)/.exec(lv.style.transform);
+    return m ? parseFloat(m[1]) : lvSnapOffset(window.lvSnap, lv.offsetHeight);
+  };
+  const start = e => {
+    dragging = true; H = lv.offsetHeight;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    startOff = curOff();
+    lv.style.transition = 'none';
+  };
+  const move = e => {
+    if(!dragging) return;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    lv.style.transform = `translateY(${Math.max(0, Math.min(startOff + (y - startY), H))}px)`;
+  };
+  const end = () => {
+    if(!dragging) return; dragging = false;
+    const off = curOff();
+    if(off > lvSnapOffset('peek', H) + 90) { closeListView(); return; }
+    const snaps = [['full', lvSnapOffset('full', H)], ['half', lvSnapOffset('half', H)], ['peek', lvSnapOffset('peek', H)]];
+    let best = snaps[0];
+    snaps.forEach(s => { if(Math.abs(s[1] - off) < Math.abs(best[1] - off)) best = s; });
+    setListSnap(best[0]);
+  };
+  handle.addEventListener('touchstart', start, { passive: true });
+  handle.addEventListener('touchmove', move, { passive: true });
+  handle.addEventListener('touchend', end);
+  handle.addEventListener('mousedown', e => {
+    start(e);
+    const mm = ev => move(ev);
+    const mu = () => { end(); document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); };
+    document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
+  });
 }
 // Kategori-chips i lista – ett-valg over samme kategori-filter som kartet bruker
 function pickListCategory(cat) {
@@ -4170,7 +4261,13 @@ function syncListCatChips() {
 }
 function closeListView() {
   const lv = document.getElementById('list-view');
-  if(lv) lv.classList.remove('open');
+  if(!lv) return;
+  const H = lv.offsetHeight || Math.round(window.innerHeight * 0.88);
+  lv.style.transition = 'transform .3s cubic-bezier(.32,.72,0,1)';
+  lv.style.transform = `translateY(${H}px)`;
+  window.lvSnap = 'closed';
+  (window.mapMarkers || []).forEach(x => x.el && x.el.classList.remove('marker-focus'));
+  setTimeout(() => lv.classList.remove('open'), 300);
 }
 function setListSort(key) {
   // filter-pillene er kilde til sannhet → speil valget dit
@@ -4195,6 +4292,7 @@ function renderListView() {
   }
   const vchk = '<svg class="lv-vchk" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
   rowsEl.innerHTML = results.map((m, i) => {
+    m._lvIndex = i;
     const isSvc = m.kind === 'service';
     const icon = isSvc ? '🏪' : '📋';
     const ri = RANKS.indexOf(getRank(m.questsCompleted || 0));
@@ -4206,16 +4304,38 @@ function renderListView() {
     const rec = (sort === 'rec' && i === 0);
     const medal = `<div class="medal xs ${rankMetalClass(ri)} lv-em"><span class="sym">${rankSym(RANKS[ri].name)}</span></div>`;
     const price = m.pay ? `${m.pay} kr` : (isSvc ? '' : 'Gratis');
-    return `<div class="lv-card ${rec ? 'rec' : ''}" onclick="openListResult(${i})">
+    const seeLabel = isSvc ? 'Se tilbyder →' : 'Se oppdrag →';
+    return `<div class="lv-card ${rec ? 'rec' : ''}" id="lv-card-${i}" onclick="locateListResult(${i})">
       ${rec ? '<div class="lv-recbadge">✨ Anbefalt</div>' : ''}
       <div class="lv-thumb">${icon}${medal}</div>
       <div class="lv-info">
         <div class="lv-title">${m.title || 'Uten tittel'}${ver}</div>
         <div class="lv-meta">${ratingTxt}${dist} · ${RANKS[ri].name}</div>
+        <button class="lv-see" onclick="event.stopPropagation();openListResult(${i})">${seeLabel}</button>
       </div>
       <div class="lv-price">${price}</div>
     </div>`;
   }).join('');
+}
+// Trykk på et kort: vis oppdraget på kartet (fly til pin + marker det) uten å forlate søket
+function locateListResult(i) {
+  const m = (window.lastResults || [])[i];
+  if(!m) return;
+  highlightListCard(m, false);
+  (window.mapMarkers || []).forEach(x => x.el && x.el.classList.remove('marker-focus'));
+  if(m.el) m.el.classList.add('marker-focus');
+  if(window.map && m.lng != null) {
+    const z = (typeof window.map.getZoom === 'function') ? Math.max(window.map.getZoom(), 15) : 15;
+    window.map.flyTo({ center: [m.lng, m.lat], zoom: z, speed: 1.4 });
+  }
+  setListSnap('peek'); // senk skuffen så pinnen blir synlig
+}
+// Marker tilhørende kort i lista – fra kort-trykk og fra pin-trykk
+function highlightListCard(m, scroll) {
+  if(!m) return;
+  document.querySelectorAll('.lv-card.active').forEach(c => c.classList.remove('active'));
+  const card = (m._lvIndex != null) ? document.getElementById('lv-card-' + m._lvIndex) : null;
+  if(card) { card.classList.add('active'); if(scroll) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
 }
 function openListResult(i) {
   const m = (window.lastResults || [])[i];
@@ -4272,7 +4392,7 @@ function updateFilterCount() {
   const firstOn = document.getElementById('tog-firstcome')?.classList.contains('on');
   const cats = document.querySelectorAll('.fcat-item.active:not([data-cat="all"])').length;
   const count = (urgentOn?1:0)+(charityOn?1:0)+(firstOn?1:0)+cats;
-  ['filter-count-badge','desktop-filter-count'].forEach(id => {
+  ['filter-count-badge','desktop-filter-count','lv-avgrens-count'].forEach(id => {
     const el = document.getElementById(id);
     if(el) { el.textContent=count; el.style.display=count>0?'flex':'none'; }
   });
