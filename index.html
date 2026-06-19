@@ -696,7 +696,11 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 .payment-note { margin:0 16px 14px; padding:9px 11px; background:rgba(255,91,36,0.07); border:1px solid rgba(255,91,36,0.2); border-radius:8px; font-size:10px; color:#e07050; display:flex; align-items:center; gap:6px; }
 
 /* ── CORNER WIDGETS ── */
-#corner-widgets { position:fixed; bottom:24px; right:18px; z-index:90; display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
+#corner-widgets { position:fixed; bottom:24px; right:18px; z-index:90; display:flex; flex-direction:column; gap:10px; align-items:flex-end; transition:opacity .2s ease, transform .2s ease; }
+/* Skjul zoom-kontrollene når et bunn-ark dekker kartet, så de ikke overlapper */
+body:has(#leaderboard.open) #corner-widgets,
+body:has(#list-view.open) #corner-widgets,
+body:has(#filter-sheet.open) #corner-widgets { opacity:0; pointer-events:none; transform:translateY(8px); }
 
 #week-worker {
   background:var(--surface); border:1px solid var(--border);
