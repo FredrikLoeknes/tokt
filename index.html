@@ -956,9 +956,11 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent);
   color:var(--text); padding:9px 13px; border-radius:11px;
   font-size:12.5px; font-weight:600; line-height:1.3;
-  max-width:min(340px,86vw); box-shadow:var(--shadow-lg);
+  max-width:min(520px,96vw); box-shadow:var(--shadow-lg);
   animation:toastIn .26s cubic-bezier(.32,.72,0,1);
 }
+/* Hold velkomst/innlogget-meldinger på én linje (faller tilbake til … hvis ekstremt langt navn) */
+#toast.t-1line { flex-wrap:nowrap; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 #toast.t-success { border-left-color:var(--green); background:linear-gradient(0deg,rgba(15,169,104,.07),rgba(15,169,104,.07)),var(--surface); }
 #toast.t-info { border-left-color:var(--accent); background:linear-gradient(0deg,rgba(59,111,245,.06),rgba(59,111,245,.06)),var(--surface); }
@@ -1462,7 +1464,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   /* ── MAP fix for mobile ── */
   @media(max-width:768px) {
     #map { top: 108px; bottom: 60px; position: fixed; left: 0; right: 0; }
-    #tips-bar { top: auto !important; bottom: 118px !important; border-radius: 12px; left: 10px !important; right: 70px !important; }
+    #tips-bar { top: 164px !important; bottom: auto !important; border-radius: 12px; left: 50% !important; right: auto !important; transform: translateX(-50%); width: calc(100vw - 20px); max-width: 440px; padding: 8px 14px; }
     #toast { bottom: 166px; }
   }
 </style>
@@ -1494,7 +1496,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 <div id="tips-bar" style="position:fixed;top:62px;left:0;right:0;z-index:89;background:linear-gradient(135deg,rgba(249,115,22,0.92),rgba(168,85,247,0.92));-webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);padding:4px 16px;min-height:30px;box-sizing:border-box;display:flex;align-items:center;gap:10px;cursor:pointer;transition:opacity .3s" onclick="nextTip()">
   <button onclick="closeTipsBar(event)" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
   <span style="font-size:16px;flex-shrink:0" id="tip-icon">💡</span>
-  <span id="tip-text" style="font-size:12px;color:#fff;font-weight:500;flex:1;min-width:0;line-height:1.4;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
+  <span id="tip-text" style="font-size:12px;color:#fff;font-weight:500;flex:1;min-width:0;line-height:1.45;text-align:left;white-space:normal"></span>
 </div>
 
 <!-- HERO TAGLINE on map -->
@@ -2801,7 +2803,7 @@ function showInstallBanner() {
   document.body.classList.add('app-banner-open');
   sessionStorage.setItem('tokt-banner-shown', '1');
 }
-// På mobil ligger tips-baren nederst – legg banneret rett over den så de ikke overlapper
+// Banneret legges rett over bunn-nav. Hvis tips-baren unntaksvis ligger i nedre del av skjermen, legg banneret rett over den.
 function positionInstallBanner() {
   const banner = document.getElementById('app-install-banner');
   if(!banner) return;
@@ -2810,11 +2812,14 @@ function positionInstallBanner() {
   const tipsVisible = tips && getComputedStyle(tips).display !== 'none' && tips.offsetParent !== null;
   if(tipsVisible) {
     const r = tips.getBoundingClientRect();
-    const aboveTips = Math.max(0, window.innerHeight - r.top) + 10;
-    banner.style.bottom = aboveTips + 'px';
-  } else {
-    banner.style.bottom = ''; // bruk CSS-standard (rett over bunn-nav)
+    // Bare juster hvis tips-baren faktisk ligger i nedre halvdel (ellers er den øverst og overlapper ikke)
+    if(r.top > window.innerHeight * 0.5) {
+      const aboveTips = Math.max(0, window.innerHeight - r.top) + 10;
+      banner.style.bottom = aboveTips + 'px';
+      return;
+    }
   }
+  banner.style.bottom = ''; // bruk CSS-standard (rett over bunn-nav)
 }
 function dismissInstallBanner() {
   const banner = document.getElementById('app-install-banner');
@@ -9060,13 +9065,14 @@ function closeTipsBar(e) {
   localStorage.setItem('tokt-tips-closed', '1');
 }
 
-function showToast(msg, type) {
+function showToast(msg, type, oneLine) {
   const t = document.getElementById('toast');
   if(!t) return;
   t.textContent = msg;
   const k = type || toastType(msg);
   t.classList.remove('t-success','t-info','t-warn','t-error');
   t.classList.add('t-' + k);
+  t.classList.toggle('t-1line', !!oneLine);
   t.style.display = 'flex';
   t.style.animation = 'none'; void t.offsetWidth; t.style.animation = ''; // spill av animasjonen på nytt hver gang
   clearTimeout(t._t);
@@ -9366,7 +9372,7 @@ async function doLogin() {
   // Close first, then show toast so it's visible
   const overlay = document.getElementById('auth-overlay');
   overlay.style.display = 'none';
-  showToast('👋 Velkommen tilbake, ' + (data.user?.email?.split('@')[0] || '') + '!');
+  showToast('👋 Velkommen tilbake, ' + (data.user?.email?.split('@')[0] || '') + '!', null, true);
   await loadUserProfile(data.user);
 }
 
@@ -9424,7 +9430,7 @@ async function proceedRegister() {
   }
   closeTermsGate();
   closeAuth();
-  showToast('✅ Konto opprettet! Du er nå logget inn.');
+  showToast('✅ Konto opprettet! Du er nå logget inn.', null, true);
   logEvent('signup');
   if(data.user) {
     // Create profile row – non-blocking, don't let this break auth
