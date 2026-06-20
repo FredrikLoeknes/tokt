@@ -5562,7 +5562,7 @@ async function loadProfilePage(userId, isOwn) {
   const { count: charityPosted } = await sb.from('quests')
     .select('id', { count:'exact', head:true })
     .eq('user_id', userId).eq('is_charity', true);
-  const profileComplete = !!(profile.full_name && profile.phone && profile.verified);
+  const profileComplete = !!(profile.full_name && (isOwn ? profile.phone : true) && profile.verified);
 
   const questsDone = doneAsTaker + (serviceDone || 0); // rang baseres på utførte oppdrag + tjeneste-avtaler
   const rank = getRank(questsDone);
