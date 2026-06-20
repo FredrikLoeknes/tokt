@@ -4106,20 +4106,24 @@ async function markGiverPaid(convId, questId) {
 // det er klart for betaling. Lukker ikke oppdraget.
 async function markWorkDone(convId, questId) {
   const { data: conv } = await sb.from('conversations')
-    .select('giver_id, taker_id, status, work_done_at, quest:quest_id(title)').eq('id', convId).single();
+    .select('taker_id, status, work_done_at').eq('id', convId).single();
   if(!conv || conv.taker_id !== currentUser?.id) { showToast('⚠️ Kun utfører kan melde oppdraget utført'); return; }
   if(conv.status !== 'accepted') { showToast('⚠️ Oppdraget er ikke aktivt'); return; }
   if(conv.work_done_at) { showToast('Allerede meldt utført'); return; }
   if(!confirm('Melde oppdraget som utført? Oppdragsgiver får beskjed om å betale.')) return;
 
-  await sb.from('conversations').update({ work_done_at: new Date().toISOString() }).eq('id', convId);
-  await sb.from('notifications').insert({
-    user_id: conv.giver_id,
-    type: 'work_done',
-    title: '🔨 Oppdrag meldt utført',
-    body: `${conv.quest?.title || 'Oppdraget'} – utfører melder at jobben er gjort. Klar for betaling.`,
-    link_id: convId
-  });
+  // Server-side: setter work_done_at + varsler oppdragsgiver trygt (uavhengig av RLS)
+  const { error } = await sb.rpc('mark_work_done', { p_conv_id: convId });
+  if(error) {
+    // Fallback hvis RPC ikke er installert ennå – direkte skriv
+    await sb.from('conversations').update({ work_done_at: new Date().toISOString() }).eq('id', convId);
+    const { data: c2 } = await sb.from('conversations').select('giver_id, quest:quest_id(title)').eq('id', convId).single();
+    if(c2) await sb.from('notifications').insert({
+      user_id: c2.giver_id, type: 'work_done', title: '🔨 Oppdrag meldt utført',
+      body: `${c2.quest?.title || 'Oppdraget'} – utfører melder at jobben er gjort. Klar for betaling.`,
+      link_id: convId
+    });
+  }
   showToast('🔨 Oppdragsgiver er varslet. Klar for betaling!');
   loadMyQuests();
 }
@@ -4141,6 +4145,15 @@ async function applyJob() {
   if(isCurrentUserMinor() && applyPanel?.dataset?.adultOnly === '1') {
     showToast('🔞 Dette oppdraget er kun for brukere over 18 år');
     return;
+  }
+
+  // Robust selv-sjekk mot databasen (i tilfelle panelet mangler giver-id)
+  if(questId) {
+    const { data: qOwner } = await sb.from('quests').select('user_id').eq('id', questId).single();
+    if(qOwner && qOwner.user_id === currentUser.id) {
+      showToast('⚠️ Du kan ikke søke på ditt eget oppdrag');
+      return;
+    }
   }
 
   // Check phone number before applying (eget nummer fra user_contacts)
@@ -6568,8 +6581,11 @@ async function loadMyQuests() {
 
   if(appliedErr) console.error('loadMyQuests applied error:', appliedErr.message);
 
+  // Ekskluder egne oppdrag – du skal aldri vises som «utfører» på ditt eget oppdrag
+  const myApplied = (applied || []).filter(c => c.quest && c.quest.user_id !== currentUser.id);
+
   const appliedEl = document.getElementById('mq-applied');
-  if(!applied || applied.length === 0) {
+  if(myApplied.length === 0) {
     const ab = document.getElementById('mq-applied-badge'); if(ab) ab.style.display = 'none';
     appliedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke søkt på noen oppdrag ennå.<br><br><button onclick="closeMyQuests()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Finn oppdrag på kartet</button></div>';
   } else {
@@ -6613,9 +6629,9 @@ async function loadMyQuests() {
       </div>`;
     };
 
-    const active = applied.filter(c => c.status === 'accepted' && c.quest);
-    const waiting = applied.filter(c => c.status === 'pending' && c.quest);
-    const done = applied.filter(c => (c.status === 'completed' || c.status === 'rejected') && c.quest);
+    const active = myApplied.filter(c => c.status === 'accepted');
+    const waiting = myApplied.filter(c => c.status === 'pending');
+    const done = myApplied.filter(c => c.status === 'completed' || c.status === 'rejected');
 
     const appliedBadge = document.getElementById('mq-applied-badge');
     if(appliedBadge) {
@@ -8753,17 +8769,21 @@ async function declineBooking(id) {
 }
 
 async function bookingMarkDone(id) {
-  const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, work_done_at, service:service_id(title)').eq('id', id).single();
+  const { data: b } = await sb.from('bookings').select('provider_id, status, work_done_at').eq('id', id).single();
   if(!b || b.provider_id !== currentUser?.id) { showToast('⚠️ Kun tilbyder kan melde utført'); return; }
   if(b.status !== 'confirmed') { showToast('⚠️ Avtalen er ikke bekreftet'); return; }
   if(b.work_done_at) { showToast('Allerede meldt utført'); return; }
   if(!confirm('Melde avtalen som utført? Kunden får beskjed om å betale.')) return;
-  await sb.from('bookings').update({ work_done_at: new Date().toISOString() }).eq('id', id);
-  await sb.from('notifications').insert({
-    user_id: b.customer_id, type: 'booking_workdone',
-    title: '🔨 Tjeneste utført', body: `${b.service?.title || 'Avtalen'} – tilbyder melder at jobben er gjort. Klar for betaling.`,
-    link_id: id
-  });
+  const { error } = await sb.rpc('booking_mark_done', { p_booking_id: id });
+  if(error) {
+    await sb.from('bookings').update({ work_done_at: new Date().toISOString() }).eq('id', id);
+    const { data: b2 } = await sb.from('bookings').select('customer_id, service:service_id(title)').eq('id', id).single();
+    if(b2) await sb.from('notifications').insert({
+      user_id: b2.customer_id, type: 'booking_workdone',
+      title: '🔨 Tjeneste utført', body: `${b2.service?.title || 'Avtalen'} – tilbyder melder at jobben er gjort. Klar for betaling.`,
+      link_id: id
+    });
+  }
   showToast('🔨 Kunden er varslet. Klar for betaling!');
   loadBookings();
 }
