@@ -1171,23 +1171,25 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   }
   #service-panel-top { touch-action: none; }
 
-  /* LEADERBOARD – bottom sheet on mobile */
-  .lb-popup {
+  /* LEADERBOARD – fullbreddes bottom-sheet på mobil (flush mot kantene) */
+  #leaderboard.lb-popup {
     position: fixed !important;
-    right: 0 !important; left: 0 !important;
+    left: 0 !important; right: 0 !important;
     top: auto !important; bottom: 60px !important;
-    width: 100% !important;
-    border-radius: 20px 20px 0 0 !important;
-    max-height: calc(100vh - 170px);
+    width: 100vw !important; max-width: 100vw !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 22px 22px 0 0 !important;
+    max-height: calc(100svh - 150px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
     overscroll-behavior: contain;
     padding-bottom: 10px;
     transform: translateY(120%) !important;
-    transition: transform .3s cubic-bezier(.32,.72,0,1) !important;
+    transition: transform .32s cubic-bezier(.32,.72,0,1) !important;
   }
-  .lb-popup.open {
+  #leaderboard.lb-popup.open {
     transform: translateY(0) !important;
     pointer-events: all !important;
   }
@@ -1879,9 +1881,9 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     <button onclick="closeLeaderboard()" class="lb-close">×</button>
   </div>
   <div class="lb-seg">
-    <button class="lb-seg-btn on" id="lbseg-all" onclick="switchLbScope('all')">Alle</button>
-    <button class="lb-seg-btn" onclick="lbScopeSoon()">Lokalt<span class="lb-soon">kommer</span></button>
-    <button class="lb-seg-btn" onclick="lbScopeSoon()">Denne uka<span class="lb-soon">kommer</span></button>
+    <button class="lb-seg-btn on" id="lbseg-all"   onclick="switchLbScope('all')">Alle</button>
+    <button class="lb-seg-btn"    id="lbseg-local" onclick="switchLbScope('local')">Lokalt</button>
+    <button class="lb-seg-btn"    id="lbseg-week"  onclick="switchLbScope('week')">Denne uka</button>
   </div>
   <div class="lb-listhead" id="lb-top-questers-title">Topp-utførere</div>
   <div class="lb-list" id="lb-list"></div>
@@ -4940,37 +4942,55 @@ async function loadLeaderboard() {
   const listEl = document.getElementById('lb-list');
   const mineEl = document.getElementById('lb-mine');
 
-  // Alternativ 2: alle med minst 1 fullført – hele lista
-  const { data: profiles } = await sb.from('profiles')
-    .select('id, full_name, quests_completed, rating')
-    .gte('quests_completed', 1)
-    .order('quests_completed', { ascending: false })
-    .order('rating', { ascending: false });
+  const lbScope = window.lbScope || 'all';
+  const L = (no,en) => (typeof currentLang!=='undefined' && currentLang==='en') ? en : no;
 
-  // Demo-rader for å gjøre lista levende (av som standard)
-  const DEMO_LB = [
-    { name:'Jonas S.', quests:47, rating:4.97, demo:true },
-    { name:'Anders K.', quests:31, rating:4.9, demo:true },
-    { name:'Maria R.', quests:18, rating:4.8, demo:true },
-    { name:'Tone H.', quests:11, rating:5.0, demo:true },
-    { name:'Per L.', quests:4, rating:4.7, demo:true }
-  ];
-  const realRows = (profiles||[]).map(p => ({ id:p.id, name:p.full_name||'Bruker', quests:p.quests_completed||0, rating:p.rating||null, demo:false }));
-  const demoRows = window.SHOW_DEMO_LEADERBOARD ? DEMO_LB : [];
-  const combined = [...realRows, ...demoRows].sort((a,b) => (b.quests - a.quests) || ((b.rating||0) - (a.rating||0)));
+  // Hold segment-knappene i synk med valgt scope
+  ['all','local','week'].forEach(s => {
+    const b = document.getElementById('lbseg-' + s);
+    if(b) b.classList.toggle('on', s === lbScope);
+  });
+
+  // Scope-avhengige overskrifter
+  const subEl  = document.getElementById('lb-sub-text');
+  const headEl = document.getElementById('lb-top-questers-title');
+  if(lbScope==='week') {
+    if(subEl)  subEl.textContent  = L('Fullført siste 7 dager','Completed in the last 7 days');
+    if(headEl) headEl.textContent = L('Ukens utførere','This week’s top movers');
+  } else if(lbScope==='local') {
+    if(subEl)  subEl.textContent  = L('Utførere i dette kartområdet','Top movers in this map area');
+    if(headEl) headEl.textContent = L('Lokale utførere','Local top movers');
+  } else {
+    if(subEl)  subEl.textContent  = L('Rangert etter fullførte oppdrag','Ranked by completed tasks');
+    if(headEl) headEl.textContent = L('Topp-utførere','Top movers');
+  }
+
+  // Hent rader for valgt scope (null => RPC ikke kjørt/feilet ennå)
+  let combined = lbScope==='week'  ? await buildWeekRows()
+               : lbScope==='local' ? await buildLocalRows()
+               :                      await buildAllRows();
+  if(combined === null) combined = [];
 
   const ww0 = document.getElementById('week-worker');
 
-  // Tom-tilstand
+  // Tom-tilstand (scope-avhengig)
   if(!combined.length) {
-    if(listEl) listEl.innerHTML = '<div class="lb-empty">Ingen rangerte utførere ennå.<br>Fullfør et oppdrag og bli den første! ⚔️</div>';
-    if(mineEl) mineEl.style.display = 'none';
-    if(ww0) ww0.style.display = 'none';
-    // «Din plass» selv om lista er tom (oppmuntring)
-    renderMyLeaderboardRow(combined, mineEl);
+    const emptyMsg = lbScope==='week'
+        ? L('Ingen fullførte oppdrag denne uka ennå.<br>Bli den første – fullfør et oppdrag! ⚔️','No tasks completed this week yet.<br>Be the first – complete a task! ⚔️')
+      : lbScope==='local'
+        ? L('Ingen utførere i dette kartområdet ennå.<br>Zoom ut eller flytt kartet.','No movers in this map area yet.<br>Zoom out or pan the map.')
+        : L('Ingen rangerte utførere ennå.<br>Fullfør et oppdrag og bli den første! ⚔️','No ranked movers yet.<br>Complete a task and be the first! ⚔️');
+    if(listEl) listEl.innerHTML = '<div class="lb-empty">'+emptyMsg+'</div>';
+    if(ww0 && lbScope==='all') ww0.style.display = 'none';
+    if(lbScope==='all') {
+      // «Din plass» selv om lista er tom (oppmuntring)
+      renderMyLeaderboardRow(combined, mineEl);
+    } else if(mineEl) {
+      mineEl.style.display = 'none';
+    }
     return;
   }
-  if(ww0) ww0.style.display = '';
+  if(ww0 && lbScope==='all') ww0.style.display = '';
 
   const posCls = ['gold','silver','bronze'];
   const ini = n => (n||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
@@ -5001,7 +5021,48 @@ async function loadLeaderboard() {
   }
 
   renderMyLeaderboardRow(combined, mineEl);
-  updateWeekWorker(combined[0]);
+  if((window.lbScope||'all')==='all') updateWeekWorker(combined[0]);
+}
+
+// ─── Datakilder per scope ──────────────────────────────────────────
+// Alle: rangert etter total quests_completed (offentlig via profiles)
+async function buildAllRows() {
+  const { data: profiles } = await sb.from('profiles')
+    .select('id, full_name, quests_completed, rating')
+    .gte('quests_completed', 1)
+    .order('quests_completed', { ascending: false })
+    .order('rating', { ascending: false });
+  const DEMO_LB = [
+    { name:'Jonas S.', quests:47, rating:4.97, demo:true },
+    { name:'Anders K.', quests:31, rating:4.9, demo:true },
+    { name:'Maria R.', quests:18, rating:4.8, demo:true },
+    { name:'Tone H.', quests:11, rating:5.0, demo:true },
+    { name:'Per L.', quests:4, rating:4.7, demo:true }
+  ];
+  const realRows = (profiles||[]).map(p => ({ id:p.id, name:p.full_name||'Bruker', quests:p.quests_completed||0, rating:p.rating||null, demo:false }));
+  const demoRows = window.SHOW_DEMO_LEADERBOARD ? DEMO_LB : [];
+  return [...realRows, ...demoRows].sort((a,b) => (b.quests - a.quests) || ((b.rating||0) - (a.rating||0)));
+}
+
+// Denne uka: ekte fullføringer siste 7 dager – via RPC (RLS-trygt).
+// Returnerer null hvis RPC mangler/feiler, så UI viser tom-tilstand i stedet for å kræsje.
+async function buildWeekRows() {
+  try {
+    const { data, error } = await sb.rpc('leaderboard_week');
+    if(error) throw error;
+    return (data||[]).map(r => ({ id:r.id, name:r.full_name||'Bruker', quests:Number(r.completed)||0, rating:r.rating!=null?Number(r.rating):null, demo:false }));
+  } catch(e) { console.error('leaderboard_week RPC:', e?.message||e); return null; }
+}
+
+// Lokalt: fullføringer innen 15 km av kartsenter – via RPC (RLS-trygt).
+async function buildLocalRows() {
+  try {
+    const c = (window.map && window.map.getCenter) ? window.map.getCenter() : null;
+    if(!c) return [];
+    const { data, error } = await sb.rpc('leaderboard_local', { clat: c.lat, clng: c.lng, radius_km: 15 });
+    if(error) throw error;
+    return (data||[]).map(r => ({ id:r.id, name:r.full_name||'Bruker', quests:Number(r.completed)||0, rating:r.rating!=null?Number(r.rating):null, demo:false }));
+  } catch(e) { console.error('leaderboard_local RPC:', e?.message||e); return null; }
 }
 
 // «Din plass» festet nederst – alltid synlig
@@ -5048,13 +5109,19 @@ function updateWeekWorker(top) {
   const s = ww.querySelector('.ww-stat'); if(s) s.textContent = `${top.quests} oppdrag · ★ ${top.rating ? Number(top.rating).toFixed(2) : '–'}`;
 }
 
-// Segment (kun «Alle» aktiv foreløpig)
+// Segment-bytte: Alle / Lokalt / Denne uka
 function switchLbScope(scope) {
+  window.lbScope = scope;
+  ['all','local','week'].forEach(s => {
+    const b = document.getElementById('lbseg-' + s);
+    if(b) b.classList.toggle('on', s === scope);
+  });
+  const listEl = document.getElementById('lb-list');
+  if(listEl) listEl.innerHTML = '<div class="lb-empty">…</div>';
   loadLeaderboard();
 }
-function lbScopeSoon() {
-  showToast('🔒 Kommer snart – lokale og ukentlige topplister er på vei!');
-}
+// Beholdt for bakoverkompatibilitet (ikke lenger i bruk)
+function lbScopeSoon() { switchLbScope('all'); }
 
 function toggleProfile() {
   if(currentUser) {
