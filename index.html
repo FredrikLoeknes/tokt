@@ -5097,6 +5097,255 @@ function closeProfilePage() {
   document.getElementById('profile-page').style.display = 'none';
 }
 
+// ── MIN ØKONOMI (Bit 1: inntektsoversikt) ──
+let okoPeriod = 'year';   // år-streng ('2026') eller 'all'
+let okoFilter = 'all';    // 'all' | 'quest' | 'service'
+let okoRows = [];         // [{type,date,title,who,whoId,amt}]
+function okoEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function okoKr(n){ return (Number(n)||0).toLocaleString('nb-NO'); }
+function okoEn(){ return currentLang === 'en'; }
+
+function openOkonomi() {
+  if(!currentUser) { openAuth('login'); return; }
+  document.getElementById('okonomi-page').style.display = 'block';
+  document.getElementById('profile-page').style.display = 'none';
+  okoPeriod = String(new Date().getFullYear());
+  okoFilter = 'all';
+  okoRows = [];
+  // tilbakestill filter-chips visuelt
+  document.querySelectorAll('#oko-chips .oko-chip').forEach(b=>b.classList.remove('on'));
+  const allChip = document.getElementById('oko-chip-all'); if(allChip) allChip.classList.add('on');
+  okoApplyLang();
+  loadOkonomi();
+}
+function closeOkonomi() {
+  document.getElementById('okonomi-page').style.display = 'none';
+  document.getElementById('profile-page').style.display = 'block';
+}
+
+function okoApplyLang(){
+  const en = okoEn();
+  safeText('oko-header-title', en ? 'My finances' : 'Min økonomi');
+  safeText('oko-l-quests', en ? 'Quests' : 'Oppdrag');
+  safeText('oko-l-services', en ? 'Services' : 'Tjenester');
+  safeText('oko-l-avg', en ? 'Avg/job' : 'Snitt/jobb');
+  safeText('oko-l-top', en ? 'Best mo.' : 'Beste mnd');
+  safeText('oko-l-chart', en ? '📈 Income per month' : '📈 Inntekt per måned');
+  safeText('oko-l-split', en ? '⚖️ Breakdown' : '⚖️ Fordeling');
+  safeText('oko-split-q-name', en ? '📋 Quests' : '📋 Oppdrag');
+  safeText('oko-split-s-name', en ? '🏪 Services' : '🏪 Tjenester');
+  safeText('oko-l-tx', en ? '🧾 Transactions' : '🧾 Transaksjoner');
+  safeText('oko-chip-all', en ? 'All' : 'Alle');
+  safeText('oko-chip-quest', en ? 'Quests' : 'Oppdrag');
+  safeText('oko-chip-service', en ? 'Services' : 'Tjenester');
+  safeText('oko-export-label', en ? 'Download CSV' : 'Last ned CSV');
+  safeText('pp-nav-okonomi-label', en ? 'Finances' : 'Økonomi');
+  safeText('oko-note', en
+    ? 'About these figures: amounts are agreed sums on completed deals, not bank-verified income. Use this as your own basis for tax and bookkeeping – always check against actual payments received.'
+    : 'Om tallene: beløpene er avtalte summer på fullførte avtaler, ikke bankbekreftet inntekt. Bruk dette som eget arbeidsgrunnlag for skatt og bokføring – sjekk alltid mot faktiske innbetalinger.');
+}
+
+async function loadOkonomi() {
+  const uid = currentUser.id;
+  const led = document.getElementById('oko-ledger');
+  if(led) led.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:16px 0;text-align:center">${okoEn()?'Loading…':'Laster…'}</div>`;
+
+  // 1) Oppdrag jeg har utført (jeg = utfører): fullførte samtaler der jeg er taker
+  const { data: convs } = await sb.from('conversations')
+    .select('giver_id, taker_confirmed_at, quest:quest_id(title, pay)')
+    .eq('taker_id', uid).eq('status', 'completed');
+
+  // 2) Tjeneste-økter jeg har levert (jeg = tilbyder): fullførte bookinger (engang + økt)
+  const { data: bks } = await sb.from('bookings')
+    .select('customer_id, taker_confirmed_at, scheduled_at, price, kind, service:service_id(title)')
+    .eq('provider_id', uid).eq('status', 'completed').in('kind', ['once', 'session']);
+
+  const rows = [];
+  const ids = new Set();
+  (convs || []).forEach(c => {
+    const pay = c.quest?.pay || 0;
+    if(pay <= 0) return; // veldedighet / 0 kr er ingen inntekt
+    rows.push({ type:'quest', date: c.taker_confirmed_at || null, title: c.quest?.title || 'Oppdrag', whoId: c.giver_id, amt: pay });
+    if(c.giver_id) ids.add(c.giver_id);
+  });
+  (bks || []).forEach(b => {
+    const price = b.price || 0;
+    if(price <= 0) return;
+    rows.push({ type:'service', date: b.taker_confirmed_at || b.scheduled_at || null, title: b.service?.title || 'Tjeneste', whoId: b.customer_id, amt: price });
+    if(b.customer_id) ids.add(b.customer_id);
+  });
+
+  // motpart-navn (batch)
+  const nameMap = {};
+  if(ids.size) {
+    const { data: profs } = await sb.from('profiles').select('id, full_name').in('id', [...ids]);
+    (profs || []).forEach(p => { nameMap[p.id] = p.full_name || 'Bruker'; });
+  }
+  rows.forEach(r => { r.who = nameMap[r.whoId] || 'Bruker'; });
+
+  okoRows = rows;
+  buildOkoSegment();
+  renderOkonomi();
+}
+
+function buildOkoSegment(){
+  const seg = document.getElementById('oko-seg'); if(!seg) return;
+  const cur = String(new Date().getFullYear());
+  let years = [...new Set(okoRows.map(r => r.date ? String(r.date).slice(0,4) : null).filter(Boolean))].sort().reverse();
+  if(!years.includes(cur)) years.unshift(cur);
+  years = [...new Set(years)].slice(0, 3);
+  if(okoPeriod !== 'all' && !years.includes(okoPeriod)) okoPeriod = years[0] || cur;
+  let html = years.map(y => `<button class="${y===okoPeriod?'on':''}" onclick="setOkoPeriod('${y}',this)">${y}</button>`).join('');
+  html += `<button class="${okoPeriod==='all'?'on':''}" onclick="setOkoPeriod('all',this)">${okoEn()?'All':'Totalt'}</button>`;
+  seg.innerHTML = html;
+}
+
+function okoRowsForPeriod(){
+  if(okoPeriod === 'all') return okoRows;
+  return okoRows.filter(r => r.date && String(r.date).startsWith(okoPeriod));
+}
+
+function setOkoPeriod(p, el){
+  okoPeriod = p;
+  document.querySelectorAll('#oko-seg button').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  renderOkonomi();
+}
+function setOkoFilter(f, el){
+  okoFilter = f;
+  document.querySelectorAll('#oko-chips .oko-chip').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  renderOkonomiLedger();
+}
+
+function renderOkonomi(){
+  const rows = okoRowsForPeriod();
+  const q = rows.filter(r => r.type === 'quest');
+  const s = rows.filter(r => r.type === 'service');
+  const qSum = q.reduce((a,b)=>a+b.amt, 0);
+  const sSum = s.reduce((a,b)=>a+b.amt, 0);
+  const tot = qSum + sSum;
+
+  safeText('oko-eyebrow', (okoEn()?'Earned · ':'Tjent · ') + (okoPeriod==='all' ? (okoEn()?'All time':'Totalt') : okoPeriod));
+  safeText('oko-total', okoKr(tot) + ' kr');
+  safeText('oko-sub', okoEn()
+    ? `from ${q.length} quests and ${s.length} service sessions`
+    : `fra ${q.length} oppdrag og ${s.length} tjeneste-økter`);
+
+  safeText('oko-s-quests', q.length);
+  safeText('oko-s-services', s.length);
+  safeText('oko-s-avg', rows.length ? okoKr(Math.round(tot/rows.length)) : '0');
+
+  const buckets = {};
+  rows.forEach(r => { if(!r.date) return; const k = String(r.date).slice(0,7); buckets[k] = (buckets[k]||0) + r.amt; });
+  const best = Object.values(buckets).reduce((a,b)=>Math.max(a,b), 0);
+  safeText('oko-s-top', okoKr(best));
+
+  const tmax = Math.max(qSum, sSum, 1);
+  safeText('oko-split-q-amt', okoKr(qSum) + ' kr');
+  safeText('oko-split-s-amt', okoKr(sSum) + ' kr');
+  const qBar = document.getElementById('oko-split-q-bar'); if(qBar) qBar.style.width = (qSum/tmax*100) + '%';
+  const sBar = document.getElementById('oko-split-s-bar'); if(sBar) sBar.style.width = (sSum/tmax*100) + '%';
+
+  renderOkonomiChart();
+  renderOkonomiLedger();
+}
+
+const OKO_MONTHS_NO = ['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Des'];
+const OKO_MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function exportOkonomiCsv(){
+  const en = okoEn();
+  const rows = okoRowsForPeriod().slice().sort((a,b) => String(a.date||'').localeCompare(String(b.date||'')));
+  if(!rows.length){ showToast(en ? 'No income to export in this period' : 'Ingen inntekt å eksportere i denne perioden'); return; }
+  const sep = ';';   // norsk Excel bruker semikolon som listeskille
+  const esc = (s) => { s = String(s == null ? '' : s); return /[";\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; };
+  const header = en ? ['Date','Type','Title','Counterparty','Amount (kr)'] : ['Dato','Type','Tittel','Motpart','Beløp (kr)'];
+  const lines = [header.join(sep)];
+  let sum = 0;
+  rows.forEach(r => {
+    sum += r.amt;
+    const dato = r.date ? String(r.date).slice(0,10) : '';
+    const type = r.type === 'quest' ? (en?'Quest':'Oppdrag') : (en?'Service':'Tjeneste');
+    lines.push([dato, type, esc(r.title), esc(r.who), r.amt].join(sep));
+  });
+  lines.push('');
+  lines.push([(en?'Total':'Sum'), '', '', '', sum].join(sep));
+
+  const csv = '\uFEFF' + lines.join('\r\n');   // BOM så æøå vises riktig i Excel
+  const periodLabel = okoPeriod === 'all' ? (en?'all-time':'totalt') : okoPeriod;
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `tokt-inntekt-${periodLabel}.csv`;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { try{ document.body.removeChild(a); }catch(e){} URL.revokeObjectURL(url); }, 100);
+  showToast(en ? 'CSV downloaded' : 'CSV lastet ned');
+  try { logEvent('okonomi_export', { period: okoPeriod, rows: rows.length }); } catch(e){}
+}
+
+function renderOkonomiChart(){
+  const el = document.getElementById('oko-chart'); if(!el) return;
+  const rows = okoRowsForPeriod();
+  let labels = [], vals = [], curIdx = -1;
+
+  if(okoPeriod === 'all'){
+    const byYear = {};
+    okoRows.forEach(r => { if(!r.date) return; const y = String(r.date).slice(0,4); byYear[y] = (byYear[y]||0) + r.amt; });
+    labels = Object.keys(byYear).sort();
+    vals = labels.map(y => byYear[y]);
+  } else {
+    const mo = Array(12).fill(0);
+    rows.forEach(r => { if(!r.date) return; const m = +String(r.date).slice(5,7) - 1; if(m >= 0 && m < 12) mo[m] += r.amt; });
+    labels = okoEn() ? OKO_MONTHS_EN : OKO_MONTHS_NO;
+    vals = mo;
+    const now = new Date();
+    if(okoPeriod === String(now.getFullYear())) curIdx = now.getMonth();
+  }
+
+  const total = vals.reduce((a,b)=>a+b, 0);
+  if(!total){
+    el.classList.remove('oko-chart'); el.classList.add('oko-chart-empty');
+    el.innerHTML = okoEn() ? 'No income in this period.' : 'Ingen inntekt i denne perioden.';
+    return;
+  }
+  el.classList.remove('oko-chart-empty'); el.classList.add('oko-chart');
+  const max = Math.max(...vals, 1);
+  el.innerHTML = vals.map((v,i) => {
+    const h = v > 0 ? Math.max(4, v/max*100) : 0;
+    return `<div class="oko-bar-col">
+      <div class="oko-bar-track"><div class="oko-bar ${v===0?'zero':''} ${i===curIdx?'cur':''}" style="height:${h}%"><span class="oko-bar-val">${okoKr(v)}</span></div></div>
+      <div class="oko-bar-lbl">${okoEsc(labels[i])}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderOkonomiLedger(){
+  const led = document.getElementById('oko-ledger'); if(!led) return;
+  let list = okoRowsForPeriod();
+  if(okoFilter !== 'all') list = list.filter(r => r.type === okoFilter);
+  list = list.slice().sort((a,b) => String(b.date||'').localeCompare(String(a.date||'')));
+  if(!list.length){
+    led.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:16px 0;text-align:center">${okoEn()?'No income here yet.':'Ingen inntekter her ennå.'}</div>`;
+    return;
+  }
+  led.innerHTML = list.map(r => {
+    const isQ = r.type === 'quest';
+    const ds = r.date
+      ? new Date(r.date).toLocaleDateString(okoEn()?'en-US':'nb-NO', { day:'numeric', month:'short', year:'numeric' })
+      : '—';
+    const fromLbl = isQ ? (okoEn()?'From':'Fra') : (okoEn()?'Customer:':'Kunde:');
+    return `<div class="oko-tx">
+      <div class="oko-tx-ico ${isQ?'q':'s'}">${isQ?'📋':'🏪'}</div>
+      <div class="oko-tx-mid">
+        <div class="oko-tx-title">${okoEsc(r.title)}</div>
+        <div class="oko-tx-meta">${ds} · ${fromLbl} ${okoEsc(r.who)}</div>
+      </div>
+      <div class="oko-tx-amt">+${okoKr(r.amt)} kr</div>
+    </div>`;
+  }).join('');
+}
+
 async function updateProfileNavBadges() {
   if(!currentUser) return;
   const setB = (id, n) => { const el = document.getElementById(id); if(!el) return; if(n > 0) { el.textContent = n; el.style.display = 'inline-flex'; } else el.style.display = 'none'; };
@@ -10000,6 +10249,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <button onclick="openTjenester('tilbud')" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <span id="pp-nav-tjenester-badge" style="display:none;position:absolute;top:8px;right:10px;background:var(--green);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;padding:0 5px;border-radius:999px;align-items:center;justify-content:center">0</span>
         <span style="font-size:21px">🏪</span><span style="font-size:11.5px;font-weight:700">Tjenester</span></button>
+      <button onclick="openOkonomi()" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span style="font-size:21px">💰</span><span id="pp-nav-okonomi-label" style="font-size:11.5px;font-weight:700">Økonomi</span></button>
     </div>
   </div>
 
@@ -10044,6 +10295,97 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <!-- Logg ut (kun egen profil) -->
   <div id="pp-logout-section" style="display:none;padding:8px 20px calc(90px + env(safe-area-inset-bottom,0px));background:var(--surface)">
     <button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">🚪 Logg ut</button>
+  </div>
+
+</div>
+
+<!-- ── MIN ØKONOMI ── -->
+<style>
+#okonomi-page .oko-sec{padding:18px 20px;background:var(--surface);border-bottom:1px solid var(--border)}
+#okonomi-page .oko-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px}
+#okonomi-page .oko-split-row{margin-bottom:12px}
+#okonomi-page .oko-split-top{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:6px}
+#okonomi-page .oko-split-bar{height:9px;border-radius:6px;background:var(--surface2);overflow:hidden}
+#okonomi-page .oko-split-fill{height:100%;border-radius:6px;transition:width .4s cubic-bezier(.2,.8,.2,1)}
+#okonomi-page .oko-chip{border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:inherit;font-weight:700;font-size:12px;padding:6px 13px;border-radius:50px;cursor:pointer;transition:.15s}
+#okonomi-page .oko-chip.on{background:var(--text);color:#fff;border-color:var(--text)}
+#okonomi-page .oko-tx{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+#okonomi-page .oko-tx:last-child{border-bottom:none}
+#okonomi-page .oko-tx-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+#okonomi-page .oko-tx-ico.q{background:rgba(59,111,245,.12)}
+#okonomi-page .oko-tx-ico.s{background:rgba(15,169,104,.12)}
+#okonomi-page .oko-tx-mid{flex:1;min-width:0}
+#okonomi-page .oko-tx-title{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#okonomi-page .oko-tx-meta{font-size:11px;color:var(--muted);margin-top:1px}
+#okonomi-page .oko-tx-amt{font-size:14px;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums;flex-shrink:0}
+#okonomi-page .oko-chart{display:flex;align-items:flex-end;gap:7px;height:124px;padding-top:6px}
+#okonomi-page .oko-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;min-width:0}
+#okonomi-page .oko-bar-track{flex:1;width:100%;display:flex;align-items:flex-end}
+#okonomi-page .oko-bar{width:100%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#f97316,#a855f7);min-height:3px;transition:height .4s cubic-bezier(.2,.8,.2,1);position:relative;cursor:default}
+#okonomi-page .oko-bar.zero{background:var(--surface2)}
+#okonomi-page .oko-bar.cur{outline:2px solid rgba(168,85,247,.35);outline-offset:1px}
+#okonomi-page .oko-bar-val{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:800;color:var(--text);white-space:nowrap;opacity:0;transition:.15s}
+#okonomi-page .oko-bar-col:hover .oko-bar-val{opacity:1}
+#okonomi-page .oko-bar-lbl{font-size:9.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+#okonomi-page .oko-chart-empty{display:flex;align-items:center;justify-content:center;height:124px;color:var(--muted);font-size:13px}
+#oko-seg{display:flex;gap:6px;margin:16px auto 0;max-width:300px}
+#oko-seg button{flex:1;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-weight:700;font-size:12px;padding:8px 4px;border-radius:9px;cursor:pointer;transition:.15s}
+#oko-seg button.on{background:#fff;color:#a855f7;border-color:#fff}
+</style>
+<div id="okonomi-page" style="display:none;position:fixed;inset:0;z-index:460;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideIn .2s ease">
+
+  <!-- Header -->
+  <div style="position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px">
+    <button onclick="closeOkonomi()" style="background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:16px;color:var(--text)">←</button>
+    <div style="font-size:16px;font-weight:800" id="oko-header-title">Min økonomi</div>
+  </div>
+
+  <!-- Hero -->
+  <div style="background:linear-gradient(135deg,#f97316,#a855f7);padding:22px 20px 26px;color:#fff;text-align:center">
+    <div id="oko-eyebrow" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.85">Tjent · 2026</div>
+    <div id="oko-total" style="font-size:42px;font-weight:800;letter-spacing:-1px;line-height:1.05;margin:6px 0 2px;font-variant-numeric:tabular-nums">0 kr</div>
+    <div id="oko-sub" style="font-size:12.5px;opacity:.9;font-weight:500">fra 0 oppdrag og 0 tjeneste-økter</div>
+    <div id="oko-seg"></div>
+  </div>
+
+  <!-- Stat-stripe -->
+  <div style="display:flex;gap:1px;background:var(--border);border-bottom:1px solid var(--border)">
+    <div style="flex:1;background:var(--surface);padding:15px 6px;text-align:center"><div id="oko-s-quests" style="font-size:19px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums">0</div><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-top:2px" id="oko-l-quests">Oppdrag</div></div>
+    <div style="flex:1;background:var(--surface);padding:15px 6px;text-align:center"><div id="oko-s-services" style="font-size:19px;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums">0</div><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-top:2px" id="oko-l-services">Tjenester</div></div>
+    <div style="flex:1;background:var(--surface);padding:15px 6px;text-align:center"><div id="oko-s-avg" style="font-size:19px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums">0</div><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-top:2px" id="oko-l-avg">Snitt/jobb</div></div>
+    <div style="flex:1;background:var(--surface);padding:15px 6px;text-align:center"><div id="oko-s-top" style="font-size:19px;font-weight:800;font-variant-numeric:tabular-nums">0</div><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-top:2px" id="oko-l-top">Beste mnd</div></div>
+  </div>
+
+  <!-- Inntekt per måned -->
+  <div class="oko-sec">
+    <div class="oko-label" id="oko-l-chart">📈 Inntekt per måned</div>
+    <div id="oko-chart" class="oko-chart"></div>
+  </div>
+
+  <!-- Fordeling -->
+  <div class="oko-sec">
+    <div class="oko-label" id="oko-l-split">⚖️ Fordeling</div>
+    <div class="oko-split-row">
+      <div class="oko-split-top"><span id="oko-split-q-name">📋 Oppdrag</span><span id="oko-split-q-amt" style="font-variant-numeric:tabular-nums">0 kr</span></div>
+      <div class="oko-split-bar"><div class="oko-split-fill" id="oko-split-q-bar" style="width:0%;background:linear-gradient(90deg,#3b6ff5,#7c5cfc)"></div></div>
+    </div>
+    <div class="oko-split-row">
+      <div class="oko-split-top"><span id="oko-split-s-name">🏪 Tjenester</span><span id="oko-split-s-amt" style="font-variant-numeric:tabular-nums">0 kr</span></div>
+      <div class="oko-split-bar"><div class="oko-split-fill" id="oko-split-s-bar" style="width:0%;background:linear-gradient(90deg,#0fa968,#2de08a)"></div></div>
+    </div>
+  </div>
+
+  <!-- Transaksjoner -->
+  <div class="oko-sec" style="border-bottom:none;padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))">
+    <div class="oko-label" id="oko-l-tx">🧾 Transaksjoner</div>
+    <div id="oko-chips" style="display:flex;gap:7px;margin-bottom:14px">
+      <button class="oko-chip on" onclick="setOkoFilter('all',this)" id="oko-chip-all">Alle</button>
+      <button class="oko-chip" onclick="setOkoFilter('quest',this)" id="oko-chip-quest">Oppdrag</button>
+      <button class="oko-chip" onclick="setOkoFilter('service',this)" id="oko-chip-service">Tjenester</button>
+    </div>
+    <div id="oko-ledger"></div>
+    <button onclick="exportOkonomiCsv()" id="oko-export-btn" style="width:100%;margin-top:16px;background:linear-gradient(135deg,var(--green),#0c8f58);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px">⬇️ <span id="oko-export-label">Last ned CSV</span></button>
+    <div id="oko-note" style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:13px;padding:10px 12px;background:var(--surface2);border-radius:10px"></div>
   </div>
 
 </div>
@@ -10135,6 +10477,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     ['modal-overlay',         hasOpen, function(){ try{ closeModal(); }catch(e){} }],
     ['rating-panel',          function(el){ return !!el; }, function(el){ el.remove(); }],
     ['list-view',             hasOpen, function(){ try{ closeListView(); }catch(e){} }],
+    ['okonomi-page',          shown,   function(){ try{ closeOkonomi(); }catch(e){} }],
     ['profile-page',          shown,   function(){ try{ closeProfilePage(); }catch(e){} }],
     ['myquests-panel',        shown,   function(){ try{ closeMyQuests(); }catch(e){} }],
     ['chat-panel',            shown,   function(){ try{ closeChat(); }catch(e){} }],
