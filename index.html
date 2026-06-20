@@ -4143,9 +4143,9 @@ async function applyJob() {
     return;
   }
 
-  // Check phone number before applying
-  const { data: profile } = await sb.from('profiles').select('phone').eq('id', currentUser.id).single();
-  if(!profile?.phone) {
+  // Check phone number before applying (eget nummer fra user_contacts)
+  const myPhone = await getContactPhone(currentUser.id);
+  if(!myPhone) {
     showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) for at oppdragsgiver kan betale deg.');
     return;
   }
@@ -5504,6 +5504,8 @@ async function loadProfilePage(userId, isOwn) {
   // Hent profildata
   const { data: profile } = await sb.from('profiles').select('*').eq('id', userId).single();
   if(!profile) { showToast('❌ Fant ikke profilen'); return; }
+  // Telefon hentes fra user_contacts for egen profil (profiles.phone droppes i Fase 3)
+  if(isOwn) profile.phone = await getContactPhone(userId);
 
   const name = profile.full_name || 'Bruker';
   const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
@@ -5895,14 +5897,32 @@ function expandAllReviews(btn) {
 }
 
 
+// ── Kontaktinfo (telefon/Vipps-nr) ligger i egen tabell user_contacts med
+//    streng RLS: kun eieren OG en godkjent motpart kan lese nummeret.
+//    Returnerer null hvis du ikke har lov til å se det (RLS filtrerer raden bort). ──
+async function getContactPhone(userId) {
+  if(!userId) return null;
+  try {
+    const { data } = await sb.from('user_contacts').select('phone').eq('user_id', userId).maybeSingle();
+    return data?.phone || null;
+  } catch(e) { console.error('getContactPhone:', e?.message||e); return null; }
+}
+async function saveContactPhone(phone) {
+  if(!currentUser) return { error: { message: 'Ikke innlogget' } };
+  return await sb.from('user_contacts')
+    .upsert({ user_id: currentUser.id, phone: phone || null, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+}
+
 async function saveProfileEdits() {
   const name = document.getElementById('pp-edit-name')?.value?.trim();
   const phone = document.getElementById('pp-edit-phone')?.value?.trim();
   if(!name) { showToast('⚠️ Navn kan ikke være tomt'); return; }
   if(phone && phone.length < 8) { showToast('⚠️ Telefonnummer må være 8 siffer'); return; }
 
-  const { error } = await sb.from('profiles').update({ full_name: name, phone: phone || null }).eq('id', currentUser.id);
+  const { error } = await sb.from('profiles').update({ full_name: name }).eq('id', currentUser.id);
   if(error) { showToast('❌ ' + error.message); return; }
+  const { error: cErr } = await saveContactPhone(phone || null);
+  if(cErr) { showToast('❌ ' + cErr.message); return; }
 
   showToast('✅ Profil oppdatert!');
   loadProfilePage(currentUser.id, true);
@@ -6241,8 +6261,10 @@ async function handleNotifClick(notifId, type, linkId) {
     const { data: conv } = await sb.from('conversations')
       .select('id, quest_id, giver_id, taker_id').eq('id', linkId).single();
     if(conv) {
-      const { data: giverProfile } = await sb.from('profiles').select('full_name, phone').eq('id', conv.giver_id).single();
-      const { data: takerProfile } = await sb.from('profiles').select('full_name, phone').eq('id', conv.taker_id).single();
+      const { data: gN } = await sb.from('profiles').select('full_name').eq('id', conv.giver_id).single();
+      const { data: tN } = await sb.from('profiles').select('full_name').eq('id', conv.taker_id).single();
+      const giverProfile = { full_name: gN?.full_name || '', phone: await getContactPhone(conv.giver_id) };
+      const takerProfile = { full_name: tN?.full_name || '', phone: await getContactPhone(conv.taker_id) };
       showPaymentInfoPopup(giverProfile, takerProfile, conv.id, conv.quest_id, 'taker');
     }
     return;
@@ -6741,8 +6763,10 @@ async function showChatPaymentInfoFor(convId) {
   const { data: conv } = await sb.from('conversations')
     .select('id, quest_id, giver_id, taker_id, status').eq('id', convId).single();
   if(!conv) return;
-  const { data: giverProfile } = await sb.from('profiles').select('full_name, phone').eq('id', conv.giver_id).single();
-  const { data: takerProfile } = await sb.from('profiles').select('full_name, phone').eq('id', conv.taker_id).single();
+  const { data: gN } = await sb.from('profiles').select('full_name').eq('id', conv.giver_id).single();
+  const { data: tN } = await sb.from('profiles').select('full_name').eq('id', conv.taker_id).single();
+  const giverProfile = { full_name: gN?.full_name || '', phone: await getContactPhone(conv.giver_id) };
+  const takerProfile = { full_name: tN?.full_name || '', phone: await getContactPhone(conv.taker_id) };
   const role = currentUser.id === conv.giver_id ? 'giver' : 'taker';
   showPaymentInfoPopup(giverProfile, takerProfile, conv.id, conv.quest_id, role);
 }
@@ -6886,12 +6910,14 @@ function questCard(q, type) {
 }
 
 async function acceptApplicant(convId, questId) {
-  // Check that giver has phone number
-  const { data: giverProfile } = await sb.from('profiles').select('phone, full_name').eq('id', currentUser.id).single();
-  if(!giverProfile?.phone) {
+  // Sjekk at oppdragsgiver har telefonnummer (eget – fra user_contacts)
+  const { data: giverNameRow } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
+  const giverPhone = await getContactPhone(currentUser.id);
+  if(!giverPhone) {
     showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) før du kan godkjenne søkere.');
     return;
   }
+  const giverProfile = { full_name: giverNameRow?.full_name || '', phone: giverPhone };
 
   // Get conversation (no auth-join)
   const { data: conv, error: convErr } = await sb.from('conversations')
@@ -6903,16 +6929,17 @@ async function acceptApplicant(convId, questId) {
     return;
   }
 
-  const { data: takerProfile } = await sb.from('profiles')
-    .select('phone, full_name').eq('id', conv.taker_id).single();
-
-  // Update conversation status
+  // Sett status til 'accepted' FØRST – da slipper RLS oss til å lese utførers nummer
   const { error: updConvErr } = await sb.from('conversations').update({ status: 'accepted' }).eq('id', convId);
   if(updConvErr) { showToast('❌ Kunne ikke godkjenne: ' + updConvErr.message); return; }
 
   // Update quest status
   const { error: updQuestErr } = await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
   if(updQuestErr) { showToast('❌ Kunne ikke oppdatere oppdraget: ' + updQuestErr.message); return; }
+
+  // Hent utførers navn + nummer (nå som matchen er godkjent kan vi lese nummeret)
+  const { data: takerNameRow } = await sb.from('profiles').select('full_name').eq('id', conv.taker_id).single();
+  const takerProfile = { full_name: takerNameRow?.full_name || '', phone: await getContactPhone(conv.taker_id) };
 
   // Notify taker with giver's phone
   await sb.from('notifications').insert({
@@ -6984,7 +7011,7 @@ function showPhoneRequired(msg) {
 async function savePhoneAndClose() {
   const phone = document.getElementById('popup-phone')?.value?.trim();
   if(!phone || phone.length < 8) { showToast('⚠️ Skriv inn 8-sifret nummer'); return; }
-  const { error } = await sb.from('profiles').update({ phone }).eq('id', currentUser.id);
+  const { error } = await saveContactPhone(phone);
   if(error) { showToast('❌ Kunne ikke lagre: ' + error.message); return; }
   document.getElementById('phone-required-popup')?.remove();
   showToast('✅ Telefonnummer lagret! Prøv igjen.');
@@ -7198,8 +7225,10 @@ async function showChatPaymentInfo() {
   const { data: conv } = await sb.from('conversations')
     .select('id, quest_id, giver_id, taker_id, status').eq('id', activeChatId).single();
   if(!conv) return;
-  const { data: giverProfile } = await sb.from('profiles').select('full_name, phone').eq('id', conv.giver_id).single();
-  const { data: takerProfile } = await sb.from('profiles').select('full_name, phone').eq('id', conv.taker_id).single();
+  const { data: gN } = await sb.from('profiles').select('full_name').eq('id', conv.giver_id).single();
+  const { data: tN } = await sb.from('profiles').select('full_name').eq('id', conv.taker_id).single();
+  const giverProfile = { full_name: gN?.full_name || '', phone: await getContactPhone(conv.giver_id) };
+  const takerProfile = { full_name: tN?.full_name || '', phone: await getContactPhone(conv.taker_id) };
   const role = currentUser.id === conv.giver_id ? 'giver' : 'taker';
   showPaymentInfoPopup(giverProfile, takerProfile, conv.id, conv.quest_id, role);
 }
@@ -7802,9 +7831,10 @@ async function contactService() {
     return;
   }
 
-  // Phone required
-  const { data: myProfile } = await sb.from('profiles').select('phone, full_name').eq('id', currentUser.id).single();
-  if(!myProfile?.phone) {
+  // Phone required (eget nummer fra user_contacts)
+  const { data: myProfile } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
+  const myPhone = await getContactPhone(currentUser.id);
+  if(!myPhone) {
     showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) for å kontakte tilbydere.');
     return;
   }
@@ -7945,8 +7975,8 @@ function openBookingRequest(kind) {
   if(!svc?.raw?.id || !svc?.raw?.user_id) { closeServicePanel(); showToast('💬 Dette er en demo-tjeneste – test med ekte tjenester!'); return; }
   if(svc.raw.user_id === currentUser.id) { showToast('⚠️ Dette er din egen tjeneste'); return; }
 
-  sb.from('profiles').select('phone').eq('id', currentUser.id).single().then(({ data: myProfile }) => {
-    if(!myProfile?.phone) { showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) for å be om avtale.'); return; }
+  getContactPhone(currentUser.id).then((myPhone) => {
+    if(!myPhone) { showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) for å be om avtale.'); return; }
 
     window._bookingCtx = { serviceId: svc.raw.id, providerId: svc.raw.user_id, title: svc.title, price: svc.price || 0, priceType: svc.priceType, kind };
     const priceTypes = { per_visit:'per besøk', per_time:'per time', per_tur:'per tur', per_mnd:'per mnd', per_stk:'per stk' };
