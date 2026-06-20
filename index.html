@@ -1959,7 +1959,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 
 <!-- LEGEND -->
 <!-- TEGNFORKLARING / LEGEND -->
-<button id="legend-toggle" onclick="toggleLegend()" aria-label="Tegnforklaring" title="Tegnforklaring">ℹ️<span class="lg-toggle-text">Tegnforklaring</span></button>
+<button id="legend-toggle" onclick="showHowItWorks()" aria-label="Slik fungerer det" title="Slik fungerer det">ℹ️<span class="lg-toggle-text">Slik fungerer det</span></button>
 <div id="legend-panel" role="dialog" aria-label="Tegnforklaring">
   <div class="lg-head"><span>🗺️ Tegnforklaring</span><button class="lg-close" onclick="toggleLegend(false)" aria-label="Lukk">✕</button></div>
   <div class="lg-gtitle" style="margin-top:2px">Oppdragstype</div>
@@ -5961,6 +5961,10 @@ function showHowItWorks() {
   overlay.style.display = 'flex';
   const f = document.getElementById('hiw-ferd');
   if (f) { f.classList.remove('hiw-play'); void f.offsetWidth; f.classList.add('hiw-play'); }
+  // Info-knappen på kartet peker nå hit – stopp hint-pulsingen når den er åpnet
+  try { localStorage.setItem('tokt-legend-seen', '1'); } catch(e){}
+  const lt = document.getElementById('legend-toggle');
+  if (lt) lt.classList.remove('hint');
 }
 
 function setScheduleType(type) {
