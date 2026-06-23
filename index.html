@@ -273,6 +273,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .lb-seg { display:flex; gap:5px; padding:0 16px 10px; position:sticky; top:54px; background:var(--surface); z-index:3; }
 .lb-seg-btn { flex:1; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-family:inherit; font-weight:700; font-size:11px; padding:7px 4px; border-radius:9px; cursor:pointer; line-height:1.15; transition:.15s; }
 .lb-seg-btn.on { background:var(--text); color:#fff; border-color:var(--text); }
+.lb-seg-btn.soon { opacity:.55; }
 .lb-soon { display:block; font-size:8px; opacity:.7; font-weight:700; }
 .lb-listhead { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); padding:10px 16px 6px; border-top:1px solid var(--border); }
 .lb-list { }
@@ -1920,8 +1921,8 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   </div>
   <div class="lb-seg">
     <button class="lb-seg-btn on" id="lbseg-all"   onclick="switchLbScope('all')">Alle</button>
-    <button class="lb-seg-btn"    id="lbseg-local" onclick="switchLbScope('local')">Lokalt</button>
-    <button class="lb-seg-btn"    id="lbseg-week"  onclick="switchLbScope('week')">Denne uka</button>
+    <button class="lb-seg-btn soon" id="lbseg-local" onclick="lbSegSoon('👋 Lokal toppliste kommer snart!','👋 Local leaderboard coming soon!')">Lokalt</button>
+    <button class="lb-seg-btn soon" id="lbseg-week"  onclick="lbSegSoon('👋 Ukens toppliste kommer snart!','👋 Weekly leaderboard coming soon!')">Denne uka</button>
   </div>
   <div class="lb-listhead" id="lb-top-questers-title">Topp-utførere</div>
   <div class="lb-list" id="lb-list"></div>
@@ -5247,6 +5248,8 @@ function switchLbScope(scope) {
 }
 // Beholdt for bakoverkompatibilitet (ikke lenger i bruk)
 function lbScopeSoon() { switchLbScope('all'); }
+// «Lokalt» / «Denne uka» er ikke aktivert ennå – vis «kommer snart», behold «Alle»
+function lbSegSoon(no, en) { showToast(L(no, en)); }
 
 function toggleProfile() {
   if(currentUser) {
