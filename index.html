@@ -375,6 +375,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .sort-pill { display:inline-flex; align-items:center; gap:6px; }
 .pill-ic { width:16px; height:16px; flex-shrink:0; display:block; }
 .lv-rows { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(24px + env(safe-area-inset-bottom)); overscroll-behavior:contain; }
+/* Mobil: gjør plass nederst så siste treff ikke havner bak bunn-navigasjonen (60px) */
+@media(max-width:768px){
+  .lv-rows { padding-bottom:calc(72px + env(safe-area-inset-bottom)); }
+}
 .lv-card {
   display:flex; gap:12px; align-items:center; padding:13px 16px;
   border-bottom:1px solid var(--border); cursor:pointer; position:relative; background:var(--surface);
@@ -734,6 +738,8 @@ body.lb-open #corner-widgets { opacity:0; pointer-events:none; transform:transla
 body:has(#leaderboard.open) #list-toggle-btn,
 body:has(#filter-sheet.open) #list-toggle-btn,
 body.lb-open #list-toggle-btn { opacity:0; pointer-events:none; }
+/* Hold bunn-navigasjonen synlig OVER resultat-lista (som leaderboard-arket) */
+body:has(#list-view.open) #bottom-nav { z-index:121; }
 
 /* ── APP-INSTALL BANNER (A) ── */
 #app-install-banner{
