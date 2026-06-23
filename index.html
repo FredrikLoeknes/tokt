@@ -119,6 +119,7 @@ html, body { height:100%; font-family:'Inter',-apple-system,BlinkMacSystemFont,'
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+.logo-shield { height:13px; width:auto; flex-shrink:0; display:block; }
 
 /* XP BAR under logo */
 .logo-xp {
@@ -1099,6 +1100,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     flex-wrap: nowrap;
   }
   .logo-name { font-size: 20px; letter-spacing: 2px; }
+  .logo-shield { height:12px; }
   #searchbox { display: none; } /* hidden on mobile, tap search icon instead */
   .logo-xp { display: none; } /* hidden on mobile */
   .btn-login-only { display: none !important; } /* hide login btn on mobile - in bottom nav */
@@ -1528,6 +1530,22 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 <div id="topbar">
   <div class="logo" onclick="goToMap()" role="button" tabindex="0" title="Til forsiden" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goToMap();}">
     <div style="position:relative;display:inline-block;pointer-events:none">
+      <div style="position:absolute;top:-11px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:4px;pointer-events:none;white-space:nowrap">
+        <span style="font-family:'Skranji',sans-serif;font-size:8px;color:var(--muted);opacity:0.6;letter-spacing:1px">ut på</span>
+        <svg class="logo-shield" viewBox="0 0 24 28" aria-hidden="true">
+          <defs>
+            <linearGradient id="toktShieldGrad" x1="0" y1="0" x2="24" y2="28" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#f97316"/>
+              <stop offset="1" stop-color="#a855f7"/>
+            </linearGradient>
+          </defs>
+          <path d="M3 4 H21 V14 C21 20.5 17 24.5 12 26.5 C7 24.5 3 20.5 3 14 Z" fill="none" stroke="url(#toktShieldGrad)" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M12 10.5 V20.5 M12 12.6 L8.8 9.7 M12 12.6 L15.2 9.7" fill="none" stroke="url(#toktShieldGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="logo-name">Tokt<span>.app</span></div>
+    </div>
+  </div>
       <div style="position:absolute;top:-11px;left:0;right:0;text-align:center;font-family:'Skranji',sans-serif;font-size:8px;color:var(--muted);opacity:0.6;white-space:nowrap;letter-spacing:1px;pointer-events:none">
         ut på
       </div>
@@ -10369,7 +10387,13 @@ sb.auth.onAuthStateChange(async (event, session) => {
     
     <!-- Top gradient banner -->
     <div style="background:linear-gradient(135deg,#f97316,#a855f7,#3b6ff5);padding:36px 28px 28px;text-align:center;position:relative">
-      <div style="font-family:'Skranji',sans-serif;font-size:38px;font-weight:700;color:#fff;letter-spacing:3px;margin-bottom:6px;text-shadow:0 2px 12px rgba(0,0,0,.2)">Tokt<span style="font-size:20px;opacity:.8">.app</span></div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:6px">
+        <svg viewBox="0 0 24 28" width="29" height="34" aria-hidden="true" style="display:block;flex-shrink:0;filter:drop-shadow(0 2px 8px rgba(0,0,0,.18))">
+          <path d="M3 4 H21 V14 C21 20.5 17 24.5 12 26.5 C7 24.5 3 20.5 3 14 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M12 10.5 V20.5 M12 12.6 L8.8 9.7 M12 12.6 L15.2 9.7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div style="font-family:'Skranji',sans-serif;font-size:38px;font-weight:700;color:#fff;letter-spacing:3px;text-shadow:0 2px 12px rgba(0,0,0,.2)">Tokt<span style="font-size:20px;opacity:.8">.app</span></div>
+      </div>
       <div style="font-size:14px;color:rgba(255,255,255,0.85);font-weight:500;letter-spacing:.5px">Ekte oppdrag. Ekte penger.</div>
       <!-- Floating emojis -->
       <div style="position:absolute;top:16px;left:20px;font-size:22px;opacity:.7">🗺️</div>
