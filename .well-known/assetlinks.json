@@ -1,1 +1,8 @@
-
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.tokt.twa",
+        "sha256_cert_fingerprints": ["CD:1E:43:8D:C7:1D:D9:E0:6F:D1:59:C3:27:85:88:8B:C9:62:89:AF:E7:57:2C:CC:72:88:CD:49:36:3D:5C:C5"]
+      }
+    }]
