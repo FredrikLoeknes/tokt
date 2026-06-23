@@ -2430,6 +2430,24 @@ const LANGUAGES = {
     androidStep1: 'Trykk på <b>meny-knappen (⋮)</b> øverst til høyre',
     androidStep2: 'Velg <b>«Installer app»</b> eller <b>«Legg til på startskjerm»</b>',
     androidStep3: 'Bekreft – så ligger Tokt på hjemskjermen!',
+    // Desktop – Chrome / Edge / Brave / Opera
+    desktopChromiumSheetTitle: 'Installer Tokt på datamaskinen',
+    desktopChromiumSheetSub: 'To raske steg i nettleseren',
+    desktopChromiumStep1: 'Klikk på <b>installer-ikonet</b> (⊕ / liten skjerm) til høyre i adresselinjen',
+    desktopChromiumStep2: 'Velg <b>«Installer»</b> – så åpner Tokt i eget vindu',
+    desktopChromiumStep3: '',
+    // Desktop – Safari (Mac)
+    desktopSafariSheetTitle: 'Installer Tokt på Mac',
+    desktopSafariSheetSub: 'To steg i Safari',
+    desktopSafariStep1: 'Åpne <b>Arkiv-menyen</b> øverst',
+    desktopSafariStep2: 'Velg <b>«Legg til i Dock»</b> – ferdig!',
+    desktopSafariStep3: '',
+    // Desktop – Firefox (har ikke native installasjon)
+    desktopFirefoxSheetTitle: 'Installer Tokt',
+    desktopFirefoxSheetSub: 'Firefox støtter ikke app-installasjon',
+    desktopFirefoxStep1: 'Åpne <b>tokt.app i Chrome, Edge eller Safari</b> for å installere appen',
+    desktopFirefoxStep2: '',
+    desktopFirefoxStep3: '',
   },
 
   en: {
@@ -2545,6 +2563,24 @@ const LANGUAGES = {
     androidStep1: 'Tap the <b>menu button (⋮)</b> at the top right',
     androidStep2: 'Choose <b>“Install app”</b> or <b>“Add to Home screen”</b>',
     androidStep3: 'Confirm – Tokt will be on your home screen!',
+    // Desktop – Chrome / Edge / Brave / Opera
+    desktopChromiumSheetTitle: 'Install Tokt on your computer',
+    desktopChromiumSheetSub: 'Two quick steps in your browser',
+    desktopChromiumStep1: 'Click the <b>install icon</b> (⊕ / small screen) on the right of the address bar',
+    desktopChromiumStep2: 'Choose <b>“Install”</b> – Tokt opens in its own window',
+    desktopChromiumStep3: '',
+    // Desktop – Safari (Mac)
+    desktopSafariSheetTitle: 'Install Tokt on Mac',
+    desktopSafariSheetSub: 'Two steps in Safari',
+    desktopSafariStep1: 'Open the <b>File menu</b> at the top',
+    desktopSafariStep2: 'Choose <b>“Add to Dock”</b> – done!',
+    desktopSafariStep3: '',
+    // Desktop – Firefox (no native install)
+    desktopFirefoxSheetTitle: 'Install Tokt',
+    desktopFirefoxSheetSub: 'Firefox doesn’t support app install',
+    desktopFirefoxStep1: 'Open <b>tokt.app in Chrome, Edge or Safari</b> to install the app',
+    desktopFirefoxStep2: '',
+    desktopFirefoxStep3: '',
   }
 
 };
@@ -2767,13 +2803,30 @@ function isIOSSafari() {
 function isAndroid() {
   return /android/i.test(navigator.userAgent);
 }
-// Kan vi tilby installasjon? Vis i nettleser på mobil uansett (native prompt ELLER guide).
+function isMobileDevice() {
+  return /android|iphone|ipad|ipod/i.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS
+}
+function isDesktop() {
+  return !isMobileDevice() && !isStandalone();
+}
+// Hvilken framgangsmåte gjelder for installasjon i denne desktop-nettleseren?
+function desktopInstallKind() {
+  const ua = navigator.userAgent.toLowerCase();
+  if(/firefox/.test(ua))                            return 'firefox';   // ingen native PWA-install
+  if(/edg\//.test(ua))                              return 'chromium';  // Edge (sjekk før Chrome)
+  if(/chrome|chromium|crios|opr\/|brave/.test(ua))  return 'chromium';  // Chrome/Edge/Brave/Opera
+  if(/safari/.test(ua))                             return 'safari';    // Safari på Mac
+  return 'other';
+}
+// Kan vi tilby installasjon? Vis i nettleser på mobil OG desktop (native prompt ELLER guide).
 function canInstallApp() {
   if(isStandalone()) return false;        // kjører allerede som installert app
   if(deferredInstallPrompt) return true;  // klar for native installasjon
   if(isIOSSafari()) return true;          // iPhone Safari → guide
   if(isAndroid()) return true;            // Android-nettleser → native eller guide
-  return false;                           // desktop uten prompt: kan ikke installeres
+  if(isDesktop()) return true;            // desktop → native prompt (Chrome/Edge) eller guide
+  return false;
 }
 
 function refreshInstallText() {
@@ -2856,13 +2909,29 @@ function dismissInstallBanner() {
 }
 function openInstallGuide() {
   // Velg riktig framgangsmåte for plattformen
-  const ios = isIOSSafari() || (isIOS() && !deferredInstallPrompt);
-  safeText('iis-title', ios ? t('iosSheetTitle') : t('androidSheetTitle'));
-  safeText('iis-sub',   ios ? t('iosSheetSub')   : t('androidSheetSub'));
-  safeHTML('iis-step1', ios ? t('iosStep1') : t('androidStep1'));
-  safeHTML('iis-step2', ios ? t('iosStep2') : t('androidStep2'));
-  safeHTML('iis-step3', ios ? t('iosStep3') : t('androidStep3'));
+  let p; // tekstprefiks: ios | android | desktopChromium | desktopSafari | desktopFirefox
+  if(isDesktop()) {
+    const k = desktopInstallKind();
+    p = (k === 'safari') ? 'desktopSafari'
+      : (k === 'firefox') ? 'desktopFirefox'
+      : 'desktopChromium';
+  } else if(isIOSSafari() || (isIOS() && !deferredInstallPrompt)) {
+    p = 'ios';
+  } else {
+    p = 'android';
+  }
+  safeText('iis-title', t(p+'SheetTitle'));
+  safeText('iis-sub',   t(p+'SheetSub'));
+  safeHTML('iis-step1', t(p+'Step1'));
+  safeHTML('iis-step2', t(p+'Step2'));
+  safeHTML('iis-step3', t(p+'Step3'));
   safeText('iis-done',  t('iosSheetDone'));
+  // Skjul steg som ikke har tekst (f.eks. Firefox som bare har én melding)
+  ['1','2','3'].forEach(n => {
+    const el = document.getElementById('iis-step'+n);
+    const row = el && el.closest('.iis-step');
+    if(row) row.style.display = (el.textContent.trim() ? 'flex' : 'none');
+  });
   const ov = document.getElementById('ios-install-overlay');
   if(ov) ov.classList.add('show');
 }
