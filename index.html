@@ -5101,10 +5101,10 @@ async function loadLeaderboard() {
   // Tom-tilstand (scope-avhengig)
   if(!combined.length) {
     const emptyMsg = lbScope==='week'
-        ? L('Ingen fullførte oppdrag denne uka ennå.<br>Bli den første – fullfør et oppdrag! ⚔️','No tasks completed this week yet.<br>Be the first – complete a task! ⚔️')
+        ? L('Ingen fullførte oppdrag denne uka ennå.<br>Bli den første – fullfør et oppdrag! <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg>','No tasks completed this week yet.<br>Be the first – complete a task! <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg>')
       : lbScope==='local'
         ? L('Ingen utførere i dette kartområdet ennå.<br>Zoom ut eller flytt kartet.','No movers in this map area yet.<br>Zoom out or pan the map.')
-        : L('Ingen rangerte utførere ennå.<br>Fullfør et oppdrag og bli den første! ⚔️','No ranked movers yet.<br>Complete a task and be the first! ⚔️');
+        : L('Ingen rangerte utførere ennå.<br>Fullfør et oppdrag og bli den første! <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg>','No ranked movers yet.<br>Complete a task and be the first! <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg>');
     if(listEl) listEl.innerHTML = '<div class="lb-empty">'+emptyMsg+'</div>';
     if(ww0 && lbScope==='all') ww0.style.display = 'none';
     if(lbScope==='all') {
@@ -5728,7 +5728,7 @@ async function loadProfilePage(userId, isOwn) {
     const remaining = Math.max(nextRank.min - questsDone, 0);
     document.getElementById('pp-prog-fill').style.width = Math.max(progress, 3) + '%';
     document.getElementById('pp-prog-left').innerHTML = `<b>${questsDone} / ${nextRank.min}</b> oppdrag til ${nextRank.name}`;
-    document.getElementById('pp-prog-right').textContent = `${remaining} igjen ⚔️`;
+    document.getElementById('pp-prog-right').innerHTML = `${remaining} igjen <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg>`;
   } else {
     document.getElementById('pp-prog-fill').style.width = '100%';
     document.getElementById('pp-prog-left').innerHTML = '<b>Høyeste rang oppnådd!</b> 🌟';
@@ -10459,7 +10459,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
           <div style="font-size:10px;color:var(--muted)">Ingen provisjon</div>
         </div>
         <div style="text-align:center">
-          <div style="font-size:16px;font-weight:800;color:var(--gold)">⚔️</div>
+          <div style="display:flex;align-items:center;justify-content:center;height:20px;color:var(--gold)"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg></div>
           <div style="font-size:10px;color:var(--muted)">Bygg din rang</div>
         </div>
       </div>
