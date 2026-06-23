@@ -3811,8 +3811,10 @@ function showPanel(job) {
   const existingGiver = document.getElementById('panel-giver-row');
   if(existingGiver) existingGiver.remove();
 
-  const renderGiverRow = (name, rating, questsDone, clickFn, verified, createdAt) => {
+  const renderGiverRow = (name, rating, questsDone, clickFn, verified, createdAt, avatarUrl) => {
     const ginit = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    const _av = safeAvatarUrl(avatarUrl);
+    const _avBg = _av ? `background-image:url('${_av}');background-size:cover;background-position:center;` : 'background:linear-gradient(135deg,#f97316,#a855f7);';
     const r = getRank(questsDone || 0);
     const n = questsDone || 0;
     const trustParts = [];
@@ -3830,7 +3832,7 @@ function showPanel(job) {
     row.style.cssText = 'margin:0 16px 12px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;gap:10px;cursor:pointer';
     row.onclick = clickFn;
     row.innerHTML = `
-      <div class="rank-ring-${rankTier(questsDone)}" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${ginit}</div>
+      <div class="rank-ring-${rankTier(questsDone)}" style="width:34px;height:34px;border-radius:50%;${_avBg}display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${_av?'':ginit}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${name} <span class="lb-badge ${r.cls}" style="font-size:9px;padding:2px 7px">${r.name}</span>${verifiedPill}</div>
         <div style="font-size:11px;color:var(--muted)">${t('giverLabel')} · ${trustLine}</div>
@@ -3840,9 +3842,9 @@ function showPanel(job) {
   };
 
   if(job.raw?.user_id) {
-    sb.from('profiles').select('full_name, rating, quests_completed, verified, created_at').eq('id', job.raw.user_id).single().then(({ data: gp }) => {
+    sb.from('profiles').select('full_name, rating, quests_completed, verified, created_at, avatar_url').eq('id', job.raw.user_id).single().then(({ data: gp }) => {
       const gname = gp?.full_name || 'Bruker';
-      renderGiverRow(gname, gp?.rating, gp?.quests_completed, () => viewOtherProfile(job.raw.user_id), gp?.verified, gp?.created_at);
+      renderGiverRow(gname, gp?.rating, gp?.quests_completed, () => viewOtherProfile(job.raw.user_id), gp?.verified, gp?.created_at, gp?.avatar_url);
       // Oppdater rating-feltet i meta med giverens rating
       const metaRating = document.querySelector('#panel-meta .meta-value.yellow');
       if(metaRating) metaRating.textContent = gp?.rating ? '★ ' + Number(gp.rating).toFixed(1) : '–';
@@ -5129,7 +5131,7 @@ async function loadLeaderboard() {
     const crown = i === 0 ? ' 👑' : '';
     return `
       <div class="lb-pos ${posCls[i]||''}">${i+1}</div>
-      <div class="lb-av">${ini(p.name)}</div>
+      ${avatarHTML('lb-av', p.name, p.avatar)}
       <div class="lb-who"><div class="lb-nm">${p.name}${crown}${isMe?' <span class="lb-you">DEG</span>':''}</div><div class="lb-meta">${rating}</div></div>
       ${medalHTML(ri,'xs')}
       <div class="lb-right"><div class="lb-cnt">${p.quests}</div><div class="lb-cntl">fullført</div></div>`;
@@ -5157,7 +5159,7 @@ async function loadLeaderboard() {
 // Alle: rangert etter total quests_completed (offentlig via profiles)
 async function buildAllRows() {
   const { data: profiles } = await sb.from('profiles')
-    .select('id, full_name, quests_completed, rating')
+    .select('id, full_name, quests_completed, rating, avatar_url')
     .gte('quests_completed', 1)
     .order('quests_completed', { ascending: false })
     .order('rating', { ascending: false });
@@ -5168,7 +5170,7 @@ async function buildAllRows() {
     { name:'Tone H.', quests:11, rating:5.0, demo:true },
     { name:'Per L.', quests:4, rating:4.7, demo:true }
   ];
-  const realRows = (profiles||[]).map(p => ({ id:p.id, name:p.full_name||'Bruker', quests:p.quests_completed||0, rating:p.rating||null, demo:false }));
+  const realRows = (profiles||[]).map(p => ({ id:p.id, name:p.full_name||'Bruker', quests:p.quests_completed||0, rating:p.rating||null, avatar:p.avatar_url||null, demo:false }));
   const demoRows = window.SHOW_DEMO_LEADERBOARD ? DEMO_LB : [];
   return [...realRows, ...demoRows].sort((a,b) => (b.quests - a.quests) || ((b.rating||0) - (a.rating||0)));
 }
@@ -5179,7 +5181,7 @@ async function buildWeekRows() {
   try {
     const { data, error } = await sb.rpc('leaderboard_week');
     if(error) throw error;
-    return (data||[]).map(r => ({ id:r.id, name:r.full_name||'Bruker', quests:Number(r.completed)||0, rating:r.rating!=null?Number(r.rating):null, demo:false }));
+    return (data||[]).map(r => ({ id:r.id, name:r.full_name||'Bruker', quests:Number(r.completed)||0, rating:r.rating!=null?Number(r.rating):null, avatar:r.avatar_url||null, demo:false }));
   } catch(e) { console.error('leaderboard_week RPC:', e?.message||e); return null; }
 }
 
@@ -5190,7 +5192,7 @@ async function buildLocalRows() {
     if(!c) return [];
     const { data, error } = await sb.rpc('leaderboard_local', { clat: c.lat, clng: c.lng, radius_km: 15 });
     if(error) throw error;
-    return (data||[]).map(r => ({ id:r.id, name:r.full_name||'Bruker', quests:Number(r.completed)||0, rating:r.rating!=null?Number(r.rating):null, demo:false }));
+    return (data||[]).map(r => ({ id:r.id, name:r.full_name||'Bruker', quests:Number(r.completed)||0, rating:r.rating!=null?Number(r.rating):null, avatar:r.avatar_url||null, demo:false }));
   } catch(e) { console.error('leaderboard_local RPC:', e?.message||e); return null; }
 }
 
@@ -5207,19 +5209,19 @@ async function renderMyLeaderboardRow(combined, mineEl) {
     mineEl.style.display = 'flex';
     mineEl.innerHTML = `
       <div class="lb-pos">#${myIdx+1}</div>
-      <div class="lb-av">${ini(me.name)}</div>
+      ${avatarHTML('lb-av', me.name, me.avatar)}
       <div class="lb-who"><div class="lb-nm">${me.name} <span class="lb-you">DEG</span></div><div class="lb-meta">${rank.name}${rating}</div></div>
       <div class="lb-right"><div class="lb-cnt" style="color:var(--accent2)">${me.quests}</div><div class="lb-cntl">fullført</div></div>`;
     mineEl.onclick = () => { closeLeaderboard(); openProfilePage(); };
     return;
   }
   // Ikke rangert ennå
-  const { data: me } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
+  const { data: me } = await sb.from('profiles').select('full_name, avatar_url').eq('id', currentUser.id).single();
   const name = me?.full_name || 'Deg';
   mineEl.style.display = 'flex';
   mineEl.innerHTML = `
     <div class="lb-pos">–</div>
-    <div class="lb-av">${ini(name)}</div>
+    ${avatarHTML('lb-av', name, me?.avatar_url)}
     <div class="lb-who"><div class="lb-nm">${name} <span class="lb-you">DEG</span></div><div class="lb-meta">Ikke på lista ennå</div></div>
     <div class="lb-right"><div class="lb-cnt" style="color:var(--muted);font-size:12px">Fullfør 1</div><div class="lb-cntl">for å bli med</div></div>`;
   mineEl.onclick = () => { closeLeaderboard(); openProfilePage(); };
@@ -5233,7 +5235,7 @@ function updateWeekWorker(top) {
   ww.onclick = top.demo
     ? () => showUserProfile(top.name, ini, '#f5c518', top.quests, top.rating, getRank(top.quests).name)
     : () => viewOtherProfile(top.id);
-  const a = ww.querySelector('.ww-avatar'); if(a) a.textContent = ini;
+  const a = ww.querySelector('.ww-avatar'); if(a) renderAvatar(a, top.avatar, ini);
   const n = ww.querySelector('.ww-name'); if(n) n.textContent = top.name;
   const s = ww.querySelector('.ww-stat'); if(s) s.textContent = `${top.quests} oppdrag · ★ ${top.rating ? Number(top.rating).toFixed(2) : '–'}`;
 }
@@ -5615,7 +5617,16 @@ function ppShowTab() { /* fjernet – oppdrag/tjenester ligger nå i egne panele
 
 // ── Profilbilde: vis opplastet bilde i sirkelen, ellers initialer ──
 function safeAvatarUrl(u){
-  return (typeof u === 'string' && /^https:\/\/[\w.-]+\.supabase\.co\/storage\//.test(u)) ? u : null;
+  // Må være en Supabase storage-URL og kun inneholde trygge tegn (ingen sitat/parentes som kan bryte ut av url())
+  if(typeof u !== 'string') return null;
+  return /^https:\/\/[\w.-]+\.supabase\.co\/storage\/[\w./?=&%:-]+$/.test(u) ? u : null;
+}
+// Avatar som HTML-streng (for lister bygget via innerHTML): bilde hvis trygg URL, ellers initialer
+function avatarHTML(cls, name, url, extraStyle){
+  const ini = (name||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
+  const safe = safeAvatarUrl(url);
+  const bg = safe ? `background-image:url('${safe}');background-size:cover;background-position:center;` : '';
+  return `<div class="${cls}" style="${bg}${extraStyle||''}">${safe?'':ini}</div>`;
 }
 function renderAvatar(el, url, initials){
   if(!el) return;
@@ -7916,7 +7927,7 @@ function showServicePanel(svc) {
   if(provId) {
     if(provRow) { provRow.style.cursor = 'pointer'; provRow.onclick = () => { closeServicePanel(); viewOtherProfile(provId); }; }
     if(provArrow) provArrow.style.display = 'block';
-    sb.from('profiles').select('full_name, rating, quests_completed, verified, created_at').eq('id', provId).single().then(({ data: pp }) => {
+    sb.from('profiles').select('full_name, rating, quests_completed, verified, created_at, avatar_url').eq('id', provId).single().then(({ data: pp }) => {
       if(!pp) return;
       const pname = pp.full_name || 'Tilbyder';
       const pinit = pname.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
@@ -7926,6 +7937,7 @@ function showServicePanel(svc) {
       document.getElementById('service-provider-name').innerHTML = pname + provVerifiedPill;
       av.textContent = pinit;
       av.style.background = 'linear-gradient(135deg,#0ea5e9,#6366f1)';
+      renderAvatar(av, pp.avatar_url, pinit);
       applyRankRing(av, pp.quests_completed || 0);
       const pn = pp.quests_completed || 0;
       const provParts = [];
