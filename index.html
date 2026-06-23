@@ -451,6 +451,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .pp-medal-emblem{position:absolute;bottom:-5px;right:-5px;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .pp-star-badge{position:absolute;top:-3px;right:-3px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f5c518,#c9900a);border:2.5px solid #fff;box-shadow:0 2px 7px rgba(201,144,10,.45);display:none;align-items:center;justify-content:center;color:#fff}
 .pp-star-badge svg{width:17px;height:17px}
+.pp-av-upload{position:absolute;bottom:-3px;left:-3px;width:30px;height:30px;border-radius:50%;background:var(--accent);border:2.5px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.3);cursor:pointer;display:none;align-items:center;justify-content:center;padding:0}
+.pp-av-upload svg{width:15px;height:15px}
+.pp-av-upload:active{transform:scale(.94)}
 .pp-journey{margin:-30px 14px 0;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:16px;padding:16px;position:relative;box-shadow:var(--shadow-lg)}
 .pp-jhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .pp-jhead .rk{font-size:19px;font-weight:800;letter-spacing:-.2px}
@@ -5610,6 +5613,59 @@ async function updateProfileNavBadges() {
 
 function ppShowTab() { /* fjernet – oppdrag/tjenester ligger nå i egne paneler */ }
 
+// ── Profilbilde: vis opplastet bilde i sirkelen, ellers initialer ──
+function safeAvatarUrl(u){
+  return (typeof u === 'string' && /^https:\/\/[\w.-]+\.supabase\.co\/storage\//.test(u)) ? u : null;
+}
+function renderAvatar(el, url, initials){
+  if(!el) return;
+  const safe = safeAvatarUrl(url);
+  if(safe){
+    el.textContent = '';
+    el.style.backgroundImage = 'url("' + encodeURI(safe) + '")';
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = 'center';
+  } else {
+    el.style.backgroundImage = '';
+    el.textContent = initials || '';
+  }
+}
+// Oppdater alle steder der mitt eget bilde vises
+function applyMyAvatar(url){
+  const name = (window.currentProfile && window.currentProfile.full_name) || '';
+  const ini = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  renderAvatar(document.getElementById('pp-avatar'), url, ini);
+  renderAvatar(document.getElementById('profile-avatar-big'), url, ini);
+  renderAvatar(document.querySelector('.avatar'), url, ini);
+}
+async function uploadProfilePhoto(input){
+  const file = input && input.files && input.files[0];
+  if(!file) return;
+  if(!currentUser){ showToast(L('⚠️ Logg inn først','⚠️ Log in first')); input.value=''; return; }
+  if(!/^image\//.test(file.type)){ showToast(L('⚠️ Velg en bildefil','⚠️ Choose an image file')); input.value=''; return; }
+  if(file.size > 5*1024*1024){ showToast(L('⚠️ Bildet er for stort (maks 5 MB)','⚠️ Image too large (max 5 MB)')); input.value=''; return; }
+  showToast(L('⏳ Laster opp bilde…','⏳ Uploading photo…'));
+  try{
+    const ext = ((file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')) || 'jpg';
+    const path = currentUser.id + '/avatar.' + ext;
+    const { error: upErr } = await sb.storage.from('quest-images').upload(path, file, { upsert:true, contentType:file.type });
+    if(upErr) throw upErr;
+    const { data: urlData } = sb.storage.from('quest-images').getPublicUrl(path);
+    if(!urlData || !urlData.publicUrl) throw new Error('Mangler bilde-URL');
+    const versioned = urlData.publicUrl + '?v=' + Date.now();   // cache-bust så nytt bilde vises straks
+    const { error: updErr } = await sb.from('profiles').update({ avatar_url: versioned }).eq('id', currentUser.id);
+    if(updErr) throw updErr;
+    if(window.currentProfile) window.currentProfile.avatar_url = versioned;
+    applyMyAvatar(versioned);
+    showToast(L('✅ Profilbilde oppdatert!','✅ Profile photo updated!'));
+  } catch(e){
+    console.error('avatar upload:', (e && e.message) || e);
+    showToast(L('⚠️ Opplasting feilet: ','⚠️ Upload failed: ') + ((e && e.message) || e));
+  } finally {
+    input.value = '';
+  }
+}
+
 async function loadProfilePage(userId, isOwn) {
   // Vis/skjul egne seksjoner
   document.getElementById('pp-edit-section').style.display = isOwn ? 'block' : 'none';
@@ -5637,7 +5693,9 @@ async function loadProfilePage(userId, isOwn) {
 
   const name = profile.full_name || 'Bruker';
   const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-  document.getElementById('pp-avatar').textContent = initials;
+  renderAvatar(document.getElementById('pp-avatar'), profile.avatar_url, initials);
+  const ppAvUp = document.getElementById('pp-av-upload');
+  if(ppAvUp) ppAvUp.style.display = isOwn ? 'flex' : 'none';
   document.getElementById('pp-name').textContent = name;
 
   // Verifisert-merke (kun når profilen faktisk er verifisert)
@@ -9856,6 +9914,8 @@ async function loadUserProfile(user) {
     const rankLevel = RANKS.indexOf(rank) + 1;
     applyRankRing(document.querySelector('.avatar'), quests);
     applyRankRing(document.getElementById('profile-avatar-big'), quests);
+    renderAvatar(document.querySelector('.avatar'), profile.avatar_url, initials);
+    renderAvatar(document.getElementById('profile-avatar-big'), profile.avatar_url, initials);
     // Samme tall som profil-side og leaderboard: fullførte oppdrag (profiles.quests_completed)
     document.getElementById('profile-quests').textContent = quests;
     document.getElementById('profile-rating').textContent = profile.rating ? profile.rating.toFixed(1) : '–';
@@ -10491,6 +10551,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div id="pp-avatar" style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.25);border:3px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800">?</div>
       <div id="pp-medal-emblem" class="medal sm pp-medal-emblem m-iron"><span class="sym">TR</span></div>
       <div id="pp-star-badge" class="pp-star-badge" title="Stjerneutfører"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5L12 18.9 6.2 21l1.1-6.5L2.6 9.9l6.5-.95z"/></svg></div>
+      <button id="pp-av-upload" class="pp-av-upload" onclick="document.getElementById('pp-av-input').click()" title="Endre profilbilde" aria-label="Endre profilbilde"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L8 6H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-4l-1.5-2Z"/><circle cx="12" cy="12.5" r="3.2"/></svg></button>
+      <input type="file" id="pp-av-input" accept="image/*" style="display:none" onchange="uploadProfilePhoto(this)">
     </div>
     <div id="pp-name" style="font-size:23px;font-weight:800;letter-spacing:-.3px">Laster…</div>
     <div id="pp-verified" style="display:none;margin-top:9px"></div>
