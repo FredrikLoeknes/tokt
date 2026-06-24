@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skatt & oppgjør – Tokt.app</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#f4f5f9; --surface:#fff; --border:rgba(0,0,0,0.07);
+    --text:#0f1523; --muted:#6b7280; --accent:#3b6ff5; --radius:14px;
+  }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); line-height:1.7; }
+
+  header {
+    background:#fff; border-bottom:1px solid var(--border);
+    padding:16px 24px; display:flex; align-items:center; gap:12px;
+    position:sticky; top:0; z-index:10; box-shadow:0 2px 12px rgba(0,0,0,0.06);
+  }
+  .logo { font-family:'Skranji',cursive; font-size:22px; font-weight:700; text-decoration:none; color:var(--text); }
+  .logo span { background:linear-gradient(135deg,#f97316,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .header-actions { margin-left:auto; display:flex; gap:8px; }
+  .back-btn, .lang-btn { background:var(--bg); border:1px solid var(--border); border-radius:50px; padding:8px 16px; font-size:13px; font-weight:600; color:var(--text); text-decoration:none; cursor:pointer; font-family:inherit; }
+  .back-btn:hover, .lang-btn:hover { background:#e8e9f0; }
+
+  .hero {
+    background:linear-gradient(135deg,#f97316,#a855f7);
+    color:#fff; padding:48px 24px; text-align:center;
+  }
+  .hero h1 { font-family:'Skranji',cursive; font-size:clamp(28px,5vw,48px); margin-bottom:10px; letter-spacing:2px; }
+  .hero p { font-size:15px; opacity:0.85; }
+  .beta-badge { display:inline-block; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); border-radius:50px; padding:4px 14px; font-size:12px; font-weight:700; margin-top:12px; letter-spacing:1px; }
+
+  .container { max-width:760px; margin:0 auto; padding:40px 24px 80px; }
+
+  .summary { background:linear-gradient(135deg,rgba(249,115,22,0.06),rgba(168,85,247,0.06)); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:32px; }
+  .summary h3 { font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:14px; }
+  .summary ul { list-style:none; }
+  .summary ul li { font-size:14px; color:#374151; padding:7px 0 7px 24px; position:relative; }
+  .summary ul li::before { content:'✓'; position:absolute; left:0; color:#16a34a; font-weight:800; }
+  .summary ul li strong { color:var(--text); }
+
+  .part-header { text-align:center; margin:40px 0 24px; }
+  .part-header h2 { font-family:'Skranji',cursive; font-size:24px; letter-spacing:2px; color:var(--text); }
+  .part-header p { font-size:13px; color:var(--muted); margin-top:6px; }
+
+  .section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:28px; margin-bottom:20px; }
+  .section h2 { font-size:20px; font-weight:700; margin-bottom:16px; color:var(--text); display:flex; align-items:center; gap:10px; }
+  .section h2 .num { background:linear-gradient(135deg,#f97316,#a855f7); color:#fff; width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0; }
+  .section h3 { font-size:15px; font-weight:700; color:var(--text); margin:18px 0 8px; }
+  .section h3:first-of-type { margin-top:0; }
+  .section p { font-size:14px; color:#374151; margin-bottom:12px; }
+  .section p:last-child { margin-bottom:0; }
+  .section ul { list-style:none; margin:10px 0; }
+  .section ul li { font-size:14px; color:#374151; padding:5px 0 5px 20px; position:relative; border-bottom:1px solid var(--bg); }
+  .section ul li:last-child { border-bottom:none; }
+  .section ul li::before { content:'→'; position:absolute; left:0; color:var(--accent); font-weight:700; }
+  .section a { color:var(--accent); }
+
+  .amount { display:inline-block; background:rgba(59,111,245,0.08); border:1px solid rgba(59,111,245,0.2); border-radius:7px; padding:1px 8px; font-weight:700; color:var(--accent); white-space:nowrap; }
+
+  .important-box { background:rgba(249,115,22,0.07); border:1px solid rgba(249,115,22,0.25); border-radius:10px; padding:14px 16px; margin:14px 0; }
+  .important-box p { color:#c2540a !important; font-weight:500; margin:0 !important; }
+
+  .version-bar { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 20px; text-align:center; font-size:12px; color:var(--muted); margin-bottom:32px; }
+  .version-bar strong { color:var(--text); }
+
+  footer { text-align:center; padding:32px 24px; font-size:13px; color:var(--muted); border-top:1px solid var(--border); }
+  footer a { color:var(--accent); text-decoration:none; }
+
+  [data-lang-en] { display:none; }
+  body.en [data-lang-no] { display:none; }
+  body.en [data-lang-en] { display:block; }
+  body.en li[data-lang-en] { display:list-item; }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">Tokt<span>.app</span></a>
+  <div class="header-actions">
+    <button class="lang-btn" id="langToggle" onclick="toggleLang()">English</button>
+    <a href="/" class="back-btn"><span data-lang-no>← Til kartet</span><span data-lang-en>← To the map</span></a>
+  </div>
+</header>
+
+<div class="hero">
+  <h1>Skatt &amp; oppgjør</h1>
+  <p data-lang-no>Tokt.app – Formidlingsplattform for småoppdrag</p>
+  <p data-lang-en>Tokt.app – A platform for small local tasks</p>
+  <div class="beta-badge">💰 INFO</div>
+</div>
+
+<div class="container">
+
+  <div class="version-bar">
+    <span data-lang-no><strong>Generell informasjon</strong> · oppdatert juni 2026 · gjelder skatteåret 2026</span>
+    <span data-lang-en><strong>General information</strong> · updated June 2026 · for the 2026 tax year</span>
+  </div>
+
+  <!-- INTRO / DISCLAIMER -->
+  <div class="important-box">
+    <p data-lang-no>Tokt er kun en formidler og er ikke part i avtalen mellom dere. Oppgjør skjer direkte mellom partene via Vipps – Tokt tar ingen provisjon og håndterer ingen betaling. Hver part er selv ansvarlig for å følge skattereglene. Dette er en generell oversikt, ikke skatteråd. Ved tvil: kontakt Skatteetaten.</p>
+    <p data-lang-en>Tokt is only a connector and is not a party to the agreement between you. Settlement happens directly between the parties via Vipps – Tokt takes no commission and handles no payment. Each party is responsible for following the tax rules. This is a general overview, not tax advice. If in doubt, contact the Norwegian Tax Administration (Skatteetaten).</p>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary">
+    <h3 data-lang-no>Kort oppsummert</h3>
+    <h3 data-lang-en>In short</h3>
+    <ul data-lang-no>
+      <li>Arbeid i private hjem og hytter: inntil <strong>6 000 kr</strong> per person per husstand i året er skattefritt.</li>
+      <li>Annet småarbeid (utenfor hjemmet): inntil <strong>1 000 kr</strong> i året er skattefritt.</li>
+      <li>Har du frikort, er samlet inntekt inntil <strong>100 000 kr</strong> i 2026 skattefri.</li>
+      <li>Tjener du mer, eller gjør dette i stort omfang, kan du bli skattepliktig eller næringsdrivende.</li>
+    </ul>
+    <ul data-lang-en>
+      <li>Work in private homes and cabins: up to <strong>NOK 6,000</strong> per person per household per year is tax-free.</li>
+      <li>Other small jobs (outside the home): up to <strong>NOK 1,000</strong> per year is tax-free.</li>
+      <li>With an exemption card (frikort), total income up to <strong>NOK 100,000</strong> in 2026 is tax-free.</li>
+      <li>Earn more, or do this at scale, and you may become taxable or self-employed.</li>
+    </ul>
+  </div>
+
+  <!-- PART 1: OPPDRAGSTAKER -->
+  <div class="part-header">
+    <h2 data-lang-no>Del 1 · Du som utfører oppdrag</h2>
+    <p data-lang-no>Når du tjener penger på Tokt</p>
+    <h2 data-lang-en>Part 1 · You who complete tasks</h2>
+    <p data-lang-en>When you earn money on Tokt</p>
+  </div>
+
+  <div class="section">
+    <h2><span class="num">1</span><span data-lang-no>Arbeid i private hjem</span><span data-lang-en>Work in private homes</span></h2>
+    <p data-lang-no>For småjobber knyttet til noens hjem, hytte eller hage – som plenklipping, snømåking, rengjøring, flyttehjelp eller barnepass – kan du tjene inntil <span class="amount">6 000 kr</span> i året per oppdragsgiver/husstand uten å betale skatt. Tjener du mer enn dette fra én og samme husstand, blir hele beløpet skattepliktig.</p>
+    <p data-lang-no>Forutsetningen er at du gjør jobben som privatperson, og at du ikke driver eget foretak innenfor samme fagfelt som oppdraget gjelder.</p>
+    <p data-lang-en>For small jobs tied to someone's home, cabin or garden – such as mowing, snow clearing, cleaning, moving help or babysitting – you can earn up to <span class="amount">NOK 6,000</span> per year per client/household without paying tax. Earn more than that from the same household, and the entire amount becomes taxable.</p>
+    <p data-lang-en>This requires that you do the work as a private individual, and that you do not run your own business in the same field as the task.</p>
+  </div>
+
+  <div class="section">
+    <h2><span class="num">2</span><span data-lang-no>Annet arbeid utenfor hjemmet</span><span data-lang-en>Other work outside the home</span></h2>
+    <p data-lang-no>For småjobber som ikke er knyttet til et privat hjem, er grensen lavere: inntil <span class="amount">1 000 kr</span> i året fra én oppdragsgiver er skattefritt. Over dette er inntekten skattepliktig.</p>
+    <p data-lang-en>For small jobs not tied to a private home, the limit is lower: up to <span class="amount">NOK 1,000</span> per year from one client is tax-free. Above that, the income is taxable.</p>
+  </div>
+
+  <div class="section">
+    <h2><span class="num">3</span><span data-lang-no>Frikort</span><span data-lang-en>Exemption card (frikort)</span></h2>
+    <p data-lang-no>Selv om en inntekt er skattepliktig, betaler du ikke skatt så lenge samlet årsinntekt er under frikortgrensen, som er <span class="amount">100 000 kr</span> for 2026. Alle fra og med året de fyller 13 år får frikort automatisk. Ser du at du kommer til å tjene mer, bør du bestille skattekort hos Skatteetaten – ellers kan det bli trukket 50 % skatt på beløpet over grensen.</p>
+    <p data-lang-en>Even if income is taxable, you pay no tax as long as your total annual income stays under the exemption-card limit, which is <span class="amount">NOK 100,000</span> for 2026. Everyone receives an exemption card automatically from the year they turn 13. If you expect to earn more, order a tax deduction card from Skatteetaten – otherwise 50% tax may be withheld on the amount above the limit.</p>
+  </div>
+
+  <div class="section">
+    <h2><span class="num">4</span><span data-lang-no>Når blir jeg næringsdrivende?</span><span data-lang-en>When do I become self-employed?</span></h2>
+    <p data-lang-no>Du kan regnes som næringsdrivende hvis aktiviteten samlet sett (1) skjer for egen regning og risiko, (2) er egnet til å gå med overskudd, og (3) har et visst omfang og varighet. Da skal inntekten rapporteres som næringsinntekt.</p>
+    <p data-lang-no>I tillegg må du registrere deg i Merverdiavgiftsregisteret hvis avgiftspliktig omsetning passerer <span class="amount">50 000 kr</span> i løpet av en 12-månedersperiode. Da skal du fakturere med merverdiavgift.</p>
+    <p data-lang-en>You may be considered self-employed if the activity as a whole (1) is carried out for your own account and risk, (2) is capable of turning a profit, and (3) has a certain scope and duration. The income must then be reported as business income.</p>
+    <p data-lang-en>You must also register in the VAT Register if taxable turnover passes <span class="amount">NOK 50,000</span> within a 12-month period. You must then invoice with VAT.</p>
+  </div>
+
+  <!-- PART 2: OPPDRAGSGIVER -->
+  <div class="part-header">
+    <h2 data-lang-no>Del 2 · Du som legger ut oppdrag</h2>
+    <p data-lang-no>Når du betaler noen for hjelp</p>
+    <h2 data-lang-en>Part 2 · You who post tasks</h2>
+    <p data-lang-en>When you pay someone for help</p>
+  </div>
+
+  <div class="section">
+    <h2><span class="num">5</span><span data-lang-no>Betaling for arbeid i hjemmet</span><span data-lang-en>Paying for work in the home</span></h2>
+    <p data-lang-no>Betaler du inntil <span class="amount">6 000 kr</span> i året til én person for arbeid knyttet til hjemmet ditt, har du normalt ingen rapporteringsplikt.</p>
+    <ul data-lang-no>
+      <li>Over 6 000 kr til én person: meld inn lønnen via «melding om lønnet arbeid i hjemmet» (forenklet a-melding).</li>
+      <li>Over 60 000 kr samlet i husstanden per år: du regnes som arbeidsgiver og skal også betale arbeidsgiveravgift og sende ordinær a-melding.</li>
+    </ul>
+    <p data-lang-en>If you pay up to <span class="amount">NOK 6,000</span> per year to one person for work tied to your home, you normally have no reporting duty.</p>
+    <ul data-lang-en>
+      <li>Over NOK 6,000 to one person: report the pay via the simplified scheme for "paid work in the home".</li>
+      <li>Over NOK 60,000 total in the household per year: you count as an employer and must also pay employer's national insurance contributions and submit an ordinary a-melding.</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2><span class="num">6</span><span data-lang-no>Betaling for arbeid utenfor hjemmet</span><span data-lang-en>Paying for work outside the home</span></h2>
+    <p data-lang-no>For arbeid som ikke er knyttet til hjemmet, gjelder en lavere grense: rapporteringsplikt inntrer når du betaler mer enn <span class="amount">2 000 kr</span> i året til én person. Betaler du en næringsdrivende (med eget foretak), har du ikke rapporteringsplikt.</p>
+    <p data-lang-en>For work not tied to your home, a lower limit applies: a reporting duty kicks in when you pay more than <span class="amount">NOK 2,000</span> per year to one person. If you pay a self-employed person (with their own business), you have no reporting duty.</p>
+  </div>
+
+  <!-- PART 3: OPPGJØR -->
+  <div class="part-header">
+    <h2 data-lang-no>Del 3 · Oppgjør på Tokt</h2>
+    <h2 data-lang-en>Part 3 · Settlement on Tokt</h2>
+  </div>
+
+  <div class="section">
+    <h2><span class="num">7</span><span data-lang-no>Slik fungerer oppgjøret</span><span data-lang-en>How settlement works</span></h2>
+    <ul data-lang-no>
+      <li>Oppgjør avtales og gjennomføres direkte mellom partene, vanligvis via Vipps.</li>
+      <li>Tokt tar ingen provisjon – hele beløpet går mellom dere.</li>
+      <li>Tokt er ikke part i avtalen og håndterer ikke penger.</li>
+      <li>Betal aldri forskudd til personer du ikke kjenner. Avtal oppgjør ved fullført oppdrag.</li>
+      <li>Oppdrag over 10 000 kr bør sikres med en skriftlig avtale mellom partene.</li>
+    </ul>
+    <ul data-lang-en>
+      <li>Settlement is agreed and carried out directly between the parties, usually via Vipps.</li>
+      <li>Tokt takes no commission – the full amount goes between you.</li>
+      <li>Tokt is not a party to the agreement and does not handle money.</li>
+      <li>Never pay in advance to people you don't know. Settle on completion.</li>
+      <li>Tasks over NOK 10,000 should be secured with a written agreement between the parties.</li>
+    </ul>
+  </div>
+
+  <div class="important-box">
+    <p data-lang-no>Beløpsgrensene gjelder skatteåret 2026 og kan endres fra år til år. Oversikten er ikke uttømmende. For din konkrete situasjon – og hvis du er i tvil om du er næringsdrivende – kontakt Skatteetaten eller en regnskapsfører. Oppdatert og fullstendig informasjon finner du på skatteetaten.no.</p>
+    <p data-lang-en>The thresholds apply to the 2026 tax year and may change from year to year. This overview is not exhaustive. For your specific situation – and if you are unsure whether you count as self-employed – contact Skatteetaten or an accountant. Up-to-date and complete information is available at skatteetaten.no.</p>
+  </div>
+
+  <div class="section" style="text-align:center">
+    <p data-lang-no style="margin-bottom:0">Les mer hos Skatteetaten: <a href="https://www.skatteetaten.no/person/skatt/hjelp-til-riktig-skatt/arbeid-trygd-og-pensjon/hobby-ekstrainntekt-og-smajobber/smajobber-og-tjenester/" target="_blank" rel="noopener">Småjobber og tjenester →</a></p>
+    <p data-lang-en style="margin-bottom:0">Read more at the Tax Administration: <a href="https://www.skatteetaten.no/en/person/taxes/get-the-taxes-right/employment-benefits-and-pensions/hobby-odd-jobs-and-extra-income/odd-jobs-and-services/" target="_blank" rel="noopener">Odd jobs and services →</a></p>
+  </div>
+
+</div>
+
+<footer>
+  <p data-lang-no>Spørsmål? <a href="mailto:hei.tokt@gmail.com">hei.tokt@gmail.com</a> · <a href="/terms.html">Vilkår &amp; personvern</a> · <a href="/">Tilbake til Tokt</a></p>
+  <p data-lang-en>Questions? <a href="mailto:hei.tokt@gmail.com">hei.tokt@gmail.com</a> · <a href="/terms.html">Terms &amp; privacy</a> · <a href="/">Back to Tokt</a></p>
+</footer>
+
+<script>
+function toggleLang(){
+  var en = document.body.classList.toggle('en');
+  document.documentElement.lang = en ? 'en' : 'no';
+  document.getElementById('langToggle').textContent = en ? 'Norsk' : 'English';
+  try { localStorage.setItem('tokt-skatt-lang', en ? 'en' : 'no'); } catch(e){}
+}
+(function(){
+  try {
+    var saved = localStorage.getItem('tokt-skatt-lang');
+    if(saved === 'en'){ document.body.classList.add('en'); document.documentElement.lang='en'; document.getElementById('langToggle').textContent='Norsk'; }
+  } catch(e){}
+})();
+</script>
+
+</body>
+</html>
