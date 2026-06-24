@@ -342,6 +342,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   margin-top:6px; background:none; border:none; padding:0;
   color:var(--accent); font-family:inherit; font-weight:800; font-size:11.5px; cursor:pointer;
 }
+.lv-see-svc { color:var(--accent2); }
 .lv-card.active { background:linear-gradient(90deg,rgba(249,115,22,.10),transparent); }
 .lv-card.active::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--orange); }
 .mapbox-marker.marker-focus { filter:drop-shadow(0 0 6px rgba(249,115,22,.95)); z-index:7 !important; }
@@ -1398,7 +1399,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     #filter-sheet {
       left: 50%; right: auto;
       transform: translateX(-50%) translateY(100%);
-      width: 520px;
+      width: 620px;
       bottom: 0;
     }
     #filter-sheet.open { transform: translateX(-50%) translateY(0); }
@@ -1430,7 +1431,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   .fcat-item.active { border-color: var(--accent); background: var(--accent-glow); }
   .fcat-icon { font-size: 22px; line-height: 1; height: 26px; display: flex; align-items: center; justify-content: center; }
   .fcat-icon svg { width: 24px; height: 24px; fill: none; stroke: var(--ink, var(--text)); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-  .fcat-label { font-size: 10px; font-weight: 600; color: var(--muted); text-align: center; }
+  .fcat-label { font-size: 10px; font-weight: 600; color: var(--text); text-align: center; }
   .fcat-item.active .fcat-label { color: var(--accent); }
 
   /* number inputs - remove spinners */
@@ -1521,9 +1522,9 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 
 <!-- VIEW TOGGLE: Alt / Oppdrag / Tjenester -->
 <div id="view-toggle" style="position:fixed;top:120px;left:50%;transform:translateX(-50%);z-index:95;display:flex;background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:3px;box-shadow:var(--shadow-lg);gap:2px">
-  <button class="vt-btn active" id="vt-all" onclick="setViewMode('all')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg><span data-en="All">Alt</span></button>
-  <button class="vt-btn" id="vt-quests" onclick="setViewMode('quests')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 10h6M9 14h6M9 18h4"/></svg><span data-en="Quests">Oppdrag</span></button>
-  <button class="vt-btn" id="vt-services" onclick="setViewMode('services')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-4h14l1 4"/><path d="M4 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 11v8h14v-8"/><path d="M9 19v-4h4v4"/></svg><span data-en="Offers">Tilbud</span></button>
+  <button class="vt-btn active" id="vt-all" data-vm="all" onclick="setViewMode('all')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg><span data-en="All">Alt</span></button>
+  <button class="vt-btn" id="vt-quests" data-vm="quests" onclick="setViewMode('quests')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 10h6M9 14h6M9 18h4"/></svg><span data-en="Quests">Oppdrag</span></button>
+  <button class="vt-btn" id="vt-services" data-vm="services" onclick="setViewMode('services')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-4h14l1 4"/><path d="M4 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 11v8h14v-8"/><path d="M9 19v-4h4v4"/></svg><span data-en="Offers">Tilbud</span></button>
 </div>
 
 <!-- TIPS BAR -->
@@ -1561,7 +1562,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   </div>
 
   <div class="logo-xp">
-    <div class="xp-rank">⚡ Din rang</div>
+    <div class="xp-rank" data-en="⚡ Your rank">⚡ Din rang</div>
     <div class="xp-track"><div class="xp-fill" id="xp-fill"></div></div>
     <div class="xp-label"></div>
   </div>
@@ -1654,6 +1655,12 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   </div>
 
   <div class="fsheet-body">
+
+    <!-- VIS: type-veksler -->
+    <div class="fsection">
+      <div class="fsection-title"><span id="fsec-show" data-en="Show">Vis</span></div>
+      <div style="display:flex;gap:4px;background:var(--surface2);border-radius:50px;padding:4px"><button class="vt-btn active" data-vm="all" onclick="setViewMode('all')" style="flex:1;justify-content:center"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg><span data-en="All">Alt</span></button><button class="vt-btn" data-vm="quests" onclick="setViewMode('quests')" style="flex:1;justify-content:center"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 10h6M9 14h6"/></svg><span data-en="Quests">Oppdrag</span></button><button class="vt-btn" data-vm="services" onclick="setViewMode('services')" style="flex:1;justify-content:center"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-4h14l1 4"/><path d="M5 11v8h14v-8"/></svg><span data-en="Services">Tjenester</span></button></div>
+    </div>
 
     <!-- CATEGORIES grid -->
     <div class="fsection">
@@ -1948,11 +1955,11 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     </div>
     <button class="lv-avgrens" onclick="openFilters()">
       <svg viewBox="0 0 24 24"><circle cx="8" cy="7" r="2.4"/><line x1="11" y1="7" x2="20" y2="7"/><line x1="4" y1="7" x2="5.6" y2="7"/><circle cx="16" cy="17" r="2.4"/><line x1="4" y1="17" x2="13" y2="17"/><line x1="18.4" y1="17" x2="20" y2="17"/></svg>
-      <span id="lv-avgrens-label">Tema</span>
+      <span id="lv-avgrens-label" data-en="Filter">Filter</span>
       <span class="lv-acount" id="lv-avgrens-count" style="display:none">0</span>
     </button>
-    <button class="lv-close" onclick="closeListView()" aria-label="Lukk">⌄</button>
   </div>
+  <div style="padding:6px 14px 2px"><div style="display:flex;gap:4px;background:var(--surface2);border-radius:50px;padding:4px"><button class="vt-btn active" data-vm="all" onclick="setViewMode('all')" style="flex:1;justify-content:center"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg><span data-en="All">Alt</span></button><button class="vt-btn" data-vm="quests" onclick="setViewMode('quests')" style="flex:1;justify-content:center"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 10h6M9 14h6"/></svg><span data-en="Quests">Oppdrag</span></button><button class="vt-btn" data-vm="services" onclick="setViewMode('services')" style="flex:1;justify-content:center"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-4h14l1 4"/><path d="M5 11v8h14v-8"/></svg><span data-en="Services">Tjenester</span></button></div></div>
   <div class="lv-catrow" id="lv-catrow">
     <button class="lv-catchip on" data-lvcat="all" onclick="pickListCategory('all')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="#3b6ff5" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>Alle</button>
     <button class="lv-catchip" data-lvcat="rengjøring" onclick="pickListCategory('rengjøring')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="#0fa9a0" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 3l-5 5"/><path d="M15.5 6.5 13 9l-7 7 2 2 7-7 2.5-2.5"/><path d="M4 21h5"/></svg>Rengjøring</button>
@@ -3417,9 +3424,11 @@ function registerMarker(el, info) {
   if(info.listOnly) el.style.display = 'none'; // utløpte vises kun i lista, ikke på kartet
 }
 
+function syncViewToggles(mode){ mode = mode || window.viewMode || 'all'; document.querySelectorAll('[data-vm]').forEach(b => b.classList.toggle('active', b.dataset.vm === mode)); }
+
 function setViewMode(mode) {
   window.viewMode = mode;
-  ['all','quests','services'].forEach(m => document.getElementById('vt-'+m)?.classList.toggle('active', m === mode));
+  syncViewToggles(mode);
   (window.mapMarkers || []).forEach(m => {
     const kindOk = mode === 'all' || (mode === 'quests' && m.kind === 'quest') || (mode === 'services' && m.kind === 'service');
     m._listPass = kindOk;                                  // lista: inkluderer utløpte
@@ -4653,6 +4662,7 @@ function toggleTheme() {
 function openFilters() {
   document.getElementById('filter-sheet').classList.add('open');
   document.getElementById('filter-overlay').classList.add('open');
+  syncViewToggles();
 }
 function closeFilters() {
   document.getElementById('filter-sheet').classList.remove('open');
@@ -4785,8 +4795,9 @@ function openListView() {
   syncListCatChips();
   renderListView();
   initListDrag();
+  syncViewToggles();
   lv.classList.add('open');
-  requestAnimationFrame(() => setListSnap('half'));
+  requestAnimationFrame(() => setListSnap('full'));
 }
 
 // Snap-hakk for resultat-skuffen: full / delt (half) / kart-peek / lukket
@@ -4810,13 +4821,13 @@ function initListDrag() {
   const handle = document.getElementById('lv-handle');
   if(!lv || !handle || handle.dataset.bound) return;
   handle.dataset.bound = '1';
-  let startY = 0, startOff = 0, dragging = false, H = 0;
+  let startY = 0, startOff = 0, dragging = false, H = 0, moved = false;
   const curOff = () => {
     const m = /translateY\(([-\d.]+)px\)/.exec(lv.style.transform);
     return m ? parseFloat(m[1]) : lvSnapOffset(window.lvSnap, lv.offsetHeight);
   };
   const start = e => {
-    dragging = true; H = lv.offsetHeight;
+    dragging = true; moved = false; H = lv.offsetHeight;
     startY = e.touches ? e.touches[0].clientY : e.clientY;
     startOff = curOff();
     lv.style.transition = 'none';
@@ -4824,10 +4835,12 @@ function initListDrag() {
   const move = e => {
     if(!dragging) return;
     const y = e.touches ? e.touches[0].clientY : e.clientY;
+    if(Math.abs(y - startY) > 6) moved = true;
     lv.style.transform = `translateY(${Math.max(0, Math.min(startOff + (y - startY), H))}px)`;
   };
   const end = () => {
     if(!dragging) return; dragging = false;
+    if(!moved) { closeListView(); return; }   // tapp på streken = lukk
     const off = curOff();
     if(off > lvSnapOffset('peek', H) + 90) { closeListView(); return; }
     const snaps = [['full', lvSnapOffset('full', H)], ['half', lvSnapOffset('half', H)], ['peek', lvSnapOffset('peek', H)]];
@@ -4909,7 +4922,7 @@ function renderListView() {
     const rec = (sort === 'rec' && i === 0);
     const medal = `<div class="medal xs ${rankMetalClass(ri)} lv-em"><span class="sym">${rankSym(RANKS[ri].name)}</span></div>`;
     const price = m.pay ? `${m.pay} kr` : (isSvc ? '' : 'Gratis');
-    const seeLabel = isSvc ? 'Se tilbyder →' : 'Se oppdrag →';
+    const seeLabel = isSvc ? NE('Se tilbyder →','See provider →') : NE('Se oppdrag →','See task →');
     const tags = [];
     if(m.expired) tags.push('<span class="lv-tag lv-tag-exp">⏰ Utløpt</span>');
     else if(m.paused) tags.push('<span class="lv-tag lv-tag-paused">⏸ Pauset</span>');
@@ -4924,7 +4937,7 @@ function renderListView() {
         <div class="lv-title">${m.title || 'Uten tittel'}${ver}</div>
         <div class="lv-meta">${ratingTxt}${dist} · ${RANKS[ri].name}</div>
         ${tagsHtml}
-        <button class="lv-see" onclick="event.stopPropagation();openListResult(${i})">${seeLabel}</button>
+        <button class="lv-see${isSvc?' lv-see-svc':''}" onclick="event.stopPropagation();openListResult(${i})">${seeLabel}</button>
       </div>
       <div class="lv-price">${price}</div>
     </div>`;
@@ -5874,7 +5887,7 @@ function renderRankLadder(questsDone) {
     const isCurrent = getRank(questsDone).name === r.name;
     return `<div class="pp-rank-row" style="${isCurrent ? 'background:rgba(59,111,245,0.05);margin:0 -8px;padding:8px;border-radius:10px' : ''}">
       <span class="lb-badge ${r.cls}" style="${achieved ? '' : 'opacity:0.35;filter:grayscale(0.7)'}">${r.name}</span>
-      <div style="flex:1;font-size:11px;color:var(--muted)">${r.min} oppdrag${isCurrent ? ' · <strong style="color:var(--accent)">Din rang</strong>' : ''}</div>
+      <div style="flex:1;font-size:11px;color:var(--muted)">${r.min} oppdrag${isCurrent ? ' · <strong style="color:var(--accent)">'+NE('Din rang','Your rank')+'</strong>' : ''}</div>
       <span style="font-size:14px">${achieved ? '✅' : '🔒'}</span>
     </div>`;
   }).join('');
@@ -9324,18 +9337,18 @@ function updateProfileAchievements(quests, rating) {
 // ── SEARCH RESULT IMAGES ──
 // ── TIPS BAR ──
 const TIPS = [
-  { icon:'📘', text:'Alle lokale steder har en Facebook-gruppe! Del oppdraget ditt der for rask og effektiv hjelp fra naboer.' },
-  { icon:'⚡', text:'Haste-oppdrag med rød markør får mer oppmerksomhet – bruk det når du trenger hjelp raskt!' },
-  { icon:'💇', text:'Visste du at du kan tilby egne tjenester? Trykk "Tilby tjeneste" og nå kunder i nabolaget ditt.' },
-  { icon:'⭐', text:'Jo høyere rating, jo mer synlig blir profilen din. Gjør en god jobb og be om en vurdering!' },
-  { icon:'👤', text:'Trykk på en oppdragsgiver eller toppliste-rad for å se profilen deres med rang og vurderinger!' },
-  { icon:'🔗', text:'Del oppdraget på WhatsApp eller Facebook for å nå enda flere som kan hjelpe deg.' },
-  { icon:'💚', text:'Veldedighetsoppdrag er gratis å legge ut og gir utfører et spesielt achievement – perfekt for å hjelpe eldre!' },
-  { icon:'🏆', text:'Fullfør 100 oppdrag og bli Valkyrje – den høyeste rangen på Tokt!' },
-  { icon:'📍', text:'Tips: Aktiver posisjon så ser du oppdrag og tjenester rett i nabolaget ditt.' },
-  { icon:'🗺️', text:NE('Kartet oppdateres i sanntid – nye oppdrag dukker opp med én gang noen legger dem ut!','The map updates in real time – new tasks appear the moment someone posts them!') },
-  { icon:'🔄', text:'Trenger du fast hjelp? Be en tilbyder om fast ukentlig eller månedlig avtale direkte i chatten.' },
-  { icon:'📸', text:'Legg til bilde på oppdraget – utfører vet hva jobben innebærer og du får flere søkere.' },
+  { icon:'📘', no:'Alle lokale steder har en Facebook-gruppe! Del oppdraget ditt der for rask og effektiv hjelp fra naboer.', en:'Every local area has a Facebook group! Share your task there for fast, effective help from neighbours.' },
+  { icon:'⚡', no:'Haste-oppdrag med rød markør får mer oppmerksomhet – bruk det når du trenger hjelp raskt!', en:'Urgent tasks with a red marker get more attention – use it when you need help fast!' },
+  { icon:'💇', no:'Visste du at du kan tilby egne tjenester? Trykk "Tilby tjeneste" og nå kunder i nabolaget ditt.', en:'Did you know you can offer your own services? Tap "Offer service" and reach customers in your neighbourhood.' },
+  { icon:'⭐', no:'Jo høyere rating, jo mer synlig blir profilen din. Gjør en god jobb og be om en vurdering!', en:'The higher your rating, the more visible your profile. Do a good job and ask for a review!' },
+  { icon:'👤', no:'Trykk på en oppdragsgiver eller toppliste-rad for å se profilen deres med rang og vurderinger!', en:'Tap a poster or a leaderboard row to see their profile with rank and reviews!' },
+  { icon:'🔗', no:'Del oppdraget på WhatsApp eller Facebook for å nå enda flere som kan hjelpe deg.', en:'Share the task on WhatsApp or Facebook to reach even more people who can help.' },
+  { icon:'💚', no:'Veldedighetsoppdrag er gratis å legge ut og gir utfører et spesielt achievement – perfekt for å hjelpe eldre!', en:'Charity tasks are free to post and give the helper a special achievement – perfect for helping the elderly!' },
+  { icon:'🏆', no:'Fullfør 100 oppdrag og bli Valkyrje – den høyeste rangen på Tokt!', en:'Complete 100 tasks to become Valkyrje – the highest rank on Tokt!' },
+  { icon:'📍', no:'Tips: Aktiver posisjon så ser du oppdrag og tjenester rett i nabolaget ditt.', en:'Tip: Enable location to see tasks and services right in your neighbourhood.' },
+  { icon:'🗺️', no:'Kartet oppdateres i sanntid – nye oppdrag dukker opp med én gang noen legger dem ut!', en:'The map updates in real time – new tasks appear the moment someone posts them!' },
+  { icon:'🔄', no:'Trenger du fast hjelp? Be en tilbyder om fast ukentlig eller månedlig avtale direkte i chatten.', en:'Need regular help? Ask a provider for a recurring weekly or monthly agreement right in the chat.' },
+  { icon:'📸', no:'Legg til bilde på oppdraget – utfører vet hva jobben innebærer og du får flere søkere.', en:'Add a photo to your task – helpers know what the job involves and you get more applicants.' },
 ];
 
 let currentTip = 0;
@@ -9371,7 +9384,7 @@ function showTip(index) {
   textEl.style.opacity = '0';
   setTimeout(() => {
     iconEl.textContent = tip.icon;
-    textEl.textContent = tip.text;
+    textEl.textContent = (currentLang==='en' ? tip.en : tip.no);
     iconEl.style.transition = 'opacity .4s';
     textEl.style.transition = 'opacity .4s';
     iconEl.style.opacity = '1';
@@ -10025,7 +10038,7 @@ async function loadUserProfile(user) {
     // Oppdater Nivå-teksten under topbar-avataren (var hardkodet)
     const avatarLvl = document.querySelector('.avatar-lvl');
     if(avatarLvl) avatarLvl.textContent = 'Nivå ' + rankLevel;
-    document.getElementById('profile-rank-badge').textContent = `${rank.name} · nivå ${RANKS.indexOf(rank)+1} av ${RANKS.length}`;
+    document.getElementById('profile-rank-badge').textContent = `${rank.name} · ${NE('nivå','level')} ${RANKS.indexOf(rank)+1} ${NE('av','of')} ${RANKS.length}`;
     const rankDescEl = document.getElementById('profile-rank-desc');
     if(rankDescEl) rankDescEl.textContent = rank.desc || '';
     // Rang-fremgang (oppdrag til neste rang) – erstatter gammelt XP-system
