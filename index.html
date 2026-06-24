@@ -2407,7 +2407,7 @@ const LANGUAGES = {
     urgentToggle: '🔴 Hastemarkering (+100 kr)', urgentToggleSub: 'Rød pulserende markør med prioritet',
     locationToggle: '📍 Del posisjon under arbeid', locationToggleSub: 'Utfører deler posisjon i sanntid',
     charityToggle: '💚 Veldedighetsoppdrag', charityToggleSub: 'Gir achievement til utfører',
-    disclaimer: '<strong>Viktig:</strong> Tokt er kun en formidlingsplattform. Alt økonomisk oppgjør skjer direkte via Vipps mellom oppdragsgiver og utfører. Tokt er ikke part i avtalen og er ikke ansvarlig for kvalitet, skader eller tvister. Ved å publisere godtar du våre <u>brukervilkår</u>. Betal aldri forskudd til ukjente. Oppdrag over 10 000 kr krever signert kontrakt.',
+    disclaimer: '<strong>Viktig:</strong> Tokt er kun en formidlingsplattform. Alt økonomisk oppgjør skjer direkte via Vipps mellom oppdragsgiver og utfører. Tokt er ikke part i avtalen og er ikke ansvarlig for kvalitet, skader eller tvister. Ved å publisere godtar du våre <u>brukervilkår</u>. Betal aldri forskudd til ukjente. Oppdrag over 10 000 kr krever signert kontrakt. Se også <a href="/skatt.html" target="_blank" style="color:var(--accent)">skatt og oppgjør</a>.',
     publishQuest: 'Publiser oppdrag',
     // Leaderboard
     lbTitle: 'Toppliste',
@@ -2546,7 +2546,7 @@ const LANGUAGES = {
     urgentToggle: '🔴 Urgent quest (+100 kr)', urgentToggleSub: 'Red pulsing marker with priority',
     locationToggle: '📍 Live location sharing', locationToggleSub: 'Taker shares live position',
     charityToggle: '💚 Charity quest', charityToggleSub: 'Earns taker a special achievement',
-    disclaimer: '<strong>Important:</strong> Tokt is a platform-only service. All payments are made directly between quest giver and taker via Vipps. Tokt is not party to any agreement and accepts no responsibility for quality, damages or disputes. By publishing you agree to our <u>terms of service</u>. Never pay strangers in advance. Quests over 10,000 NOK require a signed contract.',
+    disclaimer: '<strong>Important:</strong> Tokt is a platform-only service. All payments are made directly between quest giver and taker via Vipps. Tokt is not party to any agreement and accepts no responsibility for quality, damages or disputes. By publishing you agree to our <u>terms of service</u>. Never pay strangers in advance. Quests over 10,000 NOK require a signed contract. See also <a href="/skatt.html" target="_blank" style="color:var(--accent)">tax &amp; settlement</a>.',
     publishQuest: 'Publiser oppdrag',
     lbTitle: 'Leaderboard',
     lbTagline: 'Ranked by completed quests',
@@ -5375,6 +5375,7 @@ function okoApplyLang(){
   safeText('oko-note', en
     ? 'About these figures: amounts are agreed sums on completed deals, not bank-verified income. Use this as your own basis for tax and bookkeeping – always check against actual payments received.'
     : 'Om tallene: beløpene er avtalte summer på fullførte avtaler, ikke bankbekreftet inntekt. Bruk dette som eget arbeidsgrunnlag for skatt og bokføring – sjekk alltid mot faktiske innbetalinger.');
+  safeText('oko-skatt-link', en ? '💰 Tax & settlement →' : '💰 Skatt & oppgjør →');
 }
 
 async function loadOkonomi() {
@@ -10787,6 +10788,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div id="oko-ledger"></div>
     <button onclick="exportOkonomiCsv()" id="oko-export-btn" style="width:100%;margin-top:16px;background:linear-gradient(135deg,var(--green),#0c8f58);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px">⬇️ <span id="oko-export-label">Last ned CSV</span></button>
     <div id="oko-note" style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:13px;padding:10px 12px;background:var(--surface2);border-radius:10px"></div>
+    <a id="oko-skatt-link" href="/skatt.html" target="_blank" style="display:block;text-align:center;font-size:12px;color:var(--accent);text-decoration:underline;margin-top:10px"></a>
   </div>
 
 </div>
