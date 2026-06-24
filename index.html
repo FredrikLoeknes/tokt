@@ -375,6 +375,13 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 }
 .lv-catchip.on { background:rgba(59,111,245,.1); color:var(--accent); border-color:var(--accent); }
 .lv-catchip, .lv-sortpill, .vt-btn { display:inline-flex; align-items:center; gap:6px; }
+/* Gradient-scrollbar i søkelista (tema + sortering) – tydeligere at man kan dra */
+.lv-catrow, .lv-sortrow { scrollbar-width:thin; scrollbar-color:#a855f7 rgba(0,0,0,.05); }
+.lv-catrow::-webkit-scrollbar, .lv-sortrow::-webkit-scrollbar { height:7px; }
+.lv-catrow::-webkit-scrollbar-track, .lv-sortrow::-webkit-scrollbar-track { background:rgba(0,0,0,.05); border-radius:50px; margin:0 12px; }
+.lv-catrow::-webkit-scrollbar-thumb, .lv-sortrow::-webkit-scrollbar-thumb { background:linear-gradient(90deg,#f97316,#a855f7,#3b6ff5); border-radius:50px; }
+body.dark .lv-catrow, body.dark .lv-sortrow { scrollbar-color:#a855f7 rgba(255,255,255,.07); }
+body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-scrollbar-track { background:rgba(255,255,255,.07); }
 .sort-pill { display:inline-flex; align-items:center; gap:6px; }
 .pill-ic { width:16px; height:16px; flex-shrink:0; display:block; }
 .lv-rows { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(24px + env(safe-area-inset-bottom)); overscroll-behavior:contain; }
