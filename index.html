@@ -9871,6 +9871,22 @@ async function deleteMyAccount() {
   const ok = (typed || '').trim().toUpperCase();
   if(ok !== 'SLETT' && ok !== 'DELETE') { showToast(en ? 'Cancelled' : 'Avbrutt'); return; }
   showToast(en ? '⏳ Deleting account…' : '⏳ Sletter konto…');
+  // Rydd brukerens bilder via Storage-API-et (RPC har ikke lov til å slette i storage).
+  // Oppdragsbilder + avatar ligger under "<uid>/"; tjenestebilder som "svc-<id>" på rota.
+  try {
+    const uid = currentUser.id;
+    const paths = [];
+    const { data: folder } = await sb.storage.from('quest-images').list(uid, { limit: 1000 });
+    if(folder) for(const f of folder) paths.push(uid + '/' + f.name);
+    const { data: svcs } = await sb.from('services').select('image_url').eq('user_id', uid);
+    if(svcs) for(const s of svcs) {
+      const u = s.image_url;
+      if(!u) continue;
+      const rest = u.split('/quest-images/')[1];
+      if(rest) paths.push(decodeURIComponent(rest.split('?')[0]));
+    }
+    if(paths.length) await sb.storage.from('quest-images').remove(paths);
+  } catch(e) { console.warn('storage cleanup', e); }
   const { error } = await sb.rpc('delete_my_account');
   if(error) {
     console.error('delete_my_account', error);
