@@ -828,6 +828,8 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   animation:popIn .15s ease;
 }
 #legend-panel.open { display:block; }
+#lang-dropdown { display:none; }
+#lang-dropdown.open { display:block; }
 .lg-head { display:flex; align-items:center; justify-content:space-between; font-size:14px; font-weight:800; margin-bottom:6px; }
 .lg-close { background:var(--surface2); border:none; border-radius:50%; width:26px; height:26px; cursor:pointer; color:var(--muted); font-size:13px; line-height:1; flex-shrink:0; }
 .lg-gtitle { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); margin:12px 0 6px; }
@@ -1613,7 +1615,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     <span id="lang-current" style="display:flex;align-items:center;gap:4px"><svg viewBox="0 0 22 16" width="20" height="14" style="border-radius:2px;display:inline-block;vertical-align:middle"><rect width="22" height="16" fill="#ba0c2f"/><rect x="6" width="4" height="16" fill="#fff"/><rect y="6" width="22" height="4" fill="#fff"/><rect x="7" width="2" height="16" fill="#002868"/><rect y="7" width="22" height="2" fill="#002868"/></svg> <span style="font-size:11px;font-weight:700">NO</span></span>
     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
   </button>
-  <div id="lang-dropdown" style="display:none;position:absolute;top:44px;right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);overflow:hidden;min-width:130px;z-index:500">
+  <div id="lang-dropdown" style="position:absolute;top:44px;right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);overflow:hidden;min-width:130px;z-index:500">
     <div class="lang-option active" data-lang="no" onclick="setLanguage('no')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:13px;font-weight:500;transition:background .15s">
       <svg viewBox="0 0 22 16" width="26" height="18" style="border-radius:2px;flex-shrink:0"><rect width="22" height="16" fill="#ba0c2f"/><rect x="6" width="4" height="16" fill="#fff"/><rect y="6" width="22" height="4" fill="#fff"/><rect x="7" width="2" height="16" fill="#002868"/><rect y="7" width="22" height="2" fill="#002868"/></svg> <div><div style="font-weight:600">Norsk</div><div style="font-size:10px;color:var(--muted)">Bokmål</div></div>
     </div>
@@ -2760,11 +2762,39 @@ function applyLanguage() {
 
   // App-install (begge elementer)
   try { refreshInstallText(); } catch(e) {}
+
+  // Statisk tekst (data-en) – velkomst, auth, m.m.
+  try { applyStaticI18n(); } catch(e) {}
+
+  // Hold språk-velgeren i synk (flagg-merke + aktiv rad) – også ved sidelast
+  try {
+    const L2 = LANGUAGES[currentLang];
+    const cur = document.getElementById('lang-current');
+    if (cur && L2) cur.innerHTML = L2.flag + ' <span style="font-size:11px;font-weight:700">' + L2.code.toUpperCase() + '</span>';
+    document.querySelectorAll('.lang-option').forEach(el => el.classList.toggle('active', el.dataset.lang === currentLang));
+  } catch(e) {}
 }
 
 function safeText(id, val) { const el = document.getElementById(id); if(el && val !== undefined) el.textContent = val; }
 function safeHTML(id, val) { const el = document.getElementById(id); if(el && val !== undefined) el.innerHTML = val; }
 function safeAttr(id, attr, val) { const el = document.getElementById(id); if(el && val !== undefined) el.setAttribute(attr, val); }
+
+// Generisk oversetter for statisk tekst: alle elementer med data-en byttes mellom
+// norsk (original) og engelsk. Trygt: rører kun leaf-noder (ingen barn-elementer),
+// så nestet layout aldri brytes. Original norsk fanges automatisk i data-no.
+function applyStaticI18n() {
+  const en = currentLang === 'en';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.children.length) return;
+    if (el.dataset.no === undefined) el.dataset.no = el.textContent;
+    el.textContent = en ? el.dataset.en : el.dataset.no;
+  });
+  // Placeholders (input/textarea) via data-en-ph
+  document.querySelectorAll('[data-en-ph]').forEach(el => {
+    if (el.dataset.noPh === undefined) el.dataset.noPh = el.getAttribute('placeholder') || '';
+    el.setAttribute('placeholder', en ? el.dataset.enPh : el.dataset.noPh);
+  });
+}
 
 function toggleLangDropdown() {
   document.getElementById('lang-dropdown').classList.toggle('open');
@@ -10079,27 +10109,27 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <!-- Logo -->
     <div style="text-align:center;margin-bottom:20px">
       <div style="font-family:'Skranji',sans-serif;font-size:28px;font-weight:700;letter-spacing:2px">Tokt<span style="background:linear-gradient(135deg,#f97316,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent">.app</span></div>
-      <div style="font-size:13px;color:var(--muted);margin-top:4px" id="auth-subtitle">Logg inn for å ta oppdrag</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px" id="auth-subtitle" data-en="Log in to take tasks">Logg inn for å ta oppdrag</div>
     </div>
 
     <!-- Tabs -->
     <div style="display:flex;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:20px">
-      <button id="tab-login" onclick="switchTab('login')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">Logg inn</button>
-      <button id="tab-register" onclick="switchTab('register')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s">Registrer</button>
+      <button id="tab-login" onclick="switchTab('login')" data-en="Log in" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">Logg inn</button>
+      <button id="tab-register" onclick="switchTab('register')" data-en="Sign up" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s">Registrer</button>
     </div>
 
     <!-- Login form -->
     <div id="form-login">
       <div style="margin-bottom:12px">
-        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">E-post</label>
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Email">E-post</label>
         <input id="login-email" type="email" placeholder="din@epost.no" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
       </div>
       <div style="margin-bottom:16px">
-        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Passord</label>
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Password">Passord</label>
         <input id="login-password" type="password" placeholder="••••••••" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
       <div id="login-error" style="display:none;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--red);margin-bottom:12px"></div>
-      <button onclick="doLogin()" id="login-btn" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">Logg inn</button>
+      <button onclick="doLogin()" id="login-btn" data-en="Log in" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">Logg inn</button>
       <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--muted)">Glemt passord? <span onclick="doResetPassword()" style="color:var(--accent);cursor:pointer;text-decoration:underline">Nullstill her</span></div>
     </div>
 
@@ -10107,18 +10137,18 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div id="form-register" style="display:none">
       <div style="display:flex;gap:10px;margin-bottom:12px">
         <div style="flex:1">
-          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Fornavn</label>
+          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="First name">Fornavn</label>
           <input id="reg-firstname" type="text" placeholder="Ola" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         </div>
         <div style="flex:1">
-          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Etternavn</label>
+          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Last name">Etternavn</label>
           <input id="reg-lastname" type="text" placeholder="Nordmann" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         </div>
       </div>
       <div style="margin-bottom:12px">
-        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Fødselsdato</label>
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Date of birth">Fødselsdato</label>
         <input id="reg-birthdate" type="date" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-        <div style="font-size:10px;color:var(--muted);margin-top:4px">🔞 Du må være minst 15 år. 15–17 år får noen begrensninger.</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px" data-en="🔞 You must be at least 15. Ages 15–17 have some restrictions.">🔞 Du må være minst 15 år. 15–17 år får noen begrensninger.</div>
       </div>
       <div style="margin-bottom:12px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Mobilnummer <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(valgfritt)</span></label>
@@ -10126,18 +10156,18 @@ sb.auth.onAuthStateChange(async (event, session) => {
           <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--muted);white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:6px"><svg viewBox="0 0 22 16" width="18" height="13" style="border-radius:2px"><rect width="22" height="16" fill="#ba0c2f"/><rect x="6" width="4" height="16" fill="#fff"/><rect y="6" width="22" height="4" fill="#fff"/><rect x="7" width="2" height="16" fill="#002868"/><rect y="7" width="22" height="2" fill="#002868"/></svg> +47</div>
           <input id="reg-phone" type="tel" placeholder="12 34 56 78" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" maxlength="8">
         </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:4px">Skriv bare 8 siffer – ingen mellomrom nødvendig</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px" data-en="Just enter 8 digits – no spaces needed">Skriv bare 8 siffer – ingen mellomrom nødvendig</div>
       </div>
       <div style="margin-bottom:12px">
-        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">E-post</label>
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Email">E-post</label>
         <input id="reg-email" type="email" placeholder="din@epost.no" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
       </div>
       <div style="margin-bottom:16px">
-        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Passord</label>
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Password">Passord</label>
         <input id="reg-password" type="password" placeholder="Minimum 6 tegn" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doRegister()">
       </div>
       <div id="reg-error" style="display:none;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--red);margin-bottom:12px"></div>
-      <button onclick="doRegister()" id="register-btn" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">Opprett konto</button>
+      <button onclick="doRegister()" id="register-btn" data-en="Create account" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">Opprett konto</button>
       <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.5">🔞 Du må være minst <strong>15 år</strong> for å bruke Tokt.</div>
       <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.5">Ved å registrere deg godtar du våre <a href="/terms.html#del1" target="_blank" style="color:var(--accent)">brukervilkår</a> og <a href="/terms.html#del2" target="_blank" style="color:var(--accent)">personvernregler</a></div>
     </div>
@@ -10499,7 +10529,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
         </svg>
         <div style="font-family:'Skranji',sans-serif;font-size:38px;font-weight:700;color:#fff;letter-spacing:3px;text-shadow:0 2px 12px rgba(0,0,0,.2)">Tokt<span style="font-size:20px;opacity:.8">.app</span></div>
       </div>
-      <div style="font-size:14px;color:rgba(255,255,255,0.85);font-weight:500;letter-spacing:.5px">Ekte oppdrag. Ekte penger.</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.85);font-weight:500;letter-spacing:.5px" data-en="Real tasks. Real money.">Ekte oppdrag. Ekte penger.</div>
       <!-- Floating emojis -->
       <div style="position:absolute;top:16px;left:20px;font-size:22px;opacity:.7">🗺️</div>
       <div style="position:absolute;top:12px;right:20px;font-size:22px;opacity:.7">⚡</div>
@@ -10511,8 +10541,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
       
       <!-- What is Tokt -->
       <div style="text-align:center;margin-bottom:22px">
-        <div style="font-size:19px;font-weight:700;margin-bottom:8px;color:var(--text)">Velkommen til Tokt! 👋</div>
-        <div style="font-size:14px;color:var(--muted);line-height:1.65">Finn småjobber nær deg på kartet – eller tilby dine egne tjenester til naboer og folk i nærområdet.</div>
+        <div style="font-size:19px;font-weight:700;margin-bottom:8px;color:var(--text)" data-en="Welcome to Tokt! 👋">Velkommen til Tokt! 👋</div>
+        <div style="font-size:14px;color:var(--muted);line-height:1.65" data-en="Find small jobs near you on the map – or offer your own services to neighbours and people nearby.">Finn småjobber nær deg på kartet – eller tilby dine egne tjenester til naboer og folk i nærområdet.</div>
       </div>
 
       <!-- 3 key points -->
@@ -10520,35 +10550,35 @@ sb.auth.onAuthStateChange(async (event, session) => {
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:12px">
           <div style="font-size:22px;flex-shrink:0">📋</div>
           <div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)">Legg ut et oppdrag</div>
-            <div style="font-size:12px;color:var(--muted)">Trenger du hjelp? Post et oppdrag og få søkere</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)" data-en="Post a task">Legg ut et oppdrag</div>
+            <div style="font-size:12px;color:var(--muted)" data-en="Need help? Post a task and get applicants">Trenger du hjelp? Post et oppdrag og få søkere</div>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:12px">
           <div style="font-size:22px;flex-shrink:0">🏪</div>
           <div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)">Tilby en tjeneste</div>
-            <div style="font-size:12px;color:var(--muted)">Hårklipp, snømåking, hundeluftning – vis hva du kan</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)" data-en="Offer a service">Tilby en tjeneste</div>
+            <div style="font-size:12px;color:var(--muted)" data-en="Haircuts, snow clearing, dog walking – show what you can do">Hårklipp, snømåking, hundeluftning – vis hva du kan</div>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:12px">
           <div style="font-size:22px;flex-shrink:0">💬</div>
           <div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)">Avtal og gjør det</div>
-            <div style="font-size:12px;color:var(--muted)">Chat, bli enige og betal via Vipps</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)" data-en="Agree and get it done">Avtal og gjør det</div>
+            <div style="font-size:12px;color:var(--muted)" data-en="Chat, agree, and pay via Vipps">Chat, bli enige og betal via Vipps</div>
           </div>
         </div>
       </div>
 
       <!-- Buttons -->
       <div style="display:flex;flex-direction:column;gap:10px">
-        <button onclick="dismissWelcome('register')" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 16px rgba(168,85,247,0.3)">
+        <button onclick="dismissWelcome('register')" data-en="Get started – free 🚀" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 16px rgba(168,85,247,0.3)">
           Kom i gang – gratis 🚀
         </button>
-        <button onclick="dismissWelcome('explore')" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:14px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
+        <button onclick="dismissWelcome('explore')" data-en="Explore the map first 🗺️" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:14px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
           Utforsk kartet først 🗺️
         </button>
-        <button onclick="dismissWelcome('login')" style="width:100%;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;padding:4px">
+        <button onclick="dismissWelcome('login')" data-en="Have an account? Log in" style="width:100%;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;padding:4px">
           Har du konto? Logg inn
         </button>
       </div>
@@ -10557,15 +10587,15 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div style="display:flex;justify-content:center;gap:20px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
         <div style="text-align:center">
           <div style="font-size:16px;font-weight:800;color:var(--accent)">100%</div>
-          <div style="font-size:10px;color:var(--muted)">Gratis å bruke</div>
+          <div style="font-size:10px;color:var(--muted)" data-en="Free to use">Gratis å bruke</div>
         </div>
         <div style="text-align:center">
           <div style="font-size:16px;font-weight:800;color:var(--green)">0%</div>
-          <div style="font-size:10px;color:var(--muted)">Ingen provisjon</div>
+          <div style="font-size:10px;color:var(--muted)" data-en="No commission">Ingen provisjon</div>
         </div>
         <div style="text-align:center">
           <div style="display:flex;align-items:center;justify-content:center;height:20px;color:var(--gold)"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg></div>
-          <div style="font-size:10px;color:var(--muted)">Bygg din rang</div>
+          <div style="font-size:10px;color:var(--muted)" data-en="Build your rank">Bygg din rang</div>
         </div>
       </div>
 
