@@ -9874,7 +9874,11 @@ async function deleteMyAccount() {
   const { error } = await sb.rpc('delete_my_account');
   if(error) {
     console.error('delete_my_account', error);
-    showToast(en ? '⚠️ Could not delete account. Try again.' : '⚠️ Kunne ikke slette kontoen. Prøv igjen.');
+    alert((en ? 'Delete failed:\n\n' : 'Sletting feilet:\n\n')
+      + (error.message || 'Ukjent feil')
+      + (error.code ? ('\n\nKode: ' + error.code) : '')
+      + (error.details ? ('\n\nDetaljer: ' + error.details) : ''));
+    showToast(en ? '⚠️ Could not delete account.' : '⚠️ Kunne ikke slette kontoen.');
     return;
   }
   try { await sb.auth.signOut(); } catch(e) {}
