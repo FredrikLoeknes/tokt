@@ -1521,9 +1521,9 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 
 <!-- VIEW TOGGLE: Alt / Oppdrag / Tjenester -->
 <div id="view-toggle" style="position:fixed;top:120px;left:50%;transform:translateX(-50%);z-index:95;display:flex;background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:3px;box-shadow:var(--shadow-lg);gap:2px">
-  <button class="vt-btn active" id="vt-all" onclick="setViewMode('all')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>Alt</button>
-  <button class="vt-btn" id="vt-quests" onclick="setViewMode('quests')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 10h6M9 14h6M9 18h4"/></svg>Oppdrag</button>
-  <button class="vt-btn" id="vt-services" onclick="setViewMode('services')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-4h14l1 4"/><path d="M4 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 11v8h14v-8"/><path d="M9 19v-4h4v4"/></svg>Tilbud</button>
+  <button class="vt-btn active" id="vt-all" onclick="setViewMode('all')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg><span data-en="All">Alt</span></button>
+  <button class="vt-btn" id="vt-quests" onclick="setViewMode('quests')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 10h6M9 14h6M9 18h4"/></svg><span data-en="Quests">Oppdrag</span></button>
+  <button class="vt-btn" id="vt-services" onclick="setViewMode('services')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-4h14l1 4"/><path d="M4 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 11v8h14v-8"/><path d="M9 19v-4h4v4"/></svg><span data-en="Offers">Tilbud</span></button>
 </div>
 
 <!-- TIPS BAR -->
@@ -1926,9 +1926,9 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     <button onclick="closeLeaderboard()" class="lb-close">×</button>
   </div>
   <div class="lb-seg">
-    <button class="lb-seg-btn on" id="lbseg-all"   onclick="switchLbScope('all')">Alle</button>
-    <button class="lb-seg-btn soon" id="lbseg-local" onclick="lbSegSoon('👋 Lokal toppliste kommer snart!','👋 Local leaderboard coming soon!')">Lokalt</button>
-    <button class="lb-seg-btn soon" id="lbseg-week"  onclick="lbSegSoon('👋 Ukens toppliste kommer snart!','👋 Weekly leaderboard coming soon!')">Denne uka</button>
+    <button class="lb-seg-btn on" id="lbseg-all"   onclick="switchLbScope('all')"><span data-en="All">Alle</span></button>
+    <button class="lb-seg-btn soon" id="lbseg-local" onclick="lbSegSoon('👋 Lokal toppliste kommer snart!','👋 Local leaderboard coming soon!')"><span data-en="Local">Lokalt</span></button>
+    <button class="lb-seg-btn soon" id="lbseg-week"  onclick="lbSegSoon('👋 Ukens toppliste kommer snart!','👋 Weekly leaderboard coming soon!')"><span data-en="This week">Denne uka</span></button>
   </div>
   <div class="lb-listhead" id="lb-top-questers-title">Topp-utførere</div>
   <div class="lb-list" id="lb-list"></div>
@@ -1936,7 +1936,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 </div>
 
 <!-- LIST TOGGLE (floating, on map) -->
-<button id="list-toggle-btn" onclick="openListView()">☰ Liste · <span id="list-toggle-count">0</span></button>
+<button id="list-toggle-btn" onclick="openListView()"><span data-en="☰ List · ">☰ Liste · </span><span id="list-toggle-count">0</span></button>
 
 <!-- LIST VIEW (drabar skuff over kartet, dismissible til fullt kart) -->
 <div id="list-view">
@@ -2003,7 +2003,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     <div class="zoom-divider"></div>
     <button class="zoom-btn" onclick="if(window.map){window.map.setZoom(window.map.getZoom()-1)}">−</button>
     <div class="zoom-divider"></div>
-    <button class="zoom-btn" onclick="addMarkers();showToast('🔄 Oppdatert!')" title="Refresh quests" style="font-size:14px">↺</button>
+    <button class="zoom-btn" onclick="addMarkers();showToast(NE('🔄 Oppdatert!','🔄 Refreshed!'))" title="Refresh quests" style="font-size:14px">↺</button>
   </div>
 </div>
 
@@ -2427,13 +2427,13 @@ const LANGUAGES = {
     toastFilters: '✅ Filtre oppdatert!',
     toastLogin: '👋 Logg inn med Vipps for å ta oppdrag',
     // Rating
-    rateTitle: 'Oppdrag fullført!',
+    rateTitle: NE('Oppdrag fullført!','Task completed!'),
     rateSubtitle: 'Din vurdering hjelper samfunnet',
     rateTapStar: 'Trykk en stjerne for å vurdere',
     rateComment: 'Valgfritt: Legg igjen en kommentar…',
     submitRating: 'Send vurdering',
     skipRating: 'Hopp over',
-    ratingSubmitted: '⭐ Vurdering sendt – takk!',
+    ratingSubmitted: NE('⭐ Vurdering sendt – takk!','⭐ Rating submitted – thanks!'),
     rateLabels: ['','😕 Dårlig','😐 OK','🙂 Bra','😊 Veldig bra','🤩 Fantastisk!'],
     // Achievement
     firstQuestTitle: 'Første oppdrag',
@@ -2612,6 +2612,8 @@ const LANGUAGES = {
 
 // ── Active language (default: Norwegian) ──
 let currentLang = localStorage.getItem('tokt-lang') || 'no';
+// Kort hjelper for dynamiske (JS-rendrede) strenger
+function NE(no,en){ return currentLang==='en' ? en : no; }
 
 document.addEventListener('DOMContentLoaded', () => {
   try { applyLanguage(); } catch(e) {}
@@ -3072,7 +3074,7 @@ async function renderLeaderboardPosition(myDone){
   if(!myDone || myDone < 1){
     el.style.display = 'flex';
     rankEl.textContent = '–';
-    txtEl.innerHTML = '<b>Ikke på topplista ennå</b><br>Fullfør ditt første oppdrag for å klatre inn.';
+    txtEl.innerHTML = NE('<b>Ikke på topplista ennå</b><br>Fullfør ditt første oppdrag for å klatre inn.','<b>Not on the leaderboard yet</b><br>Complete your first task to climb in.');
     return;
   }
   try {
@@ -3082,7 +3084,7 @@ async function renderLeaderboardPosition(myDone){
     const tot = Math.max(total || 0, pos);
     el.style.display = 'flex';
     rankEl.textContent = '#' + pos;
-    txtEl.innerHTML = `<b>av ${tot} på topplista</b><br>${pos > 1 ? 'Fullfør flere for å klatre høyere.' : 'Du leder topplista! 🏆'}`;
+    txtEl.innerHTML = `<b>${NE('av','of')} ${tot} ${NE('på topplista','on the leaderboard')}</b><br>${pos > 1 ? NE('Fullfør flere for å klatre høyere.','Complete more to climb higher.') : NE('Du leder topplista! 🏆','You lead the leaderboard! 🏆')}`;
   } catch(e){
     console.error('renderLeaderboardPosition:', e?.message);
     el.style.display = 'none';
@@ -3426,7 +3428,7 @@ function setViewMode(mode) {
   clusterMarkers();
   updateListToggleCount();
   if(document.getElementById('list-view')?.classList.contains('open')) renderListView();
-  showToast(mode === 'all' ? '🗺️ Viser alt' : mode === 'quests' ? '📋 Viser kun oppdrag' : '🏪 Viser kun tilbud');
+  showToast(mode === 'all' ? NE('🗺️ Viser alt','🗺️ Showing all') : mode === 'quests' ? NE('📋 Viser kun oppdrag','📋 Showing tasks only') : NE('🏪 Viser kun tilbud','🏪 Showing offers only'));
 }
 
 function addQuestMarker(q) {
@@ -4168,11 +4170,11 @@ async function confirmPaymentReceived(convId, questId) {
   const { data: convCheck } = await sb.from('conversations')
     .select('taker_id, status').eq('id', convId).single();
   if(!convCheck || convCheck.taker_id !== currentUser?.id) {
-    showToast('⚠️ Kun utføreren kan bekrefte betaling');
+    showToast(NE('⚠️ Kun utføreren kan bekrefte betaling','⚠️ Only the taker can confirm payment'));
     return;
   }
   if(convCheck.status !== 'accepted') {
-    showToast('⚠️ Oppdraget må være godkjent først');
+    showToast(NE('⚠️ Oppdraget må være godkjent først','⚠️ The task must be approved first'));
     return;
   }
 
@@ -4203,7 +4205,7 @@ async function confirmPaymentReceived(convId, questId) {
   }
 
   await recomputeQuestsCompleted(currentUser.id);
-  showToast('🎉 Betaling bekreftet og oppdrag fullført!');
+  showToast(NE('🎉 Betaling bekreftet og oppdrag fullført!','🎉 Payment confirmed and task completed!'));
   loadMyQuests();
   addMarkers();
   if(currentUser) loadUserProfile(currentUser);
@@ -4214,9 +4216,9 @@ async function confirmPaymentReceived(convId, questId) {
 async function markGiverPaid(convId, questId) {
   const { data: conv } = await sb.from('conversations')
     .select('giver_id, taker_id, status, quest:quest_id(title)').eq('id', convId).single();
-  if(!conv || conv.giver_id !== currentUser?.id) { showToast('⚠️ Kun oppdragsgiver kan markere betalt'); return; }
-  if(conv.status !== 'accepted') { showToast('⚠️ Oppdraget er ikke aktivt'); return; }
-  if(!confirm('Bekrefte at du har betalt utføreren via Vipps?')) return;
+  if(!conv || conv.giver_id !== currentUser?.id) { showToast(NE('⚠️ Kun oppdragsgiver kan markere betalt','⚠️ Only the poster can mark as paid')); return; }
+  if(conv.status !== 'accepted') { showToast(NE('⚠️ Oppdraget er ikke aktivt','⚠️ The task is not active')); return; }
+  if(!confirm(NE('Bekrefte at du har betalt utføreren via Vipps?','Confirm that you have paid the taker via Vipps?'))) return;
 
   await sb.from('conversations').update({ giver_paid_at: new Date().toISOString() }).eq('id', convId);
   await sb.from('notifications').insert({
@@ -4226,7 +4228,7 @@ async function markGiverPaid(convId, questId) {
     body: `${conv.quest?.title || 'Oppdragsgiver'} – oppdragsgiver har markert betaling som sendt. Bekreft når du har mottatt den.`,
     link_id: convId
   });
-  showToast('✅ Markert som betalt. Venter på utførers bekreftelse.');
+  showToast(NE('✅ Markert som betalt. Venter på utførers bekreftelse.','✅ Marked as paid. Waiting for the taker to confirm.'));
   loadMyQuests();
 }
 
@@ -4235,10 +4237,10 @@ async function markGiverPaid(convId, questId) {
 async function markWorkDone(convId, questId) {
   const { data: conv } = await sb.from('conversations')
     .select('taker_id, status, work_done_at').eq('id', convId).single();
-  if(!conv || conv.taker_id !== currentUser?.id) { showToast('⚠️ Kun utfører kan melde oppdraget utført'); return; }
-  if(conv.status !== 'accepted') { showToast('⚠️ Oppdraget er ikke aktivt'); return; }
-  if(conv.work_done_at) { showToast('Allerede meldt utført'); return; }
-  if(!confirm('Melde oppdraget som utført? Oppdragsgiver får beskjed om å betale.')) return;
+  if(!conv || conv.taker_id !== currentUser?.id) { showToast(NE('⚠️ Kun utfører kan melde oppdraget utført','⚠️ Only the taker can mark the task as done')); return; }
+  if(conv.status !== 'accepted') { showToast(NE('⚠️ Oppdraget er ikke aktivt','⚠️ The task is not active')); return; }
+  if(conv.work_done_at) { showToast(NE('Allerede meldt utført','Already marked as done')); return; }
+  if(!confirm(NE('Melde oppdraget som utført? Oppdragsgiver får beskjed om å betale.','Mark the task as done? The poster will be notified to pay.'))) return;
 
   // Server-side: setter work_done_at + varsler oppdragsgiver trygt (uavhengig av RLS)
   const { error } = await sb.rpc('mark_work_done', { p_conv_id: convId });
@@ -4252,12 +4254,12 @@ async function markWorkDone(convId, questId) {
       link_id: convId
     });
   }
-  showToast('🔨 Oppdragsgiver er varslet. Klar for betaling!');
+  showToast(NE('🔨 Oppdragsgiver er varslet. Klar for betaling!','🔨 The poster has been notified. Ready for payment!'));
   loadMyQuests();
 }
 
 async function applyJob() {
-  if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å søke på oppdrag'); return; }
+  if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å søke på oppdrag','👋 Log in to apply for tasks')); return; }
 
   const applyPanel = document.getElementById('job-panel');
   const questId = applyPanel?.dataset?.questId;
@@ -4265,13 +4267,13 @@ async function applyJob() {
 
   // Block applying to own quest first
   if(giverId && giverId === currentUser.id) {
-    showToast('⚠️ Du kan ikke søke på ditt eget oppdrag');
+    showToast(NE('⚠️ Du kan ikke søke på ditt eget oppdrag',"⚠️ You can't apply to your own task"));
     return;
   }
 
   // Aldersgrense: mindreårige kan ikke ta 18+-oppdrag
   if(isCurrentUserMinor() && applyPanel?.dataset?.adultOnly === '1') {
-    showToast('🔞 Dette oppdraget er kun for brukere over 18 år');
+    showToast(NE('🔞 Dette oppdraget er kun for brukere over 18 år','🔞 This task is for users over 18 only'));
     return;
   }
 
@@ -4279,7 +4281,7 @@ async function applyJob() {
   if(questId) {
     const { data: qOwner } = await sb.from('quests').select('user_id').eq('id', questId).single();
     if(qOwner && qOwner.user_id === currentUser.id) {
-      showToast('⚠️ Du kan ikke søke på ditt eget oppdrag');
+      showToast(NE('⚠️ Du kan ikke søke på ditt eget oppdrag',"⚠️ You can't apply to your own task"));
       return;
     }
   }
@@ -4287,7 +4289,7 @@ async function applyJob() {
   // Check phone number before applying (eget nummer fra user_contacts)
   const myPhone = await getContactPhone(currentUser.id);
   if(!myPhone) {
-    showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) for at oppdragsgiver kan betale deg.');
+    showPhoneRequired(NE('Du må legge til telefonnummer (Vipps-nummer) for at oppdragsgiver kan betale deg.','You must add a phone number (Vipps number) so the poster can pay you.'));
     return;
   }
 
@@ -4320,7 +4322,7 @@ async function applyJob() {
     status: 'pending'
   }).select().single();
 
-  if(error) { showToast('❌ Feil: ' + error.message); return; }
+  if(error) { showToast(NE('❌ Feil: ','❌ Error: ') + error.message); return; }
 
   logEvent('quest_applied');
   closePanel();
@@ -4332,8 +4334,8 @@ async function applyJob() {
   // Check if first-come quest - give achievement immediately
   const { data: questData } = await sb.from('quests').select('is_first_come, title').eq('id', questId).single();
   if(questData?.is_first_come) {
-    showToast('⚡ Oppdrag tildelt! Du er førstemann til mølla!');
-    setTimeout(() => showAchievement('⚡', 'Første oppdrag!', 'Du fikk ditt første oppdrag – førstemann til mølla!'), 1000);
+    showToast(NE('⚡ Oppdrag tildelt! Du er førstemann til mølla!','⚡ Task assigned! You were first in line!'));
+    setTimeout(() => showAchievement('⚡', NE('Første oppdrag!','First task!'), NE('Du fikk ditt første oppdrag – førstemann til mølla!','You got your first task – first in line!')), 1000);
     await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
     await sb.from('conversations').update({ status: 'accepted' }).eq('id', conv.id);
     // Notify giver that quest was taken
@@ -4345,8 +4347,8 @@ async function applyJob() {
       link_id: conv.id
     });
   } else {
-    showToast('✦ Søknad sendt! Venter på godkjenning fra oppdragsgiver.');
-    setTimeout(() => showAchievement('📨', 'Første søknad!', 'Du har søkt på ditt første oppdrag. Venter på godkjenning!'), 1800);
+    showToast(NE('✦ Søknad sendt! Venter på godkjenning fra oppdragsgiver.',"✦ Application sent! Waiting for the poster's approval."));
+    setTimeout(() => showAchievement('📨', NE('Første søknad!','First application!'), NE('Du har søkt på ditt første oppdrag. Venter på godkjenning!','You applied to your first task. Waiting for approval!')), 1800);
     // Notify giver about new applicant
     await sb.from('notifications').insert({
       user_id: giverId,
@@ -4359,7 +4361,7 @@ async function applyJob() {
   openChat(conv.id, applyPanel?.dataset?.questTitle || 'Oppdrag');
 }
 
-function openModal() { if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å legge ut oppdrag'); return; } const at = document.getElementById('adult-toggle'); if(at){ at.classList.remove('on'); at.dataset.locked = ''; } applyMinorUIRestrictions(); const catSel = document.getElementById('quest-category-input'); if(catSel) checkCategoryWarning(catSel.value); document.getElementById('modal-overlay').classList.add('open'); updateQuestPreview(); }
+function openModal() { if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å legge ut oppdrag','👋 Log in to post a task')); return; } const at = document.getElementById('adult-toggle'); if(at){ at.classList.remove('on'); at.dataset.locked = ''; } applyMinorUIRestrictions(); const catSel = document.getElementById('quest-category-input'); if(catSel) checkCategoryWarning(catSel.value); document.getElementById('modal-overlay').classList.add('open'); updateQuestPreview(); }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 
 // Live marker preview in the "Legg ut" modal – mirrors how the marker will look to others
@@ -4416,7 +4418,7 @@ async function previewImage(input) {
 
   // Size check – 5MB
   if(file.size > 5 * 1024 * 1024) {
-    showToast('⚠️ Bildet er for stort. Maks 5MB.');
+    showToast(NE('⚠️ Bildet er for stort. Maks 5MB.','⚠️ Image is too large. Max 5MB.'));
     input.value = '';
     return;
   }
@@ -4454,7 +4456,7 @@ async function postJob() {
   if(!currentUser) { openAuth('login'); return; }
 
   const title = document.getElementById('quest-title-input')?.value?.trim();
-  if(!title) { showToast('⚠️ Legg til en tittel på oppdraget'); return; }
+  if(!title) { showToast(NE('⚠️ Legg til en tittel på oppdraget','⚠️ Add a title for the task')); return; }
 
   const category = document.getElementById('quest-category-input')?.value || 'Annet';
   const description = document.getElementById('quest-desc-input')?.value?.trim() || '';
@@ -4561,7 +4563,7 @@ async function postJob() {
 
     if(imgError) {
       console.warn('Image upload failed:', imgError.message);
-      showToast('⚠️ Oppdrag lagt ut, men bilde feilet: ' + imgError.message);
+      showToast(NE('⚠️ Oppdrag lagt ut, men bilde feilet: ','⚠️ Task posted, but image failed: ') + imgError.message);
     } else if(imgData) {
       const { data: urlData } = sb.storage.from('quest-images').getPublicUrl(path);
       if(urlData?.publicUrl) {
@@ -4721,8 +4723,8 @@ function applyFilters() {
   updateListToggleCount();
   if(document.getElementById('list-view')?.classList.contains('open')) renderListView();
   showToast(listVisible === 0
-    ? '🔍 Ingen treff – prøv å justere filteret'
-    : `🔍 ${listVisible} treff · ${sortLabel}`);
+    ? NE('🔍 Ingen treff – prøv å justere filteret','🔍 No matches – try adjusting the filter')
+    : `🔍 ${listVisible} ${NE('treff','matches')} · ${sortLabel}`);
 }
 
 // Utgangspunkt for avstand: brukerens posisjon, ellers kartsenter
@@ -5142,9 +5144,9 @@ async function loadLeaderboard() {
     return `
       <div class="lb-pos ${posCls[i]||''}">${i+1}</div>
       ${avatarHTML('lb-av', p.name, p.avatar)}
-      <div class="lb-who"><div class="lb-nm">${p.name}${crown}${isMe?' <span class="lb-you">DEG</span>':''}</div><div class="lb-meta">${rating}</div></div>
+      <div class="lb-who"><div class="lb-nm">${p.name}${crown}${isMe?(' <span class="lb-you">'+NE('DEG','YOU')+'</span>'):''}</div><div class="lb-meta">${rating}</div></div>
       ${medalHTML(ri,'xs')}
-      <div class="lb-right"><div class="lb-cnt">${p.quests}</div><div class="lb-cntl">fullført</div></div>`;
+      <div class="lb-right"><div class="lb-cnt">${p.quests}</div><div class="lb-cntl">${NE('fullført','completed')}</div></div>`;
   };
 
   if(listEl) {
@@ -5220,8 +5222,8 @@ async function renderMyLeaderboardRow(combined, mineEl) {
     mineEl.innerHTML = `
       <div class="lb-pos">#${myIdx+1}</div>
       ${avatarHTML('lb-av', me.name, me.avatar)}
-      <div class="lb-who"><div class="lb-nm">${me.name} <span class="lb-you">DEG</span></div><div class="lb-meta">${rank.name}${rating}</div></div>
-      <div class="lb-right"><div class="lb-cnt" style="color:var(--accent2)">${me.quests}</div><div class="lb-cntl">fullført</div></div>`;
+      <div class="lb-who"><div class="lb-nm">${me.name} <span class="lb-you">${NE('DEG','YOU')}</span></div><div class="lb-meta">${rank.name}${rating}</div></div>
+      <div class="lb-right"><div class="lb-cnt" style="color:var(--accent2)">${me.quests}</div><div class="lb-cntl">${NE('fullført','completed')}</div></div>`;
     mineEl.onclick = () => { closeLeaderboard(); openProfilePage(); };
     return;
   }
@@ -5232,8 +5234,8 @@ async function renderMyLeaderboardRow(combined, mineEl) {
   mineEl.innerHTML = `
     <div class="lb-pos">–</div>
     ${avatarHTML('lb-av', name, me?.avatar_url)}
-    <div class="lb-who"><div class="lb-nm">${name} <span class="lb-you">DEG</span></div><div class="lb-meta">Ikke på lista ennå</div></div>
-    <div class="lb-right"><div class="lb-cnt" style="color:var(--muted);font-size:12px">Fullfør 1</div><div class="lb-cntl">for å bli med</div></div>`;
+    <div class="lb-who"><div class="lb-nm">${name} <span class="lb-you">${NE('DEG','YOU')}</span></div><div class="lb-meta">${NE('Ikke på lista ennå','Not on the list yet')}</div></div>
+    <div class="lb-right"><div class="lb-cnt" style="color:var(--muted);font-size:12px">${NE('Fullfør 1','Complete 1')}</div><div class="lb-cntl">${NE('for å bli med','to join')}</div></div>`;
   mineEl.onclick = () => { closeLeaderboard(); openProfilePage(); };
 }
 
@@ -5341,10 +5343,10 @@ const ACHIEVEMENTS = [
 ];
 
 const BRAGD_GROUPS = [
-  { cat:'mil',   label:'Milepæler' },
-  { cat:'giver', label:'Oppdragsgiver' },
-  { cat:'svc',   label:'Tilbyder' },
-  { cat:'trust', label:'Tillit & bidrag' }
+  { cat:'mil',   label:'Milepæler',      labelEn:'Milestones' },
+  { cat:'giver', label:'Oppdragsgiver',  labelEn:'Posting tasks' },
+  { cat:'svc',   label:'Tilbyder',       labelEn:'Offering services' },
+  { cat:'trust', label:'Tillit & bidrag', labelEn:'Trust & contribution' }
 ];
 
 function openProfilePage() {
@@ -5699,7 +5701,7 @@ async function loadProfilePage(userId, isOwn) {
   if(ppDelLabel) ppDelLabel.textContent = currentLang === 'en' ? 'Delete account' : 'Slett konto';
   const ppInstall = document.getElementById('pp-install-section');
   if(ppInstall) ppInstall.style.display = (isOwn && canInstallApp()) ? 'block' : 'none';
-  document.getElementById('pp-header-title').textContent = isOwn ? 'Min profil' : 'Profil';
+  document.getElementById('pp-header-title').textContent = isOwn ? NE('Min profil','My profile') : NE('Profil','Profile');
   const ppReport = document.getElementById('pp-report-btn');
   if(ppReport) ppReport.style.display = isOwn ? 'none' : 'inline-block';
   const ppPage = document.getElementById('profile-page');
@@ -5711,7 +5713,7 @@ async function loadProfilePage(userId, isOwn) {
 
   // Hent profildata
   const { data: profile } = await sb.from('profiles').select('*').eq('id', userId).single();
-  if(!profile) { showToast('❌ Fant ikke profilen'); return; }
+  if(!profile) { showToast(NE('❌ Fant ikke profilen','❌ Profile not found')); return; }
   // Telefon hentes fra user_contacts for egen profil (profiles.phone droppes i Fase 3)
   if(isOwn) profile.phone = await getContactPhone(userId);
 
@@ -5790,13 +5792,13 @@ async function loadProfilePage(userId, isOwn) {
 
   // Reise-kort: rang + nivå
   document.getElementById('pp-rank-name').textContent = rank.name;
-  document.getElementById('pp-rank-level').textContent = `Nivå ${rankIndex} av ${RANKS.length}`;
+  document.getElementById('pp-rank-level').textContent = `${NE('Nivå','Level')} ${rankIndex} ${NE('av','of')} ${RANKS.length}`;
 
   // Tillit-stripe
   document.getElementById('pp-stat-quests').textContent = questsDone;
   document.getElementById('pp-stat-rating').textContent = avgRating ? '★ ' + avgRating.toFixed(1) : '–';
   const ratLabel = document.getElementById('pp-stat-rating-label');
-  if(ratLabel) ratLabel.textContent = ratings?.length ? `${ratings.length} vurdering${ratings.length===1?'':'er'}` : 'Vurdering';
+  if(ratLabel) ratLabel.textContent = ratings?.length ? (currentLang==='en' ? `${ratings.length} rating${ratings.length===1?'':'s'}` : `${ratings.length} vurdering${ratings.length===1?'':'er'}`) : NE('Vurdering','Rating');
   const memShort = profile.created_at
     ? new Date(profile.created_at).toLocaleDateString(currentLang==='en'?'en-US':'nb-NO', { month:'short', year:'numeric' })
     : '–';
@@ -5812,11 +5814,11 @@ async function loadProfilePage(userId, isOwn) {
     const progress = ((questsDone - prevMin) / (nextRank.min - prevMin)) * 100;
     const remaining = Math.max(nextRank.min - questsDone, 0);
     document.getElementById('pp-prog-fill').style.width = Math.max(progress, 3) + '%';
-    document.getElementById('pp-prog-left').innerHTML = `<b>${questsDone} / ${nextRank.min}</b> oppdrag til ${nextRank.name}`;
-    document.getElementById('pp-prog-right').innerHTML = `${remaining} igjen <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg>`;
+    document.getElementById('pp-prog-left').innerHTML = `<b>${questsDone} / ${nextRank.min}</b>${NE(' oppdrag til ',' tasks to ')}${nextRank.name}`;
+    document.getElementById('pp-prog-right').innerHTML = `${remaining} ${NE('igjen','left')} <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg>`;
   } else {
     document.getElementById('pp-prog-fill').style.width = '100%';
-    document.getElementById('pp-prog-left').innerHTML = '<b>Høyeste rang oppnådd!</b> 🌟';
+    document.getElementById('pp-prog-left').innerHTML = NE('<b>Høyeste rang oppnådd!</b> 🌟','<b>Highest rank achieved!</b> 🌟');
     document.getElementById('pp-prog-right').textContent = '';
   }
 
@@ -5878,6 +5880,34 @@ function renderRankLadder(questsDone) {
   }).join('');
 }
 
+// Engelske oversettelser for prestasjoner (id -> [title, desc])
+const ACH_EN = {
+  m1:['Get started','Complete your first task'],
+  m5:['Off to a good start','Complete 5 tasks'],
+  m10:['Experienced','Complete 10 tasks'],
+  m25:['Seasoned','Complete 25 tasks'],
+  m50:['Veteran','Complete 50 tasks'],
+  m100:['Master','Complete 100 tasks'],
+  g1:['Task poster','Post your first task'],
+  g10:['Regular poster','Post 10 tasks'],
+  gm1:['Good match','A task you posted was completed'],
+  gm10:['In demand','10 of your tasks were completed'],
+  t1:['Provider','Post your first service'],
+  td1:['Deliverable','Complete your first service deal'],
+  td10:['Regulars','Complete 10 service deals'],
+  ver:['Verified','Confirm your email address'],
+  prof:['Complete profile','Name, phone and verified email'],
+  vary:['Versatile','Complete tasks in 3 different categories'],
+  urg:['Firefighter','Complete an urgent task'],
+  fc:['First mover','Complete a "first come" task'],
+  char:['Kind-hearted','Complete a charity task'],
+  cpost:['Initiator','Post a charity task'],
+  both:['Team spirit','Both post and complete tasks'],
+  star:['Star performer','20 tasks or services (done/given) + 4.5\u2605 \u2014 gives a gold star on your profile picture']
+};
+function achT(a){ return NE(a.title, (ACH_EN[a.id]||[])[0]||a.title); }
+function achD(a){ return NE(a.desc,  (ACH_EN[a.id]||[])[1]||a.desc); }
+
 function renderAchievements(stats) {
   const el = document.getElementById('pp-achievements');
   const total = ACHIEVEMENTS.length;
@@ -5893,12 +5923,12 @@ function renderAchievements(stats) {
     if (remaining < nextRemaining) { nextRemaining = remaining; next = a; }
   });
   const nextHtml = next
-    ? `<span class="bgd-summary-next">Neste: <b>${next.title}</b>${next.prog ? ` · ${nextRemaining} igjen` : ''}</span>`
-    : `<span class="bgd-summary-next">Alle låst opp 🎉</span>`;
+    ? `<span class="bgd-summary-next">${NE('Neste','Next')}: <b>${achT(next)}</b>${next.prog ? ` · ${nextRemaining} ${NE('igjen','left')}` : ''}</span>`
+    : `<span class="bgd-summary-next">${NE('Alle låst opp 🎉','All unlocked 🎉')}</span>`;
 
   let html = `<div class="bgd-summary">
     <div class="bgd-summary-row">
-      <span class="bgd-summary-big">${unlockedCount} av ${total} fullført</span>
+      <span class="bgd-summary-big">${unlockedCount} ${NE('av','of')} ${total} ${NE('fullført','completed')}</span>
       ${nextHtml}
     </div>
     <div class="bgd-thinbar"><i style="width:${Math.max(pct, 2)}%"></i></div>
@@ -5907,12 +5937,12 @@ function renderAchievements(stats) {
   BRAGD_GROUPS.forEach((g, gi) => {
     const items = ACHIEVEMENTS.filter(a => a.cat === g.cat);
     if (!items.length) return;
-    html += `<div class="bgd-grp${gi === 0 ? ' first' : ''}">${g.label}</div><div class="bgd-list">`;
+    html += `<div class="bgd-grp${gi === 0 ? ' first' : ''}">${NE(g.label, g.labelEn||g.label)}</div><div class="bgd-list">`;
     items.forEach(a => {
       const unlocked = a.check(stats);
       let st;
       if (unlocked) {
-        st = `<span class="bgd-st done">${bragdSvg('check')} Fullført</span>`;
+        st = `<span class="bgd-st done">${bragdSvg('check')} ${NE('Fullført','Completed')}</span>`;
       } else if (a.prog) {
         const p = a.prog(stats);
         st = `<span class="bgd-st prog">${Math.min(p.cur, p.max)} / ${p.max}</span>`;
@@ -5921,7 +5951,7 @@ function renderAchievements(stats) {
       }
       html += `<div class="bgd-row ${unlocked ? 'on' : 'off'}">
         <span class="bgd-ic">${bragdSvg(a.icon)}</span>
-        <div class="bgd-mid"><div class="bgd-tt">${a.title}</div><div class="bgd-dd">${a.desc}</div></div>
+        <div class="bgd-mid"><div class="bgd-tt">${achT(a)}</div><div class="bgd-dd">${achD(a)}</div></div>
         ${st}
       </div>`;
     });
@@ -5964,7 +5994,7 @@ async function loadProfileReviews(userId) {
     return;
   }
   if(!ratings || ratings.length === 0) {
-    wrap.innerHTML = '<div style="text-align:center;padding:22px 12px;color:var(--muted);font-size:13px">Ingen vurderinger ennå.<br><span style="font-size:11px;opacity:.7">Vurderinger dukker opp her etter fullførte oppdrag og avtaler.</span></div>';
+    wrap.innerHTML = '<div style="text-align:center;padding:22px 12px;color:var(--muted);font-size:13px">'+NE('Ingen vurderinger ennå.','No ratings yet.')+'<br><span style="font-size:11px;opacity:.7">'+NE('Vurderinger dukker opp her etter fullførte oppdrag og avtaler.',"Ratings appear here after completed tasks and deals.")+'</span></div>';
     return;
   }
 
@@ -6126,15 +6156,15 @@ async function saveContactPhone(phone) {
 async function saveProfileEdits() {
   const name = document.getElementById('pp-edit-name')?.value?.trim();
   const phone = document.getElementById('pp-edit-phone')?.value?.trim();
-  if(!name) { showToast('⚠️ Navn kan ikke være tomt'); return; }
-  if(phone && phone.length < 8) { showToast('⚠️ Telefonnummer må være 8 siffer'); return; }
+  if(!name) { showToast(NE('⚠️ Navn kan ikke være tomt',"⚠️ Name can't be empty")); return; }
+  if(phone && phone.length < 8) { showToast(NE('⚠️ Telefonnummer må være 8 siffer','⚠️ Phone number must be 8 digits')); return; }
 
   const { error } = await sb.from('profiles').update({ full_name: name }).eq('id', currentUser.id);
   if(error) { showToast('❌ ' + error.message); return; }
   const { error: cErr } = await saveContactPhone(phone || null);
   if(cErr) { showToast('❌ ' + cErr.message); return; }
 
-  showToast('✅ Profil oppdatert!');
+  showToast(NE('✅ Profil oppdatert!','✅ Profile updated!'));
   loadProfilePage(currentUser.id, true);
   if(currentUser) await loadUserProfile(currentUser);
 }
@@ -6388,7 +6418,7 @@ function toggleRatingTag(el) {
 }
 
 async function submitRating() {
-  if(!selectedRating) { showToast('⭐ Velg antall stjerner først'); return; }
+  if(!selectedRating) { showToast(NE('⭐ Velg antall stjerner først','⭐ Choose a star rating first')); return; }
   if(!currentUser) return;
 
   const btn = document.getElementById('submit-rating-btn');
@@ -6410,12 +6440,12 @@ async function submitRating() {
   document.getElementById('rating-panel')?.remove();
 
   if(error && !error.message.includes('unique')) {
-    showToast('❌ Kunne ikke lagre vurdering: ' + error.message);
+    showToast(NE('❌ Kunne ikke lagre vurdering: ','❌ Could not save rating: ') + error.message);
     return;
   }
 
-  showToast('⭐ Vurdering sendt – takk!');
-  setTimeout(() => showAchievement('🏆', 'Oppdrag fullført!', 'Du har fullført et oppdrag. XP er lagt til profilen din!'), 600);
+  showToast(NE('⭐ Vurdering sendt – takk!','⭐ Rating submitted – thanks!'));
+  setTimeout(() => showAchievement('🏆', NE('Oppdrag fullført!','Task completed!'), NE('Du har fullført et oppdrag. XP er lagt til profilen din!','You completed a task. XP added to your profile!')), 600);
 
   // Reload profile to show updated rating
   if(currentUser) await loadUserProfile(currentUser);
@@ -6443,7 +6473,7 @@ async function loadNotifications() {
     .limit(20);
 
   if(!notifs || notifs.length === 0) {
-    list.innerHTML = '<div style="padding:24px;text-align:center;font-size:13px;color:var(--muted)">Ingen varsler ennå 🔔</div>';
+    list.innerHTML = '<div style="padding:24px;text-align:center;font-size:13px;color:var(--muted)">'+NE('Ingen varsler ennå 🔔','No notifications yet 🔔')+'</div>';
     return;
   }
 
@@ -6719,7 +6749,7 @@ async function loadMyQuests() {
   const postedEl = document.getElementById('mq-posted');
   const visiblePosted = (posted || []).filter(q => q.status !== 'closed' && q.status !== 'deleted');
   if(visiblePosted.length === 0) {
-    postedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke lagt ut noen oppdrag ennå.<br><span style="font-size:10px;opacity:0.6">(0 aktive oppdrag funnet for denne kontoen)</span><br><br><button onclick="closeMyQuests();openModal()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Legg ut ditt første oppdrag</button></div>';
+    postedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">'+NE('Du har ikke lagt ut noen oppdrag ennå.',"You haven't posted any tasks yet.")+'<br><span style="font-size:10px;opacity:0.6">'+NE('(0 aktive oppdrag funnet for denne kontoen)','(0 active tasks found for this account)')+'</span><br><br><button onclick="closeMyQuests();openModal()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">'+NE('Legg ut ditt første oppdrag','Post your first task')+'</button></div>';
   } else {
     try {
       const grp = { tildelt:[], aktive:[], pauset:[], historikk:[] };
@@ -6811,7 +6841,7 @@ async function loadMyQuests() {
             ${c.work_done_at
               ? `<div style="display:flex;align-items:center;gap:7px;margin-top:12px;font-size:12px;font-weight:700;color:var(--green)">🔨 Du meldte oppdraget utført</div>`
               : `<button onclick="markWorkDone('${c.id}','${q.id}')" style="width:100%;background:var(--surface);border:1.5px solid var(--green);color:var(--green);border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">🔨 Jeg er ferdig – gi beskjed</button>`}
-            <button onclick="if(confirm('Bekrefte at du har mottatt betaling? Dette fullfører oppdraget.')) confirmPaymentReceived('${c.id}','${q.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Jeg har mottatt betaling</button>
+            <button onclick="if(confirm(NE('Bekrefte at du har mottatt betaling? Dette fullfører oppdraget.','Confirm that you have received payment? This completes the task.'))) confirmPaymentReceived('${c.id}','${q.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Jeg har mottatt betaling</button>
             <div style="display:flex;gap:8px;margin-top:8px">
               <button onclick="showChatPaymentInfoFor('${c.id}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>
               <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
@@ -6873,9 +6903,9 @@ async function loadMyQuests() {
 async function editQuestFromPanel() {
   const panel = document.getElementById('job-panel');
   const questId = panel?.dataset?.questId;
-  if(!questId) { showToast('⚠️ Demo-oppdrag kan ikke endres'); return; }
+  if(!questId) { showToast(NE('⚠️ Demo-oppdrag kan ikke endres',"⚠️ Demo tasks can't be edited")); return; }
   const { data: q } = await sb.from('quests').select('*').eq('id', questId).single();
-  if(!q) { showToast('❌ Fant ikke oppdraget'); return; }
+  if(!q) { showToast(NE('❌ Fant ikke oppdraget','❌ Task not found')); return; }
   showEditQuestModal(q);
 }
 
@@ -6900,7 +6930,7 @@ function showEditQuestModal(q) {
         <input id="eq-pay" class="form-input" type="number" value="${q.pay||250}" min="0" max="50000"></div>
       <div class="form-group"><label class="form-label">Kategori</label>
         <select id="eq-category" class="form-select">${cats.map(c=>`<option ${q.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
-      <button onclick="saveQuestEdits('${q.id}')" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">💾 Lagre endringer</button>
+      <button onclick="saveQuestEdits('${q.id}')" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px"><span data-en="💾 Save changes">💾 Lagre endringer</span></button>
     </div>`;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
@@ -6911,19 +6941,19 @@ async function saveQuestEdits(questId) {
   const description = document.getElementById('eq-desc')?.value?.trim();
   const pay = parseInt(document.getElementById('eq-pay')?.value) || 0;
   const category = document.getElementById('eq-category')?.value;
-  if(!title) { showToast('⚠️ Tittel kan ikke være tom'); return; }
+  if(!title) { showToast(NE('⚠️ Tittel kan ikke være tom',"⚠️ Title can't be empty")); return; }
   const { error } = await sb.from('quests').update({ title, description, pay, category }).eq('id', questId);
   if(error) { showToast('❌ ' + error.message); return; }
   document.getElementById('edit-quest-overlay')?.remove();
   closePanel();
-  showToast('✅ Oppdrag oppdatert!');
+  showToast(NE('✅ Oppdrag oppdatert!','✅ Task updated!'));
   await addMarkers();
   loadMyQuests();
 }
 
 async function editServiceById(serviceId) {
   const { data: s } = await sb.from('services').select('*').eq('id', serviceId).single();
-  if(!s) { showToast('❌ Fant ikke tjenesten'); return; }
+  if(!s) { showToast(NE('❌ Fant ikke tjenesten','❌ Service not found')); return; }
   const existing = document.getElementById('edit-svc-overlay');
   if(existing) existing.remove();
   const overlay = document.createElement('div');
@@ -6943,7 +6973,7 @@ async function editServiceById(serviceId) {
         <input id="es-price" class="form-input" type="number" value="${s.price||350}" min="0" max="50000"></div>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button onclick="saveServiceEdits('${s.id}')" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">💾 Lagre</button>
-        <button onclick="if(confirm('Slette tjenesten permanent?')) deleteService('${s.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);color:var(--red);border-radius:12px;padding:14px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">🗑️</button>
+        <button onclick="if(confirm(NE('Slette tjenesten permanent?','Delete the service permanently?'))) deleteService('${s.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);color:var(--red);border-radius:12px;padding:14px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">🗑️</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -6954,11 +6984,11 @@ async function saveServiceEdits(serviceId) {
   const title = document.getElementById('es-title')?.value?.trim();
   const description = document.getElementById('es-desc')?.value?.trim();
   const price = parseInt(document.getElementById('es-price')?.value) || 0;
-  if(!title) { showToast('⚠️ Tittel kan ikke være tom'); return; }
+  if(!title) { showToast(NE('⚠️ Tittel kan ikke være tom',"⚠️ Title can't be empty")); return; }
   const { error } = await sb.from('services').update({ title, description, price }).eq('id', serviceId);
   if(error) { showToast('❌ ' + error.message); return; }
   document.getElementById('edit-svc-overlay')?.remove();
-  showToast('✅ Tjeneste oppdatert!');
+  showToast(NE('✅ Tjeneste oppdatert!','✅ Service updated!'));
   await addMarkers();
   if(document.getElementById('myquests-panel')?.style.display === 'block' && document.getElementById('act-side-tjenester')?.style.display !== 'none') renderTilbud();
 }
@@ -6967,7 +6997,7 @@ async function deleteService(serviceId) {
   const { error } = await sb.from('services').update({ status: 'deleted' }).eq('id', serviceId);
   if(error) { showToast('❌ ' + error.message); return; }
   document.getElementById('edit-svc-overlay')?.remove();
-  showToast('🗑️ Tjeneste slettet');
+  showToast(NE('🗑️ Tjeneste slettet','🗑️ Service deleted'));
   await addMarkers();
   if(document.getElementById('myquests-panel')?.style.display === 'block' && document.getElementById('act-side-tjenester')?.style.display !== 'none') renderTilbud();
 }
@@ -7127,7 +7157,7 @@ async function acceptApplicant(convId, questId) {
   const { data: giverNameRow } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
   const giverPhone = await getContactPhone(currentUser.id);
   if(!giverPhone) {
-    showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) før du kan godkjenne søkere.');
+    showPhoneRequired(NE('Du må legge til telefonnummer (Vipps-nummer) før du kan godkjenne søkere.','You must add a phone number (Vipps number) before you can approve applicants.'));
     return;
   }
   const giverProfile = { full_name: giverNameRow?.full_name || '', phone: giverPhone };
@@ -7138,17 +7168,17 @@ async function acceptApplicant(convId, questId) {
     .eq('id', convId).single();
 
   if(convErr || !conv) {
-    showToast('❌ Fant ikke søknaden' + (convErr ? ': ' + convErr.message : ''));
+    showToast(NE('❌ Fant ikke søknaden','❌ Application not found') + (convErr ? ': ' + convErr.message : ''));
     return;
   }
 
   // Sett status til 'accepted' FØRST – da slipper RLS oss til å lese utførers nummer
   const { error: updConvErr } = await sb.from('conversations').update({ status: 'accepted' }).eq('id', convId);
-  if(updConvErr) { showToast('❌ Kunne ikke godkjenne: ' + updConvErr.message); return; }
+  if(updConvErr) { showToast(NE('❌ Kunne ikke godkjenne: ','❌ Could not approve: ') + updConvErr.message); return; }
 
   // Update quest status
   const { error: updQuestErr } = await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
-  if(updQuestErr) { showToast('❌ Kunne ikke oppdatere oppdraget: ' + updQuestErr.message); return; }
+  if(updQuestErr) { showToast(NE('❌ Kunne ikke oppdatere oppdraget: ','❌ Could not update the task: ') + updQuestErr.message); return; }
 
   // Hent utførers navn + nummer (nå som matchen er godkjent kan vi lese nummeret)
   const { data: takerNameRow } = await sb.from('profiles').select('full_name').eq('id', conv.taker_id).single();
@@ -7190,7 +7220,7 @@ async function acceptApplicant(convId, questId) {
     }
   }
 
-  showToast('✅ Søker godkjent!');
+  showToast(NE('✅ Søker godkjent!','✅ Applicant approved!'));
   loadMyQuests();
   addMarkers();
 
@@ -7223,11 +7253,11 @@ function showPhoneRequired(msg) {
 
 async function savePhoneAndClose() {
   const phone = document.getElementById('popup-phone')?.value?.trim();
-  if(!phone || phone.length < 8) { showToast('⚠️ Skriv inn 8-sifret nummer'); return; }
+  if(!phone || phone.length < 8) { showToast(NE('⚠️ Skriv inn 8-sifret nummer','⚠️ Enter an 8-digit number')); return; }
   const { error } = await saveContactPhone(phone);
-  if(error) { showToast('❌ Kunne ikke lagre: ' + error.message); return; }
+  if(error) { showToast(NE('❌ Kunne ikke lagre: ','❌ Could not save: ') + error.message); return; }
   document.getElementById('phone-required-popup')?.remove();
-  showToast('✅ Telefonnummer lagret! Prøv igjen.');
+  showToast(NE('✅ Telefonnummer lagret! Prøv igjen.','✅ Phone number saved! Try again.'));
 }
 
 function copyAndOpenVipps(phone) {
@@ -7236,11 +7266,11 @@ function copyAndOpenVipps(phone) {
   const doOpen = () => { window.location.href = 'vipps://'; };
   if(navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(formatted).then(() => {
-      showToast('📋 ' + formatted + ' kopiert! Lim inn i Vipps');
+      showToast('📋 ' + formatted + NE(' kopiert! Lim inn i Vipps',' copied! Paste in Vipps'));
       setTimeout(doOpen, 600);
-    }).catch(() => { showToast('📱 Nummer: ' + formatted); setTimeout(doOpen, 1200); });
+    }).catch(() => { showToast(NE('📱 Nummer: ','📱 Number: ') + formatted); setTimeout(doOpen, 1200); });
   } else {
-    showToast('📱 Nummer: ' + formatted);
+    showToast(NE('📱 Nummer: ','📱 Number: ') + formatted);
     setTimeout(doOpen, 1200);
   }
 }
@@ -7297,7 +7327,7 @@ function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, role)
 async function rejectApplicant(convId) {
   const { data: conv } = await sb.from('conversations').select('taker_id').eq('id', convId).single();
   const { error } = await sb.from('conversations').update({ status: 'rejected' }).eq('id', convId);
-  if(error) { showToast('❌ Kunne ikke avvise: ' + error.message); return; }
+  if(error) { showToast(NE('❌ Kunne ikke avvise: ','❌ Could not decline: ') + error.message); return; }
   if(conv?.taker_id) {
     await sb.from('notifications').insert({
       user_id: conv.taker_id,
@@ -7307,7 +7337,7 @@ async function rejectApplicant(convId) {
       link_id: convId
     });
   }
-  showToast('❌ Søker avvist');
+  showToast(NE('❌ Søker avvist','❌ Applicant declined'));
   loadMyQuests();
 }
 
@@ -7315,22 +7345,22 @@ async function pauseQuest(questId) {
   // Sperr pause hvis oppdraget allerede er tildelt noen
   const { data: convs } = await sb.from('conversations').select('status').eq('quest_id', questId);
   if((convs || []).some(c => c.status === 'accepted')) {
-    showToast('🔒 Kan ikke pause – oppdraget er tildelt noen.');
+    showToast(NE('🔒 Kan ikke pause – oppdraget er tildelt noen.',"🔒 Can't pause – the task is assigned to someone."));
     return;
   }
   const { data, error } = await sb.from('quests').update({ status: 'paused' }).eq('id', questId).select();
-  if(error) { showToast('❌ Kunne ikke pause: ' + error.message); return; }
-  if(!data || !data.length) { showToast('❌ Fikk ikke pauset – mangler tilgang?'); return; }
-  showToast('⏸️ Oppdrag satt på pause – skjult fra kartet');
+  if(error) { showToast(NE('❌ Kunne ikke pause: ','❌ Could not pause: ') + error.message); return; }
+  if(!data || !data.length) { showToast(NE('❌ Fikk ikke pauset – mangler tilgang?','❌ Could not pause – missing access?')); return; }
+  showToast(NE('⏸️ Oppdrag satt på pause – skjult fra kartet','⏸️ Task paused – hidden from the map'));
   loadMyQuests();
   addMarkers();
 }
 
 async function resumeQuest(questId) {
   const { data, error } = await sb.from('quests').update({ status: 'open' }).eq('id', questId).select();
-  if(error) { showToast('❌ Kunne ikke aktivere: ' + error.message); return; }
-  if(!data || !data.length) { showToast('❌ Fikk ikke aktivert – mangler tilgang?'); return; }
-  showToast('▶️ Oppdrag aktivert igjen!');
+  if(error) { showToast(NE('❌ Kunne ikke aktivere: ','❌ Could not activate: ') + error.message); return; }
+  if(!data || !data.length) { showToast(NE('❌ Fikk ikke aktivert – mangler tilgang?','❌ Could not activate – missing access?')); return; }
+  showToast(NE('▶️ Oppdrag aktivert igjen!','▶️ Task reactivated!'));
   loadMyQuests();
   addMarkers();
 }
@@ -7339,20 +7369,20 @@ async function closeQuest(questId) {
   // Block closing if the quest is already assigned to someone (accepted applicant)
   const { data: convs } = await sb.from('conversations').select('status').eq('quest_id', questId);
   if((convs || []).some(c => c.status === 'accepted')) {
-    showToast('🔒 Kan ikke avslutte – oppdraget er allerede tildelt noen.');
+    showToast(NE('🔒 Kan ikke avslutte – oppdraget er allerede tildelt noen.',"🔒 Can't end – the task is already assigned to someone."));
     return;
   }
-  if(!confirm('Avslutte oppdraget? Det fjernes fra kartet og fra Mine oppdrag.')) return;
+  if(!confirm(NE('Avslutte oppdraget? Det fjernes fra kartet og fra Mine oppdrag.','End the task? It will be removed from the map and from My tasks.'))) return;
   await sb.from('quests').update({ status: 'closed' }).eq('id', questId);
-  showToast('🔴 Oppdrag avsluttet');
+  showToast(NE('🔴 Oppdrag avsluttet','🔴 Task ended'));
   loadMyQuests();
   addMarkers();
 }
 
 async function deleteQuest(questId) {
-  if(!confirm('Slette dette oppdraget?')) return;
+  if(!confirm(NE('Slette dette oppdraget?','Delete this task?'))) return;
   await sb.from('quests').update({ status: 'deleted' }).eq('id', questId);
-  showToast('🗑️ Oppdrag slettet');
+  showToast(NE('🗑️ Oppdrag slettet','🗑️ Task deleted'));
   loadMyQuests();
   addMarkers();
 }
@@ -7370,14 +7400,14 @@ async function repostQuest(questId) {
     scheduled_time_to: null
   }).eq('id', questId);
 
-  showToast('🔄 Oppdrag lagt ut på nytt!');
+  showToast(NE('🔄 Oppdrag lagt ut på nytt!','🔄 Task re-posted!'));
   loadMyQuests();
   addMarkers();
-  setTimeout(() => showAchievement('🔄', 'Lagt ut på nytt!', 'Oppdraget er aktivt igjen på kartet.'), 800);
+  setTimeout(() => showAchievement('🔄', NE('Lagt ut på nytt!','Re-posted!'), NE('Oppdraget er aktivt igjen på kartet.','The task is active again on the map.')), 800);
 }
 
 async function completeQuest(questId) {
-  if(!confirm('Marker oppdraget som fullført?')) return;
+  if(!confirm(NE('Marker oppdraget som fullført?','Mark the task as completed?'))) return;
 
   // Update quest status
   await sb.from('quests').update({ status: 'completed' }).eq('id', questId);
@@ -7416,7 +7446,7 @@ async function completeQuest(questId) {
     showRating(takerName, conv.id, takerId, questId);
   }
 
-  showToast('🎉 Oppdrag markert som fullført!');
+  showToast(NE('🎉 Oppdrag markert som fullført!','🎉 Task marked as completed!'));
   loadMyQuests();
   addMarkers();
 }
@@ -7596,7 +7626,7 @@ async function sendMessage() {
 
   if(error) {
     console.error('sendMessage error:', error.message);
-    showToast('❌ Kunne ikke sende melding');
+    showToast(NE('❌ Kunne ikke sende melding','❌ Could not send message'));
     input.value = content;
     return;
   }
@@ -8036,13 +8066,13 @@ async function contactService() {
   // Demo service
   if(!svc?.raw?.id || !svc?.raw?.user_id) {
     closeServicePanel();
-    showToast('💬 Dette er en demo-tjeneste – test med ekte tjenester!');
+    showToast(NE('💬 Dette er en demo-tjeneste – test med ekte tjenester!','💬 This is a demo service – test with real services!'));
     return;
   }
 
   // Own service
   if(svc.raw.user_id === currentUser.id) {
-    showToast('⚠️ Dette er din egen tjeneste');
+    showToast(NE('⚠️ Dette er din egen tjeneste','⚠️ This is your own service'));
     return;
   }
 
@@ -8050,7 +8080,7 @@ async function contactService() {
   const { data: myProfile } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
   const myPhone = await getContactPhone(currentUser.id);
   if(!myPhone) {
-    showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) for å kontakte tilbydere.');
+    showPhoneRequired(NE('Du må legge til telefonnummer (Vipps-nummer) for å kontakte tilbydere.','You must add a phone number (Vipps number) to contact providers.'));
     return;
   }
 
@@ -8080,7 +8110,7 @@ async function contactService() {
     status: 'accepted'
   }).select().single();
 
-  if(error) { showToast('❌ Feil: ' + error.message); return; }
+  if(error) { showToast(NE('❌ Feil: ','❌ Error: ') + error.message); return; }
 
   // Notify provider (also sends email via Edge Function)
   const { error: contactNotifErr } = await sb.from('notifications').insert({
@@ -8092,7 +8122,7 @@ async function contactService() {
   });
   if(contactNotifErr) console.error('service contact notif error:', contactNotifErr);
 
-  showToast('💬 Chat åpnet! Avtal tid med tilbyderen.');
+  showToast(NE('💬 Chat åpnet! Avtal tid med tilbyderen.','💬 Chat opened! Arrange a time with the provider.'));
   openChat(conv.id, svc.title);
 }
 
@@ -8187,11 +8217,11 @@ function openBookingRequest(kind) {
   const recurring = kind === 'recurring';
   const svc = activeService;
   if(!currentUser) { openAuth('login'); return; }
-  if(!svc?.raw?.id || !svc?.raw?.user_id) { closeServicePanel(); showToast('💬 Dette er en demo-tjeneste – test med ekte tjenester!'); return; }
-  if(svc.raw.user_id === currentUser.id) { showToast('⚠️ Dette er din egen tjeneste'); return; }
+  if(!svc?.raw?.id || !svc?.raw?.user_id) { closeServicePanel(); showToast(NE('💬 Dette er en demo-tjeneste – test med ekte tjenester!','💬 This is a demo service – test with real services!')); return; }
+  if(svc.raw.user_id === currentUser.id) { showToast(NE('⚠️ Dette er din egen tjeneste','⚠️ This is your own service')); return; }
 
   getContactPhone(currentUser.id).then((myPhone) => {
-    if(!myPhone) { showPhoneRequired('Du må legge til telefonnummer (Vipps-nummer) for å be om avtale.'); return; }
+    if(!myPhone) { showPhoneRequired(NE('Du må legge til telefonnummer (Vipps-nummer) for å be om avtale.','You must add a phone number (Vipps number) to request an agreement.')); return; }
 
     window._bookingCtx = { serviceId: svc.raw.id, providerId: svc.raw.user_id, title: svc.title, price: svc.price || 0, priceType: svc.priceType, kind };
     const priceTypes = { per_visit:'per besøk', per_time:'per time', per_tur:'per tur', per_mnd:'per mnd', per_stk:'per stk' };
@@ -8239,7 +8269,7 @@ function openBookingRequest(kind) {
           <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>${recurring?'Tilbyder bekrefter avtalen. Hver gjennomført gang gjøres opp via Vipps – Tokt tar ingen provisjon.':'Tilbyder må bekrefte før avtalen er aktiv. Betaling skjer direkte via Vipps – Tokt tar ingen provisjon.'}</div></div>
           <div style="display:flex;gap:10px">
             <button onclick="closeBookingModal()" style="flex:0 0 auto;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Avbryt</button>
-            <button id="bk-submit" onclick="submitBookingRequest()" style="flex:1;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(124,92,252,.3)">Send forespørsel →</button>
+            <button id="bk-submit" onclick="submitBookingRequest()" style="flex:1;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(124,92,252,.3)">${NE('Send forespørsel →','Send request →')}</button>
           </div>
         </div>
       </div>`;
@@ -8270,7 +8300,7 @@ async function submitBookingRequest() {
   const time = recurring ? '12:00' : (document.getElementById('bk-time')?.value || '12:00');
   const note = document.getElementById('bk-note')?.value?.trim() || null;
   const price = parseInt(document.getElementById('bk-price')?.value) || ctx.price || 0;
-  if(!date) { showToast('⚠️ Velg en dato'); return; }
+  if(!date) { showToast(NE('⚠️ Velg en dato','⚠️ Choose a date')); return; }
   const scheduledAt = new Date(date + 'T' + time).toISOString();
 
   let recurrence = null;
@@ -8294,7 +8324,7 @@ async function submitBookingRequest() {
     const { data: conv, error: cErr } = await sb.from('conversations')
       .insert({ service_id: ctx.serviceId, giver_id: currentUser.id, taker_id: ctx.providerId, status: 'accepted' })
       .select().single();
-    if(cErr) { showToast('❌ ' + cErr.message); if(btn){ btn.textContent='Send forespørsel →'; btn.disabled=false; } return; }
+    if(cErr) { showToast('❌ ' + cErr.message); if(btn){ btn.textContent=NE('Send forespørsel →','Send request →'); btn.disabled=false; } return; }
     convId = conv.id;
   }
 
@@ -8305,7 +8335,7 @@ async function submitBookingRequest() {
     scheduled_at: scheduledAt, price, note, status: 'requested'
   }).select().single();
 
-  if(bErr) { showToast('❌ ' + bErr.message); if(btn){ btn.textContent='Send forespørsel →'; btn.disabled=false; } return; }
+  if(bErr) { showToast('❌ ' + bErr.message); if(btn){ btn.textContent=NE('Send forespørsel →','Send request →'); btn.disabled=false; } return; }
 
   const { data: me } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
   const { error: notifErr } = await sb.from('notifications').insert({
@@ -8319,7 +8349,7 @@ async function submitBookingRequest() {
   if(notifErr) console.error('booking_request notif error:', notifErr);
 
   closeBookingModal();
-  showToast('📅 Forespørsel sendt! Du får beskjed når den bekreftes.');
+  showToast(NE('📅 Forespørsel sendt! Du får beskjed når den bekreftes.',"📅 Request sent! You'll be notified when it's confirmed."));
   openTjenester(recurring ? 'faste' : 'engangs');
 }
 
@@ -8427,8 +8457,8 @@ function tilbudRow(s) {
 async function pauseService(id) {
   const { data, error } = await sb.from('services').update({ status: 'paused' }).eq('id', id).select();
   if(error) { showToast('❌ ' + error.message); return; }
-  if(!data || !data.length) { showToast('❌ Fikk ikke pauset – mangler tilgang?'); return; }
-  showToast('⏸ Tjeneste satt på pause – skjult fra kartet');
+  if(!data || !data.length) { showToast(NE('❌ Fikk ikke pauset – mangler tilgang?','❌ Could not pause – missing access?')); return; }
+  showToast(NE('⏸ Tjeneste satt på pause – skjult fra kartet','⏸ Service paused – hidden from the map'));
   renderTilbud();              // oppdater listen umiddelbart
   updateProfileNavBadges();    // oppdater aktiv-teller
   try { await addMarkers(); } catch(e) { console.error('addMarkers etter pause:', e); }
@@ -8436,8 +8466,8 @@ async function pauseService(id) {
 async function resumeService(id) {
   const { data, error } = await sb.from('services').update({ status: 'active' }).eq('id', id).select();
   if(error) { showToast('❌ ' + error.message); return; }
-  if(!data || !data.length) { showToast('❌ Fikk ikke aktivert – mangler tilgang?'); return; }
-  showToast('▶️ Tjeneste aktiv igjen – synlig på kartet');
+  if(!data || !data.length) { showToast(NE('❌ Fikk ikke aktivert – mangler tilgang?','❌ Could not activate – missing access?')); return; }
+  showToast(NE('▶️ Tjeneste aktiv igjen – synlig på kartet','▶️ Service active again – visible on the map'));
   renderTilbud();
   updateProfileNavBadges();
   try { await addMarkers(); } catch(e) { console.error('addMarkers etter aktivering:', e); }
@@ -8837,17 +8867,17 @@ function providerOverview(agreements, sessionsByParent, nameMap) {
 
 async function registerSession(id) {
   const { data: a } = await sb.from('bookings').select('provider_id, customer_id, status, price, recurrence, service_id, conversation_id, service:service_id(title)').eq('id', id).single();
-  if(!a || a.provider_id !== currentUser?.id) { showToast('⚠️ Kun tilbyder kan registrere'); return; }
-  if(a.status !== 'active') { showToast('⚠️ Avtalen er ikke aktiv'); return; }
+  if(!a || a.provider_id !== currentUser?.id) { showToast(NE('⚠️ Kun tilbyder kan registrere','⚠️ Only the provider can register')); return; }
+  if(a.status !== 'active') { showToast(NE('⚠️ Avtalen er ikke aktiv','⚠️ The agreement is not active')); return; }
   const { data: open } = await sb.from('bookings').select('id').eq('parent_id', id).neq('status','completed').limit(1);
-  if(open?.length) { showToast('Forrige økt er ikke gjort opp ennå'); return; }
+  if(open?.length) { showToast(NE('Forrige økt er ikke gjort opp ennå',"The previous session isn't settled yet")); return; }
   const target = monthlyTarget(a.recurrence);
   if(target) {
     const { data: monthSessions } = await sb.from('bookings').select('scheduled_at').eq('parent_id', id);
     const cnt = sessionsThisMonth(monthSessions || []).length;
-    if(cnt >= target) { showToast(`Måneds-grensen (${target}) er nådd for denne avtalen`); return; }
+    if(cnt >= target) { showToast(NE(`Måneds-grensen (${target}) er nådd for denne avtalen`,`The monthly limit (${target}) has been reached for this agreement`)); return; }
   }
-  if(!confirm('Registrere en utført økt? Kunden får beskjed om å betale.')) return;
+  if(!confirm(NE('Registrere en utført økt? Kunden får beskjed om å betale.','Register a completed session? The customer will be notified to pay.'))) return;
   const now = new Date().toISOString();
   const { error } = await sb.from('bookings').insert({
     parent_id: id, service_id: a.service_id, conversation_id: a.conversation_id,
@@ -8856,26 +8886,26 @@ async function registerSession(id) {
   });
   if(error) { showToast('❌ ' + error.message); return; }
   await sb.from('notifications').insert({ user_id: a.customer_id, type: 'booking_workdone', title: '🔨 Økt utført', body: `${a.service?.title || 'Fast avtale'} – tilbyder registrerte en utført økt. Klar for betaling.`, link_id: id });
-  showToast('🔨 Økt registrert. Kunden er varslet.');
+  showToast(NE('🔨 Økt registrert. Kunden er varslet.','🔨 Session registered. The customer has been notified.'));
   loadBookings();
 }
 
 async function sessionMarkPaid(id) {
   const { data: s } = await sb.from('bookings').select('provider_id, customer_id, status, parent_id, service:service_id(title)').eq('id', id).single();
-  if(!s || s.customer_id !== currentUser?.id) { showToast('⚠️ Kun kunden kan markere betalt'); return; }
-  if(s.status !== 'confirmed') { showToast('⚠️ Økten er allerede gjort opp'); return; }
-  if(!confirm('Bekrefte at du har betalt for denne økten?')) return;
+  if(!s || s.customer_id !== currentUser?.id) { showToast(NE('⚠️ Kun kunden kan markere betalt','⚠️ Only the customer can mark as paid')); return; }
+  if(s.status !== 'confirmed') { showToast(NE('⚠️ Økten er allerede gjort opp','⚠️ The session is already settled')); return; }
+  if(!confirm(NE('Bekrefte at du har betalt for denne økten?','Confirm that you have paid for this session?'))) return;
   await sb.from('bookings').update({ giver_paid_at: new Date().toISOString() }).eq('id', id);
   await sb.from('notifications').insert({ user_id: s.provider_id, type: 'booking_paid', title: '💸 Betaling sendt', body: `${s.service?.title || 'Fast avtale'} – kunden har betalt for en økt. Bekreft mottak.`, link_id: s.parent_id });
-  showToast('✅ Markert som betalt. Venter på tilbyders bekreftelse.');
+  showToast(NE('✅ Markert som betalt. Venter på tilbyders bekreftelse.','✅ Marked as paid. Waiting for the provider to confirm.'));
   loadBookings();
 }
 
 async function sessionConfirmReceived(id) {
   const { data: s } = await sb.from('bookings').select('provider_id, customer_id, status, parent_id, service:service_id(title)').eq('id', id).single();
-  if(!s || s.provider_id !== currentUser?.id) { showToast('⚠️ Kun tilbyder kan bekrefte'); return; }
-  if(s.status !== 'confirmed') { showToast('⚠️ Økten er allerede gjort opp'); return; }
-  if(!confirm('Bekrefte at du har mottatt betaling for denne økten?')) return;
+  if(!s || s.provider_id !== currentUser?.id) { showToast(NE('⚠️ Kun tilbyder kan bekrefte','⚠️ Only the provider can confirm')); return; }
+  if(s.status !== 'confirmed') { showToast(NE('⚠️ Økten er allerede gjort opp','⚠️ The session is already settled')); return; }
+  if(!confirm(NE('Bekrefte at du har mottatt betaling for denne økten?','Confirm that you have received payment for this session?'))) return;
   await sb.from('bookings').update({ status: 'completed', taker_confirmed_at: new Date().toISOString() }).eq('id', id);
 
   // Er dette den første fullførte økten på avtalen? (denne er nettopp satt completed)
@@ -8892,7 +8922,7 @@ async function sessionConfirmReceived(id) {
   }
 
   await recomputeQuestsCompleted(currentUser.id);
-  showToast('🎉 Økt gjort opp!');
+  showToast(NE('🎉 Økt gjort opp!','🎉 Session settled!'));
   loadBookings();
   if(currentUser) loadUserProfile(currentUser);
 
@@ -8910,7 +8940,7 @@ async function pauseAgreement(id) {
   if(!a || (a.provider_id !== currentUser?.id && a.customer_id !== currentUser?.id)) return;
   if(a.status !== 'active') return;
   await sb.from('bookings').update({ status: 'paused' }).eq('id', id);
-  showToast('⏸️ Avtale satt på pause');
+  showToast(NE('⏸️ Avtale satt på pause','⏸️ Agreement paused'));
   loadBookings();
 }
 
@@ -8919,12 +8949,12 @@ async function resumeAgreement(id) {
   if(!a || (a.provider_id !== currentUser?.id && a.customer_id !== currentUser?.id)) return;
   if(a.status !== 'paused') return;
   await sb.from('bookings').update({ status: 'active' }).eq('id', id);
-  showToast('▶️ Avtale gjenopptatt');
+  showToast(NE('▶️ Avtale gjenopptatt','▶️ Agreement resumed'));
   loadBookings();
 }
 
 async function cancelAgreement(id) {
-  if(!confirm('Avslutte den faste avtalen? Dette kan ikke angres.')) return;
+  if(!confirm(NE('Avslutte den faste avtalen? Dette kan ikke angres.','End the recurring agreement? This cannot be undone.'))) return;
   const { data: a } = await sb.from('bookings').select('provider_id, customer_id, service:service_id(title)').eq('id', id).single();
   if(!a || (a.provider_id !== currentUser?.id && a.customer_id !== currentUser?.id)) return;
   await sb.from('bookings').update({ status: 'cancelled' }).eq('id', id);
@@ -8936,7 +8966,7 @@ async function cancelAgreement(id) {
 
 async function confirmBooking(id) {
   const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, kind, recurrence, scheduled_at, service:service_id(title)').eq('id', id).single();
-  if(!b || b.provider_id !== currentUser?.id) { showToast('⚠️ Kun tilbyder kan bekrefte'); return; }
+  if(!b || b.provider_id !== currentUser?.id) { showToast(NE('⚠️ Kun tilbyder kan bekrefte','⚠️ Only the provider can confirm')); return; }
   if(b.status !== 'requested') { showToast('Allerede behandlet'); return; }
   const recurring = b.kind === 'recurring';
   await sb.from('bookings').update({ status: recurring ? 'active' : 'confirmed' }).eq('id', id);
@@ -8953,7 +8983,7 @@ async function confirmBooking(id) {
 }
 
 async function declineBooking(id) {
-  if(!confirm('Avslå denne forespørselen?')) return;
+  if(!confirm(NE('Avslå denne forespørselen?','Decline this request?'))) return;
   const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, service:service_id(title)').eq('id', id).single();
   if(!b || b.provider_id !== currentUser?.id) return;
   await sb.from('bookings').update({ status: 'declined' }).eq('id', id);
@@ -8962,16 +8992,16 @@ async function declineBooking(id) {
     title: 'Avtale avslått', body: `Tilbyder kunne dessverre ikke ta «${b.service?.title || 'avtalen'}» denne gangen.`,
     link_id: id
   });
-  showToast('Forespørsel avslått');
+  showToast(NE('Forespørsel avslått','Request declined'));
   loadBookings();
 }
 
 async function bookingMarkDone(id) {
   const { data: b } = await sb.from('bookings').select('provider_id, status, work_done_at').eq('id', id).single();
-  if(!b || b.provider_id !== currentUser?.id) { showToast('⚠️ Kun tilbyder kan melde utført'); return; }
-  if(b.status !== 'confirmed') { showToast('⚠️ Avtalen er ikke bekreftet'); return; }
-  if(b.work_done_at) { showToast('Allerede meldt utført'); return; }
-  if(!confirm('Melde avtalen som utført? Kunden får beskjed om å betale.')) return;
+  if(!b || b.provider_id !== currentUser?.id) { showToast(NE('⚠️ Kun tilbyder kan melde utført','⚠️ Only the provider can mark as done')); return; }
+  if(b.status !== 'confirmed') { showToast(NE('⚠️ Avtalen er ikke bekreftet','⚠️ The agreement is not confirmed')); return; }
+  if(b.work_done_at) { showToast(NE('Allerede meldt utført','Already marked as done')); return; }
+  if(!confirm(NE('Melde avtalen som utført? Kunden får beskjed om å betale.','Mark the agreement as done? The customer will be notified to pay.'))) return;
   const { error } = await sb.rpc('booking_mark_done', { p_booking_id: id });
   if(error) {
     await sb.from('bookings').update({ work_done_at: new Date().toISOString() }).eq('id', id);
@@ -8988,24 +9018,24 @@ async function bookingMarkDone(id) {
 
 async function bookingMarkPaid(id) {
   const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, service:service_id(title)').eq('id', id).single();
-  if(!b || b.customer_id !== currentUser?.id) { showToast('⚠️ Kun kunden kan markere betalt'); return; }
-  if(b.status !== 'confirmed') { showToast('⚠️ Avtalen er ikke bekreftet'); return; }
-  if(!confirm('Bekrefte at du har betalt tilbyder via Vipps?')) return;
+  if(!b || b.customer_id !== currentUser?.id) { showToast(NE('⚠️ Kun kunden kan markere betalt','⚠️ Only the customer can mark as paid')); return; }
+  if(b.status !== 'confirmed') { showToast(NE('⚠️ Avtalen er ikke bekreftet','⚠️ The agreement is not confirmed')); return; }
+  if(!confirm(NE('Bekrefte at du har betalt tilbyder via Vipps?','Confirm that you have paid the provider via Vipps?'))) return;
   await sb.from('bookings').update({ giver_paid_at: new Date().toISOString() }).eq('id', id);
   await sb.from('notifications').insert({
     user_id: b.provider_id, type: 'booking_paid',
     title: '💸 Betaling sendt', body: `${b.service?.title || 'Avtalen'} – kunden har markert betaling som sendt. Bekreft når du har mottatt den.`,
     link_id: id
   });
-  showToast('✅ Markert som betalt. Venter på tilbyders bekreftelse.');
+  showToast(NE('✅ Markert som betalt. Venter på tilbyders bekreftelse.','✅ Marked as paid. Waiting for the provider to confirm.'));
   loadBookings();
 }
 
 async function bookingConfirmReceived(id) {
   const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, conversation_id, service:service_id(title)').eq('id', id).single();
-  if(!b || b.provider_id !== currentUser?.id) { showToast('⚠️ Kun tilbyder kan bekrefte betaling'); return; }
-  if(b.status !== 'confirmed') { showToast('⚠️ Avtalen er ikke aktiv'); return; }
-  if(!confirm('Bekrefte at du har mottatt betaling? Dette fullfører avtalen.')) return;
+  if(!b || b.provider_id !== currentUser?.id) { showToast(NE('⚠️ Kun tilbyder kan bekrefte betaling','⚠️ Only the provider can confirm payment')); return; }
+  if(b.status !== 'confirmed') { showToast(NE('⚠️ Avtalen er ikke aktiv','⚠️ The agreement is not active')); return; }
+  if(!confirm(NE('Bekrefte at du har mottatt betaling? Dette fullfører avtalen.','Confirm that you have received payment? This completes the agreement.'))) return;
   await sb.from('bookings').update({ status: 'completed', taker_confirmed_at: new Date().toISOString() }).eq('id', id);
   await sb.from('notifications').insert({
     user_id: b.customer_id, type: 'booking_done',
@@ -9013,7 +9043,7 @@ async function bookingConfirmReceived(id) {
     link_id: id
   });
   await recomputeQuestsCompleted(currentUser.id);
-  showToast('🎉 Betaling bekreftet og avtale fullført!');
+  showToast(NE('🎉 Betaling bekreftet og avtale fullført!','🎉 Payment confirmed and agreement completed!'));
   loadBookings();
   if(currentUser) loadUserProfile(currentUser);
   const { data: cp } = await sb.from('profiles').select('full_name').eq('id', b.customer_id).single();
@@ -9043,7 +9073,7 @@ function previewServiceImage(input) {
 async function postService() {
   if(!currentUser) { openAuth('login'); return; }
   const title = document.getElementById('svc-title').value.trim();
-  if(!title) { showToast('⚠️ Legg til en tittel'); return; }
+  if(!title) { showToast(NE('⚠️ Legg til en tittel','⚠️ Add a title')); return; }
   const price = parseInt(document.getElementById('svc-price')?.value) || 0;
   const category = document.getElementById('svc-category').value;
   const desc = document.getElementById('svc-desc').value.trim();
@@ -9086,7 +9116,7 @@ async function postService() {
   }
 
   closeServiceModal();
-  showToast('🏪 Tjeneste publisert på kartet!');
+  showToast(NE('🏪 Tjeneste publisert på kartet!','🏪 Service published on the map!'));
   logEvent('service_posted');
   addServiceMarker(serviceToSvc(data));
   // Reset address fields
@@ -9259,7 +9289,7 @@ function showUserProfile(name, initials, color, quests, rating, rank) {
 function startChatWithUser() {
   document.getElementById('user-profile-popup').style.display = 'none';
   if(!currentUser) { openAuth('login'); return; }
-  showToast('💬 Åpner chat...');
+  showToast(NE('💬 Åpner chat...','💬 Opening chat...'));
 }
 
 // ── UPDATE PROFILE WITH ACHIEVEMENTS ──
@@ -9303,7 +9333,7 @@ const TIPS = [
   { icon:'💚', text:'Veldedighetsoppdrag er gratis å legge ut og gir utfører et spesielt achievement – perfekt for å hjelpe eldre!' },
   { icon:'🏆', text:'Fullfør 100 oppdrag og bli Valkyrje – den høyeste rangen på Tokt!' },
   { icon:'📍', text:'Tips: Aktiver posisjon så ser du oppdrag og tjenester rett i nabolaget ditt.' },
-  { icon:'🗺️', text:'Kartet oppdateres i sanntid – nye oppdrag dukker opp med én gang noen legger dem ut!' },
+  { icon:'🗺️', text:NE('Kartet oppdateres i sanntid – nye oppdrag dukker opp med én gang noen legger dem ut!','The map updates in real time – new tasks appear the moment someone posts them!') },
   { icon:'🔄', text:'Trenger du fast hjelp? Be en tilbyder om fast ukentlig eller månedlig avtale direkte i chatten.' },
   { icon:'📸', text:'Legg til bilde på oppdraget – utfører vet hva jobben innebærer og du får flere søkere.' },
 ];
@@ -9465,7 +9495,7 @@ function closeAuth() {
   ['login-error','reg-error'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
 }
 function showPostChoice() {
-  if(!currentUser) { openAuth('login'); showToast('👋 Logg inn for å legge ut'); return; }
+  if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å legge ut','👋 Log in to post')); return; }
   const existing = document.getElementById('post-choice-overlay');
   if(existing) { existing.remove(); return; }
   const overlay = document.createElement('div');
@@ -9594,14 +9624,14 @@ function checkCategoryWarning(val){
 }
 // 18+-toggle: kan ikke skrus av når kategorien tvinger den på
 function toggleAdultReq(el){
-  if(el.dataset.locked === '1'){ showToast('🔞 Denne kategorien krever 18 år'); return; }
+  if(el.dataset.locked === '1'){ showToast(NE('🔞 Denne kategorien krever 18 år','🔞 This category requires 18+')); return; }
   el.classList.toggle('on');
 }
 
 /* ===================== RAPPORTER / FLAGG ===================== */
 let _reportCtx = null;   // { type, id, name }
 function openReportModal(type, id, name){
-  if(!currentUser){ openAuth('login'); showToast('👋 Logg inn for å rapportere'); return; }
+  if(!currentUser){ openAuth('login'); showToast(NE('👋 Logg inn for å rapportere','👋 Log in to report')); return; }
   _reportCtx = { type: type, id: id, name: name };
   const label = type === 'quest' ? 'Oppdrag: ' : type === 'user' ? 'Bruker: ' : 'Tjeneste: ';
   document.getElementById('report-target-label').textContent = label + (name || '');
@@ -9620,7 +9650,7 @@ function selectReportReason(el){
 async function submitReport(){
   if(!_reportCtx) return;
   const sel = document.querySelector('#report-reasons .report-reason.sel');
-  if(!sel){ showToast('⚠️ Velg en grunn'); return; }
+  if(!sel){ showToast(NE('⚠️ Velg en grunn','⚠️ Choose a reason')); return; }
   const details = document.getElementById('report-details').value.trim() || null;
   const btn = document.getElementById('report-submit-btn');
   btn.disabled = true; btn.textContent = 'Sender…';
@@ -9634,7 +9664,7 @@ async function submitReport(){
   btn.disabled = false; btn.textContent = 'Send rapport';
   if(error){ showToast('❌ ' + error.message); return; }
   closeReport();
-  showToast('✅ Takk! Rapporten er sendt og blir vurdert.');
+  showToast(NE('✅ Takk! Rapporten er sendt og blir vurdert.','✅ Thanks! The report has been sent and will be reviewed.'));
 }
 // Rapporter fra oppdragspanelet
 function reportQuestFromPanel(){
@@ -9743,7 +9773,7 @@ async function proceedRegister() {
   }
   closeTermsGate();
   closeAuth();
-  showToast('✅ Konto opprettet! Sjekk e-posten din for bekreftelseslenke.', null, true);
+  showToast(NE('✅ Konto opprettet! Sjekk e-posten din for bekreftelseslenke.','✅ Account created! Check your email for a confirmation link.'), null, true);
   logEvent('signup');
   if(data.user) {
     // Create profile row – non-blocking, don't let this break auth
@@ -9887,7 +9917,7 @@ async function doLogout() {
   if(window.map) addMarkers();
   document.getElementById('profile-panel').style.display = 'none';
   closeProfilePage();              // lukk fullskjerm-profilsiden
-  showToast('👋 Du er nå logget ut');
+  showToast(NE('👋 Du er nå logget ut','👋 You are now logged out'));
   openAuth('login');               // vis innloggings-/registreringsboksen
 }
 
@@ -10220,18 +10250,18 @@ sb.auth.onAuthStateChange(async (event, session) => {
         <div id="profile-xp-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#f97316,#a855f7);border-radius:3px;transition:width .5s ease"></div>
       </div>
     </div>
-    <button onclick="document.getElementById('profile-panel').style.display='none';openProfilePage()" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">👤 Min profil</button>
-    <button onclick="openMyQuests('posted')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">📋 Mine oppdrag</button>
-    <button onclick="openTjenester('tilbud')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s">🏪 Tjenester</button>
-<button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">Logg ut</button>
+    <button onclick="document.getElementById('profile-panel').style.display='none';openProfilePage()" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s"><span data-en="👤 My profile">👤 Min profil</span></button>
+    <button onclick="openMyQuests('posted')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s"><span data-en="📋 My tasks">📋 Mine oppdrag</span></button>
+    <button onclick="openTjenester('tilbud')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s"><span data-en="🏪 Services">🏪 Tjenester</span></button>
+<button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s"><span data-en="Log out">Logg ut</span></button>
   </div>
 </div>
 
 <!-- NOTIFICATIONS PANEL -->
 <div id="notif-panel" style="display:none;position:fixed;right:18px;top:74px;z-index:250;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;max-height:70vh;max-height:70svh;animation:slideIn .2s ease">
   <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
-    <div style="font-size:15px;font-weight:700;flex:1">🔔 Varsler</div>
-    <button onclick="markAllRead()" style="background:none;border:none;font-size:11px;color:var(--accent);cursor:pointer;font-family:inherit">Merk alle lest</button>
+    <div style="font-size:15px;font-weight:700;flex:1" data-en="🔔 Notifications">🔔 Varsler</div>
+    <button onclick="markAllRead()" style="background:none;border:none;font-size:11px;color:var(--accent);cursor:pointer;font-family:inherit" data-en="Mark all read">Merk alle lest</button>
     <button onclick="closeNotifications()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer">×</button>
   </div>
   <div id="notif-list" style="overflow-y:auto;max-height:calc(70vh - 54px)">
@@ -10244,7 +10274,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <div style="max-width:600px;margin:0 auto;padding:20px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-top:10px">
       <button onclick="backFromMyQuests()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">←</button>
-      <div style="font-size:20px;font-weight:700" id="activity-title">Min aktivitet</div>
+      <div style="font-size:20px;font-weight:700" id="activity-title" data-en="My activity">Min aktivitet</div>
     </div>
 
     <!-- TOPP-BRYTER: Oppdrag / Tjenester -->
@@ -10256,8 +10286,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <!-- ===== OPPDRAG-SIDE ===== -->
     <div id="act-side-oppdrag">
       <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:20px;border:1px solid var(--border)">
-        <button id="mq-tab-posted" onclick="switchMqTab('posted')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">📋 Lagt ut</button>
-        <button id="mq-tab-applied" onclick="switchMqTab('applied')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:5px">Aktive &amp; søkt<span id="mq-applied-badge" style="display:none;font-size:10px;font-weight:800;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span></button>
+        <button id="mq-tab-posted" onclick="switchMqTab('posted')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s"><span data-en="📋 Posted">📋 Lagt ut</span></button>
+        <button id="mq-tab-applied" onclick="switchMqTab('applied')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:5px"><span data-en="Active &amp; applied">Aktive &amp; søkt</span><span id="mq-applied-badge" style="display:none;font-size:10px;font-weight:800;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span></button>
       </div>
       <div id="mq-posted" style="display:flex;flex-direction:column;gap:12px"></div>
       <div id="mq-applied" style="display:none;flex-direction:column;gap:12px"></div>
@@ -10352,7 +10382,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div style="display:flex;gap:0;background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:12px">
       <div style="flex:1;padding:8px;text-align:center;border-right:1px solid var(--border)">
         <div id="upp-quests" style="font-size:16px;font-weight:800;color:var(--accent)">0</div>
-        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Fullført</div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase"><span data-en="Completed">Fullført</span></div>
       </div>
       <div style="flex:1;padding:8px;text-align:center">
         <div id="upp-rating" style="font-size:16px;font-weight:800;color:var(--gold)">–</div>
@@ -10399,8 +10429,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
 <!-- INBOX PANEL -->
 <div id="inbox-panel" style="display:none;position:fixed;right:18px;top:74px;z-index:200;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;max-height:70vh;max-height:70svh;animation:slideIn .2s ease">
   <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
-    <div style="font-size:15px;font-weight:700;flex:1">💬 Innboks</div>
-    <button onclick="markAllChatRead()" style="background:none;border:none;font-size:11px;color:var(--accent);cursor:pointer;font-family:inherit">Merk alle lest</button>
+    <div style="font-size:15px;font-weight:700;flex:1" data-en="💬 Inbox">💬 Innboks</div>
+    <button onclick="markAllChatRead()" style="background:none;border:none;font-size:11px;color:var(--accent);cursor:pointer;font-family:inherit" data-en="Mark all read">Merk alle lest</button>
     <button onclick="closeInbox()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer">×</button>
   </div>
   <div id="inbox-list" style="overflow-y:auto;max-height:calc(70vh - 54px)">
@@ -10635,7 +10665,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
   <!-- Kontekst-handlinger (vises når profilen åpnes fra et søketreff) -->
   <div id="pp-context-actions" style="display:none;gap:10px;padding:14px 20px 0">
-    <button onclick="ppContextShowOnMap()" style="flex:1;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📍 Vis på kart</button>
+    <button onclick="ppContextShowOnMap()" style="flex:1;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit"><span data-en="📍 Show on map">📍 Vis på kart</span></button>
     <button onclick="ppContextContact()" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">💬 Kontakt</button>
   </div>
 
@@ -10657,7 +10687,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <div style="display:flex;gap:1px;background:var(--border);border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:14px">
     <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
       <div id="pp-stat-quests" style="font-size:20px;font-weight:800;color:var(--accent)">0</div>
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Fullført</div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)"><span data-en="Completed">Fullført</span></div>
     </div>
     <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
       <div id="pp-stat-rating" style="font-size:20px;font-weight:800;color:var(--gold)">–</div>
@@ -10665,7 +10695,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
     <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
       <div id="pp-stat-member" style="font-size:20px;font-weight:800;color:var(--green)">–</div>
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Medlem siden</div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)"><span data-en="Member since">Medlem siden</span></div>
     </div>
   </div>
 
@@ -10674,10 +10704,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div style="display:flex;gap:8px">
       <button onclick="openMyQuests('posted')" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <span id="pp-nav-quests-badge" style="display:none;position:absolute;top:8px;right:10px;background:var(--green);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;padding:0 5px;border-radius:999px;align-items:center;justify-content:center">0</span>
-        <span style="font-size:21px">📋</span><span style="font-size:11.5px;font-weight:700">Mine oppdrag</span></button>
+        <span style="font-size:21px">📋</span><span style="font-size:11.5px;font-weight:700" data-en="My tasks">Mine oppdrag</span></button>
       <button onclick="openTjenester('tilbud')" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <span id="pp-nav-tjenester-badge" style="display:none;position:absolute;top:8px;right:10px;background:var(--green);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;padding:0 5px;border-radius:999px;align-items:center;justify-content:center">0</span>
-        <span style="font-size:21px">🏪</span><span style="font-size:11.5px;font-weight:700">Tjenester</span></button>
+        <span style="font-size:21px">🏪</span><span style="font-size:11.5px;font-weight:700" data-en="Services">Tjenester</span></button>
       <button onclick="openOkonomi()" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <span style="font-size:21px">💰</span><span id="pp-nav-okonomi-label" style="font-size:11.5px;font-weight:700">Økonomi</span></button>
     </div>
@@ -10697,33 +10727,33 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
   <!-- Rediger profil (kun egen profil) -->
   <div id="pp-edit-section" style="padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
-    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px">⚙️ Rediger profil</div>
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px"><span data-en="⚙️ Edit profile">⚙️ Rediger profil</span></div>
     <div style="margin-bottom:10px">
       <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Navn</div>
       <input id="pp-edit-name" class="form-input" type="text" placeholder="Ditt navn" style="width:100%;box-sizing:border-box">
     </div>
     <div style="margin-bottom:12px">
-      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Telefon (Vipps-nummer)</div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px" data-en="Phone (Vipps number)">Telefon (Vipps-nummer)</div>
       <input id="pp-edit-phone" class="form-input" type="tel" placeholder="8 siffer" maxlength="8" style="width:100%;box-sizing:border-box">
     </div>
-    <button onclick="saveProfileEdits()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">💾 Lagre endringer</button>
+    <button onclick="saveProfileEdits()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit"><span data-en="💾 Save changes">💾 Lagre endringer</span></button>
   </div>
 
   <!-- Anmeldelser -->
   <div style="padding:18px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
-    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px">⭐ Vurderinger</div>
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px" data-en="⭐ Ratings">⭐ Vurderinger</div>
     <div id="pp-reviews"><div style="font-size:13px;color:var(--muted);padding:8px 0">Laster vurderinger…</div></div>
   </div>
 
   <!-- Bragder -->
   <div style="padding:16px 20px 24px;background:var(--surface)">
-    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px">Bragder</div>
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px" data-en="Achievements">Bragder</div>
     <div id="pp-achievements"></div>
   </div>
 
   <!-- Logg ut (kun egen profil) -->
   <div id="pp-logout-section" style="display:none;padding:8px 20px calc(90px + env(safe-area-inset-bottom,0px));background:var(--surface)">
-    <button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">🚪 Logg ut</button>
+    <button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s"><span data-en="🚪 Log out">🚪 Logg ut</span></button>
     <button id="pp-delete-account-btn" onclick="deleteMyAccount()" style="width:100%;background:transparent;border:1px solid rgba(220,38,38,.35);color:#dc2626;border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s">🗑️ <span data-del-label>Slett konto</span></button>
   </div>
 
@@ -10854,11 +10884,11 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
   <div class="nav-item nav-post" onclick="showPostChoice()" style="flex:1.2">
     <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
-    <div class="nav-label" style="color:#fff;font-weight:700">Legg ut</div>
+    <div class="nav-label" style="color:#fff;font-weight:700" data-en="Post">Legg ut</div>
   </div>
   <div class="nav-item" onclick="toggleInbox()">
     <div class="nav-icon" style="position:relative"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 20l1.3-4.1A8.38 8.38 0 0 1 12 3a8.38 8.38 0 0 1 9 8.5Z"/></svg><span id="mobile-inbox-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:8px;font-weight:800;width:14px;height:14px;border-radius:50%;align-items:center;justify-content:center">0</span></div>
-    <div class="nav-label">Innboks</div>
+    <div class="nav-label" data-en="Inbox">Innboks</div>
   </div>
   <div class="nav-item" onclick="openMyQuests('posted')">
     <div class="nav-icon" style="position:relative"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span id="mobile-mq-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:8px;font-weight:800;min-width:14px;height:14px;border-radius:7px;align-items:center;justify-content:center;padding:0 3px">0</span></div>
