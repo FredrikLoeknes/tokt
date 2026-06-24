@@ -5664,6 +5664,8 @@ async function loadProfilePage(userId, isOwn) {
   if(ppQuick) ppQuick.style.display = isOwn ? 'block' : 'none';
   const ppLogout = document.getElementById('pp-logout-section');
   if(ppLogout) ppLogout.style.display = isOwn ? 'block' : 'none';
+  const ppDelLabel = document.querySelector('#pp-delete-account-btn [data-del-label]');
+  if(ppDelLabel) ppDelLabel.textContent = currentLang === 'en' ? 'Delete account' : 'Slett konto';
   const ppInstall = document.getElementById('pp-install-section');
   if(ppInstall) ppInstall.style.display = (isOwn && canInstallApp()) ? 'block' : 'none';
   document.getElementById('pp-header-title').textContent = isOwn ? 'Min profil' : 'Profil';
@@ -9858,6 +9860,33 @@ async function doLogout() {
   openAuth('login');               // vis innloggings-/registreringsboksen
 }
 
+async function deleteMyAccount() {
+  if(!currentUser) return;
+  const en = currentLang === 'en';
+  const warn = en
+    ? 'Delete your account permanently?\n\nThis removes your profile, quests, services, bookings, messages, ratings and photos. This cannot be undone.'
+    : 'Slette kontoen din permanent?\n\nDette fjerner profil, oppdrag, tjenester, bestillinger, meldinger, vurderinger og bilder. Dette kan ikke angres.';
+  if(!confirm(warn)) return;
+  const typed = prompt(en ? 'Type DELETE to confirm.' : 'Skriv SLETT for å bekrefte.');
+  const ok = (typed || '').trim().toUpperCase();
+  if(ok !== 'SLETT' && ok !== 'DELETE') { showToast(en ? 'Cancelled' : 'Avbrutt'); return; }
+  showToast(en ? '⏳ Deleting account…' : '⏳ Sletter konto…');
+  const { error } = await sb.rpc('delete_my_account');
+  if(error) {
+    console.error('delete_my_account', error);
+    showToast(en ? '⚠️ Could not delete account. Try again.' : '⚠️ Kunne ikke slette kontoen. Prøv igjen.');
+    return;
+  }
+  try { await sb.auth.signOut(); } catch(e) {}
+  currentUser = null;
+  updateUIForAuth(null);
+  if(window.map) addMarkers();
+  document.getElementById('profile-panel').style.display = 'none';
+  closeProfilePage();
+  showToast(en ? '✓ Your account has been deleted' : '✓ Kontoen din er slettet');
+  openAuth('login');
+}
+
 function showAuthError(form, msg) {
   const id = form==='login' ? 'login-error' : 'reg-error';
   const el = document.getElementById(id);
@@ -10644,6 +10673,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <!-- Logg ut (kun egen profil) -->
   <div id="pp-logout-section" style="display:none;padding:8px 20px calc(90px + env(safe-area-inset-bottom,0px));background:var(--surface)">
     <button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">🚪 Logg ut</button>
+    <button id="pp-delete-account-btn" onclick="deleteMyAccount()" style="width:100%;background:transparent;border:1px solid rgba(220,38,38,.35);color:#dc2626;border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s">🗑️ <span data-del-label>Slett konto</span></button>
   </div>
 
   </div><!-- /.pp-wrap -->
