@@ -7280,22 +7280,39 @@ async function savePhoneAndClose() {
   showToast(NE('✅ Telefonnummer lagret! Prøv igjen.','✅ Phone number saved! Try again.'));
 }
 
-function copyAndOpenVipps(phone) {
+function copyAndOpenVipps(phone, amount, message) {
   logEvent('vipps_clicked');
   const formatted = phone.replace(/(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
-  const doOpen = () => { window.location.href = 'vipps://'; };
+  const amountTxt = (amount !== null && amount !== undefined && !isNaN(amount))
+    ? Number(amount).toLocaleString('nb-NO') + ' kr' : null;
+
+  // ── VIPPS-LENKE ───────────────────────────────────────────────
+  // Offisiell forhåndsutfylling (nummer + beløp) krever bedriftsavtale.
+  // I gratis P2P-modus åpner vi appen og kopierer nummeret.
+  // Vil du teste uoffisiell "Vipps meg"-forhåndsutfylling: bytt
+  // linjen under til den genererte lenken fra vipps.aslak.io og test
+  // på mobil. La PREFILL stå tom for trygg standardoppførsel.
+  const PREFILL = ''; // f.eks. byggVippsMegLenke(phone, amount, message)
+  const target = PREFILL || 'vipps://';
+
+  const doOpen = () => { window.location.href = target; };
+
+  const toastMsg = amountTxt
+    ? '📋 ' + formatted + NE(' kopiert – send ', ' copied – send ') + amountTxt + NE(' i Vipps', ' in Vipps')
+    : '📋 ' + formatted + NE(' kopiert! Lim inn i Vipps', ' copied! Paste in Vipps');
+
   if(navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(formatted).then(() => {
-      showToast('📋 ' + formatted + NE(' kopiert! Lim inn i Vipps',' copied! Paste in Vipps'));
-      setTimeout(doOpen, 600);
-    }).catch(() => { showToast(NE('📱 Nummer: ','📱 Number: ') + formatted); setTimeout(doOpen, 1200); });
+      showToast(toastMsg);
+      setTimeout(doOpen, 700);
+    }).catch(() => { showToast(NE('📱 Nummer: ','📱 Number: ') + formatted + (amountTxt ? ' · ' + amountTxt : '')); setTimeout(doOpen, 1200); });
   } else {
-    showToast(NE('📱 Nummer: ','📱 Number: ') + formatted);
+    showToast(NE('📱 Nummer: ','📱 Number: ') + formatted + (amountTxt ? ' · ' + amountTxt : ''));
     setTimeout(doOpen, 1200);
   }
 }
 
-function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, role) {
+async function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, role) {
   const existing = document.getElementById('payment-info-popup');
   if(existing) existing.remove();
 
@@ -7304,6 +7321,22 @@ function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, role)
   // Strip non-digits, use last 8 digits (handles +47 prefix etc)
   const otherPhone = otherPhoneRaw ? otherPhoneRaw.replace(/\D/g, '').slice(-8) : null;
   const phoneDisplay = otherPhone ? otherPhone.replace(/(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4') : 'Nummer ikke oppgitt';
+
+  // ── Hent avtalt beløp + oppdragstittel slik at det vises i betalingsvinduet ──
+  let questAmount = null, questTitle = '';
+  if(questId) {
+    try {
+      const { data: qRow } = await sb.from('quests').select('price, title').eq('id', questId).single();
+      if(qRow) {
+        questAmount = (qRow.price !== null && qRow.price !== undefined && !isNaN(qRow.price)) ? Math.round(Number(qRow.price)) : null;
+        questTitle = qRow.title || '';
+      }
+    } catch(e) { /* beløp er valgfritt – vis vinduet uansett */ }
+  }
+  const amountDisplay = questAmount !== null ? questAmount.toLocaleString('nb-NO') + ' kr' : null;
+  // Melding som følger med i Vipps (maks ~50 tegn for å holde det rent)
+  const vippsMsg = (questTitle ? 'Tokt: ' + questTitle : 'Tokt-oppdrag').slice(0, 50);
+  const safeMsg = vippsMsg.replace(/'/g, '');
 
   const popup = document.createElement('div');
   popup.id = 'payment-info-popup';
@@ -7325,13 +7358,19 @@ function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId, role)
             <div style="font-size:14px;color:var(--muted);margin-top:2px">📱 ${phoneDisplay}</div>
           </div>
         </div>
+        ${amountDisplay ? `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)">
+          <span style="font-size:13px;color:var(--muted);font-weight:600">${role === 'giver' ? 'Avtalt beløp' : 'Du skal ha'}</span>
+          <span style="font-size:22px;font-weight:800;color:#ff5b24">${amountDisplay}</span>
+        </div>
+        ${questTitle ? `<div style="font-size:11.5px;color:var(--muted);margin-top:6px;text-align:right">«${questTitle}»</div>` : ''}` : ''}
       </div>
 
       ${role === 'giver' && otherPhone ? `
-        <button onclick="copyAndOpenVipps('${otherPhone}')" style="display:block;width:100%;background:#ff5b24;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;margin-bottom:10px;box-sizing:border-box">
-          💸 Kopier nummer og åpne Vipps
+        <button onclick="copyAndOpenVipps('${otherPhone}', ${questAmount !== null ? questAmount : 'null'}, '${safeMsg}')" style="display:block;width:100%;background:#ff5b24;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;margin-bottom:10px;box-sizing:border-box">
+          💸 ${amountDisplay ? 'Betal ' + amountDisplay + ' med Vipps' : 'Kopier nummer og åpne Vipps'}
         </button>
-        <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px">Nummeret kopieres – lim inn i Vipps-søket</div>` : ''}
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px">Nummeret kopieres automatisk – søk det opp i Vipps og send beløpet</div>` : ''}
 
       ${role === 'taker' ? `
         <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:12px;padding:11px 13px;margin-bottom:10px;font-size:12px;color:var(--muted);line-height:1.5"><span>✅</span><div>Når pengene er på konto, gå til <b style="color:var(--text)">Mine oppdrag</b> og trykk «Jeg har mottatt betaling» for å fullføre.</div></div>` : ''}
