@@ -10122,6 +10122,13 @@ function showAuthSuccess(form, msg) {
 
 async function loadUserProfile(user) {
   currentUser = user;
+  // Ved refresh kan session gjenopprettes fra localStorage FØR profil-panelet lenger
+  // nede i HTML er parset. Da ville getElementById returnert null og funksjonen kastet
+  // en feil før updateUIForAuth(user) – som ga «halvveis innlogget» (data lastes, men
+  // «Logg inn»-knappen blir stående). Vent derfor til DOM er ferdig.
+  if(document.readyState === 'loading'){
+    await new Promise(res => document.addEventListener('DOMContentLoaded', res, { once:true }));
+  }
   const meta = user.user_metadata || {};
   const name = meta.full_name || meta.first_name || user.email.split('@')[0];
   const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
@@ -10131,8 +10138,8 @@ async function loadUserProfile(user) {
   if(avatar) avatar.textContent = initials;
 
   // Update profile panel
-  document.getElementById('profile-avatar-big').textContent = initials;
-  document.getElementById('profile-name').textContent = name;
+  const _pab = document.getElementById('profile-avatar-big'); if(_pab) _pab.textContent = initials;
+  const _pn = document.getElementById('profile-name'); if(_pn) _pn.textContent = name;
 
   // Try load profile from DB
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
@@ -10150,13 +10157,13 @@ async function loadUserProfile(user) {
     renderAvatar(document.querySelector('.avatar'), profile.avatar_url, initials);
     renderAvatar(document.getElementById('profile-avatar-big'), profile.avatar_url, initials);
     // Samme tall som profil-side og leaderboard: fullførte oppdrag (profiles.quests_completed)
-    document.getElementById('profile-quests').textContent = quests;
-    document.getElementById('profile-rating').textContent = profile.rating ? profile.rating.toFixed(1) : '–';
-    document.getElementById('profile-level').textContent = rankLevel;
+    const _pqEl = document.getElementById('profile-quests'); if(_pqEl) _pqEl.textContent = quests;
+    const _prEl = document.getElementById('profile-rating'); if(_prEl) _prEl.textContent = profile.rating ? profile.rating.toFixed(1) : '–';
+    const _plEl = document.getElementById('profile-level'); if(_plEl) _plEl.textContent = rankLevel;
     // Oppdater Nivå-teksten under topbar-avataren (var hardkodet)
     const avatarLvl = document.querySelector('.avatar-lvl');
     if(avatarLvl) avatarLvl.textContent = 'Nivå ' + rankLevel;
-    document.getElementById('profile-rank-badge').textContent = `${rank.name} · ${NE('nivå','level')} ${RANKS.indexOf(rank)+1} ${NE('av','of')} ${RANKS.length}`;
+    const _prb = document.getElementById('profile-rank-badge'); if(_prb) _prb.textContent = `${rank.name} · ${NE('nivå','level')} ${RANKS.indexOf(rank)+1} ${NE('av','of')} ${RANKS.length}`;
     const rankDescEl = document.getElementById('profile-rank-desc');
     if(rankDescEl) rankDescEl.textContent = rank.desc || '';
     // Rang-fremgang (oppdrag til neste rang) – erstatter gammelt XP-system
@@ -10181,7 +10188,7 @@ async function loadUserProfile(user) {
   updateMyQuestsBadge();
   // Hide welcome popup when logged in
   localStorage.setItem('tokt-welcome-seen', '1');
-  document.getElementById('welcome-overlay').style.display = 'none';
+  const _wo = document.getElementById('welcome-overlay'); if(_wo) _wo.style.display = 'none';
   checkUnreadNotifs();
   subscribeToNotifications();
   registerPushNotifications();
