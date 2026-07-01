@@ -940,6 +940,14 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .form-label { font-size:11px; font-weight:700; color:var(--muted); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:.6px; }
 .form-input,.form-select,.form-textarea { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 14px; font-size:14px; color:var(--text); font-family:inherit; outline:none; transition:border-color .15s,box-shadow .15s; }
 .form-input:focus,.form-select:focus,.form-textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+/* 24-timers tidsvelger (erstatter native type=time som viser AM/PM) */
+.tp-wrap { display:flex; align-items:center; gap:6px; width:100%; }
+.tp-sel { flex:1; -webkit-appearance:none; appearance:none; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 10px; font-size:15px; color:var(--text); font-family:inherit; outline:none; text-align:center; text-align-last:center; cursor:pointer; transition:border-color .15s,box-shadow .15s; }
+.tp-sel:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+.tp-colon { font-weight:800; color:var(--muted); font-size:15px; }
+/* Kort puls på et nyopprettet oppdrag så det er lett å se på kartet */
+.marker-justposted { animation: mjustposted 1.3s ease-out 2; transform-origin:center bottom; z-index:20; }
+@keyframes mjustposted { 0%{ filter:drop-shadow(0 0 0 rgba(16,185,129,.0)); } 30%{ filter:drop-shadow(0 0 14px rgba(16,185,129,.85)); transform:scale(1.14); } 100%{ filter:drop-shadow(0 0 0 rgba(16,185,129,0)); transform:scale(1); } }
 /* iOS: font under 16px på skjemafelt utløser auto-zoom ved fokus. 16px på mobil hindrer det. */
 @media(max-width:768px){
   input, textarea, select { font-size:16px !important; }
@@ -2181,12 +2189,12 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
         <div style="display:flex;gap:8px">
           <div style="flex:1">
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fra</div>
-            <input id="quest-time-from" type="time" class="form-input" style="width:100%">
+            <div class="tp-wrap" data-tp-id="quest-time-from" data-tp-def=""></div>
           </div>
           <div style="display:flex;align-items:center;padding-top:20px;color:var(--muted);font-size:13px">–</div>
           <div style="flex:1">
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til</div>
-            <input id="quest-time-to" type="time" class="form-input" style="width:100%">
+            <div class="tp-wrap" data-tp-id="quest-time-to" data-tp-def=""></div>
           </div>
         </div>
       </div>
@@ -2208,12 +2216,12 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
         <div style="display:flex;gap:8px;margin-bottom:10px">
           <div style="flex:1">
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Klokkeslett fra</div>
-            <input id="quest-recurring-time-from" type="time" class="form-input" style="width:100%" value="08:00">
+            <div class="tp-wrap" data-tp-id="quest-recurring-time-from" data-tp-def="08:00"></div>
           </div>
           <div style="display:flex;align-items:center;padding-top:20px;color:var(--muted);font-size:13px">–</div>
           <div style="flex:1">
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til</div>
-            <input id="quest-recurring-time-to" type="time" class="form-input" style="width:100%" value="16:00">
+            <div class="tp-wrap" data-tp-id="quest-recurring-time-to" data-tp-def="16:00"></div>
           </div>
         </div>
         <div style="display:flex;gap:8px">
@@ -2235,12 +2243,12 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
         <div style="display:flex;gap:8px">
           <div style="flex:1">
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fra kl.</div>
-            <input id="quest-flexible-time-from" type="time" class="form-input" style="width:100%">
+            <div class="tp-wrap" data-tp-id="quest-flexible-time-from" data-tp-def=""></div>
           </div>
           <div style="display:flex;align-items:center;padding-top:20px;color:var(--muted);font-size:13px">–</div>
           <div style="flex:1">
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til kl.</div>
-            <input id="quest-flexible-time-to" type="time" class="form-input" style="width:100%">
+            <div class="tp-wrap" data-tp-id="quest-flexible-time-to" data-tp-def=""></div>
           </div>
         </div>
         <div style="font-size:11px;color:var(--muted);margin-top:8px">💡 Oppdraget ligger ute til noen tar det – ingen utløpsdato</div>
@@ -3471,6 +3479,7 @@ function addQuestMarker(q) {
   const coords = spreadCoords(job.coords);
   registerMarker(el, {
     kind: 'quest',
+    id: q.id,
     category: q.category || '',
     matchText: ((q.category||'') + ' ' + (q.title||'')).toLowerCase(),
     pay: q.pay || 0,
@@ -3799,6 +3808,39 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('load', initMap);
+
+// ── 24-timers tidsvelger (erstatter native <input type="time"> som viser AM/PM) ──
+function _tpBuildOne(wrap){
+  const id = wrap.dataset.tpId;
+  if(!id) return;
+  const def = wrap.dataset.tpDef || '';
+  let defH = '', defM = '00';
+  if(/^\d{1,2}:\d{2}/.test(def)){ const p = def.split(':'); defH = String(parseInt(p[0],10)).padStart(2,'0'); defM = String(parseInt(p[1],10)).padStart(2,'0'); }
+  let hOpts = '<option value="">–</option>';
+  for(let h=0; h<24; h++){ const v = String(h).padStart(2,'0'); hOpts += `<option value="${v}"${v===defH?' selected':''}>${v}</option>`; }
+  let mOpts = '';
+  for(let m=0; m<60; m+=5){ const v = String(m).padStart(2,'0'); mOpts += `<option value="${v}"${v===defM?' selected':''}>${v}</option>`; }
+  wrap.innerHTML = `<select class="tp-sel tp-h" aria-label="Time">${hOpts}</select><span class="tp-colon">:</span><select class="tp-sel tp-m" aria-label="Minutt">${mOpts}</select><input type="hidden" id="${id}">`;
+  const hs = wrap.querySelector('.tp-h'), ms = wrap.querySelector('.tp-m'), hid = wrap.querySelector('input[type="hidden"]');
+  const sync = () => { hid.value = hs.value ? (hs.value + ':' + (ms.value || '00')) : ''; };
+  hs.addEventListener('change', () => { if(hs.value && !ms.value) ms.value = '00'; sync(); });
+  ms.addEventListener('change', sync);
+  sync();
+  wrap.dataset.tpBuilt = '1';
+}
+function buildTimePickers(){ document.querySelectorAll('.tp-wrap').forEach(w => { if(w.dataset.tpBuilt !== '1') _tpBuildOne(w); }); }
+// Sett/nullstill en tidsvelger programmatisk. '' = tøm (time = –)
+function setTimePicker(id, val){
+  const hid = document.getElementById(id);
+  const wrap = hid ? hid.closest('.tp-wrap') : document.querySelector('.tp-wrap[data-tp-id="' + id + '"]');
+  if(!wrap) return;
+  const hs = wrap.querySelector('.tp-h'), ms = wrap.querySelector('.tp-m'), h = wrap.querySelector('input[type="hidden"]');
+  if(!hs || !ms) return;
+  if(/^\d{1,2}:\d{2}/.test(val || '')){ const p = val.split(':'); hs.value = String(parseInt(p[0],10)).padStart(2,'0'); ms.value = String(parseInt(p[1],10)).padStart(2,'0'); }
+  else { hs.value = ''; ms.value = '00'; }
+  if(h) h.value = hs.value ? (hs.value + ':' + (ms.value || '00')) : '';
+}
+document.addEventListener('DOMContentLoaded', buildTimePickers);
 
 function showPanel(job) {
   // Close all other panels first
@@ -4505,6 +4547,17 @@ async function postJob() {
   const finalTimeFrom = keepOpen ? null : scheduledTimeFrom;
   const finalTimeTo = keepOpen ? null : scheduledTimeTo;
 
+  // Hindre at oppdraget «forsvinner»: et once-oppdrag med dato + tid som allerede
+  // har passert blir umiddelbart markert utløpt og vises da kun i lista, ikke på kartet.
+  if(!keepOpen && scheduleType === 'once' && finalScheduledDate) {
+    const t = finalTimeTo || finalTimeFrom || '23:59';
+    const when = new Date(`${finalScheduledDate}T${t}`);
+    if(!isNaN(when.getTime()) && when.getTime() < Date.now()) {
+      showToast(NE('⚠️ Tidspunktet har allerede passert – velg et fremtidig tidspunkt','⚠️ That time has already passed – pick a future time'));
+      return;
+    }
+  }
+
   const isFirstCome = document.getElementById('mode-firstcome')?.classList.contains('active') || false;
   const isUrgent = document.querySelector('#modal .toggle')?.classList.contains('on') || false;
 
@@ -4596,10 +4649,12 @@ async function postJob() {
   safeReset('quest-date-input');
   document.getElementById('address-confirmed').style.display = 'none';
   questLat = null; questLng = null;
-  safeReset('quest-time-from');
-  safeReset('quest-time-to');
-  safeReset('quest-recurring-time-from');
-  safeReset('quest-recurring-time-to');
+  setTimePicker('quest-time-from','');
+  setTimePicker('quest-time-to','');
+  setTimePicker('quest-recurring-time-from','08:00');
+  setTimePicker('quest-recurring-time-to','16:00');
+  setTimePicker('quest-flexible-time-from','');
+  setTimePicker('quest-flexible-time-to','');
   safeReset('quest-date-end-input');
   const priceEl = document.getElementById('modal-price');
   if(priceEl) priceEl.value = '250';
@@ -4618,17 +4673,49 @@ async function postJob() {
   // Show congrats popup
   showQuestPostedPopup(title);
 
+  // Sørg for at det nye oppdraget faktisk vises på kartet:
+  // nullstill filtre/visning som ellers kan skjule det (kategori, pris, avstand, haste/veldedighet, kun-tjenester)
+  resetMapFiltersForNewQuest();
+
   // Reload all markers
   await addMarkers();
 
-  // Fly to quest location
+  // Fly to quest location + fremhev det nye oppdraget
   if(window.map) window.map.flyTo({ center: [lng, lat], zoom: 14, speed: 1.4 });
+  highlightNewQuestMarker(quest && quest.id);
 
   // Reload profile
   if(currentUser) await loadUserProfile(currentUser);
 
   // Reload mine oppdrag so new quest shows up immediately
   loadMyQuests();
+}
+
+// Nullstill kartfiltre slik at et nyopprettet oppdrag garantert er synlig
+function resetMapFiltersForNewQuest() {
+  window.viewMode = 'all';
+  try { syncViewToggles('all'); } catch(e){}
+  document.querySelectorAll('.fcat-item').forEach(el => el.classList.toggle('active', el.dataset.cat === 'all'));
+  ['tog-urgent','tog-charity','tog-firstcome'].forEach(id => document.getElementById(id)?.classList.remove('on'));
+  const rmin = document.getElementById('range-min'); if(rmin) rmin.value = 0;
+  const rmax = document.getElementById('range-max'); if(rmax) rmax.value = 50000;
+  try { updateRange(); } catch(e){}
+  window.maxDistKm = undefined;
+  const rdist = document.getElementById('range-dist'); if(rdist){ rdist.value = 5; try { updateDist(5); } catch(e){} }
+  try { updateFilterCount(); } catch(e){}
+}
+
+// Finn markøren for det nye oppdraget, tving den synlig og gi en kort puls
+function highlightNewQuestMarker(id) {
+  if(!id) return;
+  setTimeout(() => {
+    const m = (window.mapMarkers || []).find(mm => mm.id === id);
+    if(!m || !m.el) return;
+    m.el.style.display = '';
+    m.el.style.visibility = 'visible';
+    m.el.classList.add('marker-justposted');
+    setTimeout(() => m.el && m.el.classList.remove('marker-justposted'), 2600);
+  }, 350);
 }
 
 function showQuestPostedPopup(title) {
@@ -8307,7 +8394,7 @@ function openBookingRequest(kind) {
             <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Dato</label>
               <input id="bk-date" type="date" min="${new Date().toISOString().slice(0,10)}" value="${tomorrow}" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
             <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Tid</label>
-              <input id="bk-time" type="time" value="12:00" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
+              <div class="tp-wrap" data-tp-id="bk-time" data-tp-def="12:00"></div></div>
           </div>`;
 
     let m = document.getElementById('booking-modal');
@@ -8335,6 +8422,7 @@ function openBookingRequest(kind) {
     m.onclick = (e) => { if(e.target === m) closeBookingModal(); };
     closeServicePanel();
     m.style.display = 'flex';
+    buildTimePickers();
   });
 }
 
