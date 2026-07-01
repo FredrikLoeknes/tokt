@@ -2166,104 +2166,65 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     </div>
     <div class="form-group">
       <label class="form-label" data-en="📅 When do you want it done?">📅 Når skal det gjøres?</label>
-      <div style="font-size:11.5px;color:var(--muted);margin:-4px 0 10px;line-height:1.45" data-en="Just a preferred time – it doesn't affect where or how long the task shows on the map. It stays up until someone takes it.">Bare et ønsket tidspunkt – det påvirker ikke om eller hvor lenge oppdraget vises på kartet. Det ligger ute til noen tar det.</div>
+      <div style="font-size:11.5px;color:var(--muted);margin:-4px 0 10px;line-height:1.45" data-en="Pick a deadline if there's a hard cut-off, or a time window to say when it suits. Only a deadline affects the map.">Velg en frist hvis det har en hard tidsgrense, eller et tidsvindu hvis du bare vil si når det passer. Bare frist påvirker kartet.</div>
 
-      <!-- Type velger -->
+      <!-- Modus-velger -->
       <div style="display:flex;gap:8px;margin-bottom:12px">
-        <div class="mode-btn active" id="schedule-once" onclick="setScheduleType('once')" style="font-size:12px;padding:8px">
-          📌 Én gang
-        </div>
-        <div class="mode-btn" id="schedule-recurring" onclick="setScheduleType('recurring')" style="font-size:12px;padding:8px">
-          🔁 Gjentakende
-        </div>
-        <div class="mode-btn" id="schedule-flexible" onclick="setScheduleType('flexible')" style="font-size:12px;padding:8px">
-          🕐 Fleksibel
-        </div>
+        <div class="mode-btn" id="schedule-frist" onclick="setScheduleType('frist')" style="font-size:12px;padding:9px 6px;line-height:1.3"><span style="font-size:15px">⏳</span><br><span data-en="Deadline">Innen frist</span></div>
+        <div class="mode-btn" id="schedule-vindu" onclick="setScheduleType('vindu')" style="font-size:12px;padding:9px 6px;line-height:1.3"><span style="font-size:15px">🕐</span><br><span data-en="Time window">Tidsvindu</span></div>
+        <div class="mode-btn active" id="schedule-any" onclick="setScheduleType('any')" style="font-size:12px;padding:9px 6px;line-height:1.3"><span style="font-size:15px">📌</span><br><span data-en="Anytime">Når som helst</span></div>
       </div>
 
-      <!-- Én gang -->
-      <div id="schedule-once-fields">
-        <div style="margin-bottom:8px">
-          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Dato</div>
-          <input id="quest-date-input" type="date" class="form-input" style="width:100%">
-        </div>
+      <!-- Frist -->
+      <div id="schedule-frist-fields" style="display:none">
         <div style="display:flex;gap:8px">
           <div style="flex:1">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fra</div>
-            <div class="tp-wrap" data-tp-id="quest-time-from" data-tp-def=""></div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px" data-en="Date">Dato</div>
+            <input id="q-frist-date" type="date" class="form-input" style="width:100%">
           </div>
-          <div style="display:flex;align-items:center;padding-top:20px;color:var(--muted);font-size:13px">–</div>
           <div style="flex:1">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til</div>
-            <div class="tp-wrap" data-tp-id="quest-time-to" data-tp-def=""></div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px" data-en="By (time)">Innen kl.</div>
+            <div class="tp-wrap" data-tp-id="q-frist-time" data-tp-def=""></div>
           </div>
         </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;background:rgba(232,137,12,.09);border:1px solid rgba(232,137,12,.2);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:#8a5406;line-height:1.5"><span>⏳</span><div data-en="Shown as a deadline and removed from the map when the time is up.">Vises som frist og forsvinner fra kartet når tiden er ute.</div></div>
       </div>
 
-      <!-- Gjentakende -->
-      <div id="schedule-recurring-fields" style="display:none">
+      <!-- Tidsvindu -->
+      <div id="schedule-vindu-fields" style="display:none">
         <div style="margin-bottom:10px">
-          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Hvilke dager?</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <div class="day-btn" data-day="1" onclick="toggleDay(this)">Man</div>
-            <div class="day-btn" data-day="2" onclick="toggleDay(this)">Tir</div>
-            <div class="day-btn" data-day="3" onclick="toggleDay(this)">Ons</div>
-            <div class="day-btn" data-day="4" onclick="toggleDay(this)">Tor</div>
-            <div class="day-btn" data-day="5" onclick="toggleDay(this)">Fre</div>
-            <div class="day-btn" data-day="6" onclick="toggleDay(this)">Lør</div>
-            <div class="day-btn" data-day="0" onclick="toggleDay(this)">Søn</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-bottom:10px">
-          <div style="flex:1">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Klokkeslett fra</div>
-            <div class="tp-wrap" data-tp-id="quest-recurring-time-from" data-tp-def="08:00"></div>
-          </div>
-          <div style="display:flex;align-items:center;padding-top:20px;color:var(--muted);font-size:13px">–</div>
-          <div style="flex:1">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til</div>
-            <div class="tp-wrap" data-tp-id="quest-recurring-time-to" data-tp-def="16:00"></div>
-          </div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px" data-en="Date (optional)">Dato (valgfritt)</div>
+          <input id="q-vindu-date" type="date" class="form-input" style="width:100%">
         </div>
         <div style="display:flex;gap:8px">
           <div style="flex:1">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fra dato</div>
-            <input id="quest-date-input" type="date" class="form-input" style="width:100%">
-          </div>
-          <div style="flex:1">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til dato</div>
-            <input id="quest-date-end-input" type="date" class="form-input" style="width:100%">
-          </div>
-        </div>
-      </div>
-
-      <!-- Fleksibel -->
-      <div id="schedule-flexible-fields" style="display:none;background:rgba(59,111,245,0.06);border:1px solid rgba(59,111,245,0.15);border-radius:10px;padding:12px">
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">🕐 Fleksibelt tidsrom</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Oppdraget kan gjøres når som helst – men mellom disse klokkeslettene</div>
-        <div style="display:flex;gap:8px">
-          <div style="flex:1">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fra kl.</div>
-            <div class="tp-wrap" data-tp-id="quest-flexible-time-from" data-tp-def=""></div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px" data-en="Available from">Tilgjengelig fra</div>
+            <div class="tp-wrap" data-tp-id="q-vindu-from" data-tp-def=""></div>
           </div>
           <div style="display:flex;align-items:center;padding-top:20px;color:var(--muted);font-size:13px">–</div>
           <div style="flex:1">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til kl.</div>
-            <div class="tp-wrap" data-tp-id="quest-flexible-time-to" data-tp-def=""></div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px" data-en="To">Til</div>
+            <div class="tp-wrap" data-tp-id="q-vindu-to" data-tp-def=""></div>
           </div>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:8px">💡 Oppdraget ligger ute til noen tar det – ingen utløpsdato</div>
+        <div style="margin-top:10px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px" data-en="Weekdays (optional)">Ukedager (valgfritt)</div>
+          <div id="q-vindu-days" style="display:flex;gap:6px;flex-wrap:wrap">
+            <div class="day-btn" data-day="1" onclick="toggleDay(this)" data-en="Mon">Man</div>
+            <div class="day-btn" data-day="2" onclick="toggleDay(this)" data-en="Tue">Tir</div>
+            <div class="day-btn" data-day="3" onclick="toggleDay(this)" data-en="Wed">Ons</div>
+            <div class="day-btn" data-day="4" onclick="toggleDay(this)" data-en="Thu">Tor</div>
+            <div class="day-btn" data-day="5" onclick="toggleDay(this)" data-en="Fri">Fre</div>
+            <div class="day-btn" data-day="6" onclick="toggleDay(this)" data-en="Sat">Lør</div>
+            <div class="day-btn" data-day="0" onclick="toggleDay(this)" data-en="Sun">Søn</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;background:rgba(59,111,245,.07);border:1px solid rgba(59,111,245,.16);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:#2b4a86;line-height:1.5"><span>🕐</span><div data-en="Just info about when it suits. Stays up until someone takes it — the time never hides it.">Bare info om når det passer. Ligger ute til noen tar det – klokka skjuler det aldri.</div></div>
       </div>
 
-      <div style="font-size:11px;color:var(--muted);margin-top:6px" data-en="Optional – helps the doer plan. Doesn't hide the task.">Valgfritt – hjelper utfører å planlegge. Skjuler ikke oppdraget.</div>
-
-      <!-- Legg ut til det blir tatt -->
-      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px 12px;background:rgba(59,111,245,0.06);border:1px solid rgba(59,111,245,0.15);border-radius:10px;cursor:pointer" onclick="toggleKeepOpen(this)">
-        <div id="keep-open-check" style="width:20px;height:20px;border-radius:6px;border:2px solid var(--border);background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:13px"></div>
-        <div>
-          <div style="font-size:13px;font-weight:600;color:var(--text)">📌 Legg ut til oppdraget blir tatt</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:1px">Oppdraget utløper ikke automatisk</div>
-        </div>
+      <!-- Når som helst -->
+      <div id="schedule-any-fields" style="display:block">
+        <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11.5px;color:var(--muted);line-height:1.5"><span>📌</span><div data-en="No time constraint. Stays up until someone takes it.">Ingen tidsbinding. Oppdraget ligger ute til noen tar det.</div></div>
       </div>
     </div>
 
@@ -3280,6 +3241,8 @@ function questToJob(q) {
     scheduledDate: q.scheduled_date || null,
     scheduledTimeFrom: q.scheduled_time_from || null,
     scheduledTimeTo: q.scheduled_time_to || null,
+    scheduleMode: q.schedule_mode || (q.scheduled_date ? 'vindu' : 'any'),
+    scheduleDays: q.schedule_days || null,
     coords: [q.lng, q.lat],
     people: [],
     raw: q
@@ -3503,26 +3466,33 @@ function addQuestMarker(q) {
 }
 
 // ── EXPIRED QUEST LOGIC ──
-// Utløp styres KUN av datoen (slutten av den valgte dagen). Klokkeslettet er bare
-// et ønske om når oppdraget helst skal gjøres, og skal aldri skjule det fra kartet.
-// Returns true if the quest's scheduled DAY has fully passed
-function isQuestExpired(q) {
-  if(!q.scheduled_date) return false;
-  const expiry = new Date(`${q.scheduled_date}T23:59:59`);
-  return Date.now() > expiry.getTime();
+// Kun modus 'frist' bruker klokkeslettet som en hard grense. Tidsvindu (og eldre
+// oppdrag uten modus) utløper først når hele den valgte DAGEN er over. 'any' = ingen dato = aldri.
+function questDeadlineMs(q) {
+  if(!q.scheduled_date) return null;
+  if(q.schedule_mode === 'frist') {
+    const t = q.scheduled_time_to || q.scheduled_time_from || '23:59:59';
+    return new Date(`${q.scheduled_date}T${t}`).getTime();
+  }
+  return new Date(`${q.scheduled_date}T23:59:59`).getTime();
 }
 
-// Returns true if the scheduled day passed MORE than 24 hours ago (should be hidden)
+// Returns true if the quest's deadline (frist) or scheduled day has passed
+function isQuestExpired(q) {
+  const d = questDeadlineMs(q);
+  return d != null && Date.now() > d;
+}
+
+// Returns true if it expired MORE than 24 hours ago (should be hidden)
 function isQuestHidden(q) {
-  if(!q.scheduled_date) return false;
-  const expiry = new Date(`${q.scheduled_date}T23:59:59`);
-  return Date.now() > expiry.getTime() + 24 * 60 * 60 * 1000;
+  const d = questDeadlineMs(q);
+  return d != null && Date.now() > d + 24 * 60 * 60 * 1000;
 }
 
 // Mark expired quests in Supabase (called on load)
 async function checkAndExpireQuests() {
   const { data: quests } = await sb.from('quests')
-    .select('id, scheduled_date, scheduled_time_from, scheduled_time_to')
+    .select('id, scheduled_date, scheduled_time_from, scheduled_time_to, schedule_mode')
     .eq('status', 'open')
     .not('scheduled_date', 'is', null);
 
@@ -3959,21 +3929,39 @@ function showPanel(job) {
   // Show scheduled time if set
   const schedEl = document.getElementById('panel-schedule');
   if(schedEl) schedEl.remove();
-  if(job.scheduledDate || job.scheduledTimeFrom) {
-    const dateStr = job.scheduledDate
+  {
+    const mode = job.scheduleMode || (job.scheduledDate ? 'vindu' : 'any');
+    const trimTime = t => t ? t.slice(0,5) : '';
+    const dayNames = ['Søn','Man','Tir','Ons','Tor','Fre','Lør'];
+    const dateLong = job.scheduledDate
       ? new Date(job.scheduledDate).toLocaleDateString('nb-NO', { weekday:'long', day:'numeric', month:'long' })
       : '';
-    const trimTime = t => t ? t.slice(0,5) : '';
-    const timeStr = job.scheduledTimeFrom
-      ? job.scheduledTimeTo
-        ? `${trimTime(job.scheduledTimeFrom)} – ${trimTime(job.scheduledTimeTo)}`
-        : `Fra ${trimTime(job.scheduledTimeFrom)}`
-      : '';
-    const schedDiv = document.createElement('div');
-    schedDiv.id = 'panel-schedule';
-    schedDiv.style.cssText = 'margin:0 0 12px;padding:10px 12px;background:rgba(59,111,245,0.07);border:1px solid rgba(59,111,245,0.15);border-radius:10px;display:flex;align-items:center;gap:8px;font-size:12px';
-    schedDiv.innerHTML = `<span style="font-size:16px">📅</span><div><div style="font-weight:600;color:var(--text)">${dateStr}</div>${timeStr ? `<div style="color:var(--muted);margin-top:1px">🕐 ${timeStr}</div>` : ''}</div>`;
-    document.getElementById('panel-meta').after(schedDiv);
+    let icon = '📅', accent = '59,111,245', title = '', sub = '';
+
+    if(mode === 'frist' && (job.scheduledDate || job.scheduledTimeTo)) {
+      icon = '⏳'; accent = '229,72,77';
+      title = NE('Frist','Deadline') + (dateLong ? ': ' + dateLong : '');
+      if(job.scheduledTimeTo) sub = NE('Innen kl. ','By ') + trimTime(job.scheduledTimeTo);
+    } else if(mode === 'vindu' && (job.scheduledTimeFrom || job.scheduledTimeTo || job.scheduledDate || job.scheduleDays)) {
+      icon = '🕐'; accent = '59,111,245';
+      const win = job.scheduledTimeFrom
+        ? (job.scheduledTimeTo ? `${trimTime(job.scheduledTimeFrom)}–${trimTime(job.scheduledTimeTo)}` : NE('fra ','from ') + trimTime(job.scheduledTimeFrom))
+        : (job.scheduledTimeTo ? NE('til ','until ') + trimTime(job.scheduledTimeTo) : '');
+      const daysArr = (job.scheduleDays ? String(job.scheduleDays).split(',') : []).map(d => dayNames[parseInt(d,10)]).filter(Boolean);
+      title = NE('Tilgjengelig','Available') + (win ? ' ' + win : '');
+      const parts = [];
+      if(daysArr.length) parts.push(daysArr.join(' '));
+      if(dateLong) parts.push(dateLong);
+      sub = parts.join(' · ');
+    }
+
+    if(title) {
+      const schedDiv = document.createElement('div');
+      schedDiv.id = 'panel-schedule';
+      schedDiv.style.cssText = `margin:0 0 12px;padding:10px 12px;background:rgba(${accent},0.08);border:1px solid rgba(${accent},0.2);border-radius:10px;display:flex;align-items:flex-start;gap:8px;font-size:12px`;
+      schedDiv.innerHTML = `<span style="font-size:16px">${icon}</span><div><div style="font-weight:600;color:var(--text)">${title}</div>${sub ? `<div style="color:var(--muted);margin-top:1px">${sub}</div>` : ''}</div>`;
+      document.getElementById('panel-meta').after(schedDiv);
+    }
   }
   const appEl = document.getElementById('panel-applicants');
   const isQuestOwner = currentUser && job.raw?.user_id === currentUser.id;
@@ -4420,7 +4408,7 @@ async function applyJob() {
   openChat(conv.id, applyPanel?.dataset?.questTitle || 'Oppdrag');
 }
 
-function openModal() { if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å legge ut oppdrag','👋 Log in to post a task')); return; } const at = document.getElementById('adult-toggle'); if(at){ at.classList.remove('on'); at.dataset.locked = ''; } applyMinorUIRestrictions(); const catSel = document.getElementById('quest-category-input'); if(catSel) checkCategoryWarning(catSel.value); document.getElementById('modal-overlay').classList.add('open'); updateQuestPreview(); }
+function openModal() { if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å legge ut oppdrag','👋 Log in to post a task')); return; } const at = document.getElementById('adult-toggle'); if(at){ at.classList.remove('on'); at.dataset.locked = ''; } applyMinorUIRestrictions(); const catSel = document.getElementById('quest-category-input'); if(catSel) checkCategoryWarning(catSel.value); document.getElementById('modal-overlay').classList.add('open'); try { setScheduleType('any'); } catch(e){} updateQuestPreview(); }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 
 // Live marker preview in the "Legg ut" modal – mirrors how the marker will look to others
@@ -4527,26 +4515,26 @@ async function postJob() {
   const fullDescription = description + (description ? '\n\n' : '') + equipText;
   const duration = document.getElementById('quest-duration-input')?.value || '';
   const isCharity = document.getElementById('charity-toggle')?.classList.contains('on') || false;
-  const scheduleType = document.getElementById('schedule-recurring')?.classList.contains('active') ? 'recurring'
-    : document.getElementById('schedule-flexible')?.classList.contains('active') ? 'flexible'
-    : 'once';
-  const scheduledDate = scheduleType === 'once' ? document.getElementById('quest-date-input')?.value || null : null;
-  const scheduledTimeFrom = scheduleType === 'recurring'
-    ? document.getElementById('quest-recurring-time-from')?.value || null
-    : scheduleType === 'flexible'
-    ? document.getElementById('quest-flexible-time-from')?.value || null
-    : document.getElementById('quest-time-from')?.value || null;
-  const scheduledTimeTo = scheduleType === 'recurring'
-    ? document.getElementById('quest-recurring-time-to')?.value || null
-    : scheduleType === 'flexible'
-    ? document.getElementById('quest-flexible-time-to')?.value || null
-    : document.getElementById('quest-time-to')?.value || null;
-  const keepOpen = document.getElementById('keep-open-check')?.textContent === '✓';
+  const scheduleMode = document.getElementById('schedule-frist')?.classList.contains('active') ? 'frist'
+    : document.getElementById('schedule-vindu')?.classList.contains('active') ? 'vindu'
+    : 'any';
 
-  // If "keep open until taken" is checked, clear the scheduled date so it never expires
-  const finalScheduledDate = keepOpen ? null : scheduledDate;
-  const finalTimeFrom = keepOpen ? null : scheduledTimeFrom;
-  const finalTimeTo = keepOpen ? null : scheduledTimeTo;
+  let scheduledDate = null, scheduledTimeFrom = null, scheduledTimeTo = null, scheduleDays = null;
+  if(scheduleMode === 'frist') {
+    scheduledDate = document.getElementById('q-frist-date')?.value || null;
+    scheduledTimeTo = document.getElementById('q-frist-time')?.value || null; // frist-tidspunkt
+  } else if(scheduleMode === 'vindu') {
+    scheduledDate = document.getElementById('q-vindu-date')?.value || null;
+    scheduledTimeFrom = document.getElementById('q-vindu-from')?.value || null;
+    scheduledTimeTo = document.getElementById('q-vindu-to')?.value || null;
+    const days = [...document.querySelectorAll('#q-vindu-days .day-btn.active')].map(d => d.dataset.day);
+    scheduleDays = days.length ? days.join(',') : null;
+  }
+  // 'any' → alt forblir null (ligger ute til noen tar det)
+
+  const finalScheduledDate = scheduledDate;
+  const finalTimeFrom = scheduledTimeFrom;
+  const finalTimeTo = scheduledTimeTo;
 
   const isFirstCome = document.getElementById('mode-firstcome')?.classList.contains('active') || false;
   const isUrgent = document.querySelector('#modal .toggle')?.classList.contains('on') || false;
@@ -4597,6 +4585,8 @@ async function postJob() {
     scheduled_date: finalScheduledDate,
     scheduled_time_from: finalTimeFrom,
     scheduled_time_to: finalTimeTo,
+    schedule_mode: scheduleMode,
+    schedule_days: scheduleDays,
     status: 'open',
     lat,
     lng
@@ -4636,16 +4626,15 @@ async function postJob() {
   safeReset('quest-title-input');
   safeReset('quest-desc-input');
   safeReset('quest-address-input');
-  safeReset('quest-date-input');
+  safeReset('q-frist-date');
+  safeReset('q-vindu-date');
   document.getElementById('address-confirmed').style.display = 'none';
   questLat = null; questLng = null;
-  setTimePicker('quest-time-from','');
-  setTimePicker('quest-time-to','');
-  setTimePicker('quest-recurring-time-from','08:00');
-  setTimePicker('quest-recurring-time-to','16:00');
-  setTimePicker('quest-flexible-time-from','');
-  setTimePicker('quest-flexible-time-to','');
-  safeReset('quest-date-end-input');
+  setTimePicker('q-frist-time','');
+  setTimePicker('q-vindu-from','');
+  setTimePicker('q-vindu-to','');
+  document.querySelectorAll('#q-vindu-days .day-btn').forEach(d => d.classList.remove('active'));
+  setScheduleType('any');
   const priceEl = document.getElementById('modal-price');
   if(priceEl) priceEl.value = '250';
   const priceDisplay = document.getElementById('modal-price-display');
@@ -4654,7 +4643,6 @@ async function postJob() {
   if(imgPreview) imgPreview.style.display = 'none';
   const uploadPlaceholder = document.getElementById('upload-placeholder');
   if(uploadPlaceholder) uploadPlaceholder.style.display = 'block';
-  document.querySelectorAll('.day-btn').forEach(d => d.classList.remove('active'));
   if(imgInput) imgInput.value = '';
   if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publiser oppdrag'; }
 
@@ -6398,12 +6386,11 @@ function showHowItWorks() {
 }
 
 function setScheduleType(type) {
-  document.getElementById('schedule-once').classList.toggle('active', type === 'once');
-  document.getElementById('schedule-recurring').classList.toggle('active', type === 'recurring');
-  document.getElementById('schedule-flexible').classList.toggle('active', type === 'flexible');
-  document.getElementById('schedule-once-fields').style.display = type === 'once' ? 'block' : 'none';
-  document.getElementById('schedule-recurring-fields').style.display = type === 'recurring' ? 'block' : 'none';
-  document.getElementById('schedule-flexible-fields').style.display = type === 'flexible' ? 'block' : 'none';
+  ['frist','vindu','any'].forEach(t => {
+    document.getElementById('schedule-'+t)?.classList.toggle('active', t === type);
+    const f = document.getElementById('schedule-'+t+'-fields');
+    if(f) f.style.display = (t === type) ? 'block' : 'none';
+  });
 }
 
 function toggleDay(el) {
