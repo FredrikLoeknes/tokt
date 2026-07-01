@@ -2165,7 +2165,8 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">📅 Når skal det gjøres?</label>
+      <label class="form-label" data-en="📅 When do you want it done?">📅 Når skal det gjøres?</label>
+      <div style="font-size:11.5px;color:var(--muted);margin:-4px 0 10px;line-height:1.45" data-en="Just a preferred time – it doesn't affect where or how long the task shows on the map. It stays up until someone takes it.">Bare et ønsket tidspunkt – det påvirker ikke om eller hvor lenge oppdraget vises på kartet. Det ligger ute til noen tar det.</div>
 
       <!-- Type velger -->
       <div style="display:flex;gap:8px;margin-bottom:12px">
@@ -2254,7 +2255,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
         <div style="font-size:11px;color:var(--muted);margin-top:8px">💡 Oppdraget ligger ute til noen tar det – ingen utløpsdato</div>
       </div>
 
-      <div style="font-size:11px;color:var(--muted);margin-top:6px">Valgfritt – hjelper utfører å planlegge</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px" data-en="Optional – helps the doer plan. Doesn't hide the task.">Valgfritt – hjelper utfører å planlegge. Skjuler ikke oppdraget.</div>
 
       <!-- Legg ut til det blir tatt -->
       <div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px 12px;background:rgba(59,111,245,0.06);border:1px solid rgba(59,111,245,0.15);border-radius:10px;cursor:pointer" onclick="toggleKeepOpen(this)">
@@ -3502,19 +3503,19 @@ function addQuestMarker(q) {
 }
 
 // ── EXPIRED QUEST LOGIC ──
-// Returns true if quest is expired (scheduled time has passed)
+// Utløp styres KUN av datoen (slutten av den valgte dagen). Klokkeslettet er bare
+// et ønske om når oppdraget helst skal gjøres, og skal aldri skjule det fra kartet.
+// Returns true if the quest's scheduled DAY has fully passed
 function isQuestExpired(q) {
   if(!q.scheduled_date) return false;
-  const timeStr = q.scheduled_time_to || q.scheduled_time_from || '23:59';
-  const expiry = new Date(`${q.scheduled_date}T${timeStr}`);
+  const expiry = new Date(`${q.scheduled_date}T23:59:59`);
   return Date.now() > expiry.getTime();
 }
 
-// Returns true if quest expired MORE than 24 hours ago (should be hidden)
+// Returns true if the scheduled day passed MORE than 24 hours ago (should be hidden)
 function isQuestHidden(q) {
   if(!q.scheduled_date) return false;
-  const timeStr = q.scheduled_time_to || q.scheduled_time_from || '23:59';
-  const expiry = new Date(`${q.scheduled_date}T${timeStr}`);
+  const expiry = new Date(`${q.scheduled_date}T23:59:59`);
   return Date.now() > expiry.getTime() + 24 * 60 * 60 * 1000;
 }
 
@@ -4546,17 +4547,6 @@ async function postJob() {
   const finalScheduledDate = keepOpen ? null : scheduledDate;
   const finalTimeFrom = keepOpen ? null : scheduledTimeFrom;
   const finalTimeTo = keepOpen ? null : scheduledTimeTo;
-
-  // Hindre at oppdraget «forsvinner»: et once-oppdrag med dato + tid som allerede
-  // har passert blir umiddelbart markert utløpt og vises da kun i lista, ikke på kartet.
-  if(!keepOpen && scheduleType === 'once' && finalScheduledDate) {
-    const t = finalTimeTo || finalTimeFrom || '23:59';
-    const when = new Date(`${finalScheduledDate}T${t}`);
-    if(!isNaN(when.getTime()) && when.getTime() < Date.now()) {
-      showToast(NE('⚠️ Tidspunktet har allerede passert – velg et fremtidig tidspunkt','⚠️ That time has already passed – pick a future time'));
-      return;
-    }
-  }
 
   const isFirstCome = document.getElementById('mode-firstcome')?.classList.contains('active') || false;
   const isUrgent = document.querySelector('#modal .toggle')?.classList.contains('on') || false;
@@ -9613,7 +9603,14 @@ function showAchievement(icon, title, desc) {
 // create policy "Users manage own services" on services for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 const SUPABASE_URL = 'https://notbntypwtorecnynkfr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vdGJudHlwd3RvcmVjbnlua2ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNDYxNzksImV4cCI6MjA5NjYyMjE3OX0.BqDLMfSHFf1TfaOcFLT4hKA2AfJevEQL472Is3IfT0E';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: window.localStorage
+  }
+});
 
 // Enkel, personvernvennlig hendelseslogging til egen Supabase-tabell (gratis alternativ til Vercel Pro)
 async function logEvent(name, meta){
@@ -10255,16 +10252,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Restore session on page load
 (async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if(session?.user) {
-    await loadUserProfile(session.user);
-  }
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if(session?.user && !currentUser) {
+      await loadUserProfile(session.user);
+    }
+  } catch(e) { console.warn('getSession:', e?.message); }
 })();
 
-// Keep session in sync (login, logout, token refresh)
+// Keep session in sync (login, initial restore, token refresh, logout)
 sb.auth.onAuthStateChange(async (event, session) => {
-  if(event === 'SIGNED_IN' && session?.user) {
-    await loadUserProfile(session.user);
+  if((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && session?.user) {
+    // Unngå dobbel-lasting hvis IIFE-en over allerede har lastet samme bruker
+    if(!currentUser || currentUser.id !== session.user.id) {
+      await loadUserProfile(session.user);
+    }
   } else if(event === 'SIGNED_OUT') {
     currentUser = null;
     window.currentProfile = null;
