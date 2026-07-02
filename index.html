@@ -1839,7 +1839,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   <div class="payment-note" style="margin:0 16px 12px;padding:10px 12px;background:rgba(255,91,36,0.07);border:1px solid rgba(255,91,36,0.2);border-radius:10px;font-size:11px;color:#e07050">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span id="panel-payment-note">Betaling via <strong style="color:#ff5b24">Vipps</strong> direkte mellom partene</span>
+      <span id="panel-payment-note">Betaling via <strong style="color:#0fa968">Vipps</strong> direkte mellom partene</span>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <span style="background:rgba(255,91,36,0.1);border-radius:50px;padding:2px 8px">📱 Vipps-nr kreves</span>
@@ -2367,7 +2367,7 @@ const LANGUAGES = {
     giverLabel: 'Oppdragsgiver', newUserLabel: 'Ny bruker', questsDoneShort: 'oppdrag fullført', newProviderLabel: 'Ny tilbyder',
     verifiedLabel: '✓ Verifisert', memberSince: 'Medlem siden',
     acceptQuest: '✦ Ta oppdraget',
-    paymentNote: 'Betaling via <strong style="color:#ff5b24">&nbsp;Vipps&nbsp;</strong> direkte mellom partene',
+    paymentNote: 'Betaling via <strong style="color:#0fa968">&nbsp;Vipps&nbsp;</strong> direkte mellom partene',
     approvalRequired: '✋ Godkjenning kreves',
     firstComeServed: '⚡ Førstemann til mølla',
     noApplicants: 'Ingen søkere ennå – vær den første!',
@@ -2405,7 +2405,7 @@ const LANGUAGES = {
     toastApplied: '✦ Søknad sendt! Du varsles når bekreftet.',
     toastPosted: '✅ Oppdraget er publisert på kartet!',
     toastFilters: '✅ Filtre oppdatert!',
-    toastLogin: '👋 Logg inn med Vipps for å ta oppdrag',
+    toastLogin: '👋 Logg inn for å ta oppdrag',
     // Rating
     rateTitle: 'Oppdrag fullført!',
     rateSubtitle: 'Din vurdering hjelper samfunnet',
@@ -2507,7 +2507,7 @@ const LANGUAGES = {
     giverLabel: 'Posted by', newUserLabel: 'New user', questsDoneShort: 'quests completed', newProviderLabel: 'New provider',
     verifiedLabel: '✓ Verified', memberSince: 'Member since',
     acceptQuest: '✦ Accept quest',
-    paymentNote: '<span id="panel-payment-note">Payment via <strong style="color:#ff5b24">&nbsp;Vipps&nbsp;</strong> directly between parties</span>',
+    paymentNote: '<span id="panel-payment-note">Payment via <strong style="color:#0fa968">&nbsp;Vipps&nbsp;</strong> directly between parties</span>',
     approvalRequired: '✋ Approval required',
     firstComeServed: '⚡ First come, first served',
     noApplicants: 'Ingen søkere ennå – vær den første!',
@@ -2540,7 +2540,7 @@ const LANGUAGES = {
     toastApplied: '✦ Application sent! You will be notified when confirmed.',
     toastPosted: '✅ Quest published on the map!',
     toastFilters: '✅ Filters applied!',
-    toastLogin: '👋 Log in with Vipps to apply for quests',
+    toastLogin: '👋 Log in to apply for quests',
     rateTitle: 'Quest complete!',
     rateSubtitle: 'Your rating helps the community stay trustworthy',
     rateTapStar: 'Tap a star to rate',
@@ -7167,7 +7167,7 @@ function giverTakenBlock(q, conv) {
       <div style="margin-top:12px">
         <button disabled style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:11px;padding:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:not-allowed">⏳ Venter på utførers bekreftelse</button>
         <div style="display:flex;gap:8px;margin-top:8px">
-          <button onclick="showChatPaymentInfoFor('${conv.id}')" style="flex:1;background:#ff5b24;color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">💸 Vipps</button>
+          <button onclick="showChatPaymentInfoFor('${conv.id}')" style="flex:1;background:#0fa968;color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">💸 Vipps</button>
           ${chatBtn}
         </div>
       </div>`;
@@ -7177,7 +7177,7 @@ function giverTakenBlock(q, conv) {
       ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>🔨</span><div><b>Utfører melder at oppdraget er utført</b> – klar for betaling. Betal via Vipps og marker «Jeg har betalt».</div></div>`
       : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>Betal utfører via Vipps når jobben er gjort, og marker så <b style="color:var(--text)">«Jeg har betalt»</b>.</div></div>`}
     <div style="margin-top:12px">
-      <button onclick="showChatPaymentInfoFor('${conv.id}')" style="width:100%;background:#ff5b24;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💸 Betal med Vipps</button>
+      <button onclick="showChatPaymentInfoFor('${conv.id}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💸 Betal med Vipps</button>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button onclick="markGiverPaid('${conv.id}','${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>
         ${chatBtn}
@@ -7462,13 +7462,13 @@ async function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId,
         ${amountDisplay ? `
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)">
           <span style="font-size:13px;color:var(--muted);font-weight:600">${role === 'giver' ? 'Avtalt beløp' : 'Du skal ha'}</span>
-          <span style="font-size:22px;font-weight:800;color:#ff5b24">${amountDisplay}</span>
+          <span style="font-size:22px;font-weight:800;color:#0fa968">${amountDisplay}</span>
         </div>
         ${questTitle ? `<div style="font-size:11.5px;color:var(--muted);margin-top:6px;text-align:right">«${questTitle}»</div>` : ''}` : ''}
       </div>
 
       ${role === 'giver' && otherPhone ? `
-        <button onclick="copyAndOpenVipps('${otherPhone}', ${questAmount !== null ? questAmount : 'null'}, '${safeMsg}')" style="display:block;width:100%;background:#ff5b24;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;margin-bottom:10px;box-sizing:border-box">
+        <button onclick="copyAndOpenVipps('${otherPhone}', ${questAmount !== null ? questAmount : 'null'}, '${safeMsg}')" style="display:block;width:100%;background:#0fa968;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;margin-bottom:10px;box-sizing:border-box">
           💸 ${amountDisplay ? 'Betal ' + amountDisplay + ' med Vipps' : 'Kopier nummer og åpne Vipps'}
         </button>
         <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px">Nummeret kopieres automatisk – søk det opp i Vipps og send beløpet</div>` : ''}
@@ -8799,7 +8799,7 @@ function bookingCard(b, nameMap, sessions) {
       // customer = betaler (giver)
       body = `${tracker}
         <div style="display:flex;gap:8px;align-items:flex-start;background:${b.work_done_at?'rgba(15,169,104,0.09)':'var(--surface2)'};${b.work_done_at?'border:1px solid rgba(15,169,104,0.25);':''}border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:${b.work_done_at?'var(--text)':'var(--muted)'};line-height:1.5"><span>${b.work_done_at?'🔨':'📅'}</span><div>${b.work_done_at?'<b>Tilbyder melder utført.</b> Betal via Vipps og marker betalt.':'Avtale bekreftet. Møt opp til avtalt tid.'}</div></div>
-        <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#ff5b24;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">💸 Betal med Vipps</button>
+        <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">💸 Betal med Vipps</button>
         <div style="display:flex;gap:8px;margin-top:8px">
           ${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="bookingMarkPaid('${b.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}
           ${chatBtn}
@@ -8847,7 +8847,7 @@ function sessionHandshake(s, isProvider, convId, chatBtn) {
   }
   return wrap(`
     <div style="display:flex;gap:8px;align-items:flex-start;background:${paid?'var(--surface2)':'rgba(15,169,104,0.09)'};${paid?'':'border:1px solid rgba(15,169,104,0.25);'}border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:${paid?'var(--muted)':'var(--text)'};line-height:1.5"><span>${paid?'⏳':'🔨'}</span><div>${paid?'Du har markert betalt. Venter på tilbyders bekreftelse.':'<b>Tilbyder registrerte en økt.</b> Betal via Vipps og marker betalt.'}</div></div>
-    <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#ff5b24;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px">💸 Betal med Vipps</button>
+    <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px">💸 Betal med Vipps</button>
     <div style="display:flex;gap:8px;margin-top:8px">${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="sessionMarkPaid('${s.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}${chatBtn}</div>`);
 }
 
@@ -10392,18 +10392,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.5">Ved å registrere deg godtar du våre <a href="/terms.html#del1" target="_blank" style="color:var(--accent)">brukervilkår</a> og <a href="/terms.html#del2" target="_blank" style="color:var(--accent)">personvernregler</a></div>
     </div>
 
-    <!-- Divider -->
-    <div style="display:flex;align-items:center;gap:10px;margin:16px 0">
-      <div style="flex:1;height:1px;background:var(--border)"></div>
-      <div style="font-size:11px;color:var(--muted)">eller</div>
-      <div style="flex:1;height:1px;background:var(--border)"></div>
-    </div>
+    <!-- Vipps-innlogging fjernet inntil Vipps Logg inn-produktet er aktivert (bedriftsavtale). Bygg ekte «Logg inn med Vipps»-knapp her da, etter Vipps sin designmanual. -->
 
-    <!-- Vipps (coming soon) -->
-    <button style="width:100%;background:#FF5B24;color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;opacity:.6;display:flex;align-items:center;justify-content:center;gap:8px" onclick="showToast('👋 Vipps-innlogging kommer snart!')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-      Fortsett med Vipps <span style="font-size:10px;opacity:.8">(snart)</span>
-    </button>
 
   </div>
 </div>
@@ -10594,7 +10584,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div id="chat-title" style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Chat</div>
       <div id="chat-status" style="font-size:11px;color:var(--muted)">Aktiv</div>
     </div>
-    <button id="chat-payment-btn" onclick="showChatPaymentInfo()" style="display:none;background:#ff5b24;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
+    <button id="chat-payment-btn" onclick="showChatPaymentInfo()" style="display:none;background:#0fa968;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
       💸 Vipps
     </button>
     <div id="chat-status-badge" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);border:1px solid var(--green)">Åpen</div>
