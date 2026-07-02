@@ -1839,7 +1839,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   <div class="payment-note" style="margin:0 16px 12px;padding:10px 12px;background:rgba(255,91,36,0.07);border:1px solid rgba(255,91,36,0.2);border-radius:10px;font-size:11px;color:#e07050">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span id="panel-payment-note">Betaling via <strong style="color:#0fa968">Vipps</strong> direkte mellom partene</span>
+      <span id="panel-payment-note">Betaling direkte mellom partene – Vipps eller annen avtalt metode</span>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <span style="background:rgba(255,91,36,0.1);border-radius:50px;padding:2px 8px">📱 Vipps-nr kreves</span>
@@ -1887,7 +1887,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
         <div class="hiw-bd"><h4>Jobben gjøres</h4><p>Utfører fullfører oppdraget. Dere har hverandres telefonnummer i appen.</p></div></div>
 
       <div class="hiw-step"><div class="hiw-node"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M2.5 10h19"/></svg></div>
-        <div class="hiw-bd"><h4>Betal med Vipps</h4><p>Rett mellom dere — utfører bekrefter mottak i appen. <span class="free">Tokt tar 0 % provisjon.</span></p></div></div>
+        <div class="hiw-bd"><h4>Gjør opp direkte</h4><p>Rett mellom dere med Vipps eller annen avtalt metode — utfører bekrefter mottak i appen. <span class="free">Tokt tar 0 % provisjon.</span></p></div></div>
 
       <div class="hiw-step"><div class="hiw-node reward"><svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9L12 3Z"/></svg></div>
         <div class="hiw-bd"><h4>Stig i rang</h4><p>Gi hverandre terningkast. Fullførte tokt løfter rangen din — fra Trell mot Valkyrje.</p></div></div>
@@ -1915,7 +1915,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
       </details>
 
       <div class="hiw-cond">
-        <div class="row" style="margin-bottom:6px"><span>💸</span><span><b>All betaling via Vipps</b>, direkte mellom partene. Tokt er kun formidler og tar 0 % provisjon.</span></div>
+        <div class="row" style="margin-bottom:6px"><span>💸</span><span><b>Betaling direkte mellom partene</b> – Vipps eller annen avtalt metode. Tokt er kun formidler og tar 0 % provisjon.</span></div>
         <div class="row" style="margin-bottom:6px"><span>🚫</span><span>Betal aldri på forhånd til noen du ikke kjenner.</span></div>
         <div class="row" style="margin-bottom:6px"><span>📱</span><span>Telefonnummer kreves for å søke eller godkjenne.</span></div>
         <div class="row"><span>⚠️</span><span>Oppdrag over 10 000 kr bør ha skriftlig avtale.</span></div>
@@ -2367,7 +2367,7 @@ const LANGUAGES = {
     giverLabel: 'Oppdragsgiver', newUserLabel: 'Ny bruker', questsDoneShort: 'oppdrag fullført', newProviderLabel: 'Ny tilbyder',
     verifiedLabel: '✓ Verifisert', memberSince: 'Medlem siden',
     acceptQuest: '✦ Ta oppdraget',
-    paymentNote: 'Betaling via <strong style="color:#0fa968">&nbsp;Vipps&nbsp;</strong> direkte mellom partene',
+    paymentNote: 'Betaling direkte mellom partene – Vipps eller annen avtalt metode',
     approvalRequired: '✋ Godkjenning kreves',
     firstComeServed: '⚡ Førstemann til mølla',
     noApplicants: 'Ingen søkere ennå – vær den første!',
@@ -2389,7 +2389,7 @@ const LANGUAGES = {
     urgentToggle: '🔴 Hastemarkering (+100 kr)', urgentToggleSub: 'Rød pulserende markør med prioritet',
     locationToggle: '📍 Del posisjon under arbeid', locationToggleSub: 'Utfører deler posisjon i sanntid',
     charityToggle: '💚 Veldedighetsoppdrag', charityToggleSub: 'Gir achievement til utfører',
-    disclaimer: '<strong>Viktig:</strong> Tokt er kun en formidlingsplattform. Alt økonomisk oppgjør skjer direkte via Vipps mellom oppdragsgiver og utfører. Tokt er ikke part i avtalen og er ikke ansvarlig for kvalitet, skader eller tvister. Ved å publisere godtar du våre <u>brukervilkår</u>. Betal aldri forskudd til ukjente. Oppdrag over 10 000 kr krever signert kontrakt. Se også <a href="/skatt.html" target="_blank" style="color:var(--accent)">skatt og oppgjør</a>.',
+    disclaimer: '<strong>Viktig:</strong> Tokt er kun en formidlingsplattform. Alt økonomisk oppgjør skjer direkte mellom oppdragsgiver og utfører (Vipps eller annen avtalt metode). Tokt er ikke part i avtalen og er ikke ansvarlig for kvalitet, skader eller tvister. Ved å publisere godtar du våre <u>brukervilkår</u>. Betal aldri forskudd til ukjente. Oppdrag over 10 000 kr krever signert kontrakt. Se også <a href="/skatt.html" target="_blank" style="color:var(--accent)">skatt og oppgjør</a>.',
     publishQuest: 'Publiser oppdrag',
     // Leaderboard
     lbTitle: 'Toppliste',
@@ -2507,7 +2507,7 @@ const LANGUAGES = {
     giverLabel: 'Posted by', newUserLabel: 'New user', questsDoneShort: 'quests completed', newProviderLabel: 'New provider',
     verifiedLabel: '✓ Verified', memberSince: 'Member since',
     acceptQuest: '✦ Accept quest',
-    paymentNote: '<span id="panel-payment-note">Payment via <strong style="color:#0fa968">&nbsp;Vipps&nbsp;</strong> directly between parties</span>',
+    paymentNote: '<span id="panel-payment-note">Payment directly between parties – Vipps or another agreed method</span>',
     approvalRequired: '✋ Approval required',
     firstComeServed: '⚡ First come, first served',
     noApplicants: 'Ingen søkere ennå – vær den første!',
@@ -2528,7 +2528,7 @@ const LANGUAGES = {
     urgentToggle: '🔴 Urgent quest (+100 kr)', urgentToggleSub: 'Red pulsing marker with priority',
     locationToggle: '📍 Live location sharing', locationToggleSub: 'Taker shares live position',
     charityToggle: '💚 Charity quest', charityToggleSub: 'Earns taker a special achievement',
-    disclaimer: '<strong>Important:</strong> Tokt is a platform-only service. All payments are made directly between quest giver and taker via Vipps. Tokt is not party to any agreement and accepts no responsibility for quality, damages or disputes. By publishing you agree to our <u>terms of service</u>. Never pay strangers in advance. Quests over 10,000 NOK require a signed contract. See also <a href="/skatt.html" target="_blank" style="color:var(--accent)">tax &amp; settlement</a>.',
+    disclaimer: '<strong>Important:</strong> Tokt is a platform-only service. All payments are made directly between quest giver and taker (Vipps or another agreed method). Tokt is not party to any agreement and accepts no responsibility for quality, damages or disputes. By publishing you agree to our <u>terms of service</u>. Never pay strangers in advance. Quests over 10,000 NOK require a signed contract. See also <a href="/skatt.html" target="_blank" style="color:var(--accent)">tax &amp; settlement</a>.',
     publishQuest: 'Publiser oppdrag',
     lbTitle: 'Leaderboard',
     lbTagline: 'Ranked by completed quests',
@@ -4277,7 +4277,7 @@ async function markGiverPaid(convId, questId) {
     .select('giver_id, taker_id, status, quest:quest_id(title)').eq('id', convId).single();
   if(!conv || conv.giver_id !== currentUser?.id) { showToast(NE('⚠️ Kun oppdragsgiver kan markere betalt','⚠️ Only the poster can mark as paid')); return; }
   if(conv.status !== 'accepted') { showToast(NE('⚠️ Oppdraget er ikke aktivt','⚠️ The task is not active')); return; }
-  if(!confirm(NE('Bekrefte at du har betalt utføreren via Vipps?','Confirm that you have paid the taker via Vipps?'))) return;
+  if(!confirm(NE('Bekrefte at du har betalt utføreren?','Confirm that you have paid the taker?'))) return;
 
   await sb.from('conversations').update({ giver_paid_at: new Date().toISOString() }).eq('id', convId);
   await sb.from('notifications').insert({
@@ -7174,8 +7174,8 @@ function giverTakenBlock(q, conv) {
   }
   return `${tracker}
     ${workDone
-      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>🔨</span><div><b>Utfører melder at oppdraget er utført</b> – klar for betaling. Betal via Vipps og marker «Jeg har betalt».</div></div>`
-      : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>Betal utfører via Vipps når jobben er gjort, og marker så <b style="color:var(--text)">«Jeg har betalt»</b>.</div></div>`}
+      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>🔨</span><div><b>Utfører melder at oppdraget er utført</b> – klar for betaling. Betal (Vipps eller annen avtalt metode) og marker «Jeg har betalt».</div></div>`
+      : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>Betal utfører (Vipps eller annen avtalt metode) når jobben er gjort, og marker så <b style="color:var(--text)">«Jeg har betalt»</b>.</div></div>`}
     <div style="margin-top:12px">
       <button onclick="showChatPaymentInfoFor('${conv.id}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💸 Betal med Vipps</button>
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -7447,7 +7447,7 @@ async function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId,
       <div style="text-align:center;margin-bottom:20px">
         <div style="font-size:40px;margin-bottom:8px">${role === 'giver' ? '🎉' : '💰'}</div>
         <div style="font-size:18px;font-weight:800">${role === 'giver' ? 'Utfører godkjent!' : 'Du har fått oppdraget!'}</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:4px">${role === 'giver' ? 'Betalingsinformasjon for utfører' : 'Oppdragsgiver vil betale deg via Vipps'}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">${role === 'giver' ? 'Betalingsinformasjon for utfører' : 'Oppdragsgiver betaler deg direkte'}</div>
       </div>
 
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px">
@@ -8429,7 +8429,7 @@ function openBookingRequest(kind) {
             <textarea id="bk-note" rows="2" placeholder="F.eks. adresse, portkode, ønsker…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;resize:none"></textarea></div>
           <div style="margin-bottom:14px"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Avtalt pris ${recurring?'(per gang)':(ptLabel?'('+ptLabel+')':'')}</label>
             <div style="display:flex;align-items:center;gap:8px"><input id="bk-price" type="number" value="${svc.price||0}" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"><span style="font-size:14px;font-weight:700;color:var(--muted)">kr</span></div></div>
-          <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>${recurring?'Tilbyder bekrefter avtalen. Hver gjennomført gang gjøres opp via Vipps – Tokt tar ingen provisjon.':'Tilbyder må bekrefte før avtalen er aktiv. Betaling skjer direkte via Vipps – Tokt tar ingen provisjon.'}</div></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>${recurring?'Tilbyder bekrefter avtalen. Hver gjennomført gang gjøres opp direkte (Vipps eller annen avtalt metode) – Tokt tar ingen provisjon.':'Tilbyder må bekrefte før avtalen er aktiv. Betaling skjer direkte mellom partene (Vipps eller annen avtalt metode) – Tokt tar ingen provisjon.'}</div></div>
           <div style="display:flex;gap:10px">
             <button onclick="closeBookingModal()" style="flex:0 0 auto;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Avbryt</button>
             <button id="bk-submit" onclick="submitBookingRequest()" style="flex:1;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(124,92,252,.3)">${NE('Send forespørsel →','Send request →')}</button>
@@ -8798,7 +8798,7 @@ function bookingCard(b, nameMap, sessions) {
     } else {
       // customer = betaler (giver)
       body = `${tracker}
-        <div style="display:flex;gap:8px;align-items:flex-start;background:${b.work_done_at?'rgba(15,169,104,0.09)':'var(--surface2)'};${b.work_done_at?'border:1px solid rgba(15,169,104,0.25);':''}border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:${b.work_done_at?'var(--text)':'var(--muted)'};line-height:1.5"><span>${b.work_done_at?'🔨':'📅'}</span><div>${b.work_done_at?'<b>Tilbyder melder utført.</b> Betal via Vipps og marker betalt.':'Avtale bekreftet. Møt opp til avtalt tid.'}</div></div>
+        <div style="display:flex;gap:8px;align-items:flex-start;background:${b.work_done_at?'rgba(15,169,104,0.09)':'var(--surface2)'};${b.work_done_at?'border:1px solid rgba(15,169,104,0.25);':''}border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:${b.work_done_at?'var(--text)':'var(--muted)'};line-height:1.5"><span>${b.work_done_at?'🔨':'📅'}</span><div>${b.work_done_at?'<b>Tilbyder melder utført.</b> Betal (Vipps eller annen avtalt metode) og marker betalt.':'Avtale bekreftet. Møt opp til avtalt tid.'}</div></div>
         <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">💸 Betal med Vipps</button>
         <div style="display:flex;gap:8px;margin-top:8px">
           ${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="bookingMarkPaid('${b.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}
@@ -8846,7 +8846,7 @@ function sessionHandshake(s, isProvider, convId, chatBtn) {
       <div style="display:flex;gap:8px;margin-top:8px"><button onclick="showChatPaymentInfoFor('${convId}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>${chatBtn}</div>`);
   }
   return wrap(`
-    <div style="display:flex;gap:8px;align-items:flex-start;background:${paid?'var(--surface2)':'rgba(15,169,104,0.09)'};${paid?'':'border:1px solid rgba(15,169,104,0.25);'}border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:${paid?'var(--muted)':'var(--text)'};line-height:1.5"><span>${paid?'⏳':'🔨'}</span><div>${paid?'Du har markert betalt. Venter på tilbyders bekreftelse.':'<b>Tilbyder registrerte en økt.</b> Betal via Vipps og marker betalt.'}</div></div>
+    <div style="display:flex;gap:8px;align-items:flex-start;background:${paid?'var(--surface2)':'rgba(15,169,104,0.09)'};${paid?'':'border:1px solid rgba(15,169,104,0.25);'}border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:${paid?'var(--muted)':'var(--text)'};line-height:1.5"><span>${paid?'⏳':'🔨'}</span><div>${paid?'Du har markert betalt. Venter på tilbyders bekreftelse.':'<b>Tilbyder registrerte en økt.</b> Betal (Vipps eller annen avtalt metode) og marker betalt.'}</div></div>
     <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px">💸 Betal med Vipps</button>
     <div style="display:flex;gap:8px;margin-top:8px">${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="sessionMarkPaid('${s.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}${chatBtn}</div>`);
 }
@@ -9188,7 +9188,7 @@ async function bookingMarkPaid(id) {
   const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, service:service_id(title)').eq('id', id).single();
   if(!b || b.customer_id !== currentUser?.id) { showToast(NE('⚠️ Kun kunden kan markere betalt','⚠️ Only the customer can mark as paid')); return; }
   if(b.status !== 'confirmed') { showToast(NE('⚠️ Avtalen er ikke bekreftet','⚠️ The agreement is not confirmed')); return; }
-  if(!confirm(NE('Bekrefte at du har betalt tilbyder via Vipps?','Confirm that you have paid the provider via Vipps?'))) return;
+  if(!confirm(NE('Bekrefte at du har betalt tilbyder?','Confirm that you have paid the provider?'))) return;
   await sb.from('bookings').update({ giver_paid_at: new Date().toISOString() }).eq('id', id);
   await sb.from('notifications').insert({
     user_id: b.provider_id, type: 'booking_paid',
@@ -9995,7 +9995,7 @@ function openTermsGate() {
     <p style="font-size:13px;color:var(--muted);line-height:1.65;margin:0 0 10px">Les gjennom hovedpunktene under. Du må scrolle helt til bunnen før du kan huke av og opprette konto. Fullstendige vilkår finner du <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">her</a>.</p>
     <div style="font-weight:800;font-size:13px;letter-spacing:.5px;color:var(--accent);margin:6px 0 4px">DEL 1 – BRUKERVILKÅR</div>
     ${heading(1,'Om Tokt')}${p('Tokt er en norsk formidlingsplattform for småoppdrag. Ved å opprette konto godtar du disse vilkårene.')}
-    ${heading(2,'Kun en formidler')}${p('Tokt formidler kontakt mellom oppdragsgiver og utfører, men er ikke part i avtalen mellom dere. Vi tar ingen provisjon. Alt oppgjør skjer direkte mellom partene, hovedsakelig via Vipps.')}
+    ${heading(2,'Kun en formidler')}${p('Tokt formidler kontakt mellom oppdragsgiver og utfører, men er ikke part i avtalen mellom dere. Vi tar ingen provisjon. Alt oppgjør skjer direkte mellom partene – for eksempel via Vipps eller annen avtalt metode.')}
     ${heading(3,'Konto')}${p('Du må være minst 15 år. Du er selv ansvarlig for at opplysningene du oppgir er riktige, og for å holde passordet ditt hemmelig.')}
     ${heading(4,'Bruk av plattformen')}${p('Du skal opptre redelig, ikke legge ut ulovlige, villedende eller støtende oppdrag, og ikke misbruke andre brukere. Betal aldri forskudd til ukjente.')}
     ${heading(5,'Betaling')}${p('Betaling avtales og gjennomføres direkte mellom partene. Tokt håndterer ingen penger. Oppdrag over 10 000 kr krever en signert kontrakt mellom partene.')}
@@ -10012,7 +10012,7 @@ function openTermsGate() {
     <p style="font-size:13px;color:var(--muted);line-height:1.65;margin:0 0 10px">Please read the key points below. You must scroll all the way to the bottom before you can tick the box and create your account. Full terms are available <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">here</a>.</p>
     <div style="font-weight:800;font-size:13px;letter-spacing:.5px;color:var(--accent);margin:6px 0 4px">PART 1 – TERMS OF SERVICE</div>
     ${heading(1,'','About Tokt')}${p('Tokt is a Norwegian platform for small local tasks. By creating an account you agree to these terms.')}
-    ${heading(2,'','Platform only')}${p('Tokt connects task givers and takers, but is not a party to the agreement between you. We take no commission. All settlement happens directly between the parties, mainly via Vipps.')}
+    ${heading(2,'','Platform only')}${p('Tokt connects task givers and takers, but is not a party to the agreement between you. We take no commission. All settlement happens directly between the parties – for example via Vipps or another agreed method.')}
     ${heading(3,'','Account')}${p('You must be at least 15 years old. You are responsible for providing correct information and keeping your password secret.')}
     ${heading(4,'','Use of the platform')}${p('Act honestly, do not post illegal, misleading or offensive tasks, and do not abuse other users. Never pay strangers in advance.')}
     ${heading(5,'','Payment')}${p('Payment is agreed and made directly between the parties. Tokt handles no money. Tasks over NOK 10,000 require a signed contract between the parties.')}
@@ -10719,7 +10719,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <input id="svc-image-input" type="file" accept="image/*" style="display:none" onchange="previewServiceImage(this)">
     </div>
     <div class="disclaimer">
-      <strong>Viktig:</strong> Som tilbyder er du selv ansvarlig for kvaliteten på tjenesten. All betaling skjer direkte via Vipps mellom deg og kunden.
+      <strong>Viktig:</strong> Som tilbyder er du selv ansvarlig for kvaliteten på tjenesten. All betaling skjer direkte mellom deg og kunden (Vipps eller annen avtalt metode).
     </div>
     <button onclick="postService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#3b6ff5);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">
       🏪 Publiser tjeneste
@@ -10776,7 +10776,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
           <div style="font-size:22px;flex-shrink:0">💬</div>
           <div>
             <div style="font-size:13px;font-weight:700;color:var(--text)" data-en="Agree and get it done">Avtal og gjør det</div>
-            <div style="font-size:12px;color:var(--muted)" data-en="Chat, agree, and pay via Vipps">Chat, bli enige og betal via Vipps</div>
+            <div style="font-size:12px;color:var(--muted)" data-en="Chat, agree, and pay">Chat, bli enige og betal</div>
           </div>
         </div>
       </div>
