@@ -1294,17 +1294,13 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     flex-shrink: 0 !important;
     align-self: flex-end !important;
   }
-  /* Publiser-knapp alltid synlig nederst */
+  /* Publiser-knapp ligger nederst i skjemaet (ikke festet/sticky) */
   .publish-btn-wrap {
-    position: sticky !important;
-    bottom: 0 !important;
-    background: var(--surface) !important;
-    padding: 12px 0 8px !important;
-    margin: 0 -16px !important;
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-    border-top: 1px solid var(--border) !important;
-    z-index: 10 !important;
+    position: static !important;
+    background: transparent !important;
+    padding: 4px 0 8px !important;
+    margin: 0 !important;
+    border-top: none !important;
   }
 
   /* BOTTOM NAV BAR */
