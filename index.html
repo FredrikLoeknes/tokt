@@ -4570,9 +4570,21 @@ async function postJob() {
     } catch(e) {}
   }
 
+  // Sesjonsvakt: sørg for at økta lever før insert. På mobil/PWA kan tilgangs-
+  // tokenet ha utløpt mens appen lå i bakgrunnen. Da er currentUser satt i JS,
+  // men auth.uid() er null på serveren → RLS avviser raden med en kryptisk feil.
+  // getSession() auto-refresher tokenet hvis refresh-tokenet fortsatt er gyldig.
+  const { data: { session: freshSession } } = await sb.auth.getSession();
+  if(!freshSession?.user) {
+    if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publiser oppdrag'; }
+    showToast(NE('⚠️ Økta di har utløpt – logg inn på nytt','⚠️ Your session expired – please log in again'));
+    openAuth('login');
+    return;
+  }
+
   // Insert quest
   const { data: quest, error } = await sb.from('quests').insert({
-    user_id: currentUser.id,
+    user_id: freshSession.user.id,
     title,
     description: fullDescription,
     category,
