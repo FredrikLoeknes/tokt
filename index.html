@@ -2789,10 +2789,26 @@ function closeLangDropdown() {
   document.getElementById('lang-dropdown').classList.remove('open');
 }
 
-// Register service worker early
+// Register service worker early + auto-oppdatering.
+// Sikrer at brukere ikke blir sittende fast på en gammel index.html:
+//  - reg.update() sjekker etter ny service worker ved oppstart og hver gang
+//    appen kommer i forgrunnen igjen (viktig på PWA som bare gjenopptas).
+//  - controllerchange fyrer når en ny SW tar over → vi laster siden på nytt én
+//    gang, slik at den nyeste koden faktisk vises.
 if('serviceWorker' in navigator) {
+  let swRefreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if(swRefreshing) return;
+    swRefreshing = true;
+    window.location.reload();
+  });
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      reg.update();
+      document.addEventListener('visibilitychange', () => {
+        if(document.visibilityState === 'visible') reg.update();
+      });
+    }).catch(() => {});
   });
 }
 
@@ -4499,6 +4515,21 @@ function clearImage(e) {
   updateQuestPreview();
 }
 
+// Verifiserer at innloggingsøkta lever før en skriveoperasjon. På mobil/PWA kan
+// tilgangstokenet ha utløpt mens appen lå i bakgrunnen; da er currentUser satt i
+// JS, men auth.uid() er null på serveren, og RLS avviser skrivingen med en kryptisk
+// feil. getSession() auto-refresher tokenet hvis refresh-tokenet fortsatt er gyldig.
+// Returnerer den ferske brukeren, eller null (og ber brukeren logge inn på nytt).
+async function requireSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if(!session?.user) {
+    showToast(NE('⚠️ Økta di har utløpt – logg inn på nytt','⚠️ Your session expired – please log in again'));
+    openAuth('login');
+    return null;
+  }
+  return session.user;
+}
+
 async function postJob() {
   if(!currentUser) { openAuth('login'); return; }
 
@@ -4570,21 +4601,16 @@ async function postJob() {
     } catch(e) {}
   }
 
-  // Sesjonsvakt: sørg for at økta lever før insert. På mobil/PWA kan tilgangs-
-  // tokenet ha utløpt mens appen lå i bakgrunnen. Da er currentUser satt i JS,
-  // men auth.uid() er null på serveren → RLS avviser raden med en kryptisk feil.
-  // getSession() auto-refresher tokenet hvis refresh-tokenet fortsatt er gyldig.
-  const { data: { session: freshSession } } = await sb.auth.getSession();
-  if(!freshSession?.user) {
+  // Sesjonsvakt: unngå kryptisk RLS-feil ved utløpt token (se requireSession).
+  const authUser = await requireSession();
+  if(!authUser) {
     if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publiser oppdrag'; }
-    showToast(NE('⚠️ Økta di har utløpt – logg inn på nytt','⚠️ Your session expired – please log in again'));
-    openAuth('login');
     return;
   }
 
   // Insert quest
   const { data: quest, error } = await sb.from('quests').insert({
-    user_id: freshSession.user.id,
+    user_id: authUser.id,
     title,
     description: fullDescription,
     category,
@@ -6520,6 +6546,9 @@ async function submitRating() {
   const btn = document.getElementById('submit-rating-btn');
   if(btn) { btn.textContent = 'Sender…'; btn.disabled = true; }
 
+  const authUser = await requireSession();
+  if(!authUser) { if(btn) { btn.textContent = NE('Send vurdering','Submit rating'); btn.disabled = false; } return; }
+
   const comment = document.getElementById('rating-comment')?.value?.trim() || '';
   const tags = [...document.querySelectorAll('.rating-tag.active')].map(t => t.textContent).join(', ');
   const fullComment = [tags, comment].filter(Boolean).join('\n') || null;
@@ -6527,7 +6556,7 @@ async function submitRating() {
   const { error } = await sb.from('ratings').insert({
     conversation_id: ratingContext.convId || null,
     quest_id: ratingContext.questId || null,
-    rater_id: currentUser.id,
+    rater_id: authUser.id,
     rated_id: ratingContext.ratedId || null,
     score: selectedRating,
     comment: fullComment
@@ -7751,11 +7780,14 @@ async function sendMessage() {
   const input = document.getElementById('chat-input');
   const content = input.value.trim();
   if(!content) return;
+
+  const authUser = await requireSession();
+  if(!authUser) return; // behold teksten i feltet så brukeren ikke mister meldingen
   input.value = '';
 
   const { data: newMsg, error } = await sb.from('messages').insert({
     conversation_id: activeChatId,
-    sender_id: currentUser.id,
+    sender_id: authUser.id,
     content
   }).select().single();
 
@@ -8452,13 +8484,16 @@ async function submitBookingRequest() {
   const btn = document.getElementById('bk-submit');
   if(btn) { btn.textContent = 'Sender…'; btn.disabled = true; }
 
+  const authUser = await requireSession();
+  if(!authUser) { if(btn){ btn.textContent=NE('Send forespørsel →','Send request →'); btn.disabled=false; } return; }
+
   let convId;
   const { data: existing } = await sb.from('conversations').select('id').eq('service_id', ctx.serviceId).eq('giver_id', currentUser.id).limit(1);
   if(existing?.length) {
     convId = existing[0].id;
   } else {
     const { data: conv, error: cErr } = await sb.from('conversations')
-      .insert({ service_id: ctx.serviceId, giver_id: currentUser.id, taker_id: ctx.providerId, status: 'accepted' })
+      .insert({ service_id: ctx.serviceId, giver_id: authUser.id, taker_id: ctx.providerId, status: 'accepted' })
       .select().single();
     if(cErr) { showToast('❌ ' + cErr.message); if(btn){ btn.textContent=NE('Send forespørsel →','Send request →'); btn.disabled=false; } return; }
     convId = conv.id;
@@ -8466,7 +8501,7 @@ async function submitBookingRequest() {
 
   const { data: bk, error: bErr } = await sb.from('bookings').insert({
     service_id: ctx.serviceId, conversation_id: convId,
-    customer_id: currentUser.id, provider_id: ctx.providerId,
+    customer_id: authUser.id, provider_id: ctx.providerId,
     kind: recurring ? 'recurring' : 'once', recurrence,
     scheduled_at: scheduledAt, price, note, status: 'requested'
   }).select().single();
@@ -9014,6 +9049,7 @@ async function registerSession(id) {
     if(cnt >= target) { showToast(NE(`Måneds-grensen (${target}) er nådd for denne avtalen`,`The monthly limit (${target}) has been reached for this agreement`)); return; }
   }
   if(!confirm(NE('Registrere en utført økt? Kunden får beskjed om å betale.','Register a completed session? The customer will be notified to pay.'))) return;
+  if(!await requireSession()) return;
   const now = new Date().toISOString();
   const { error } = await sb.from('bookings').insert({
     parent_id: id, service_id: a.service_id, conversation_id: a.conversation_id,
@@ -9230,8 +9266,11 @@ async function postService() {
     });
   }
 
+  const authUser = await requireSession();
+  if(!authUser) return;
+
   const { data, error } = await sb.from('services').insert({
-    user_id: currentUser.id, title, description: svcFullDesc, category,
+    user_id: authUser.id, title, description: svcFullDesc, category,
     price, price_type: priceType, is_recurring: isRecurring,
     recurring_info: recurringInfo || null, lat, lng
   }).select().single();
