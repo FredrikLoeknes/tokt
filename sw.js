@@ -1,7 +1,8 @@
-// Tokt.app Service Worker v2.0
+// Tokt.app Service Worker v3.0
 // Handles push notifications and offline caching
 
-const CACHE_NAME = 'tokt-v2';
+// Bump ved endring her → gammel cache slettes automatisk i 'activate'.
+const CACHE_NAME = 'tokt-v3';
 const STATIC_ASSETS = ['/', '/index.html', '/terms.html'];
 
 // Install
@@ -12,7 +13,7 @@ self.addEventListener('install', e => {
   self.skipWaiting();
 });
 
-// Activate – delete any old caches (e.g. tokt-v1)
+// Activate – delete any old caches (e.g. tokt-v2)
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -23,9 +24,12 @@ self.addEventListener('activate', e => {
 });
 
 // Fetch
-//  - Pages (HTML/navigations): NETWORK-FIRST so updates show up immediately,
-//    falling back to cache only when offline.
-//  - Other assets: cache-first, but refreshed in the background.
+//  - Pages (HTML/navigations): NETWORK-FIRST med {cache:'no-store'} slik at vi
+//    ALLTID henter fersk index.html fra nettet og ikke fra nettleserens HTTP-
+//    cache. (Uten no-store kunne mobilnettleseren servere en gammel index.html
+//    til service workeren, som så viste utdatert versjon.) Cache brukes kun som
+//    reserve når man er offline.
+//  - Other assets: cache-first, hentes i bakgrunnen ved miss.
 self.addEventListener('fetch', e => {
   const req = e.request;
   if(req.method !== 'GET') return;
@@ -35,7 +39,7 @@ self.addEventListener('fetch', e => {
 
   if(isHTML) {
     e.respondWith(
-      fetch(req).then(res => {
+      fetch(req, { cache: 'no-store' }).then(res => {
         const copy = res.clone();
         caches.open(CACHE_NAME).then(c => c.put(req, copy));
         return res;
