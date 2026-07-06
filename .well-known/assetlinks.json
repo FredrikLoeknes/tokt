@@ -1,8 +1,12 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "app.tokt.twa",
-        "sha256_cert_fingerprints": ["CD:1E:43:8D:C7:1D:D9:E0:6F:D1:59:C3:27:85:88:8B:C9:62:89:AF:E7:57:2C:CC:72:88:CD:49:36:3D:5C:C5"]
-      }
-    }]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.tokt.twa",
+      "sha256_cert_fingerprints": [
+        "08:16:BA:32:05:14:21:AF:3A:85:93:C4:4E:7D:8F:74:6F:5A:90:DA:3F:67:FE:85:0D:9B:CA:29:8B:4D:8D:10"
+      ]
+    }
+  }
+]
