@@ -815,6 +815,8 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .zoom-controls { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column; box-shadow:var(--shadow); }
 .zoom-btn { width:40px; height:40px; background:none; border:none; color:var(--text); font-size:18px; font-weight:300; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s; }
 .zoom-btn:hover { background:var(--surface2); }
+#map-refresh-icon.spinning { animation: refreshSpin .8s linear infinite; }
+@keyframes refreshSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .zoom-divider { height:1px; background:var(--border); }
 
 /* ── LEGEND ── */
@@ -2022,7 +2024,12 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     <div class="zoom-divider"></div>
     <button class="zoom-btn" onclick="if(window.map){window.map.setZoom(window.map.getZoom()-1)}">−</button>
     <div class="zoom-divider"></div>
-    <button class="zoom-btn" onclick="addMarkers();showToast(NE('🔄 Oppdatert!','🔄 Refreshed!'))" title="Refresh quests" style="font-size:14px">↺</button>
+    <button class="zoom-btn" id="map-refresh-btn" onclick="refreshMapData()" title="Oppdater" aria-label="Oppdater oppdrag">
+      <svg id="map-refresh-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block">
+        <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+        <polyline points="21 3 21 9 15 9"/>
+      </svg>
+    </button>
   </div>
 </div>
 
@@ -3513,6 +3520,35 @@ async function checkAndExpireQuests() {
   const toExpire = quests.filter(q => isQuestExpired(q)).map(q => q.id);
   if(toExpire.length > 0) {
     await sb.from('quests').update({ status: 'expired' }).in('id', toExpire);
+  }
+}
+
+// Oppdater-knappen på kartet: henter ferske oppdrag fra databasen og sjekker
+// samtidig om en ny appversjon finnes (service worker-oppdatering). Finnes det
+// en ny versjon, tar den over og siden relastes automatisk (controllerchange).
+// Sletter INGEN brukerdata – kun ferskt innhold.
+let _refreshing = false;
+async function refreshMapData() {
+  if(_refreshing) return;
+  _refreshing = true;
+  const icon = document.getElementById('map-refresh-icon');
+  if(icon) icon.classList.add('spinning');
+  try {
+    // 1) Ferske oppdrag/tjenester fra Supabase
+    await addMarkers();
+    // 2) Se etter ny appversjon (ufarlig – bytter kun hvis ny finnes)
+    if('serviceWorker' in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if(reg) reg.update();
+      } catch(e) {}
+    }
+    showToast(NE('🔄 Oppdatert!','🔄 Refreshed!'));
+  } catch(e) {
+    showToast(NE('⚠️ Kunne ikke oppdatere – sjekk nettet','⚠️ Could not refresh – check your connection'));
+  } finally {
+    if(icon) icon.classList.remove('spinning');
+    _refreshing = false;
   }
 }
 
