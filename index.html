@@ -3534,8 +3534,11 @@ async function refreshMapData() {
   const icon = document.getElementById('map-refresh-icon');
   if(icon) icon.classList.add('spinning');
   try {
-    // 1) Ferske oppdrag/tjenester fra Supabase
-    await addMarkers();
+    // 1) Ferske oppdrag/tjenester fra Supabase (maks 10 sek – spinneren skal aldri stå evig)
+    await Promise.race([
+      addMarkers(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('refresh-timeout')), 10000))
+    ]);
     // 2) Se etter ny appversjon (ufarlig – bytter kun hvis ny finnes)
     if('serviceWorker' in navigator) {
       try {
@@ -3558,6 +3561,10 @@ async function addMarkers() {
   window.mapMarkers = [];
   window._usedCoords = {};
 
+  // Demo-markører FØRST – synkront, før noen await. Kartet skal aldri stå tomt
+  // selv om et databasekall henger (f.eks. låst token-fornyelse i supabase-js).
+  if(window.SHOW_DEMO) loadDemoMarkers();
+
   // Which quests is the current user involved in as taker?
   // accepted = working on (teal), pending = applied/awaiting reply (toned down).
   // This only affects the logged-in user's own view of the map.
@@ -3574,9 +3581,6 @@ async function addMarkers() {
       else if(c.status === 'pending') window._appliedQuestIds.add(c.quest_id);
     });
   }
-
-  // Always show demo markers as background
-  if(window.SHOW_DEMO) loadDemoMarkers();
 
   // Check and expire any overdue quests first
   await checkAndExpireQuests();
@@ -10331,15 +10335,34 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Restore session on page load
+// Restore session on page load.
+// Med timeout + selvhelbredelse: en korrupt/utgått lagret økt kan få supabase-js
+// til å henge for alltid på token-fornyelse (navigator.locks-lås). Da ville alle
+// databasekall fryse og kartet stå tomt. Henger gjenopprettingen >6 sek, fjerner
+// vi den lagrede økten og laster siden på nytt ÉN gang (loop-vern via
+// sessionStorage). Brukeren fortsetter da utlogget – bedre enn en frossen app.
 (async () => {
-  try {
+  const restore = (async () => {
     const { data: { session } } = await sb.auth.getSession();
     if(session?.user && !currentUser) {
       await loadUserProfile(session.user);
     }
-  } catch(e) { console.warn('getSession:', e?.message); }
-  finally { window._authChecked = true; }
+  })();
+  const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('auth-timeout')), 6000));
+  try {
+    await Promise.race([restore, timeout]);
+    sessionStorage.removeItem('tokt-auth-selfheal');
+  } catch(e) {
+    console.warn('getSession:', e?.message);
+    if(e?.message === 'auth-timeout' && !sessionStorage.getItem('tokt-auth-selfheal')) {
+      try {
+        sessionStorage.setItem('tokt-auth-selfheal', '1');
+        Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
+        window.location.reload();
+        return;
+      } catch(_) {}
+    }
+  } finally { window._authChecked = true; }
 })();
 
 // Keep session in sync (login, initial restore, token refresh, logout)
