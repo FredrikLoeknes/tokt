@@ -1925,6 +1925,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
       </div>
 
       <a class="hiw-terms" href="/terms.html" target="_blank">Les fullstendige brukervilkår og personvern →</a>
+      <div id="hiw-tips"></div>
       <button class="hiw-cta" onclick="document.getElementById('how-it-works-overlay').style.display='none'">Forstått! 👍</button>
     </div>
   </div>
@@ -3436,7 +3437,7 @@ function setViewMode(mode) {
   clusterMarkers();
   updateListToggleCount();
   if(document.getElementById('list-view')?.classList.contains('open')) renderListView();
-  showToast(mode === 'all' ? NE('🗺️ Viser alt','🗺️ Showing all') : mode === 'quests' ? NE('📋 Viser kun oppdrag','📋 Showing tasks only') : NE('🏪 Viser kun tilbud','🏪 Showing offers only'));
+  // Ingen toast her – de aktive filter-chippene viser allerede tilstanden tydelig.
 }
 
 function addQuestMarker(q) {
@@ -6452,6 +6453,15 @@ function toggleKeepOpen(el) {
 function showHowItWorks() {
   const overlay = document.getElementById('how-it-works-overlay');
   overlay.style.display = 'flex';
+  // Tips bor her permanent: render hele TIPS-lista i overlayen (i valgt språk)
+  const tipsBox = document.getElementById('hiw-tips');
+  if(tipsBox && typeof TIPS !== 'undefined') {
+    tipsBox.innerHTML =
+      '<div style="font-weight:800;font-size:14px;margin:14px 0 8px;color:var(--text)">💡 ' + (currentLang==='en' ? 'Tips' : 'Tips') + '</div>' +
+      TIPS.map(tp =>
+        '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:13px;color:var(--muted);line-height:1.45"><span>' + tp.icon + '</span><span>' + (currentLang==='en' ? tp.en : tp.no) + '</span></div>'
+      ).join('');
+  }
   const f = document.getElementById('hiw-ferd');
   if (f) { f.classList.remove('hiw-play'); void f.offsetWidth; f.classList.add('hiw-play'); }
   // Info-knappen på kartet peker nå hit – stopp hint-pulsingen når den er åpnet
@@ -9556,9 +9566,18 @@ const TIPS = [
 let currentTip = 0;
 let tipInterval = null;
 
+// Teller app-økter (én per sidelast). Tips-baren vises kun de første 3 øktene –
+// deretter bor alle tipsene permanent bak ℹ️-knappen («Slik fungerer det»).
+try {
+  const _sn = parseInt(localStorage.getItem('tokt-sessions') || '0', 10) + 1;
+  localStorage.setItem('tokt-sessions', String(_sn));
+} catch(e) {}
+
 function initTipsBar() {
   const seen = localStorage.getItem('tokt-tips-closed');
-  if(seen) {
+  let sessions = 1;
+  try { sessions = parseInt(localStorage.getItem('tokt-sessions') || '1', 10); } catch(e) {}
+  if(seen || sessions > 3) {
     document.getElementById('tips-bar').style.display = 'none';
     // Tips already closed - move filter to normal position
     const fb = document.getElementById('desktop-filter-btn');
@@ -9934,10 +9953,9 @@ async function doLogin() {
     showAuthError('login', error.message === 'Invalid login credentials' ? 'Feil e-post eller passord' : error.message);
     return;
   }
-  // Close first, then show toast so it's visible
   const overlay = document.getElementById('auth-overlay');
   overlay.style.display = 'none';
-  showToast('👋 Velkommen tilbake, ' + (data.user?.email?.split('@')[0] || '') + '!', null, true);
+  // Ingen velkomst-toast – at man er innlogget vises allerede tydelig i UI-et.
   await loadUserProfile(data.user);
 }
 
