@@ -9301,6 +9301,9 @@ async function postService() {
 
 // ── WELCOME POPUP ──
 function showWelcomeIfNew() {
+  // Vent til øktgjenopprettingen er ferdig, ellers rekker vi å vise velkomsten
+  // et kort øyeblikk før innloggingen restaureres → irriterende «blink».
+  if(!window._authChecked) { setTimeout(showWelcomeIfNew, 150); return; }
   const seen = localStorage.getItem('tokt-welcome-seen');
   // Never show for logged in users, only for brand new visitors
   if(!seen && !currentUser) {
@@ -10300,6 +10303,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await loadUserProfile(session.user);
     }
   } catch(e) { console.warn('getSession:', e?.message); }
+  finally { window._authChecked = true; }
 })();
 
 // Keep session in sync (login, initial restore, token refresh, logout)
