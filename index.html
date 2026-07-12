@@ -364,7 +364,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   color:var(--muted); font-family:inherit; font-weight:700; font-size:12px;
   padding:7px 13px; border-radius:50px; cursor:pointer; white-space:nowrap;
 }
-.lv-sortpill.on { background:var(--text); color:#fff; border-color:var(--text); }
+.lv-sortpill.on { background:rgba(59,111,245,.12); color:var(--accent); border-color:var(--accent); }
 .lv-catrow {
   display:flex; gap:7px; padding:10px 16px 0; overflow-x:auto;
   background:var(--surface);
@@ -3980,6 +3980,20 @@ function showPanel(job) {
       <div class="meta-item"><div class="meta-label" id="panel-applicants-label">${L.applicantsLabel||'Søkere'}</div><div class="meta-value">${job.applicants ?? 0}</div></div>
     </div>`;
 
+  // Oppdragsalder – vises kun for ekte oppdrag med created_at (ikke demo)
+  const oldAge = document.getElementById('panel-age');
+  if(oldAge) oldAge.remove();
+  if(job.createdAt) {
+    const ageHtml = questAgeHtml(job.createdAt, 'Lagt ut ');
+    if(ageHtml) {
+      const ageEl = document.createElement('div');
+      ageEl.id = 'panel-age';
+      ageEl.style.cssText = 'padding-top:10px;margin-top:10px;border-top:1px solid var(--border)';
+      ageEl.innerHTML = ageHtml;
+      document.getElementById('panel-meta').after(ageEl);
+    }
+  }
+
   // Show scheduled time if set
   const schedEl = document.getElementById('panel-schedule');
   if(schedEl) schedEl.remove();
@@ -5051,7 +5065,7 @@ function renderListView() {
   if(cntEl) cntEl.textContent = `${results.length} treff · ${sortLabel}`;
   updateListToggleCount();
   if(!results.length) {
-    rowsEl.innerHTML = '<div class="lv-empty">Ingen treff her.<br>Juster filteret, zoom ut eller flytt kartet.</div>';
+    rowsEl.innerHTML = '<div class="lv-empty">' + NE('Ingen treff her.<br>Juster filteret, zoom ut eller flytt kartet.','No results here.<br>Adjust the filter, zoom out or move the map.') + '</div>';
     return;
   }
   const vchk = '<svg class="lv-vchk" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
@@ -5064,7 +5078,7 @@ function renderListView() {
     const ri = RANKS.indexOf(getRank(m.questsCompleted || 0));
     const ratingTxt = (m.rating != null)
       ? `<span class="lv-star">★ ${m.rating.toFixed(1)}</span>`
-      : `<span class="lv-new">Ny</span>`;
+      : `<span class="lv-new">${NE('Ny','New')}</span>`;
     const dist = (m.distKm != null) ? ` · 📍 ${formatDistance(m.distKm)}` : '';
     const ver = m.verified ? ' ' + vchk : '';
     const rec = (sort === 'rec' && i === 0);
@@ -5082,8 +5096,9 @@ function renderListView() {
       ${rec ? '<div class="lv-recbadge">✨ Anbefalt</div>' : ''}
       <div class="lv-thumb">${icon}${medal}</div>
       <div class="lv-info">
-        <div class="lv-title">${m.title || 'Uten tittel'}${ver}</div>
+        <div class="lv-title">${m.title || NE('Uten tittel','Untitled')}${ver}</div>
         <div class="lv-meta">${ratingTxt}${dist} · ${RANKS[ri].name}</div>
+        ${m.createdAt ? `<div class="lv-meta" style="margin-top:2px">${questAgeHtml(m.createdAt)}</div>` : ''}
         ${tagsHtml}
         <button class="lv-see${isSvc?' lv-see-svc':''}" onclick="event.stopPropagation();openListResult(${i})">${seeLabel}</button>
       </div>
@@ -7669,6 +7684,20 @@ function timeAgo(dateStr) {
   if(diff < 3600) return Math.floor(diff/60) + ' min siden';
   if(diff < 86400) return Math.floor(diff/3600) + ' t siden';
   return Math.floor(diff/86400) + ' dager siden';
+}
+
+// Aldersmerke for oppdrag: relativ tid via timeAgo(). Oppdrag under 24 t markeres
+// grønt ("fersk") for å signalisere aktivitet – nyttig for cold-start. Bruker
+// eksisterende created_at, ingen ny DB-kolonne. Demo-oppdrag (uten dato) skjules.
+function questAgeHtml(createdAt, prefix) {
+  if(!createdAt) return '';
+  const diff = Date.now() - new Date(createdAt).getTime();
+  if(isNaN(diff) || diff < 0) return '';
+  const fresh = diff < 86400000; // under 24 t
+  const txt = (prefix || '') + timeAgo(createdAt);
+  const color = fresh ? 'var(--green)' : 'var(--muted)';
+  const weight = fresh ? '600' : '400';
+  return `<span class="quest-age" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:${color};font-weight:${weight}">🕒 ${txt}</span>`;
 }
 
 // ── CHAT FUNCTIONS ──
