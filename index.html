@@ -5844,6 +5844,8 @@ async function uploadProfilePhoto(input){
   if(!currentUser){ showToast(L('⚠️ Logg inn først','⚠️ Log in first')); input.value=''; return; }
   if(!/^image\//.test(file.type)){ showToast(L('⚠️ Velg en bildefil','⚠️ Choose an image file')); input.value=''; return; }
   if(file.size > 5*1024*1024){ showToast(L('⚠️ Bildet er for stort (maks 5 MB)','⚠️ Image too large (max 5 MB)')); input.value=''; return; }
+  const su = await requireSession();
+  if(!su){ input.value=''; return; }
   showToast(L('⏳ Laster opp bilde…','⏳ Uploading photo…'));
   try{
     const ext = ((file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')) || 'jpg';
@@ -10383,31 +10385,46 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Restore session on page load.
-// Med timeout + selvhelbredelse: en korrupt/utgått lagret økt kan få supabase-js
-// til å henge for alltid på token-fornyelse (navigator.locks-lås). Da ville alle
-// databasekall fryse og kartet stå tomt. Henger gjenopprettingen >6 sek, fjerner
-// vi den lagrede økten og laster siden på nytt ÉN gang (loop-vern via
-// sessionStorage). Brukeren fortsetter da utlogget – bedre enn en frossen app.
+// Tålmodig to-trinns selvhelbredelse: en korrupt lagret økt kan få supabase-js
+// til å henge for alltid på token-fornyelse (navigator.locks-lås). Men treg
+// oppstart (mobilnett, kald start) er IKKE en deadlock – da skal økta bevares.
+// Trinn 1 (8 sek): UI fortsetter utlogget, men gjenopprettingen jobber videre i
+//   bakgrunnen; løser den seg senere, logger onAuthStateChange brukeren inn.
+// Trinn 2 (25 sek helt uten svar): ekte deadlock – fjern lagret økt og last på
+//   nytt ÉN gang (loop-vern via localStorage-flagg med tidsstempel, slik at
+//   vernet også virker på tvers av full app-omstart).
 (async () => {
+  window._authRestored = false;
   const restore = (async () => {
     const { data: { session } } = await sb.auth.getSession();
+    window._authRestored = true;
     if(session?.user && !currentUser) {
       await loadUserProfile(session.user);
     }
   })();
-  const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('auth-timeout')), 6000));
+  const softTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('auth-slow')), 8000));
   try {
-    await Promise.race([restore, timeout]);
-    sessionStorage.removeItem('tokt-auth-selfheal');
+    await Promise.race([restore, softTimeout]);
+    try { localStorage.removeItem('tokt-auth-selfheal'); } catch(_) {}
   } catch(e) {
-    console.warn('getSession:', e?.message);
-    if(e?.message === 'auth-timeout' && !sessionStorage.getItem('tokt-auth-selfheal')) {
-      try {
-        sessionStorage.setItem('tokt-auth-selfheal', '1');
-        Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
-        window.location.reload();
-        return;
-      } catch(_) {}
+    if(e?.message === 'auth-slow') {
+      // Treg oppstart: IKKE slett noe. La restore fullføre i bakgrunnen.
+      console.warn('getSession treg – venter i bakgrunnen');
+      restore.then(() => { try { localStorage.removeItem('tokt-auth-selfheal'); } catch(_) {} }).catch(()=>{});
+      // Ekte deadlock-vakt: fortsatt intet svar etter totalt 25 sek → purge + reload én gang.
+      setTimeout(() => {
+        if(window._authRestored) return;
+        let last = 0;
+        try { last = parseInt(localStorage.getItem('tokt-auth-selfheal') || '0', 10) || 0; } catch(_) {}
+        if(Date.now() - last < 120000) return;  // allerede prøvd nylig – ikke loop
+        try {
+          localStorage.setItem('tokt-auth-selfheal', String(Date.now()));
+          Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
+          window.location.reload();
+        } catch(_) {}
+      }, 17000);
+    } else {
+      console.warn('getSession:', e?.message);
     }
   } finally { window._authChecked = true; }
 })();
