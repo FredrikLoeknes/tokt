@@ -209,11 +209,15 @@ html, body { height:100%; font-family:'Inter',-apple-system,BlinkMacSystemFont,'
 }
 
 /* Rank ring – subtle, static, colour by tier (bronze → silver → gold → legend) */
-.rank-ring-start, .rank-ring-bronze, .rank-ring-silver, .rank-ring-gold, .rank-ring-legend { position:relative; }
-.rank-ring-start  { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--border); }
-.rank-ring-bronze { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #b9763a; }
-.rank-ring-silver { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #9aa7b4; }
-.rank-ring-gold   { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #d9a300; }
+.rank-ring-start, .rank-ring-bronze, .rank-ring-silver, .rank-ring-gold, .rank-ring-platinum, .rank-ring-emerald, .rank-ring-diamond, .rank-ring-master, .rank-ring-legend { position:relative; }
+.rank-ring-start    { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--border); }
+.rank-ring-bronze   { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #b9763a; }
+.rank-ring-silver   { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #9aa7b4; }
+.rank-ring-gold     { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #d9a300; }
+.rank-ring-platinum { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #14b8a6; }
+.rank-ring-emerald  { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #10b981; }
+.rank-ring-diamond  { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #38bdf8; }
+.rank-ring-master   { box-shadow:0 0 0 2px var(--surface), 0 0 0 4px #a855f7; }
 .rank-ring-legend::after {
   content:''; position:absolute; inset:-4px; border-radius:50%; padding:2px;
   background:conic-gradient(#d9a300,#a855f7,#0ea5e9,#d9a300);
@@ -431,15 +435,15 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
 }
 
 /* ── RANK BADGE COLORS ── */
-.rank-trell      { background:rgba(107,114,128,0.12); color:#6b7280; border-color:#6b7280; }
-.rank-bonde      { background:rgba(139,90,43,0.12); color:#8b5a2b; border-color:#8b5a2b; }
-.rank-varjager   { background:rgba(59,111,245,0.12); color:var(--accent); border-color:var(--accent); }
-.rank-hovding    { background:rgba(124,92,252,0.12); color:var(--accent2); border-color:var(--accent2); }
-.rank-gode       { background:rgba(15,169,104,0.12); color:var(--green); border-color:var(--green); }
-.rank-vaering    { background:rgba(249,115,22,0.12); color:#f97316; border-color:#f97316; }
-.rank-jarl       { background:rgba(201,144,10,0.15); color:var(--gold); border-color:var(--gold); }
-.rank-konge      { background:linear-gradient(135deg,rgba(201,144,10,0.2),rgba(124,92,252,0.2)); color:var(--gold); border-color:var(--gold); }
-.rank-valkyrje   { background:linear-gradient(135deg,rgba(233,30,140,0.15),rgba(124,92,252,0.2)); color:#e91e8c; border-color:#e91e8c; font-style:italic; }
+.rank-jern       { background:rgba(107,114,128,0.12); color:#6b7280; border-color:#6b7280; }
+.rank-bronse     { background:rgba(185,118,58,0.14); color:#b9763a; border-color:#b9763a; }
+.rank-solv       { background:rgba(154,167,180,0.16); color:#78838f; border-color:#9aa7b4; }
+.rank-gull       { background:rgba(201,144,10,0.15); color:var(--gold); border-color:var(--gold); }
+.rank-platina    { background:rgba(20,184,166,0.12); color:#0f9488; border-color:#14b8a6; }
+.rank-smaragd    { background:rgba(15,169,104,0.12); color:var(--green); border-color:var(--green); }
+.rank-diamant    { background:rgba(56,189,248,0.13); color:#0284c7; border-color:#38bdf8; }
+.rank-mester     { background:rgba(168,85,247,0.12); color:var(--accent2); border-color:var(--accent2); }
+.rank-legende    { background:linear-gradient(135deg,rgba(233,30,140,0.15),rgba(124,92,252,0.2)); color:#e91e8c; border-color:#e91e8c; font-style:italic; }
 
 /* ── METALLISKE MEDALJER (rang) ── */
 .medal{position:relative;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;
@@ -450,10 +454,12 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
   background:radial-gradient(circle at 38% 30%,rgba(255,255,255,.4),transparent 55%),linear-gradient(160deg,var(--m2),var(--m1));
   box-shadow:inset 0 1px 2px rgba(255,255,255,.5),inset 0 -2px 4px rgba(0,0,0,.4);}
 .medal .sym{position:relative;z-index:2;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45);letter-spacing:.4px}
-.medal.sm{width:34px;height:34px}.medal.sm .sym{font-size:9px}
-.medal.xs{width:30px;height:30px}.medal.xs .sym{font-size:8px}
+.medal.sm{width:34px;height:34px}.medal.sm .sym{font-size:8.5px;letter-spacing:.2px}
+.medal.xs{width:30px;height:30px}.medal.xs .sym{font-size:7.5px;letter-spacing:.2px}
 .m-iron{--m1:#52585f;--m2:#8b929b}.m-bronze{--m1:#7c4a22;--m2:#c98c52}
 .m-silver{--m1:#7d8794;--m2:#d3dae3}.m-gold{--m1:#b8860b;--m2:#ffd66b}
+.m-platinum{--m1:#0f766e;--m2:#5eead4}.m-emerald{--m1:#166534;--m2:#4ade80}
+.m-diamond{--m1:#1d4ed8;--m2:#93c5fd}
 .m-master{--m1:#7c3aed;--m2:#d8b4fe}.m-legend{--m1:#9d174d;--m2:#f0abfc}
 
 /* ── PROFIL: avatar-emblem, reise-kort, mini-stige ── */
@@ -466,7 +472,10 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
 .pp-av-upload:active{transform:scale(.94)}
 .pp-journey{margin:-30px 14px 0;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:16px;padding:16px;position:relative;box-shadow:var(--shadow-lg)}
 .pp-jhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-.pp-jhead .rk{font-size:19px;font-weight:800;letter-spacing:-.2px}
+.pp-jhead .rk{font-family:'Skranji',sans-serif;font-size:22px;font-weight:700;letter-spacing:.4px;
+  background:linear-gradient(115deg,var(--rk1,#52585f) 10%,var(--rk2,#8b929b) 55%,var(--rk1,#52585f));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.12))}
 .pp-jhead .lv{font-size:11.5px;color:var(--muted);font-weight:600}
 .pp-prog{margin-top:12px}
 .pp-prog .bar{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
@@ -478,6 +487,19 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
 .pp-mladder .step.dim{opacity:.45;filter:grayscale(.5)}
 .pp-mladder .step.cur .nm{color:var(--accent)}
 .pp-mladder .ar{color:var(--muted);font-size:12px;margin-top:11px}
+/* Full rangstige (sammenleggbar) */
+.pp-ladder-toggle{width:100%;background:none;border:none;border-top:1px solid var(--border);margin-top:14px;padding:12px 0 2px;font-family:inherit;font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.pp-full-ladder{position:relative;margin-top:8px;padding:4px 2px 2px}
+.pp-full-ladder .rail{position:absolute;left:17px;top:14px;bottom:16px;width:3px;border-radius:2px;background:var(--surface2)}
+.pp-full-ladder .rail i{position:absolute;left:0;top:0;width:100%;border-radius:2px;background:var(--grad);display:block}
+.fl-row{position:relative;display:flex;align-items:center;gap:12px;padding:7px 0}
+.fl-row .info{flex:1;min-width:0}
+.fl-row .nm{font-size:13px;font-weight:800;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.fl-row .ds{font-size:10.5px;color:var(--muted);line-height:1.35;margin-top:1px}
+.fl-row .th{font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0}
+.fl-row.locked .medal{filter:grayscale(.75);opacity:.45}
+.fl-row.locked .nm{color:var(--muted)}
+.fl-you{font-size:8px;font-weight:800;background:var(--grad);color:#fff;padding:2px 6px;border-radius:50px;letter-spacing:.4px}
 .pp-lbpos{display:flex;align-items:center;gap:11px;background:rgba(201,144,10,.07);border:1px solid rgba(201,144,10,.25);border-radius:12px;padding:11px 13px;margin-top:15px}
 .pp-lbpos .r{font-size:18px;font-weight:800;color:var(--gold);white-space:nowrap}
 .pp-lbpos .tx{flex:1;font-size:11.5px;color:var(--muted);line-height:1.4}.pp-lbpos .tx b{color:var(--text)}
@@ -1916,7 +1938,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
         <div class="hiw-bd"><h4>Gjør opp direkte</h4><p>Rett mellom dere med Vipps eller annen avtalt metode — utfører bekrefter mottak i appen. <span class="free">Tokt tar 0 % provisjon.</span></p></div></div>
 
       <div class="hiw-step"><div class="hiw-node reward"><svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9L12 3Z"/></svg></div>
-        <div class="hiw-bd"><h4>Stig i rang</h4><p>Gi hverandre terningkast. Fullførte tokt løfter rangen din — fra Trell mot Valkyrje.</p></div></div>
+        <div class="hiw-bd"><h4>Stig i rang</h4><p>Gi hverandre terningkast. Fullførte tokt løfter rangen din — fra Jern mot Legende.</p></div></div>
     </div>
 
     <div class="hiw-foot">
@@ -2024,7 +2046,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 
 <!-- CORNER WIDGETS -->
 <div id="corner-widgets">
-  <div id="week-worker" style="display:none" onclick="showUserProfile('Jonas S.','JS','#f5c518',47,4.97,'Valkyrje')" title="Se profil">
+  <div id="week-worker" style="display:none" onclick="showUserProfile('Jonas S.','JS','#f5c518',47,4.97,'Legende')" title="Se profil">
     <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
       <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold)">👑 Ukens utfører</div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
@@ -3093,49 +3115,50 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── /APP-INSTALL ──
 
 // Rank system – global so all functions can access it
+// Navn og beskrivelser er tospråklige: vis alltid via rankName(r) / rankDesc(r).
+// `name` (norsk) er kanonisk nøkkel og brukes til sammenligning; medaljer viser romertall (RANK_ROMAN).
 const RANKS = [
-  { name:'Trell',    cls:'rank-trell',    min:0,   desc:'Samfunnets laveste klasse. Gjør det tyngste arbeidet, men alle starter et sted.' },
-  { name:'Bonde',    cls:'rank-bonde',    min:2,   desc:'Den frie og største delen av befolkningen. Eier egen gård og deltar i samfunnet.' },
-  { name:'Varjager', cls:'rank-varjager', min:5,   desc:'Skandinaver som reiste ut i verden for handel og eventyr.' },
-  { name:'Høvding',  cls:'rank-hovding',  min:10,  desc:'En lokal leder som samler en hær og leder viktige tokt.' },
-  { name:'Gode',     cls:'rank-gode',     min:18,  desc:'En høvding som også fungerer som religiøs leder og dommer på tinget.' },
-  { name:'Væring',   cls:'rank-vaering',  min:30,  desc:'Elitesoldater i den bysantinske keiserens livgarde i Konstantinopel.' },
-  { name:'Jarl',     cls:'rank-jarl',     min:50,  desc:'Den mektigste klassen under kongen. Kontrollerer store landområder.' },
-  { name:'Konge',    cls:'rank-konge',    min:75,  desc:'Det øverste sjiktet i samfunnet. En overkonge som styrer over jarler og bønder.' },
-  { name:'Valkyrje', cls:'rank-valkyrje', min:100, desc:'De som velger hvem som er verdig. Legendariske krigere som overgår alle andre.' }
+  { name:'Jern',    en:'Iron',     cls:'rank-jern',    min:0,   desc:'Alle starter her. Fullfør ditt første oppdrag og kom i gang!',      descEn:'Everyone starts here. Complete your first task to get going!' },
+  { name:'Bronse',  en:'Bronze',   cls:'rank-bronse',  min:2,   desc:'Du er i gang! Naboene begynner å legge merke til deg.',             descEn:'You are on your way! Neighbours are starting to notice.' },
+  { name:'Sølv',    en:'Silver',   cls:'rank-solv',    min:5,   desc:'Fem oppdrag i boks – du har fått rutinen.',                         descEn:'Five tasks done – you have got the routine.' },
+  { name:'Gull',    en:'Gold',     cls:'rank-gull',    min:10,  desc:'Ti fullførte oppdrag. En erfaren toktfarer.',                       descEn:'Ten completed tasks. An experienced quester.' },
+  { name:'Platina', en:'Platinum', cls:'rank-platina', min:18,  desc:'Blant de mest aktive i nabolaget.',                                 descEn:'Among the most active in the neighbourhood.' },
+  { name:'Smaragd', en:'Emerald',  cls:'rank-smaragd', min:30,  desc:'30 oppdrag! Du løfter hele nærmiljøet.',                            descEn:'30 tasks! You lift the whole community.' },
+  { name:'Diamant', en:'Diamond',  cls:'rank-diamant', min:50,  desc:'50 oppdrag. Få når så langt.',                                      descEn:'50 tasks. Few make it this far.' },
+  { name:'Mester',  en:'Master',   cls:'rank-mester',  min:75,  desc:'75 oppdrag. Nå snakker vi legendestoff.',                           descEn:'75 tasks. Legend material in the making.' },
+  { name:'Legende', en:'Legend',   cls:'rank-legende', min:100, desc:'100 oppdrag. Det høyeste du kan nå på Tokt.',                       descEn:'100 tasks. The highest you can reach on Tokt.' }
 ];
+function rankName(r){ return r ? NE(r.name, r.en || r.name) : ''; }
+function rankDesc(r){ return r ? NE(r.desc, r.descEn || r.desc) : ''; }
 function getRank(quests) {
   let r = RANKS[0];
   for(const rank of RANKS) { if(quests >= rank.min) r = rank; }
   return r;
 }
-// Map a rank to a visual tier for the avatar ring
+// Map a rank to a visual tier for the avatar ring (1:1 med metallstigen)
+const RANK_TIERS = ['start','bronze','silver','gold','platinum','emerald','diamond','master','legend'];
 function rankTier(quests) {
   const idx = RANKS.indexOf(getRank(quests || 0));
-  if(idx >= 8) return 'legend';
-  if(idx >= 6) return 'gold';
-  if(idx >= 4) return 'silver';
-  if(idx >= 2) return 'bronze';
-  return 'start';
+  return RANK_TIERS[Math.max(0, Math.min(idx, RANK_TIERS.length - 1))];
 }
 function applyRankRing(el, quests) {
   if(!el) return;
-  el.classList.remove('rank-ring-start','rank-ring-bronze','rank-ring-silver','rank-ring-gold','rank-ring-legend');
+  el.classList.remove(...RANK_TIERS.map(t => 'rank-ring-' + t));
   el.classList.add('rank-ring-' + rankTier(quests));
 }
 
-// ── Medalje-mapping for rang (jern→bronse→sølv→gull→ametyst→legend) ──
-const RANK_METAL = ['m-iron','m-iron','m-bronze','m-silver','m-silver','m-gold','m-gold','m-master','m-legend'];
-const RANK_SYM = { 'Trell':'TR','Bonde':'BO','Varjager':'VA','Høvding':'HØ','Gode':'GO','Væring':'VÆ','Jarl':'JA','Konge':'KO','Valkyrje':'VK' };
+// ── Medalje-mapping for rang (jern→bronse→sølv→gull→platina→smaragd→diamant→mester→legende) ──
+const RANK_METAL = ['m-iron','m-bronze','m-silver','m-gold','m-platinum','m-emerald','m-diamond','m-master','m-legend'];
+const RANK_ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX'];
 function rankMetalClass(idx){ return RANK_METAL[Math.max(0, Math.min(idx, RANK_METAL.length-1))]; }
-function rankSym(name){ return RANK_SYM[name] || (name||'?').slice(0,2).toUpperCase(); }
+function rankSym(idx){ return RANK_ROMAN[Math.max(0, Math.min(idx, RANK_ROMAN.length-1))] || 'I'; }
 function rankMetalVars(idx){
-  const map = {'m-iron':['#52585f','#8b929b'],'m-bronze':['#7c4a22','#c98c52'],'m-silver':['#7d8794','#d3dae3'],'m-gold':['#b8860b','#ffd66b'],'m-master':['#7c3aed','#d8b4fe'],'m-legend':['#9d174d','#f0abfc']};
+  const map = {'m-iron':['#52585f','#8b929b'],'m-bronze':['#7c4a22','#c98c52'],'m-silver':['#7d8794','#d3dae3'],'m-gold':['#b8860b','#ffd66b'],'m-platinum':['#0f766e','#5eead4'],'m-emerald':['#166534','#4ade80'],'m-diamond':['#1d4ed8','#93c5fd'],'m-master':['#7c3aed','#d8b4fe'],'m-legend':['#9d174d','#f0abfc']};
   return map[rankMetalClass(idx)] || map['m-iron'];
 }
 // Bygg en liten medalje (sym) som HTML
 function medalHTML(idx, sizeClass){
-  return `<div class="medal ${sizeClass||'sm'} ${rankMetalClass(idx)}"><span class="sym">${rankSym(RANKS[idx].name)}</span></div>`;
+  return `<div class="medal ${sizeClass||'sm'} ${rankMetalClass(idx)}"><span class="sym">${rankSym(idx)}</span></div>`;
 }
 // Render mini-stige: nåværende rang + de to neste
 function renderMiniLadder(curIdx){
@@ -3146,7 +3169,7 @@ function renderMiniLadder(curIdx){
   if(idxs.length < 2) idxs = [RANKS.length-3, RANKS.length-2, RANKS.length-1].filter(i => i >= 0);
   el.innerHTML = idxs.map((i, n) => {
     const cur = i === curIdx;
-    const step = `<div class="step ${cur ? 'cur' : 'dim'}">${medalHTML(i,'sm')}<div class="nm">${RANKS[i].name}${cur ? ' ◄' : ''}</div></div>`;
+    const step = `<div class="step ${cur ? 'cur' : 'dim'}">${medalHTML(i,'sm')}<div class="nm">${rankName(RANKS[i])}${cur ? ' ◄' : ''}</div></div>`;
     return n < idxs.length-1 ? step + '<div class="ar">→</div>' : step;
   }).join('');
 }
@@ -4025,7 +4048,7 @@ function showPanel(job) {
     row.innerHTML = `
       <div class="rank-ring-${rankTier(questsDone)}" style="width:34px;height:34px;border-radius:50%;${_avBg}display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${_av?'':ginit}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${name} <span class="lb-badge ${r.cls}" style="font-size:9px;padding:2px 7px">${r.name}</span>${verifiedPill}</div>
+        <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${name} <span class="lb-badge ${r.cls}" style="font-size:9px;padding:2px 7px">${rankName(r)}</span>${verifiedPill}</div>
         <div style="font-size:11px;color:var(--muted)">${t('giverLabel')} · ${trustLine}</div>
       </div>
       <span style="color:var(--muted);font-size:14px">›</span>`;
@@ -4171,7 +4194,7 @@ function showPanel(job) {
           <div class="applicant-avatar" style="background:${p.col}20;color:${p.col}">${p.init}</div>
           <div class="applicant-name">${p.name}</div>
           <span class="applicant-rating">★ ${p.rating}</span>
-          <span class="rank-pill ${r.cls}">${r.name}</span>
+          <span class="rank-pill ${r.cls}">${rankName(r)}</span>
         </div>`;
       }).join('');
   } else {
@@ -5193,7 +5216,7 @@ function renderListView() {
     const dist = (m.distKm != null) ? ` · 📍 ${formatDistance(m.distKm)}` : '';
     const ver = m.verified ? ' ' + vchk : '';
     const rec = (sort === 'rec' && i === 0);
-    const medal = `<div class="medal xs ${rankMetalClass(ri)} lv-em"><span class="sym">${rankSym(RANKS[ri].name)}</span></div>`;
+    const medal = `<div class="medal xs ${rankMetalClass(ri)} lv-em"><span class="sym">${rankSym(ri)}</span></div>`;
     const price = m.pay ? `${m.pay} kr` : (isSvc ? '' : 'Gratis');
     const seeLabel = isSvc ? NE('Se tilbyder →','See provider →') : NE('Se oppdrag →','See task →');
     const tags = [];
@@ -5208,7 +5231,7 @@ function renderListView() {
       <div class="lv-thumb">${icon}${medal}</div>
       <div class="lv-info">
         <div class="lv-title">${m.title || NE('Uten tittel','Untitled')}${ver}</div>
-        <div class="lv-meta">${ratingTxt}${dist} · ${RANKS[ri].name}</div>
+        <div class="lv-meta">${ratingTxt}${dist} · ${rankName(RANKS[ri])}</div>
         ${m.createdAt ? `<div class="lv-meta" style="margin-top:2px">${questAgeHtml(m.createdAt)}</div>` : ''}
         ${tagsHtml}
         <button class="lv-see${isSvc?' lv-see-svc':''}" onclick="event.stopPropagation();openListResult(${i})">${seeLabel}</button>
@@ -5509,7 +5532,7 @@ async function renderMyLeaderboardRow(combined, mineEl) {
     mineEl.innerHTML = `
       <div class="lb-pos">#${myIdx+1}</div>
       ${avatarHTML('lb-av', me.name, me.avatar)}
-      <div class="lb-who"><div class="lb-nm">${me.name} <span class="lb-you">${NE('DEG','YOU')}</span></div><div class="lb-meta">${rank.name}${rating}</div></div>
+      <div class="lb-who"><div class="lb-nm">${me.name} <span class="lb-you">${NE('DEG','YOU')}</span></div><div class="lb-meta">${rankName(rank)}${rating}</div></div>
       <div class="lb-right"><div class="lb-cnt" style="color:var(--accent2)">${me.quests}</div><div class="lb-cntl">${NE('fullført','completed')}</div></div>`;
     mineEl.onclick = () => { closeLeaderboard(); openProfilePage(); };
     return;
@@ -5607,7 +5630,7 @@ const ACHIEVEMENTS = [
   { id:'m10',  icon:'trend',     cat:'mil',   title:'Erfaren',            desc:'Fullfør 10 oppdrag',                   check: s => s.completed >= 10,  prog: s => ({cur:s.completed, max:10}) },
   { id:'m25',  icon:'medal',     cat:'mil',   title:'Rutinert',           desc:'Fullfør 25 oppdrag',                   check: s => s.completed >= 25,  prog: s => ({cur:s.completed, max:25}) },
   { id:'m50',  icon:'shield',    cat:'mil',   title:'Veteran',            desc:'Fullfør 50 oppdrag',                   check: s => s.completed >= 50,  prog: s => ({cur:s.completed, max:50}) },
-  { id:'m100', icon:'crown',     cat:'mil',   title:'Mester',             desc:'Fullfør 100 oppdrag',                  check: s => s.completed >= 100, prog: s => ({cur:s.completed, max:100}) },
+  { id:'m100', icon:'crown',     cat:'mil',   title:'Toktmester',         desc:'Fullfør 100 oppdrag',                  check: s => s.completed >= 100, prog: s => ({cur:s.completed, max:100}) },
   // Oppdragsgiver
   { id:'g1',   icon:'clipboard', cat:'giver', title:'Oppdragsgiver',      desc:'Legg ut ditt første oppdrag',          check: s => s.posted >= 1 },
   { id:'g10',  icon:'briefcase', cat:'giver', title:'Fast oppdragsgiver', desc:'Legg ut 10 oppdrag',                   check: s => s.posted >= 10, prog: s => ({cur:s.posted, max:10}) },
@@ -6182,11 +6205,11 @@ async function loadProfilePage(userId, isOwn) {
   const emblem = document.getElementById('pp-medal-emblem');
   if(emblem) {
     emblem.className = 'medal sm pp-medal-emblem ' + rankMetalClass(rankIdx0);
-    emblem.innerHTML = `<span class="sym">${rankSym(rank.name)}</span>`;
+    emblem.innerHTML = `<span class="sym">${rankSym(rankIdx0)}</span>`;
   }
 
   // Reise-kort: rang + nivå
-  document.getElementById('pp-rank-name').textContent = rank.name;
+  document.getElementById('pp-rank-name').textContent = rankName(rank);
   document.getElementById('pp-rank-level').textContent = `${NE('Nivå','Level')} ${rankIndex} ${NE('av','of')} ${RANKS.length}`;
 
   // Tillit-stripe
@@ -6199,17 +6222,19 @@ async function loadProfilePage(userId, isOwn) {
     : '–';
   document.getElementById('pp-stat-member').textContent = memShort;
 
-  // Reise: progresjon til neste rang (medalje-farget fyll)
+  // Reise: progresjon til neste rang (medalje-farget fyll) + metallisk rangnavn
   const [mc1, mc2] = rankMetalVars(rankIdx0);
   const progEl = document.getElementById('pp-prog');
   if(progEl) { progEl.style.setProperty('--m1', mc1); progEl.style.setProperty('--m2', mc2); }
+  const rkEl = document.getElementById('pp-rank-name');
+  if(rkEl) { rkEl.style.setProperty('--rk1', mc1); rkEl.style.setProperty('--rk2', mc2); }
   const nextRank = RANKS.find(r => r.min > questsDone);
   if(nextRank) {
     const prevMin = rank.min;
     const progress = ((questsDone - prevMin) / (nextRank.min - prevMin)) * 100;
     const remaining = Math.max(nextRank.min - questsDone, 0);
     document.getElementById('pp-prog-fill').style.width = Math.max(progress, 3) + '%';
-    document.getElementById('pp-prog-left').innerHTML = `<b>${questsDone} / ${nextRank.min}</b>${NE(' oppdrag til ',' tasks to ')}${nextRank.name}`;
+    document.getElementById('pp-prog-left').innerHTML = `<b>${questsDone} / ${nextRank.min}</b>${NE(' oppdrag til ',' tasks to ')}${rankName(nextRank)}`;
     document.getElementById('pp-prog-right').innerHTML = `${remaining} ${NE('igjen','left')} <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg>`;
   } else {
     document.getElementById('pp-prog-fill').style.width = '100%';
@@ -6217,8 +6242,9 @@ async function loadProfilePage(userId, isOwn) {
     document.getElementById('pp-prog-right').textContent = '';
   }
 
-  // Mini-stige (nåværende + de to neste)
+  // Mini-stige (nåværende + de to neste) + full stige (sammenleggbar)
   renderMiniLadder(rankIdx0);
+  renderRankLadder(questsDone);
 
   // Topplisteplass (ekte tall fra quests_completed; gated)
   renderLeaderboardPosition(questsDone);
@@ -6264,15 +6290,36 @@ async function loadProfilePage(userId, isOwn) {
 
 function renderRankLadder(questsDone) {
   const el = document.getElementById('pp-rank-ladder');
-  el.innerHTML = RANKS.map(r => {
-    const achieved = questsDone >= r.min;
-    const isCurrent = getRank(questsDone).name === r.name;
-    return `<div class="pp-rank-row" style="${isCurrent ? 'background:rgba(59,111,245,0.05);margin:0 -8px;padding:8px;border-radius:10px' : ''}">
-      <span class="lb-badge ${r.cls}" style="${achieved ? '' : 'opacity:0.35;filter:grayscale(0.7)'}">${r.name}</span>
-      <div style="flex:1;font-size:11px;color:var(--muted)">${r.min} oppdrag${isCurrent ? ' · <strong style="color:var(--accent)">'+NE('Din rang','Your rank')+'</strong>' : ''}</div>
-      <span style="font-size:14px">${achieved ? '✅' : '🔒'}</span>
-    </div>`;
-  }).join('');
+  if(!el) return;
+  const curIdx = RANKS.indexOf(getRank(questsDone));
+  // Rail-fyll: nådde trinn + delvis fremgang mot neste rang
+  const next = RANKS[curIdx + 1];
+  const part = next ? Math.min(Math.max((questsDone - RANKS[curIdx].min) / (next.min - RANKS[curIdx].min), 0), 1) : 1;
+  const fillPct = Math.min(100, Math.max(((curIdx + part) / (RANKS.length - 1)) * 100, 4));
+  el.innerHTML = `<div class="rail"><i style="height:${fillPct.toFixed(1)}%"></i></div>` +
+    RANKS.map((r, i) => {
+      const achieved = questsDone >= r.min;
+      const cur = i === curIdx;
+      return `<div class="fl-row ${achieved ? '' : 'locked'}">
+        ${medalHTML(i, 'sm')}
+        <div class="info">
+          <div class="nm">${rankName(r)}${cur ? ` <span class="fl-you">${NE('DIN RANG','YOUR RANK')}</span>` : ''}</div>
+          <div class="ds">${rankDesc(r)}</div>
+        </div>
+        <div class="th">${r.min}</div>
+        <span style="font-size:13px;flex-shrink:0">${achieved ? '✅' : '🔒'}</span>
+      </div>`;
+    }).join('');
+}
+function toggleFullLadder() {
+  const el = document.getElementById('pp-rank-ladder');
+  const chev = document.getElementById('pp-ladder-chev');
+  const tx = document.getElementById('pp-ladder-toggle-tx');
+  if(!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if(chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+  if(tx) tx.textContent = open ? NE('Vis hele rangstigen','Show the full rank ladder') : NE('Skjul rangstigen','Hide the rank ladder');
 }
 
 // Engelske oversettelser for prestasjoner (id -> [title, desc])
@@ -6282,7 +6329,7 @@ const ACH_EN = {
   m10:['Experienced','Complete 10 tasks'],
   m25:['Seasoned','Complete 25 tasks'],
   m50:['Veteran','Complete 50 tasks'],
-  m100:['Master','Complete 100 tasks'],
+  m100:['Tokt Master','Complete 100 tasks'],
   g1:['Task poster','Post your first task'],
   g10:['Regular poster','Post 10 tasks'],
   gm1:['Good match','A task you posted was completed'],
@@ -9819,7 +9866,7 @@ function showUserProfile(name, initials, color, quests, rating, rank) {
   document.getElementById('upp-quests').textContent = quests || 0;
   const rankObj = getRank(quests || 0);
   const rankIdx = RANKS.indexOf(rankObj) + 1;
-  document.getElementById('upp-rank').textContent = `${rankObj.name} · ${rankIdx}/${RANKS.length}`;
+  document.getElementById('upp-rank').textContent = `${rankName(rankObj)} · ${rankIdx}/${RANKS.length}`;
 
   // Trust signals only (no game milestones) – keep it credible, not gamey
   const badges = [];
@@ -9888,7 +9935,7 @@ const TIPS = [
   { icon:'👤', no:'Trykk på en oppdragsgiver eller toppliste-rad for å se profilen deres med rang og vurderinger!', en:'Tap a poster or a leaderboard row to see their profile with rank and reviews!' },
   { icon:'🔗', no:'Del oppdraget på WhatsApp eller Facebook for å nå enda flere som kan hjelpe deg.', en:'Share the task on WhatsApp or Facebook to reach even more people who can help.' },
   { icon:'💚', no:'Veldedighetsoppdrag er gratis å legge ut og gir utfører et spesielt achievement – perfekt for å hjelpe eldre!', en:'Charity tasks are free to post and give the helper a special achievement – perfect for helping the elderly!' },
-  { icon:'🏆', no:'Fullfør 100 oppdrag og bli Valkyrje – den høyeste rangen på Tokt!', en:'Complete 100 tasks to become Valkyrje – the highest rank on Tokt!' },
+  { icon:'🏆', no:'Fullfør 100 oppdrag og bli Legende – den høyeste rangen på Tokt!', en:'Complete 100 tasks to become a Legend – the highest rank on Tokt!' },
   { icon:'📍', no:'Tips: Aktiver posisjon så ser du oppdrag og tjenester rett i nabolaget ditt.', en:'Tip: Enable location to see tasks and services right in your neighbourhood.' },
   { icon:'🗺️', no:'Kartet oppdateres i sanntid – nye oppdrag dukker opp med én gang noen legger dem ut!', en:'The map updates in real time – new tasks appear the moment someone posts them!' },
   { icon:'🔄', no:'Trenger du fast hjelp? Be en tilbyder om fast ukentlig eller månedlig avtale direkte i chatten.', en:'Need regular help? Ask a provider for a recurring weekly or monthly agreement right in the chat.' },
@@ -10604,9 +10651,9 @@ async function loadUserProfile(user) {
     // Oppdater Nivå-teksten under topbar-avataren (var hardkodet)
     const avatarLvl = document.querySelector('.avatar-lvl');
     if(avatarLvl) avatarLvl.textContent = 'Nivå ' + rankLevel;
-    const _prb = document.getElementById('profile-rank-badge'); if(_prb) _prb.textContent = `${rank.name} · ${NE('nivå','level')} ${RANKS.indexOf(rank)+1} ${NE('av','of')} ${RANKS.length}`;
+    const _prb = document.getElementById('profile-rank-badge'); if(_prb) _prb.textContent = `${rankName(rank)} · ${NE('nivå','level')} ${RANKS.indexOf(rank)+1} ${NE('av','of')} ${RANKS.length}`;
     const rankDescEl = document.getElementById('profile-rank-desc');
-    if(rankDescEl) rankDescEl.textContent = rank.desc || '';
+    if(rankDescEl) rankDescEl.textContent = rankDesc(rank);
     // Rang-fremgang (oppdrag til neste rang) – erstatter gammelt XP-system
     const nextR = RANKS.find(r => r.min > quests);
     let progPct, progTxt;
@@ -10832,7 +10879,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <div style="background:linear-gradient(135deg,#f97316,#a855f7);padding:20px;text-align:center">
     <div id="profile-avatar-big" style="width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,0.2);border:3px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;margin:0 auto 10px">?</div>
     <div id="profile-name" style="font-size:16px;font-weight:700;color:#fff">Laster...</div>
-    <div id="profile-rank-badge" style="display:inline-block;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:50px;margin-top:4px">Trell</div>
+    <div id="profile-rank-badge" style="display:inline-block;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:50px;margin-top:4px">Jern</div>
     <div id="profile-rank-desc" style="font-size:11px;color:rgba(255,255,255,0.75);margin-top:6px;line-height:1.4;padding:0 12px;font-style:italic;max-width:280px;margin-left:auto;margin-right:auto"></div>
   </div>
   <div style="padding:14px">
@@ -11261,7 +11308,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <div style="background:linear-gradient(135deg,#f97316,#a855f7);padding:24px 20px 44px;text-align:center;color:#fff">
     <div class="pp-avwrap">
       <div id="pp-avatar" style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.25);border:3px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800">?</div>
-      <div id="pp-medal-emblem" class="medal sm pp-medal-emblem m-iron"><span class="sym">TR</span></div>
+      <div id="pp-medal-emblem" class="medal sm pp-medal-emblem m-iron"><span class="sym">I</span></div>
       <div id="pp-star-badge" class="pp-star-badge" title="Stjerneutfører"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5L12 18.9 6.2 21l1.1-6.5L2.6 9.9l6.5-.95z"/></svg></div>
       <label id="pp-av-upload" class="pp-av-upload" for="pp-av-input" onclick="window._avPickPending=Date.now();startAvatarWatch()" title="Endre profilbilde" aria-label="Endre profilbilde"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L8 6H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-4l-1.5-2Z"/><circle cx="12" cy="12.5" r="3.2"/></svg></label>
       <input type="file" id="pp-av-input" style="display:none" onchange="uploadProfilePhoto(this)">
@@ -11282,7 +11329,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <!-- Reise-kort (rang nedtonet: progresjon + mini-stige + topplisteplass) -->
   <div id="pp-journey" class="pp-journey">
     <div class="pp-jhead">
-      <div class="rk" id="pp-rank-name">Trell</div>
+      <div class="rk" id="pp-rank-name">Jern</div>
       <div class="lv" id="pp-rank-level">Nivå 1 av 9</div>
     </div>
     <div class="pp-prog" id="pp-prog">
@@ -11290,6 +11337,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div class="lbl"><span id="pp-prog-left"><b>0 / 2</b> oppdrag til neste</span><span id="pp-prog-right"></span></div>
     </div>
     <div class="pp-mladder" id="pp-mini-ladder"></div>
+    <button id="pp-ladder-toggle" class="pp-ladder-toggle" onclick="toggleFullLadder()"><span id="pp-ladder-toggle-tx" data-en="Show the full rank ladder">Vis hele rangstigen</span> <span id="pp-ladder-chev" style="display:inline-block;transition:transform .25s">▾</span></button>
+    <div id="pp-rank-ladder" class="pp-full-ladder" style="display:none"></div>
     <div class="pp-lbpos" id="pp-lbpos" style="display:none"><div class="r" id="pp-lbpos-rank">–</div><div class="tx" id="pp-lbpos-text"></div></div>
   </div>
 
