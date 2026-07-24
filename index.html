@@ -3688,6 +3688,7 @@ function loadDemoMarkers() {
     const coords = spreadCoords(job.coords);
     registerMarker(el, {
       kind: 'quest',
+      isDemo: true,
       category: job.category || '',
       matchText: (job.title + ' ' + (job.tags||[]).map(t=>t.t).join(' ')).toLowerCase(),
       pay: job.pay || 0,
@@ -3722,6 +3723,7 @@ function addServiceMarker(svc) {
   const coords = spreadCoords(svc.coords);
   registerMarker(el, {
     kind: 'service',
+    isDemo: !svc.raw, // demo-tjenester har ingen raw (DB-rad)
     category: svc.category || '',
     matchText: ((svc.title||'') + ' ' + (svc.category||'') + ' ' + (svc.tags||[]).map(t=>t.t||t).join(' ')).toLowerCase(),
     pay: svc.price || svc.pay || 0,
@@ -3750,19 +3752,32 @@ function clearClusterMarkers() {
 function updateMapEmptyState(count){
   const box = document.getElementById('map-empty');
   if(!box) return;
+  if(window._mapEmptyPlacePin) return; // kort fra stedssøk styres av selectSearchPlace/dismiss
   const mode = window.viewMode || 'all';
   const anyCat = !!document.querySelector('.fcat-item.active:not([data-cat="all"])');
   const togglesOn = ['tog-urgent','tog-charity','tog-firstcome'].some(id => document.getElementById(id)?.classList.contains('on'));
   const filtered = anyCat || togglesOn || mode !== 'all';
   if(count > 0 || filtered || window._mapEmptyDismissed){ box.style.display = 'none'; return; }
-  const noun = mode === 'services' ? 'tilbud' : 'oppdrag';
-  document.getElementById('map-empty-title').textContent = 'Ingen ' + noun + ' her ennå';
-  document.getElementById('map-empty-text').textContent = 'Bli den første til å legge ut et ' + noun + ' i området – så ser folk i nærheten det med en gang.';
+  showMapEmptyCard(null);
+}
+// Viser «bli den første»-kortet, evt. med stedsnavn (fra stedssøk)
+function showMapEmptyCard(placeName){
+  const box = document.getElementById('map-empty');
+  if(!box) return;
+  const mode = window.viewMode || 'all';
+  const noun = mode === 'services' ? NE('tilbud','offer') : NE('oppdrag','task');
+  document.getElementById('map-empty-title').textContent = placeName
+    ? NE('Ingen ' + noun + ' i ' + placeName + ' ennå', 'No ' + noun + 's in ' + placeName + ' yet')
+    : NE('Ingen ' + noun + ' her ennå', 'No ' + noun + 's here yet');
+  document.getElementById('map-empty-text').textContent = NE(
+    'Tokt er helt nytt. Bli den første til å legge ut et ' + noun + ' i området – så ser folk i nærheten det med en gang.',
+    'Tokt is brand new. Be the first to post a ' + noun + ' in the area – people nearby will see it right away.');
   box.style.display = 'block';
 }
 // Lukk hilsenen for resten av besøket (× eller når man tar tak i kartet)
 function dismissMapEmpty(){
   window._mapEmptyDismissed = true;
+  window._mapEmptyPlacePin = false;
   const box = document.getElementById('map-empty');
   if(box) box.style.display = 'none';
 }
@@ -3776,7 +3791,7 @@ function clusterMarkers() {
   // Eligible = not filtered out, with coordinates
   const eligible = window.mapMarkers.filter(m =>
     m.el && m.el.style.display !== 'none' && m.lng != null && m.lat != null);
-  updateMapEmptyState(eligible.length);   // vises kun når INGENTING matcher (ikke ved panorering)
+  updateMapEmptyState(eligible.filter(m => !m.isDemo).length);   // demo teller ikke – vises kun når ingen EKTE oppdrag finnes
   // Reset any previous clustering hide
   eligible.forEach(m => { m.el.style.visibility = ''; m.el.style.pointerEvents = ''; });
 
@@ -8180,6 +8195,16 @@ async function runSearch(query) {
   const q = query.toLowerCase();
   const hits = [];
 
+  // Stedssøk (Mapbox geocoding) – startes parallelt med DB-søkene
+  const placePromise = (query.length >= 2) ? (async () => {
+    try {
+      const token = 'pk.eyJ1IjoiZnJlZHJpa2xvZWtuZXMiLCJhIjoiY21xNjl6c25kMDFodjJxcXprcXc0NHYzMyJ9.e3IAYTrRQ6053w-zO-4fvw';
+      const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&country=NO&language=no&limit=4&types=place,locality,neighborhood,address&proximity=10.757933,59.911491`);
+      const data = await res.json();
+      return data.features || [];
+    } catch(e) { return []; }
+  })() : Promise.resolve([]);
+
   // Demo oppdrag – bruk window.JOBS som er satt globalt (kun når demo er på)
   const jobList = window.SHOW_DEMO ? (window.JOBS || []) : [];
   for(const j of jobList) {
@@ -8222,8 +8247,16 @@ async function runSearch(query) {
     }
   } catch(e) {}
 
-  if(hits.length === 0) {
-    box.innerHTML = '<div class="search-empty">Ingen treff for «' + query + '»</div>';
+  // Vent på stedstreff (startet parallelt øverst)
+  const places = await placePromise;
+  window._searchPlaces = places;
+
+  if(hits.length === 0 && places.length === 0) {
+    box.innerHTML = '<div class="search-empty">' +
+      NE('Ingen treff for «' + query + '»', 'No results for "' + query + '"') +
+      '<div style="font-size:11.5px;color:var(--muted);margin-top:5px">' +
+      NE('Tokt er helt nytt – bli den første til å legge ut!', 'Tokt is brand new – be the first to post!') +
+      '</div></div>';
     return;
   }
 
@@ -8257,11 +8290,76 @@ async function runSearch(query) {
   if(svcHits.length) {
     resultHtml += '<div class="search-section-title" style="background:rgba(168,85,247,0.06);color:var(--accent2)">🏪 Tilbud (' + svcHits.length + ')</div>' + svcHits.map(renderHit).join('');
   }
+
+  // Steder – klikk flyr kartet dit
+  if(places.length) {
+    const typeLabel = f => {
+      const t = (f.place_type || [])[0];
+      if(t === 'address') return NE('Adresse','Address');
+      if(t === 'neighborhood') return NE('Nabolag','Neighbourhood');
+      if(t === 'locality') return NE('Sted','Locality');
+      return NE('Sted','Place');
+    };
+    resultHtml += '<div class="search-section-title" style="background:rgba(15,169,104,0.06);color:var(--green)">📍 ' + NE('Steder','Places') + '</div>' +
+      places.map((f, i) => {
+        const name = f.text || '';
+        const context = (f.place_name || '').replace(name + ', ', '').replace(', Norge', '').replace('Norge', '');
+        return '<div class="search-result-item" onclick="selectSearchPlace(' + i + ')">' +
+          '<div class="search-result-thumb" style="background:rgba(15,169,104,0.10);display:flex;align-items:center;justify-content:center;font-size:20px">📍</div>' +
+          '<div class="search-result-info">' +
+            '<div class="search-result-title"></div>' +
+            '<div class="search-result-meta">' + typeLabel(f) + (context ? ' · <span class="srp-ctx"></span>' : '') + '</div>' +
+          '</div></div>';
+      }).join('');
+  }
   box.innerHTML = resultHtml;
+  // Stedsnavn settes via textContent (trygt mot spesialtegn i navn)
+  if(places.length) {
+    const rows = box.querySelectorAll('.search-result-item');
+    const offset = rows.length - places.length;
+    places.forEach((f, i) => {
+      const row = rows[offset + i];
+      if(!row) return;
+      const titleEl = row.querySelector('.search-result-title');
+      if(titleEl) titleEl.textContent = f.text || '';
+      const ctxEl = row.querySelector('.srp-ctx');
+      if(ctxEl) ctxEl.textContent = (f.place_name || '').replace((f.text || '') + ', ', '').replace(/,?\s*Norge$/, '');
+    });
+  }
+}
+
+// Klikk på stedstreff: fly til stedet, og vis «bli den første»-kort hvis området er tomt
+function selectSearchPlace(idx) {
+  const f = (window._searchPlaces || [])[idx];
+  if(!f || !f.center) return;
+  closeSearch();
+  const d = document.getElementById('search-input-desktop'); if(d) d.value = '';
+  const m = document.getElementById('search-input-mobile'); if(m) m.value = '';
+  const [lng, lat] = f.center;
+  const t = (f.place_type || [])[0];
+  const zoom = t === 'address' ? 15 : t === 'neighborhood' ? 13.5 : t === 'locality' ? 13 : 11.5;
+  if(window.map) window.map.flyTo({ center: [lng, lat], zoom, speed: 1.5, curve: 1.3 });
+  // Finnes det EKTE oppdrag/tjenester i nærheten? (demo teller ikke)
+  setTimeout(() => {
+    const nearKm = t === 'address' ? 3 : 8;
+    const real = (window.mapMarkers || []).filter(mk =>
+      !mk.isDemo && mk.lng != null && mk.lat != null && mk.el && mk.el.style.display !== 'none');
+    const any = real.some(mk => haversineKm(lat, lng, mk.lat, mk.lng) <= nearKm);
+    if(!any) { window._mapEmptyPlacePin = true; showMapEmptyCard(f.text || ''); }
+  }, 900);
+}
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371, toRad = x => x * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(a));
 }
 
 function selectSearchResult(questId, coords) {
   closeSearch();
+  window._mapEmptyPlacePin = false;
+  const _me = document.getElementById('map-empty'); if(_me) _me.style.display = 'none';
   document.getElementById('search-input-desktop').value = '';
   document.getElementById('search-input-mobile').value = '';
   if(window.map && coords && coords[0]) window.map.flyTo({ center: coords, zoom: 15, speed: 1.6 });
@@ -9701,6 +9799,7 @@ function updateProfileAchievements(quests, rating) {
 // ── SEARCH RESULT IMAGES ──
 // ── TIPS BAR ──
 const TIPS = [
+  { icon:'🚀', no:'Tokt er helt nytt – vær den første til å legge ut et oppdrag i ditt nabolag!', en:'Tokt is brand new – be the first to post a task in your neighbourhood!' },
   { icon:'📘', no:'Alle lokale steder har en Facebook-gruppe! Del oppdraget ditt der for rask og effektiv hjelp fra naboer.', en:'Every local area has a Facebook group! Share your task there for fast, effective help from neighbours.' },
   { icon:'⚡', no:'Haste-oppdrag med rød markør får mer oppmerksomhet – bruk det når du trenger hjelp raskt!', en:'Urgent tasks with a red marker get more attention – use it when you need help fast!' },
   { icon:'💇', no:'Visste du at du kan tilby egne tjenester? Trykk "Tilby tjeneste" og nå kunder i nabolaget ditt.', en:'Did you know you can offer your own services? Tap "Offer service" and reach customers in your neighbourhood.' },
