@@ -5821,9 +5821,11 @@ function ppShowTab() { /* fjernet – oppdrag/tjenester ligger nå i egne panele
 
 // ── Profilbilde: vis opplastet bilde i sirkelen, ellers initialer ──
 function safeAvatarUrl(u){
-  // Må være en Supabase storage-URL og kun inneholde trygge tegn (ingen sitat/parentes som kan bryte ut av url())
-  if(typeof u !== 'string') return null;
-  return /^https:\/\/[\w.-]+\.supabase\.co\/storage\/[\w./?=&%:-]+$/.test(u) ? u : null;
+  // Godta alle offentlige storage-URL-er fra Supabase; avvis kun tegn som kan
+  // bryte ut av CSS url() (anførselstegn, parenteser, mellomrom).
+  if(typeof u !== 'string' || !u) return null;
+  const ok = /^https:\/\/[\w.-]+\.supabase\.co\/storage\/v1\/object\/public\//.test(u) && !/[\s'"()\\]/.test(u);
+  return ok ? u : null;
 }
 // Avatar som HTML-streng (for lister bygget via innerHTML): bilde hvis trygg URL, ellers initialer
 function avatarHTML(cls, name, url, extraStyle){
@@ -5835,6 +5837,9 @@ function avatarHTML(cls, name, url, extraStyle){
 function renderAvatar(el, url, initials){
   if(!el) return;
   const safe = safeAvatarUrl(url);
+  if(el.id === 'pp-avatar' && window._avDbg){
+    _avDbg('render:' + (url ? (safe ? 'ok' : 'AVVIST') : 'tom-url'));
+  }
   if(safe){
     el.textContent = '';
     el.style.backgroundImage = 'url("' + encodeURI(safe) + '")';
@@ -6474,7 +6479,7 @@ async function saveProfileEdits() {
   if(cErr) { showToast('❌ ' + cErr.message); return; }
 
   showToast(NE('✅ Profil oppdatert!','✅ Profile updated!'));
-  loadProfilePage(currentUser.id, true);
+  await loadProfilePage(currentUser.id, true);
   if(currentUser) await loadUserProfile(currentUser);
 }
 
@@ -11177,7 +11182,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <input id="pp-edit-phone" class="form-input" type="tel" name="tel" autocomplete="tel" inputmode="numeric" placeholder="8 siffer" maxlength="8" style="width:100%;box-sizing:border-box">
     </div>
     <button onclick="saveProfileEdits()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit"><span data-en="💾 Save changes">💾 Lagre endringer</span></button>
-    <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:8px;opacity:.6">build 24.07-e</div>
+    <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:8px;opacity:.6">build 24.07-f</div>
     <div id="pp-av-debug" style="text-align:center;font-size:10px;color:var(--muted);margin-top:2px;opacity:.8;word-break:break-all"></div>
   </div>
 
