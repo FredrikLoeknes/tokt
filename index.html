@@ -4573,13 +4573,28 @@ function clearImage(e) {
 // feil. getSession() auto-refresher tokenet hvis refresh-tokenet fortsatt er gyldig.
 // Returnerer den ferske brukeren, eller null (og ber brukeren logge inn på nytt).
 async function requireSession() {
-  const { data: { session } } = await sb.auth.getSession();
-  if(!session?.user) {
+  // getSession() kan henge eller kaste i frosne/gjenopptatte faner (navigator.locks-
+  // konkurranse, typisk etter retur fra fil-/bildevelger i Custom Tab). Derfor:
+  // kappløp mot 4 sek frist, og ved heng/feil faller vi tilbake til currentUser –
+  // RLS er uansett den ekte porten, og en død token gir synlig feil i selve skrivingen.
+  try {
+    const res = await Promise.race([
+      sb.auth.getSession(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('session-timeout')), 4000))
+    ]);
+    const session = res && res.data && res.data.session;
+    if(session?.user) return session.user;
+    if(currentUser) return currentUser;   // getSession tom, men appen er innlogget – la skrivingen avgjøre
+    showToast(NE('⚠️ Økta di har utløpt – logg inn på nytt','⚠️ Your session expired – please log in again'));
+    openAuth('login');
+    return null;
+  } catch(e) {
+    console.warn('requireSession:', e?.message);
+    if(currentUser) return currentUser;   // lås-heng/feil: fortsett optimistisk
     showToast(NE('⚠️ Økta di har utløpt – logg inn på nytt','⚠️ Your session expired – please log in again'));
     openAuth('login');
     return null;
   }
-  return session.user;
 }
 
 async function postJob() {
@@ -5918,6 +5933,9 @@ async function uploadProfilePhoto(input){
   } finally {
     input.value = '';
   }
+  } catch(e) {
+    window._avDbg && _avDbg('feil: ' + ((e && e.message) || e));
+    showToast(L('⚠️ Noe gikk galt: ','⚠️ Something went wrong: ') + ((e && e.message) || e));
   } finally {
     window._avUploading = false;
   }
@@ -11159,7 +11177,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <input id="pp-edit-phone" class="form-input" type="tel" name="tel" autocomplete="tel" inputmode="numeric" placeholder="8 siffer" maxlength="8" style="width:100%;box-sizing:border-box">
     </div>
     <button onclick="saveProfileEdits()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit"><span data-en="💾 Save changes">💾 Lagre endringer</span></button>
-    <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:8px;opacity:.6">build 24.07-c</div>
+    <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:8px;opacity:.6">build 24.07-d</div>
     <div id="pp-av-debug" style="text-align:center;font-size:10px;color:var(--muted);margin-top:2px;opacity:.8;word-break:break-all"></div>
   </div>
 
