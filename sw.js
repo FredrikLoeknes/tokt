@@ -2,7 +2,7 @@
 // Handles push notifications and offline caching
 
 // Bump ved endring her → gammel cache slettes automatisk i 'activate'.
-const CACHE_NAME = 'tokt-v6';
+const CACHE_NAME = 'tokt-v7';
 const STATIC_ASSETS = ['/', '/index.html', '/terms.html'];
 
 // Install
