@@ -5837,9 +5837,6 @@ function avatarHTML(cls, name, url, extraStyle){
 function renderAvatar(el, url, initials){
   if(!el) return;
   const safe = safeAvatarUrl(url);
-  if(el.id === 'pp-avatar' && window._avDbg){
-    _avDbg('render:' + (url ? (safe ? 'ok' : 'AVVIST') : 'tom-url'));
-  }
   if(safe){
     el.textContent = '';
     el.style.backgroundImage = 'url("' + encodeURI(safe) + '")';
@@ -5903,7 +5900,6 @@ async function uploadProfilePhoto(input){
   try{
   if(!currentUser){ showToast(NE('⚠️ Logg inn først','⚠️ Log in first')); input.value=''; return; }
   if(file.type && !/^image\//.test(file.type)){ showToast(NE('⚠️ Velg en bildefil','⚠️ Choose an image file')); input.value=''; return; }
-  window._avDbg && _avDbg('fil: ' + (file.type || 'ukjent type') + ' ' + Math.round(file.size/1024) + 'kB');
   if(file.size > 15*1024*1024){ showToast(NE('⚠️ Bildet er for stort (maks 15 MB)','⚠️ Image too large (max 15 MB)')); input.value=''; return; }
   const su = await requireSession();
   if(!su){ input.value=''; return; }
@@ -5939,7 +5935,6 @@ async function uploadProfilePhoto(input){
     input.value = '';
   }
   } catch(e) {
-    window._avDbg && _avDbg('feil: ' + ((e && e.message) || e));
     showToast(NE('⚠️ Noe gikk galt: ','⚠️ Something went wrong: ') + ((e && e.message) || e));
   } finally {
     window._avUploading = false;
@@ -5949,15 +5944,6 @@ async function uploadProfilePhoto(input){
 // Google Foto-pickeren (særlig skybilder som lastes ned først). Når appen får
 // fokus tilbake etter at pickeren ble åpnet, poller vi inputen i opptil 10 sek
 // og starter opplastingen manuelt hvis en fil ligger der uten at onchange fyrte.
-// Diagnose-hjelper: viser siste hendelser varig på profilsiden (toasts forsvinner fort)
-window._avDbg = function(t){
-  try{
-    const el = document.getElementById('pp-av-debug');
-    if(!el) return;
-    el.textContent = (el.textContent ? el.textContent + ' → ' : '') + t;
-    if(el.textContent.length > 120) el.textContent = el.textContent.slice(-120);
-  }catch(_){}
-};
 // Aktiv overvåker: fra kamera-knappen trykkes sjekkes file-inputen hvert 0,7 s
 // i 20 s – helt uavhengig av change/focus/visibility-events som kan utebli.
 window.startAvatarWatch = function(){
@@ -5972,7 +5958,6 @@ window.startAvatarWatch = function(){
     const inp = document.getElementById('pp-av-input');
     if(inp && inp.files && inp.files[0]){
       clearInterval(window._avWatch); window._avWatch = null;
-      window._avDbg && _avDbg('watcher fant fil');
       uploadProfilePhoto(inp);
     }
   }, 700);
@@ -11098,8 +11083,8 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div id="pp-avatar" style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.25);border:3px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800">?</div>
       <div id="pp-medal-emblem" class="medal sm pp-medal-emblem m-iron"><span class="sym">TR</span></div>
       <div id="pp-star-badge" class="pp-star-badge" title="Stjerneutfører"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5L12 18.9 6.2 21l1.1-6.5L2.6 9.9l6.5-.95z"/></svg></div>
-      <label id="pp-av-upload" class="pp-av-upload" for="pp-av-input" onclick="window._avPickPending=Date.now();startAvatarWatch();window._avDbg&&_avDbg('klikk')" title="Endre profilbilde" aria-label="Endre profilbilde"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L8 6H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-4l-1.5-2Z"/><circle cx="12" cy="12.5" r="3.2"/></svg></label>
-      <input type="file" id="pp-av-input" style="display:none" onchange="window._avDbg&&_avDbg('change-event');uploadProfilePhoto(this)">
+      <label id="pp-av-upload" class="pp-av-upload" for="pp-av-input" onclick="window._avPickPending=Date.now();startAvatarWatch()" title="Endre profilbilde" aria-label="Endre profilbilde"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L8 6H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-4l-1.5-2Z"/><circle cx="12" cy="12.5" r="3.2"/></svg></label>
+      <input type="file" id="pp-av-input" style="display:none" onchange="uploadProfilePhoto(this)">
     </div>
     <div id="pp-name" style="font-size:23px;font-weight:800;letter-spacing:-.3px">Laster…</div>
     <div id="pp-verified" style="display:none;margin-top:9px"></div>
@@ -11182,8 +11167,6 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <input id="pp-edit-phone" class="form-input" type="tel" name="tel" autocomplete="tel" inputmode="numeric" placeholder="8 siffer" maxlength="8" style="width:100%;box-sizing:border-box">
     </div>
     <button onclick="saveProfileEdits()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit"><span data-en="💾 Save changes">💾 Lagre endringer</span></button>
-    <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:8px;opacity:.6">build 24.07-f</div>
-    <div id="pp-av-debug" style="text-align:center;font-size:10px;color:var(--muted);margin-top:2px;opacity:.8;word-break:break-all"></div>
   </div>
 
   <!-- Anmeldelser -->
