@@ -5875,8 +5875,12 @@ function verifyImageDisplays(url){
   });
 }
 async function uploadProfilePhoto(input){
+  if(window._avUploading) return;          // vern mot dobbel-kall (onchange + fallback)
   const file = input && input.files && input.files[0];
   if(!file) return;
+  window._avPickPending = 0;
+  window._avUploading = true;
+  try{
   if(!currentUser){ showToast(L('⚠️ Logg inn først','⚠️ Log in first')); input.value=''; return; }
   if(!/^image\//.test(file.type)){ showToast(L('⚠️ Velg en bildefil','⚠️ Choose an image file')); input.value=''; return; }
   if(file.size > 15*1024*1024){ showToast(L('⚠️ Bildet er for stort (maks 15 MB)','⚠️ Image too large (max 15 MB)')); input.value=''; return; }
@@ -5913,7 +5917,33 @@ async function uploadProfilePhoto(input){
   } finally {
     input.value = '';
   }
+  } finally {
+    window._avUploading = false;
+  }
 }
+// Android/Custom Tab-fallback: change-eventen på file-input uteblir ofte etter
+// Google Foto-pickeren (særlig skybilder som lastes ned først). Når appen får
+// fokus tilbake etter at pickeren ble åpnet, poller vi inputen i opptil 10 sek
+// og starter opplastingen manuelt hvis en fil ligger der uten at onchange fyrte.
+(function(){
+  function pollAvatarInput(){
+    if(!window._avPickPending) return;
+    if(Date.now() - window._avPickPending > 60000){ window._avPickPending = 0; return; }
+    const delays = [500, 1200, 2500, 4500, 7000, 10000];
+    delays.forEach(ms => setTimeout(() => {
+      if(!window._avPickPending || window._avUploading) return;
+      const inp = document.getElementById('pp-av-input');
+      if(inp && inp.files && inp.files[0]){
+        window._avPickPending = 0;
+        uploadProfilePhoto(inp);
+      } else if(ms === 10000){
+        window._avPickPending = 0;   // bruker avbrøt pickeren – rydd flagget
+      }
+    }, ms));
+  }
+  window.addEventListener('focus', pollAvatarInput);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) pollAvatarInput(); });
+})();
 
 async function loadProfilePage(userId, isOwn) {
   // Vis/skjul egne seksjoner
@@ -11009,7 +11039,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div id="pp-avatar" style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.25);border:3px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800">?</div>
       <div id="pp-medal-emblem" class="medal sm pp-medal-emblem m-iron"><span class="sym">TR</span></div>
       <div id="pp-star-badge" class="pp-star-badge" title="Stjerneutfører"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5L12 18.9 6.2 21l1.1-6.5L2.6 9.9l6.5-.95z"/></svg></div>
-      <button id="pp-av-upload" class="pp-av-upload" onclick="document.getElementById('pp-av-input').click()" title="Endre profilbilde" aria-label="Endre profilbilde"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L8 6H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-4l-1.5-2Z"/><circle cx="12" cy="12.5" r="3.2"/></svg></button>
+      <button id="pp-av-upload" class="pp-av-upload" onclick="window._avPickPending=Date.now();document.getElementById('pp-av-input').click()" title="Endre profilbilde" aria-label="Endre profilbilde"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L8 6H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-4l-1.5-2Z"/><circle cx="12" cy="12.5" r="3.2"/></svg></button>
       <input type="file" id="pp-av-input" accept="image/*" style="display:none" onchange="uploadProfilePhoto(this)">
     </div>
     <div id="pp-name" style="font-size:23px;font-weight:800;letter-spacing:-.3px">Laster…</div>
