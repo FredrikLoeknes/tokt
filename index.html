@@ -5838,23 +5838,70 @@ function applyMyAvatar(url){
   renderAvatar(document.getElementById('profile-avatar-big'), url, ini);
   renderAvatar(document.querySelector('.avatar'), url, ini);
 }
+// Behandler profilbildet før opplasting: dekoder, senterbeskjærer til kvadrat,
+// skalerer til maks 512×512 og eksporterer som JPEG (~50 kB). Løser tre ting:
+// HEIC/ukjente formater (feiler ærlig i stedet for tom sirkel), store filer,
+// og gir perfekt kvadrat til den runde avataren.
+function processAvatarImage(file){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try{
+        const w = img.naturalWidth, h = img.naturalHeight;
+        if(!w || !h) throw new Error('decode');
+        const side = Math.min(w, h);
+        const size = Math.min(512, side);
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        canvas.getContext('2d').drawImage(img, (w - side)/2, (h - side)/2, side, side, 0, 0, size, size);
+        URL.revokeObjectURL(url);
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('decode')), 'image/jpeg', 0.85);
+      } catch(e){ URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
+    img.src = url;
+  });
+}
+// Verifiserer at en bilde-URL faktisk kan vises i nettleseren (5 sek frist).
+function verifyImageDisplays(url){
+  return new Promise(resolve => {
+    const img = new Image();
+    const done = ok => { clearTimeout(t); resolve(ok); };
+    const t = setTimeout(() => done(false), 5000);
+    img.onload = () => done(true);
+    img.onerror = () => done(false);
+    img.src = url;
+  });
+}
 async function uploadProfilePhoto(input){
   const file = input && input.files && input.files[0];
   if(!file) return;
   if(!currentUser){ showToast(L('⚠️ Logg inn først','⚠️ Log in first')); input.value=''; return; }
   if(!/^image\//.test(file.type)){ showToast(L('⚠️ Velg en bildefil','⚠️ Choose an image file')); input.value=''; return; }
-  if(file.size > 5*1024*1024){ showToast(L('⚠️ Bildet er for stort (maks 5 MB)','⚠️ Image too large (max 5 MB)')); input.value=''; return; }
+  if(file.size > 15*1024*1024){ showToast(L('⚠️ Bildet er for stort (maks 15 MB)','⚠️ Image too large (max 15 MB)')); input.value=''; return; }
   const su = await requireSession();
   if(!su){ input.value=''; return; }
+  showToast(L('⏳ Behandler bilde…','⏳ Processing photo…'));
+  let blob;
+  try{
+    blob = await processAvatarImage(file);
+  } catch(e){
+    showToast(L('⚠️ Bildeformatet støttes ikke (f.eks. HEIC). Velg et JPEG- eller PNG-bilde.','⚠️ Unsupported image format (e.g. HEIC). Choose a JPEG or PNG image.'));
+    input.value='';
+    return;
+  }
   showToast(L('⏳ Laster opp bilde…','⏳ Uploading photo…'));
   try{
-    const ext = ((file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')) || 'jpg';
-    const path = currentUser.id + '/avatar.' + ext;
-    const { error: upErr } = await sb.storage.from('quest-images').upload(path, file, { upsert:true, contentType:file.type });
+    const path = currentUser.id + '/avatar.jpg';
+    const { error: upErr } = await sb.storage.from('quest-images').upload(path, blob, { upsert:true, contentType:'image/jpeg' });
     if(upErr) throw upErr;
     const { data: urlData } = sb.storage.from('quest-images').getPublicUrl(path);
     if(!urlData || !urlData.publicUrl) throw new Error('Mangler bilde-URL');
     const versioned = urlData.publicUrl + '?v=' + Date.now();   // cache-bust så nytt bilde vises straks
+    // Bekreft at bildet faktisk kan vises FØR vi lagrer og melder suksess
+    const displays = await verifyImageDisplays(versioned);
+    if(!displays) throw new Error(L('Bildet ble lastet opp, men kan ikke vises. Sjekk at bildebøtta er offentlig.','Image uploaded but cannot be displayed. Check that the storage bucket is public.'));
     const { error: updErr } = await sb.from('profiles').update({ avatar_url: versioned }).eq('id', currentUser.id);
     if(updErr) throw updErr;
     if(window.currentProfile) window.currentProfile.avatar_url = versioned;
