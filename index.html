@@ -798,6 +798,29 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .iis-step .txt{ font-size:13px; line-height:1.4; }
 .iis-done{ width:100%; background:linear-gradient(135deg,#f97316,#a855f7); color:#fff; border:none; border-radius:12px; padding:12px; font-size:14px; font-weight:800; font-family:inherit; margin-top:8px; cursor:pointer; }
 
+/* Hent appen-ark (App Store / Google Play, nettleser-install som sekundærvalg) */
+#get-app-overlay{
+  position:fixed; inset:0; z-index:1100; background:rgba(0,0,0,.5);
+  -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+  display:none; align-items:flex-end; justify-content:center;
+}
+#get-app-overlay.show{ display:flex; }
+#get-app-sheet{
+  background:var(--surface); width:100%; max-width:480px;
+  border-radius:22px 22px 0 0; box-shadow:0 -10px 40px rgba(0,0,0,.25);
+  padding:8px 20px calc(24px + env(safe-area-inset-bottom,0px));
+  transform:translateY(100%); transition:transform .35s cubic-bezier(.32,.72,0,1);
+}
+#get-app-overlay.show #get-app-sheet{ transform:translateY(0); }
+.gas-icon{ width:58px; height:58px; border-radius:14px; margin:4px auto 12px; display:block; box-shadow:0 6px 18px rgba(168,85,247,.28); }
+.gas-badges{ display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+.gas-badge{ display:flex; align-items:center; justify-content:center; gap:12px; width:100%; box-sizing:border-box; background:#000; color:#fff; border:1px solid #333; border-radius:13px; padding:10px 16px; cursor:pointer; font-family:inherit; text-decoration:none; }
+.gas-badge svg{ width:24px; height:24px; flex-shrink:0; fill:#fff; }
+.gas-badge .tx{ text-align:left; line-height:1.15; }
+.gas-badge .tx small{ display:block; font-size:9.5px; font-weight:500; opacity:.85; letter-spacing:.3px; }
+.gas-badge .tx b{ font-size:16.5px; font-weight:700; letter-spacing:.2px; }
+.gas-alt{ display:block; width:100%; background:none; border:none; color:var(--muted); font-size:12px; font-family:inherit; text-align:center; text-decoration:underline; margin-top:14px; cursor:pointer; }
+
 #week-worker {
   background:var(--surface); border:1px solid var(--border);
   border-radius:var(--radius); padding:10px 14px;
@@ -2429,10 +2452,15 @@ const LANGUAGES = {
     firstQuestDesc: 'Du søkte på ditt første oppdrag. Eventyret begynner!',
     // App install
     installTitle: 'Last ned Tokt-appen',
-    installCardSub: 'Legg den på hjemskjermen – åpne raskere, få varsler',
-    installBannerSub: 'Åpne raskere – som en vanlig app',
-    installBtn: 'Installer',
+    installCardSub: 'Hent den gratis fra App Store eller Google Play',
+    installBannerSub: 'Nå på App Store og Google Play',
+    installBtn: 'Hent appen',
     installToast: '🎉 Tokt er lagt til på hjemskjermen!',
+    storeSheetTitle: 'Hent Tokt-appen',
+    storeSheetSub: 'Gratis på App Store og Google Play',
+    storeBadgePlaySmall: 'HENT DEN PÅ',
+    storeBadgeAppleSmall: 'Last ned fra',
+    storeAltWeb: 'Eller installer direkte fra nettleseren',
     iosSheetTitle: 'Installer Tokt på iPhone',
     iosSheetSub: 'Tre enkle steg i Safari',
     iosStep1: 'Trykk på <b>Del-knappen</b> nederst i Safari',
@@ -2562,10 +2590,15 @@ const LANGUAGES = {
     firstQuestDesc: 'You applied for your first quest. The adventure begins!',
     // App install
     installTitle: 'Get the Tokt app',
-    installCardSub: 'Add it to your home screen – open faster, get alerts',
-    installBannerSub: 'Open faster – just like a regular app',
-    installBtn: 'Install',
+    installCardSub: 'Get it free on the App Store or Google Play',
+    installBannerSub: 'Now on the App Store and Google Play',
+    installBtn: 'Get the app',
     installToast: '🎉 Tokt was added to your home screen!',
+    storeSheetTitle: 'Get the Tokt app',
+    storeSheetSub: 'Free on the App Store and Google Play',
+    storeBadgePlaySmall: 'GET IT ON',
+    storeBadgeAppleSmall: 'Download on the',
+    storeAltWeb: 'Or install directly from your browser',
     iosSheetTitle: 'Install Tokt on iPhone',
     iosSheetSub: 'Three quick steps in Safari',
     iosStep1: 'Tap the <b>Share button</b> at the bottom of Safari',
@@ -2849,6 +2882,24 @@ function isMobileDevice() {
 function isDesktop() {
   return !isMobileDevice() && !isStandalone();
 }
+
+// ── Ekte app-lenker (App Store / Google Play) ──
+const TOKT_PLAY_URL = 'https://play.google.com/store/apps/details?id=app.tokt.twa';
+const TOKT_APPSTORE_URL = 'https://apps.apple.com/no/app/id6785554775';
+
+// Kjører vi allerede inne i en av de native appene?
+// – Android-TWA: standalone display-mode; førstelast har dessuten referrer android-app://
+// – iOS-wrapper (WKWebView): UA på iOS mangler «Safari»-token (gjelder også de fleste
+//   in-app-nettlesere som Facebook/Instagram – der skjuler vi også install-UI, trygt valg)
+function isInNativeApp() {
+  if(isStandalone()) return true;
+  try {
+    if((document.referrer || '').startsWith('android-app://')) sessionStorage.setItem('tokt-native', '1');
+    if(sessionStorage.getItem('tokt-native') === '1') return true;
+  } catch(e) {}
+  if(isIOS() && !/safari/i.test(navigator.userAgent)) return true;
+  return false;
+}
 // Hvilken framgangsmåte gjelder for installasjon i denne desktop-nettleseren?
 function desktopInstallKind() {
   const ua = navigator.userAgent.toLowerCase();
@@ -2860,10 +2911,10 @@ function desktopInstallKind() {
 }
 // Kan vi tilby installasjon? Vis i nettleser på mobil OG desktop (native prompt ELLER guide).
 function canInstallApp() {
-  if(isStandalone()) return false;        // kjører allerede som installert app
+  if(isInNativeApp()) return false;       // kjører allerede i appen (TWA / iOS-wrapper / PWA)
   if(deferredInstallPrompt) return true;  // klar for native installasjon
-  if(isIOSSafari()) return true;          // iPhone Safari → guide
-  if(isAndroid()) return true;            // Android-nettleser → native eller guide
+  if(isIOSSafari()) return true;          // iPhone Safari → App Store / guide
+  if(isAndroid()) return true;            // Android-nettleser → Google Play / guide
   if(isDesktop()) return true;            // desktop → native prompt (Chrome/Edge) eller guide
   return false;
 }
@@ -2892,8 +2943,15 @@ function updateTopbarInstallBtn() {
   if(show) btn.title = t('installTitle');
 }
 
-// Hovedhandling: native prompt (Android) eller guide (iPhone)
+// Hovedhandling: mobil → store-ark (App Store / Google Play), desktop → nettleser-install
 async function triggerInstall() {
+  if(isMobileDevice() && !isInNativeApp()) { openGetAppSheet(); return; }
+  browserInstallFallback();
+}
+
+// Sekundærvalg: installer som PWA rett fra nettleseren (native prompt eller guide)
+async function browserInstallFallback() {
+  closeGetAppSheet();
   if(deferredInstallPrompt) {
     deferredInstallPrompt.prompt();
     let outcome = 'dismissed';
@@ -2903,7 +2961,29 @@ async function triggerInstall() {
     else dismissInstallBanner();
     return;
   }
-  openInstallGuide(); // ingen native prompt → vis steg-for-steg guide (iPhone/Android)
+  openInstallGuide(); // ingen native prompt → vis steg-for-steg guide (iPhone/Android/desktop)
+}
+
+// Store-arket: viser riktig butikk for plattformen (begge hvis ukjent)
+function openGetAppSheet() {
+  safeText('gas-title', t('storeSheetTitle'));
+  safeText('gas-sub', t('storeSheetSub'));
+  safeText('gas-play-small', t('storeBadgePlaySmall'));
+  safeText('gas-apple-small', t('storeBadgeAppleSmall'));
+  safeText('gas-alt', t('storeAltWeb'));
+  const play = document.getElementById('gas-play');
+  const apple = document.getElementById('gas-apple');
+  if(play) play.href = TOKT_PLAY_URL;
+  if(apple) apple.href = TOKT_APPSTORE_URL;
+  const android = isAndroid(), ios = isIOS();
+  if(play) play.style.display = (android || !ios) ? 'flex' : 'none';
+  if(apple) apple.style.display = (ios || !android) ? 'flex' : 'none';
+  const ov = document.getElementById('get-app-overlay');
+  if(ov) ov.classList.add('show');
+}
+function closeGetAppSheet() {
+  const ov = document.getElementById('get-app-overlay');
+  if(ov) ov.classList.remove('show');
 }
 
 function showInstallBanner() {
@@ -2982,6 +3062,7 @@ function closeIosInstallSheet() {
 function hideAllInstallUI() {
   dismissInstallBanner();
   closeIosInstallSheet();
+  closeGetAppSheet();
   const card = document.getElementById('pp-install-section');
   if(card) card.style.display = 'none';
   const tb = document.getElementById('app-install-topbar-btn');
@@ -11248,9 +11329,9 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;box-shadow:0 4px 14px rgba(168,85,247,.3)">📲</div>
       <div style="flex:1;min-width:0">
         <div id="pp-install-title" style="font-size:13.5px;font-weight:800">Last ned Tokt-appen</div>
-        <div id="pp-install-sub" style="font-size:11px;color:var(--muted);line-height:1.4;margin-top:1px">Legg den på hjemskjermen – åpne raskere, få varsler</div>
+        <div id="pp-install-sub" style="font-size:11px;color:var(--muted);line-height:1.4;margin-top:1px">Hent den gratis fra App Store eller Google Play</div>
       </div>
-      <button onclick="event.stopPropagation();triggerInstall()" id="pp-install-btn" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:11px;padding:10px 15px;font-size:12.5px;font-weight:800;font-family:inherit;flex-shrink:0;box-shadow:0 4px 12px rgba(168,85,247,.28);cursor:pointer">Installer</button>
+      <button onclick="event.stopPropagation();triggerInstall()" id="pp-install-btn" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:11px;padding:10px 15px;font-size:12.5px;font-weight:800;font-family:inherit;flex-shrink:0;box-shadow:0 4px 12px rgba(168,85,247,.28);cursor:pointer">Hent appen</button>
     </div>
   </div>
 
@@ -11388,9 +11469,9 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <div class="aib-ico">📲</div>
   <div class="aib-tx">
     <b id="aib-title">Last ned Tokt-appen</b>
-    <small id="aib-sub">Åpne raskere – som en vanlig app</small>
+    <small id="aib-sub">Nå på App Store og Google Play</small>
   </div>
-  <button onclick="triggerInstall()" id="aib-go" class="aib-go">Installer</button>
+  <button onclick="triggerInstall()" id="aib-go" class="aib-go">Hent appen</button>
 </div>
 
 <!-- iPhone-INSTALL-GUIDE (D) -->
@@ -11403,6 +11484,27 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div class="iis-step"><div class="n">2</div><div class="txt" id="iis-step2">Bla ned og velg <b>«Legg til på Hjem-skjerm»</b></div></div>
     <div class="iis-step"><div class="n">3</div><div class="txt" id="iis-step3">Trykk <b>«Legg til»</b> – ferdig!</div></div>
     <button onclick="closeIosInstallSheet()" id="iis-done" class="iis-done">Skjønner</button>
+  </div>
+</div>
+
+<!-- HENT APPEN-ARK (App Store / Google Play; nettleser-install som sekundærvalg) -->
+<div id="get-app-overlay" onclick="if(event.target===this)closeGetAppSheet()">
+  <div id="get-app-sheet">
+    <div class="iis-grab"></div>
+    <img src="/icon192.png" alt="Tokt" class="gas-icon">
+    <h3 id="gas-title" style="font-size:16px;font-weight:800;text-align:center;margin-bottom:4px">Hent Tokt-appen</h3>
+    <div class="iis-sub" id="gas-sub" style="margin-bottom:0">Gratis på App Store og Google Play</div>
+    <div class="gas-badges">
+      <a id="gas-play" class="gas-badge" href="https://play.google.com/store/apps/details?id=app.tokt.twa" target="_blank" rel="noopener" style="display:none">
+        <svg viewBox="0 0 512 512" aria-hidden="true"><path d="M325.3 234.3 104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/></svg>
+        <span class="tx"><small id="gas-play-small">HENT DEN PÅ</small><b>Google Play</b></span>
+      </a>
+      <a id="gas-apple" class="gas-badge" href="https://apps.apple.com/no/app/id6785554775" target="_blank" rel="noopener" style="display:none">
+        <svg viewBox="0 0 384 512" aria-hidden="true"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
+        <span class="tx"><small id="gas-apple-small">Last ned fra</small><b>App Store</b></span>
+      </a>
+    </div>
+    <button class="gas-alt" id="gas-alt" onclick="browserInstallFallback()">Eller installer direkte fra nettleseren</button>
   </div>
 </div>
 
