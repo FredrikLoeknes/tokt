@@ -303,7 +303,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 
 /* ── LIST VIEW (kart ⇄ liste) ── */
 #list-toggle-btn {
-  position:fixed; left:50%; bottom:70px; transform:translateX(-50%); z-index:92;
+  position:fixed; left:50%; bottom:calc(70px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%); z-index:92;
   background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:50px;
   padding:11px 20px; font-family:inherit; font-size:13px; font-weight:800;
   box-shadow:var(--shadow); cursor:pointer; display:flex; align-items:center; gap:7px;
@@ -1046,7 +1046,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 
 /* ── TOAST ── */
 #toast {
-  position:fixed; bottom:80px; left:50%; transform:translateX(-50%); z-index:99999;
+  position:fixed; bottom:calc(80px + env(safe-area-inset-bottom, 0px)); left:50%; transform:translateX(-50%); z-index:99999;
   display:none; align-items:center; gap:9px;
   background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent);
   color:var(--text); padding:9px 13px; border-radius:11px;
@@ -1316,7 +1316,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   }
 
   /* CORNER WIDGETS */
-  #corner-widgets { bottom: 120px; right: 12px; gap: 8px; }
+  #corner-widgets { bottom: calc(120px + env(safe-area-inset-bottom, 0px)); right: 12px; gap: 8px; }
   #week-worker { display: none !important; }
   .zoom-controls { border-radius: 12px; }
   .zoom-btn { width: 44px; height: 44px; font-size: 22px; } /* bigger touch targets */
@@ -2322,7 +2322,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
       </div>
     </div>
     <div id="charity-note" style="display:none;background:rgba(15,169,104,0.08);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:12px;font-size:12px;color:var(--green);margin-bottom:12px;line-height:1.6">
-      💚 <strong>Veldedighetsoppdrag:</strong> Betaling settes til 0 kr. Utfører gjør dette frivillig og får et spesielt achievement. Perfekt for å hjelpe eldre, naboer eller andre som trenger det.
+      💚 <strong>Veldedighetsoppdrag:</strong> Betaling settes til 0 kr. Utfører gjør dette frivillig og får et spesielt achievement. Perfekt for å hjelpe andre som trenger det.
     </div>
     <div style="text-align:center;margin:8px 0 4px;font-size:11px;color:var(--muted)">
       Ved å publisere godtar du <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">brukervilkårene</a>. Betal aldri forskudd.
@@ -4718,6 +4718,12 @@ async function requireSession() {
 }
 
 async function postJob() {
+  // Re-entry-vakt: ett publiseringsforsøk om gangen (hindrer dobbelt-trykk-duplikater)
+  if(window._postingQuest) return;
+  window._postingQuest = true;
+  try { await _postJobInner(); } finally { window._postingQuest = false; }
+}
+async function _postJobInner() {
   if(!currentUser) { openAuth('login'); return; }
 
   const title = document.getElementById('quest-title-input')?.value?.trim();
@@ -4795,8 +4801,11 @@ async function postJob() {
     return;
   }
 
-  // Insert quest
-  const { data: quest, error } = await sb.from('quests').insert({
+  // Insert quest – idempotent: samme utkast får samme id, så et retry etter
+  // nettverksfeil kan aldri gi to rader (duplikat gir 23505 = allerede lagret).
+  if(!window._questDraftId) { try { window._questDraftId = crypto.randomUUID(); } catch(e) { window._questDraftId = null; } }
+  let { data: quest, error } = await sb.from('quests').insert({
+    ...(window._questDraftId ? { id: window._questDraftId } : {}),
     user_id: authUser.id,
     title,
     description: fullDescription,
@@ -4817,11 +4826,18 @@ async function postJob() {
     lng
   }).select().single();
 
+  if(error && error.code === '23505' && window._questDraftId) {
+    // Oppdraget ble faktisk lagret ved forrige forsøk – hent det og fortsett som suksess
+    const { data: existing } = await sb.from('quests').select('*').eq('id', window._questDraftId).single();
+    if(existing) { quest = existing; error = null; }
+  }
+
   if(error) {
     if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publiser oppdrag'; }
     showToast('❌ ' + error.message);
     return;
   }
+  window._questDraftId = null; // publisert – neste oppdrag får ny id
 
   logEvent('quest_posted', { category: category });
 
@@ -9935,7 +9951,7 @@ const TIPS = [
   { icon:'⭐', no:'Jo høyere rating, jo mer synlig blir profilen din. Gjør en god jobb og be om en vurdering!', en:'The higher your rating, the more visible your profile. Do a good job and ask for a review!' },
   { icon:'👤', no:'Trykk på en oppdragsgiver eller toppliste-rad for å se profilen deres med rang og vurderinger!', en:'Tap a poster or a leaderboard row to see their profile with rank and reviews!' },
   { icon:'🔗', no:'Del oppdraget på WhatsApp eller Facebook for å nå enda flere som kan hjelpe deg.', en:'Share the task on WhatsApp or Facebook to reach even more people who can help.' },
-  { icon:'💚', no:'Veldedighetsoppdrag er gratis å legge ut og gir utfører et spesielt achievement – perfekt for å hjelpe eldre!', en:'Charity tasks are free to post and give the helper a special achievement – perfect for helping the elderly!' },
+  { icon:'💚', no:'Veldedighetsoppdrag er gratis å legge ut og gir utfører et spesielt achievement – perfekt for å hjelpe andre som trenger det!', en:'Charity tasks are free to post and give the helper a special achievement – perfect for helping others in need!' },
   { icon:'🏆', no:'Fullfør 100 oppdrag og bli Legende – den høyeste rangen på Tokt!', en:'Complete 100 tasks to become a Legend – the highest rank on Tokt!' },
   { icon:'📍', no:'Tips: Aktiver posisjon så ser du oppdrag og tjenester rett i nabolaget ditt.', en:'Tip: Enable location to see tasks and services right in your neighbourhood.' },
   { icon:'🗺️', no:'Kartet oppdateres i sanntid – nye oppdrag dukker opp med én gang noen legger dem ut!', en:'The map updates in real time – new tasks appear the moment someone posts them!' },
@@ -10331,7 +10347,10 @@ async function doLogin() {
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
   btn.textContent = 'Logg inn'; btn.disabled = false;
   if(error) {
-    showAuthError('login', error.message === 'Invalid login credentials' ? 'Feil e-post eller passord' : error.message);
+    let lmsg = error.message;
+    if(lmsg === 'Invalid login credentials') lmsg = NE('Feil e-post eller passord','Wrong email or password');
+    else if(/not confirmed/i.test(lmsg)) lmsg = NE('E-posten din er ikke bekreftet ennå. Trykk på lenken i e-posten fra Tokt – sjekk også søppelpost!','Your email is not confirmed yet. Click the link in the email from Tokt – check your spam folder too!');
+    showAuthError('login', lmsg);
     return;
   }
   const overlay = document.getElementById('auth-overlay');
@@ -10386,7 +10405,7 @@ async function proceedRegister() {
     else if(msg.includes('invalid') && msg.includes('email')) msg = 'Ugyldig e-postadresse. Sjekk at du har skrevet riktig.';
     else if(msg.includes('weak') || msg.includes('password')) msg = 'Passordet er for svakt. Bruk minst 6 tegn.';
     else if(msg.includes('rate limit') || msg.includes('too many') || msg.includes('over_email_send_rate_limit')) msg = 'For mange forsøk. Vent noen minutter og prøv igjen.';
-    else if(msg.includes('email') && msg.includes('confirm')) msg = 'Konto opprettet! Sjekk e-posten din for bekreftelseslenke.';
+    else if(msg.includes('email') && msg.includes('confirm')) msg = 'Konto opprettet! Sjekk e-posten din for bekreftelseslenke (sjekk også søppelpost).';
     else msg = 'Feil: ' + msg; // Show real error for debugging
     closeTermsGate();
     showAuthError('reg', msg);
@@ -10394,7 +10413,7 @@ async function proceedRegister() {
   }
   closeTermsGate();
   closeAuth();
-  showToast(NE('✅ Konto opprettet! Sjekk e-posten din for bekreftelseslenke.','✅ Account created! Check your email for a confirmation link.'), null, true);
+  showToast(NE('✅ Konto opprettet! Sjekk e-posten din for bekreftelseslenke – den kan havne i søppelpost.','✅ Account created! Check your email for a confirmation link – it may land in your spam folder.'), null, true);
   logEvent('signup');
   if(data.user) {
     // Create profile row – non-blocking, don't let this break auth
