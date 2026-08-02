@@ -10106,6 +10106,30 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   }
 });
 
+// ── Fanger opp feil fra e-postlenker (utløpt/allerede brukt bekreftelseslenke) ──
+// Supabase redirecter da hit med f.eks. #error=access_denied&error_code=otp_expired.
+// Uten denne håndteringen lander brukeren bare utlogget på kartet uten forklaring.
+(function handleAuthLinkError(){
+  try {
+    const h = window.location.hash || '';
+    if(!/error_code=|error=access_denied/.test(h)) return;
+    const params = new URLSearchParams(h.replace(/^#/, ''));
+    const code = params.get('error_code') || '';
+    const desc = params.get('error_description') || '';
+    // Rydd URL-en så feilen ikke henger igjen ved refresh/deling
+    try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {}
+    const show = () => {
+      const expired = code === 'otp_expired' || /expired|invalid/i.test(desc);
+      openAuth('login');
+      showConfirmResend(expired
+        ? NE('Bekreftelseslenken er utløpt eller allerede brukt. Skriv inn e-posten din over og be om en ny lenke.','The confirmation link has expired or was already used. Enter your email above and request a new link.')
+        : NE('Noe gikk galt med lenken. Skriv inn e-posten din over og be om en ny.','Something went wrong with the link. Enter your email above and request a new one.'));
+    };
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show, { once:true });
+    else show();
+  } catch(e) {}
+})();
+
 // Enkel, personvernvennlig hendelseslogging til egen Supabase-tabell (gratis alternativ til Vercel Pro)
 async function logEvent(name, meta){
   try {
@@ -10349,7 +10373,11 @@ async function doLogin() {
   if(error) {
     let lmsg = error.message;
     if(lmsg === 'Invalid login credentials') lmsg = NE('Feil e-post eller passord','Wrong email or password');
-    else if(/not confirmed/i.test(lmsg)) lmsg = NE('E-posten din er ikke bekreftet ennå. Trykk på lenken i e-posten fra Tokt – sjekk også søppelpost!','Your email is not confirmed yet. Click the link in the email from Tokt – check your spam folder too!');
+    else if(/not confirmed/i.test(lmsg)) {
+      // Ikke en blindvei lenger: gi brukeren mulighet til å få ny lenke direkte
+      showConfirmResend(NE('E-posten din er ikke bekreftet ennå. Sjekk innboksen og søppelposten – eller be om en ny lenke under.','Your email is not confirmed yet. Check your inbox and spam folder – or request a new link below.'));
+      return;
+    }
     showAuthError('login', lmsg);
     return;
   }
@@ -10397,7 +10425,7 @@ async function proceedRegister() {
   // Tidspunkt brukeren faktisk godtok vilkårene (når de trykket «Godta»)
   const acceptedAt = new Date().toISOString();
   if(gateBtn){ gateBtn.textContent = en ? 'Creating account…' : 'Oppretter konto…'; gateBtn.disabled = true; }
-  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName, phone: phone, birth_date: birthdate, is_adult: isAdult, terms_accepted_at: acceptedAt, terms_version: TERMS_VERSION } } });
+  const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: 'https://tokt.app', data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName, phone: phone, birth_date: birthdate, is_adult: isAdult, terms_accepted_at: acceptedAt, terms_version: TERMS_VERSION } } });
   if(gateBtn){ gateBtn.textContent = en ? 'Accept and create account' : 'Godta og opprett konto'; gateBtn.disabled = false; }
   if(error) {
     let msg = error.message;
@@ -10616,7 +10644,53 @@ function showAuthError(form, msg) {
   el.style.background = 'rgba(229,57,53,0.1)';
   el.style.borderColor = 'rgba(229,57,53,0.3)';
   el.style.color = 'var(--red)';
-  setTimeout(() => el.style.display = 'none', 4000);
+  if(el._hideTimer) clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => el.style.display = 'none', 4000);
+}
+
+// ── E-POSTBEKREFTELSE: send lenken på nytt ──
+// Vises når innlogging feiler pga. ubekreftet e-post, eller når en utløpt/
+// allerede brukt bekreftelseslenke sender brukeren tilbake med #error i URL-en.
+function showConfirmResend(msg) {
+  const el = document.getElementById('login-error');
+  if(!el) return;
+  if(el._hideTimer) { clearTimeout(el._hideTimer); el._hideTimer = null; }
+  el.textContent = '';
+  const msgEl = document.createElement('div');
+  msgEl.textContent = msg;
+  const btn = document.createElement('button');
+  btn.id = 'resend-confirm-btn';
+  btn.type = 'button';
+  btn.textContent = NE('📧 Send ny bekreftelseslenke','📧 Send a new confirmation link');
+  btn.style.cssText = 'margin-top:8px;width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit';
+  btn.onclick = resendConfirmation;
+  el.appendChild(msgEl);
+  el.appendChild(btn);
+  el.style.display = 'block';
+  el.style.background = 'rgba(229,57,53,0.1)';
+  el.style.borderColor = 'rgba(229,57,53,0.3)';
+  el.style.color = 'var(--red)';
+  // Ingen auto-skjul – brukeren trenger tid til å lese og trykke
+}
+
+async function resendConfirmation() {
+  const email = (document.getElementById('login-email')?.value || '').trim();
+  if(!email || !email.includes('@')) {
+    showConfirmResend(NE('Skriv inn e-posten din i feltet over, og trykk så på knappen under.','Enter your email in the field above, then press the button below.'));
+    return;
+  }
+  const btn = document.getElementById('resend-confirm-btn');
+  if(btn){ btn.disabled = true; btn.textContent = NE('Sender…','Sending…'); }
+  const { error } = await sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: 'https://tokt.app' } });
+  if(error) {
+    const rl = /rate limit|too many|over_email_send_rate_limit/i.test(error.message);
+    showConfirmResend(rl
+      ? NE('For mange forsøk – vent noen minutter og prøv igjen.','Too many attempts – wait a few minutes and try again.')
+      : NE('Kunne ikke sende ny lenke: ','Could not send a new link: ') + error.message);
+    return;
+  }
+  showAuthSuccess('login', NE('Ny bekreftelseslenke sendt til ' + email + '! Sjekk innboksen – og søppelpost. Lenken varer i 24 timer.','New confirmation link sent to ' + email + '! Check your inbox – and spam. The link is valid for 24 hours.'));
+  logEvent('confirm_resend');
 }
 
 function showAuthSuccess(form, msg) {
