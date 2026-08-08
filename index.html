@@ -2106,8 +2106,8 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     </div>
     <div class="qpreview-card">
       <div class="qpreview-top">
-        <span class="qpreview-label">Slik ser oppdraget ut på kartet</span>
-        <span class="qpreview-hint">slik andre ser det</span>
+        <span class="qpreview-label" data-en="How the quest looks on the map">Slik ser oppdraget ut på kartet</span>
+        <span class="qpreview-hint" data-en="as others see it">slik andre ser det</span>
       </div>
       <div class="qpreview-stage">
         <div class="quest-pin shape-circle" id="qpreview-pin">
@@ -4627,7 +4627,7 @@ function updateQuestPreview() {
 
   // name (truncation handled by CSS)
   const nameEl = document.getElementById('qpreview-name');
-  if(nameEl) nameEl.textContent = cleanName(title) || 'Oppdragets navn';
+  if(nameEl) nameEl.textContent = cleanName(title) || NE('Oppdragets navn','Quest name');
 
   // optional photo fill
   const imgPrev = document.getElementById('image-preview');
@@ -9685,20 +9685,87 @@ async function bookingConfirmReceived(id) {
 
 function openServiceModal() {
   if(!currentUser) { openAuth('login'); return; }
+  applyMinorUIRestrictions();
   document.getElementById('service-modal-overlay').style.display = 'flex';
+  updateSvcPreview();
 }
 function closeServiceModal() {
   document.getElementById('service-modal-overlay').style.display = 'none';
 }
 
+// Live markør-forhåndsvisning i «Tilby tjeneste» – speiler addServiceMarker
+// (lilla firkant = slik ANDRE ser tjenesten; eieren selv ser trekant på kartet)
+function updateSvcPreview() {
+  const pin = document.getElementById('svcpreview-pin');
+  if(!pin) return;
+  const title = (document.getElementById('svc-title')?.value || '').trim();
+  const cat = document.getElementById('svc-category')?.value || '';
+  let price = parseInt(document.getElementById('svc-price')?.value, 10);
+  if(isNaN(price)) price = 0;
+
+  // ikon fra kategori (samme logikk som markerIcon for tjenester)
+  const iconEl = document.getElementById('svcpreview-icon');
+  if(iconEl) { const _k = catKeyFromString(cat); iconEl.innerHTML = _k ? catIconSvg(_k,{size:22,stroke:2}) : (firstEmoji(cat) || '🏪'); }
+
+  const coinEl = document.getElementById('svcpreview-coin');
+  if(coinEl) coinEl.textContent = price + ' kr';
+
+  const nameEl = document.getElementById('svcpreview-name');
+  if(nameEl) nameEl.textContent = cleanName(title) || NE('Tjenestens navn','Service name');
+
+  // valgfritt bilde fyller emblemet, som på ekte markører
+  const prev = document.getElementById('svc-image-preview');
+  const hasImg = prev && prev.style.display !== 'none';
+  const emblem = pin.querySelector('.qp-emblem');
+  let img = document.getElementById('svcpreview-img');
+  if(hasImg && emblem) {
+    if(!img) {
+      img = document.createElement('img');
+      img.id = 'svcpreview-img';
+      img.className = 'qp-img';
+      emblem.insertBefore(img, document.getElementById('svcpreview-coin'));
+    }
+    img.src = document.getElementById('svc-preview-img')?.src || '';
+  } else if(img) {
+    img.remove();
+  }
+}
+
+// Nullstill skjemaet ETTER vellykket publisering (ikke ved åpning – da mister
+// man ikke det man skrev om modalen lukkes ved uhell)
+function resetServiceForm() {
+  const setVal = (id, v) => { const el = document.getElementById(id); if(el) el.value = v; };
+  setVal('svc-title', ''); setVal('svc-desc', ''); setVal('svc-price', '350');
+  const pd = document.getElementById('svc-price-display'); if(pd) pd.textContent = '350';
+  const pt = document.getElementById('svc-price-type'); if(pt) pt.selectedIndex = 0;
+  const rt = document.getElementById('svc-recurring-toggle'); if(rt) rt.classList.remove('on');
+  const rg = document.getElementById('svc-recurring-info-group'); if(rg) rg.style.display = 'none';
+  setVal('svc-recurring-info', '');
+  const ii = document.getElementById('svc-image-input'); if(ii) ii.value = '';
+  const ip = document.getElementById('svc-image-preview'); if(ip) ip.style.display = 'none';
+  const up = document.getElementById('svc-upload-placeholder'); if(up) up.style.display = 'block';
+  try { setSvcEquipment('own'); } catch(e) {}
+  setVal('svc-address-input', '');
+  const ac = document.getElementById('svc-address-confirmed'); if(ac) ac.style.display = 'none';
+  svcLat = null; svcLng = null;
+  updateSvcPreview();
+}
+
 function previewServiceImage(input) {
   const file = input.files[0];
   if(!file) return;
+  // Størrelsessjekk – 5MB (samme grense som oppdragsbilder)
+  if(file.size > 5 * 1024 * 1024) {
+    showToast(NE('⚠️ Bildet er for stort. Maks 5MB.','⚠️ Image is too large. Max 5MB.'));
+    input.value = '';
+    return;
+  }
   const reader = new FileReader();
   reader.onload = e => {
     document.getElementById('svc-preview-img').src = e.target.result;
     document.getElementById('svc-image-preview').style.display = 'block';
     document.getElementById('svc-upload-placeholder').style.display = 'none';
+    updateSvcPreview();
   };
   reader.readAsDataURL(file);
 }
@@ -9707,8 +9774,28 @@ async function postService() {
   if(!currentUser) { openAuth('login'); return; }
   const title = document.getElementById('svc-title').value.trim();
   if(!title) { showToast(NE('⚠️ Legg til en tittel','⚠️ Add a title')); return; }
-  const price = parseInt(document.getElementById('svc-price')?.value) || 0;
+  let price = parseInt(document.getElementById('svc-price')?.value) || 0;
   const category = document.getElementById('svc-category').value;
+
+  // Mindreårige: blokkerte kategorier og pristak (speiler oppdrag-reglene)
+  if(isCurrentUserMinor()) {
+    if(MINOR_BLOCKED_CATEGORIES.indexOf(category) !== -1) {
+      showToast(NE('🔞 Denne kategorien krever 18 år','🔞 This category requires 18+'));
+      return;
+    }
+    if(price > MINOR_MAX_PAY) price = MINOR_MAX_PAY;
+  }
+
+  // Adresse er PÅKREVD: uten valgt punkt havnet tjenester før stille på en
+  // fallback-posisjon (Oslo sentrum) og ble i praksis usynlige for eieren.
+  if(!svcLat || !svcLng) {
+    showToast(NE('📍 Velg adresse/område fra forslagene før du publiserer','📍 Pick an address/area from the suggestions before publishing'));
+    const ai = document.getElementById('svc-address-input');
+    if(ai) { ai.focus(); ai.style.borderColor = 'var(--red)'; setTimeout(() => ai.style.borderColor = 'var(--border)', 2000); }
+    return;
+  }
+  const lat = svcLat, lng = svcLng;
+
   const desc = document.getElementById('svc-desc').value.trim();
   const svcEquip = document.getElementById('svc-equip-customer')?.classList.contains('active') ? 'customer' : 'own';
   const svcEquipText = svcEquip === 'own' ? '🔧 Har eget utstyr – tar med alt' : '🏠 Kunden skaffer utstyr';
@@ -9717,23 +9804,15 @@ async function postService() {
   const isRecurring = document.getElementById('svc-recurring-toggle').classList.contains('on');
   const recurringInfo = document.getElementById('svc-recurring-info').value.trim();
 
-  let lat = 59.911491, lng = 10.757933;
-  if(svcLat && svcLng) {
-    lat = svcLat;
-    lng = svcLng;
-  } else if(navigator.geolocation) {
-    await new Promise(resolve => {
-      navigator.geolocation.getCurrentPosition(p => { lat=p.coords.latitude; lng=p.coords.longitude; resolve(); }, resolve, {timeout:3000});
-    });
-  }
-
   const authUser = await requireSession();
   if(!authUser) return;
 
+  // status settes eksplisitt: addMarkers() henter kun status='active', så en
+  // annen DB-default ville gjort nye tjenester usynlige etter refresh
   const { data, error } = await sb.from('services').insert({
     user_id: authUser.id, title, description: svcFullDesc, category,
     price, price_type: priceType, is_recurring: isRecurring,
-    recurring_info: recurringInfo || null, lat, lng
+    recurring_info: recurringInfo || null, lat, lng, status: 'active'
   }).select().single();
 
   if(error) { showToast('❌ ' + error.message); return; }
@@ -9755,12 +9834,7 @@ async function postService() {
   showToast(NE('🏪 Tjeneste publisert på kartet!','🏪 Service published on the map!'));
   logEvent('service_posted');
   addServiceMarker(serviceToSvc(data));
-  // Reset address fields
-  const svcAddrInput = document.getElementById('svc-address-input');
-  if(svcAddrInput) svcAddrInput.value = '';
-  const svcAddrConf = document.getElementById('svc-address-confirmed');
-  if(svcAddrConf) svcAddrConf.style.display = 'none';
-  svcLat = null; svcLng = null;
+  resetServiceForm();
 }
 
 // ── WELCOME POPUP ──
@@ -10293,6 +10367,14 @@ function applyMinorUIRestrictions(){
   if(price) price.max = minor ? String(MINOR_MAX_PAY) : '50000';
   const note = document.getElementById('minor-price-note');
   if(note) note.style.display = minor ? 'block' : 'none';
+  // Tjeneste-modalen: samme regler (blokkerte kategorier + pristak)
+  document.querySelectorAll('#svc-category option').forEach(function(op){
+    if(MINOR_BLOCKED_CATEGORIES.indexOf(op.textContent.trim()) !== -1) op.style.display = minor ? 'none' : '';
+  });
+  const sPrice = document.getElementById('svc-price');
+  if(sPrice) sPrice.max = minor ? String(MINOR_MAX_PAY) : '50000';
+  const sNote = document.getElementById('svc-minor-price-note');
+  if(sNote) sNote.style.display = minor ? 'block' : 'none';
 }
 // Kategori-valg i «legg ut»: blind date-advarsel + auto-18+
 function checkCategoryWarning(val){
@@ -11221,17 +11303,34 @@ sb.auth.onAuthStateChange(async (event, session) => {
 <div id="service-modal-overlay" onclick="if(event.target===this)closeServiceModal()" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);align-items:center;justify-content:center">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;width:440px;max-width:95vw;max-height:90vh;max-height:90svh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:popIn .2s ease">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
-      <div style="font-size:18px;font-weight:700">🏪 Tilby en tjeneste</div>
+      <div style="font-size:18px;font-weight:700" data-en="🏪 Offer a service">🏪 Tilby en tjeneste</div>
       <button onclick="closeServiceModal()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">×</button>
     </div>
 
+    <div class="qpreview-card">
+      <div class="qpreview-top">
+        <span class="qpreview-label" data-en="How the service looks on the map">Slik ser tjenesten ut på kartet</span>
+        <span class="qpreview-hint" data-en="as others see it">slik andre ser det</span>
+      </div>
+      <div class="qpreview-stage">
+        <div class="quest-pin service shape-square" id="svcpreview-pin">
+          <div class="qp-emblem">
+            <div class="qp-shape"></div>
+            <span class="qp-icon" id="svcpreview-icon">🏪</span>
+            <div class="qp-coin" id="svcpreview-coin">350 kr</div>
+          </div>
+          <div class="qp-name" id="svcpreview-name">Tjenestens navn</div>
+        </div>
+      </div>
+    </div>
+
     <div class="form-group">
-      <label class="form-label">Hva tilbyr du?</label>
-      <input id="svc-title" class="form-input" type="text" placeholder="F.eks. «Hårklipp hjemme hos deg»">
+      <label class="form-label" data-en="What do you offer?">Hva tilbyr du?</label>
+      <input id="svc-title" class="form-input" type="text" placeholder="F.eks. «Hårklipp hjemme hos deg»" data-en-ph="E.g. «Haircut at your home»" oninput="updateSvcPreview()">
     </div>
     <div class="form-group">
-      <label class="form-label">Kategori</label>
-      <select id="svc-category" class="form-select">
+      <label class="form-label" data-en="Category">Kategori</label>
+      <select id="svc-category" class="form-select" onchange="updateSvcPreview()">
         <option>💇 Hår og skjønnhet</option>
         <option>🌿 Hagearbeid</option>
         <option>🐾 Dyrepass</option>
@@ -11248,15 +11347,15 @@ sb.auth.onAuthStateChange(async (event, session) => {
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">Beskrivelse</label>
-      <textarea id="svc-desc" class="form-textarea" placeholder="Beskriv tjenesten din, din erfaring og hva som er inkludert…"></textarea>
+      <label class="form-label" data-en="Description">Beskrivelse</label>
+      <textarea id="svc-desc" class="form-textarea" placeholder="Beskriv tjenesten din, din erfaring og hva som er inkludert…" data-en-ph="Describe your service, your experience and what's included…"></textarea>
       <div style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.45" data-en="💡 Tip: mention when you're usually available – e.g. «weekdays 08–16». The exact time is agreed in chat when someone books.">💡 Tips: nevn gjerne når du vanligvis er ledig – f.eks. «hverdager 08–16». Konkret tidspunkt avtales i chat ved booking.</div>
     </div>
     <div class="form-group">
-      <label class="form-label">📍 Adresse / område du tilbyr tjenesten</label>
+      <label class="form-label" data-en="📍 Address / area where you offer the service (required)">📍 Adresse / område du tilbyr tjenesten (påkrevd)</label>
       <div style="position:relative">
         <input id="svc-address-input" class="form-input" type="text"
-          placeholder="Skriv adresse, sted eller nabolag…"
+          placeholder="Skriv adresse, sted eller nabolag…" data-en-ph="Type an address, place or neighbourhood…"
           autocomplete="off"
           oninput="searchSvcAddress(this.value)"
           onfocus="this.style.borderColor='var(--accent)'"
@@ -11264,63 +11363,64 @@ sb.auth.onAuthStateChange(async (event, session) => {
         <div id="svc-address-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);z-index:999;overflow:hidden;margin-top:4px"></div>
       </div>
       <div id="svc-address-confirmed" style="display:none;margin-top:6px;font-size:12px;color:var(--green);font-weight:600">✅ <span id="svc-address-confirmed-text"></span></div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">Brukes til å plassere tjenesten på kartet</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px" data-en="Choose from the suggestions – this places the service on the map">Velg fra forslagene – dette plasserer tjenesten på kartet</div>
     </div>
     <div class="form-group">
-      <label class="form-label">🧰 Utstyr</label>
+      <label class="form-label" data-en="🧰 Equipment">🧰 Utstyr</label>
       <div style="display:flex;gap:8px">
         <div class="mode-btn active" id="svc-equip-own" onclick="setSvcEquipment('own')" style="font-size:12px;padding:10px 8px">
-          🔧 Har eget utstyr<br><span style="font-size:10px;font-weight:400;color:var(--muted)">Jeg tar med alt</span>
+          <span data-en="🔧 Own equipment">🔧 Har eget utstyr</span><br><span style="font-size:10px;font-weight:400;color:var(--muted)" data-en="I bring everything">Jeg tar med alt</span>
         </div>
         <div class="mode-btn" id="svc-equip-customer" onclick="setSvcEquipment('customer')" style="font-size:12px;padding:10px 8px">
-          🏠 Kunde skaffer<br><span style="font-size:10px;font-weight:400;color:var(--muted)">Utstyr finnes hos kunden</span>
+          <span data-en="🏠 Customer provides">🏠 Kunde skaffer</span><br><span style="font-size:10px;font-weight:400;color:var(--muted)" data-en="Equipment is at the customer's">Utstyr finnes hos kunden</span>
         </div>
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Pris</label>
+      <label class="form-label" data-en="Price">Pris</label>
       <div class="cost-display"><span id="svc-price-display">350</span> <small>kr</small></div>
       <input id="svc-price" type="number" min="0" max="50000" value="350"
-        oninput="document.getElementById('svc-price-display').textContent=this.value||0"
+        oninput="document.getElementById('svc-price-display').textContent=this.value||0;updateSvcPreview()"
         style="width:100%;margin-top:8px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text);font-size:15px;font-weight:600;font-family:inherit;outline:none"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
-        placeholder="Skriv inn beløp…">
+        placeholder="Skriv inn beløp…" data-en-ph="Enter amount…">
+      <div id="svc-minor-price-note" style="display:none;font-size:11px;color:var(--muted);margin-top:4px" data-en="Under 18: max price is 2000 kr">Under 18: makspris er 2000 kr</div>
     </div>
     <div class="form-group">
-      <label class="form-label">Pristype</label>
+      <label class="form-label" data-en="Price type">Pristype</label>
       <select id="svc-price-type" class="form-select">
-        <option value="per_visit">Per besøk / oppdrag</option>
-        <option value="per_time">Per time</option>
-        <option value="per_tur">Per tur</option>
-        <option value="per_mnd">Per måned</option>
-        <option value="per_stk">Per stk</option>
+        <option value="per_visit" data-en="Per visit / job">Per besøk / oppdrag</option>
+        <option value="per_time" data-en="Per hour">Per time</option>
+        <option value="per_tur" data-en="Per walk/trip">Per tur</option>
+        <option value="per_mnd" data-en="Per month">Per måned</option>
+        <option value="per_stk" data-en="Per item">Per stk</option>
       </select>
     </div>
     <div class="form-group">
       <div class="toggle-row">
         <div class="toggle-info">
-          <div class="toggle-label">🔄 Tilbyr fast / gjentakende</div>
-          <div class="toggle-sub">F.eks. ukentlig, månedlig eller sesong</div>
+          <div class="toggle-label" data-en="🔄 Recurring offered">🔄 Tilbyr fast / gjentakende</div>
+          <div class="toggle-sub" data-en="E.g. weekly, monthly or seasonal">F.eks. ukentlig, månedlig eller sesong</div>
         </div>
         <div class="toggle" id="svc-recurring-toggle" onclick="this.classList.toggle('on');document.getElementById('svc-recurring-info-group').style.display=this.classList.contains('on')?'block':'none'"></div>
       </div>
     </div>
     <div id="svc-recurring-info-group" style="display:none" class="form-group">
-      <label class="form-label">Fast avtale info</label>
-      <input id="svc-recurring-info" class="form-input" type="text" placeholder="F.eks. «Fast ukentlig hundetur – 2500 kr/mnd»">
+      <label class="form-label" data-en="Recurring details">Fast avtale info</label>
+      <input id="svc-recurring-info" class="form-input" type="text" placeholder="F.eks. «Fast ukentlig hundetur – 2500 kr/mnd»" data-en-ph="E.g. «Weekly dog walk – 2500 kr/month»">
     </div>
     <div class="form-group">
-      <label class="form-label">Bilde (valgfritt)</label>
+      <label class="form-label" data-en="Photo (optional)">Bilde (valgfritt)</label>
       <div onclick="document.getElementById('svc-image-input').click()" style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:var(--surface2)">
         <div id="svc-image-preview" style="display:none;margin-bottom:8px"><img id="svc-preview-img" style="max-width:100%;max-height:120px;border-radius:8px;object-fit:cover"></div>
-        <div id="svc-upload-placeholder"><div style="font-size:24px">📷</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Trykk for å legge til bilde</div></div>
+        <div id="svc-upload-placeholder"><div style="font-size:24px">📷</div><div style="font-size:12px;color:var(--muted);margin-top:4px" data-en="Tap to add a photo">Trykk for å legge til bilde</div></div>
       </div>
       <input id="svc-image-input" type="file" accept="image/*" style="display:none" onchange="previewServiceImage(this)">
     </div>
     <div class="disclaimer">
-      <strong>Viktig:</strong> Som tilbyder er du selv ansvarlig for kvaliteten på tjenesten. All betaling skjer direkte mellom deg og kunden (Vipps eller annen avtalt metode).
+      <strong data-en="Important:">Viktig:</strong> <span data-en="As a provider you are responsible for the quality of the service. All payment happens directly between you and the customer (Vipps or another agreed method).">Som tilbyder er du selv ansvarlig for kvaliteten på tjenesten. All betaling skjer direkte mellom deg og kunden (Vipps eller annen avtalt metode).</span>
     </div>
-    <button onclick="postService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#3b6ff5);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">
+    <button onclick="postService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#3b6ff5);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)" data-en="🏪 Publish service">
       🏪 Publiser tjeneste
     </button>
   </div>
