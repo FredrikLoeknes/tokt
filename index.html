@@ -4704,7 +4704,18 @@ async function requireSession() {
     ]);
     const session = res && res.data && res.data.session;
     if(session?.user) return session.user;
-    if(currentUser) return currentUser;   // getSession tom, men appen er innlogget – la skrivingen avgjøre
+    if(currentUser) {
+      // Ingen økt, men appen tror vi er innlogget (utløpt token, eller konto uten økt).
+      // Prøv å reparere økta før vi slipper skrivingen gjennom:
+      try {
+        const r = await Promise.race([
+          sb.auth.refreshSession(),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('refresh-timeout')), 4000))
+        ]);
+        if(r && r.data && r.data.session && r.data.session.user) return r.data.session.user;
+      } catch(e) {}
+      return currentUser;   // siste utvei – RLS avgjør, og 42501 gir nå vennlig melding
+    }
     showToast(NE('⚠️ Økta di har utløpt – logg inn på nytt','⚠️ Your session expired – please log in again'));
     openAuth('login');
     return null;
@@ -4834,6 +4845,14 @@ async function _postJobInner() {
 
   if(error) {
     if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publiser oppdrag'; }
+    if(error.code === '42501' || /row-level security/i.test(error.message || '')) {
+      // Skriving avvist av RLS = ingen gyldig økt. Rydd opp den halvveis-innloggede
+      // tilstanden og be brukeren logge inn – i stedet for rå databasefeil.
+      showToast(NE('⚠️ Økta di har utløpt – logg inn på nytt, så kan du publisere.','⚠️ Your session expired – log in again to publish.'));
+      try { await sb.auth.signOut(); } catch(e) {}
+      openAuth('login');
+      return;
+    }
     showToast('❌ ' + error.message);
     return;
   }
@@ -10440,11 +10459,10 @@ async function proceedRegister() {
     return;
   }
   closeTermsGate();
-  closeAuth();
-  showToast(NE('✅ Konto opprettet! Sjekk e-posten din for bekreftelseslenke – den kan havne i søppelpost.','✅ Account created! Check your email for a confirmation link – it may land in your spam folder.'), null, true);
   logEvent('signup');
   if(data.user) {
     // Create profile row – non-blocking, don't let this break auth
+    // (Krever økt pga RLS – med e-postbekreftelse avslått finnes økten alltid her.)
     sb.from('profiles').upsert({
       id: data.user.id,
       full_name: firstName + ' ' + lastName,
@@ -10464,7 +10482,17 @@ async function proceedRegister() {
           if(error) console.warn('Terms consent log to profiles failed (kjørte du SQL-en?):', error.message);
         });
     });
+  }
+  if(data.session && data.user) {
+    // E-postbekreftelse er avslått i Supabase → brukeren har økt umiddelbart og er klar
+    closeAuth();
+    showToast(NE('✅ Konto opprettet – du er klar til å legge ut og ta oppdrag!','✅ Account created – you are ready to post and take quests!'), null, true);
     await loadUserProfile(data.user);
+  } else {
+    // Bekreftelse kreves (fallback hvis innstillingen noen gang skrus på igjen):
+    // IKKE sett appen i innlogget tilstand uten økt – det gir kryptiske RLS-feil ved skriving.
+    switchTab('login');
+    showConfirmResend(NE('Konto opprettet! Bekreft e-posten din via lenken vi sendte (sjekk søppelpost) – og logg inn her etterpå.','Account created! Confirm your email via the link we sent (check spam) – then log in here.'));
   }
 }
 
