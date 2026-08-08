@@ -1844,10 +1844,10 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     <div class="fsection">
       <div class="fsection-title"><span id="fsec-sortby">Sort by</span></div>
       <div class="fpill-row">
-        <div class="fpill sort-pill active" data-sort="rec" onclick="togglePillSingle(this,'sort')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l1.6 4.8L18 10l-4.4 1.2L12 16l-1.6-4.8L6 10l4.4-1.2L12 4Z"/><path d="M18.5 14.5l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6.6-1.8Z"/></svg><span class="fpill-tx">Anbefalt</span></div>
+        <div class="fpill sort-pill active" data-sort="new" onclick="togglePillSingle(this,'sort')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4l3 2"/></svg><span class="fpill-tx">Nyeste</span></div>
+        <div class="fpill sort-pill" data-sort="rec" onclick="togglePillSingle(this,'sort')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l1.6 4.8L18 10l-4.4 1.2L12 16l-1.6-4.8L6 10l4.4-1.2L12 4Z"/><path d="M18.5 14.5l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6.6-1.8Z"/></svg><span class="fpill-tx">Anbefalt</span></div>
         <div class="fpill sort-pill" data-sort="near" onclick="togglePillSingle(this,'sort')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.3-6-10a6 6 0 0 1 12 0c0 4.7-6 10-6 10Z"/><circle cx="12" cy="11" r="2.2"/></svg><span class="fpill-tx">Nærmest</span></div>
         <div class="fpill sort-pill" data-sort="pay" onclick="togglePillSingle(this,'sort')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="12" cy="12" r="2.2"/><path d="M6.5 10v4M17.5 10v4"/></svg><span class="fpill-tx">Høyest betalt</span></div>
-        <div class="fpill sort-pill" data-sort="new" onclick="togglePillSingle(this,'sort')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4l3 2"/></svg><span class="fpill-tx">Nyeste</span></div>
         <div class="fpill sort-pill" data-sort="rated" onclick="togglePillSingle(this,'sort')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l2.3 5.4 5.7.5-4.3 3.8 1.3 5.6L12 16.9 7 19.3l1.3-5.6L4 9.9l5.7-.5L12 4Z"/></svg><span class="fpill-tx">Best vurdert</span></div>
       </div>
     </div>
@@ -2036,11 +2036,11 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     <button class="lv-catchip" data-lvcat="eldre" onclick="pickListCategory('eldre')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="#c0567a" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="4.5" r="2"/><path d="M10 7v6l-2.5 7"/><path d="M10 11l3 1"/><path d="M14 8v13"/></svg>Eldre</button>
   </div>
   <div class="lv-sortrow">
-    <button class="lv-sortpill on" data-lvsort="rec" onclick="setListSort('rec')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l1.6 4.8L18 10l-4.4 1.2L12 16l-1.6-4.8L6 10l4.4-1.2L12 4Z"/><path d="M18.5 14.5l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6.6-1.8Z"/></svg>Anbefalt</button>
+    <button class="lv-sortpill on" data-lvsort="new" onclick="setListSort('new')">🆕 Nyeste</button>
+    <button class="lv-sortpill" data-lvsort="rec" onclick="setListSort('rec')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l1.6 4.8L18 10l-4.4 1.2L12 16l-1.6-4.8L6 10l4.4-1.2L12 4Z"/><path d="M18.5 14.5l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6.6-1.8Z"/></svg>Anbefalt</button>
     <button class="lv-sortpill" data-lvsort="near" onclick="setListSort('near')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.3-6-10a6 6 0 0 1 12 0c0 4.7-6 10-6 10Z"/><circle cx="12" cy="11" r="2.2"/></svg>Nærmest</button>
     <button class="lv-sortpill" data-lvsort="rated" onclick="setListSort('rated')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l2.3 5.4 5.7.5-4.3 3.8 1.3 5.6L12 16.9 7 19.3l1.3-5.6L4 9.9l5.7-.5L12 4Z"/></svg>Best vurdert</button>
     <button class="lv-sortpill" data-lvsort="pay" onclick="setListSort('pay')">💰 Betaling</button>
-    <button class="lv-sortpill" data-lvsort="new" onclick="setListSort('new')">🆕 Nyeste</button>
   </div>
   <div class="lv-rows" id="list-view-rows"></div>
 </div>
@@ -2732,9 +2732,9 @@ function applyLanguage() {
   safeText('tog-firstcome-label', L.firstComeLabel); safeText('tog-firstcome-sub', L.firstComeSub);
   safeText('tog-open-label', L.openLabel); safeText('tog-open-sub', L.openSub);
 
-  // Sort pills
-  const sortKeys = ['sortRecommended','sortNearest','sortPay','sortNewest','sortRated'];
-  document.querySelectorAll('.sort-pill').forEach((el,i) => { if(sortKeys[i]){ const _tx=el.querySelector('.fpill-tx'); const _lbl=String(L[sortKeys[i]]).replace(/^[^A-Za-zÆØÅæøå]+/,'').trim(); if(_tx) _tx.textContent=_lbl; } });
+  // Sort pills – mappes på data-sort, ikke rekkefølge (tåler ombytting)
+  const sortKeyBy = { rec:'sortRecommended', near:'sortNearest', pay:'sortPay', new:'sortNewest', rated:'sortRated' };
+  document.querySelectorAll('.sort-pill').forEach(el => { const k = sortKeyBy[el.dataset.sort]; if(k && L[k]){ const _tx=el.querySelector('.fpill-tx'); const _lbl=String(L[k]).replace(/^[^A-Za-zÆØÅæøå]+/,'').trim(); if(_tx) _tx.textContent=_lbl; } });
 
   // Filter sheet titles
   safeText('fsheet-title-text', L.filterTitle || L.filtersTitle);
@@ -5090,12 +5090,22 @@ function proximityScore(d) {
   if(d == null) return 0.4;                                    // ukjent avstand = middels
   return Math.exp(-d / 3);
 }
-// «Anbefalt»: tillit (62%) balansert mot nærhet (38%)
+// «Anbefalt»: tillit (62%) balansert mot nærhet (38%).
+// Oppstartsfase: ekte innlegg går ALLTID foran demo (+1 er større enn maks
+// basisscore), og ferske ekte innlegg får en bonus som fases ut over 48 timer.
 function recScore(m, origin) {
   const t = trustScore(m);
   const d = (origin && m.lng != null) ? getDistanceKm(origin, [m.lng, m.lat]) : null;
   const p = proximityScore(d);
-  return 0.62 * t + 0.38 * p;
+  let s = 0.62 * t + 0.38 * p;
+  if(!m.isDemo) {
+    s += 1; // ekte-tier: alle ekte foran alle demo
+    if(m.createdAt) {
+      const ageH = (Date.now() - new Date(m.createdAt).getTime()) / 36e5;
+      if(ageH >= 0 && ageH < 48) s += 0.15 * (1 - ageH / 48); // ferskhetsbonus
+    }
+  }
+  return s;
 }
 // Felles rangeringsmotor – brukes av kartet nå og lista senere
 function computeResults() {
@@ -5104,7 +5114,7 @@ function computeResults() {
     (m._listPass !== undefined ? m._listPass : (m.el && m.el.style.display !== 'none'))
     && m.lng != null);
   vis.forEach(m => { m.distKm = origin ? getDistanceKm(origin, [m.lng, m.lat]) : null; });
-  const sort = document.querySelector('.sort-pill.active')?.dataset.sort || 'rec';
+  const sort = document.querySelector('.sort-pill.active')?.dataset.sort || 'new';
   const byDist = (a, b) => (a.distKm == null ? 1e9 : a.distKm) - (b.distKm == null ? 1e9 : b.distKm);
   const arr = vis.slice();
   if(sort === 'near') arr.sort(byDist);
@@ -5122,7 +5132,7 @@ function openListView() {
   const lv = document.getElementById('list-view');
   if(!lv) return;
   // synk liste-sortering med aktiv filter-sortering
-  const active = document.querySelector('.sort-pill.active')?.dataset.sort || 'rec';
+  const active = document.querySelector('.sort-pill.active')?.dataset.sort || 'new';
   document.querySelectorAll('.lv-sortpill').forEach(p => p.classList.toggle('on', p.dataset.lvsort === active));
   syncListCatChips();
   renderListView();
