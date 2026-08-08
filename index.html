@@ -5256,6 +5256,7 @@ function renderListView() {
     const price = m.pay ? `${m.pay} kr` : (isSvc ? '' : 'Gratis');
     const seeLabel = isSvc ? NE('Se tilbyder →','See provider →') : NE('Se oppdrag →','See task →');
     const tags = [];
+    if(m.isDemo) tags.push('<span class="lv-tag" style="background:rgba(240,165,0,0.12);color:var(--gold);border:1px solid rgba(240,165,0,0.3)">🧪 ' + NE('Eksempel','Example') + '</span>');
     if(m.expired) tags.push('<span class="lv-tag lv-tag-exp">⏰ Utløpt</span>');
     else if(m.paused) tags.push('<span class="lv-tag lv-tag-paused">⏸ Pauset</span>');
     else if(m.ownership === 'mine') tags.push('<span class="lv-tag lv-tag-mine">Mitt</span>');
@@ -8372,6 +8373,7 @@ async function runSearch(query) {
   // Demo oppdrag – bruk window.JOBS som er satt globalt (kun når demo er på)
   const jobList = window.SHOW_DEMO ? (window.JOBS || []) : [];
   for(const j of jobList) {
+    if(isQuestHiddenForMinor({ category: j.category, pay: j.pay })) continue; // 18+ skjules for mindreårige
     const text = (j.title + ' ' + j.desc + ' ' + j.label + ' ' + (j.tags||[]).map(t=>t.t||'').join(' ')).toLowerCase();
     if(text.includes(q)) {
       hits.push({ id: j.id, title: j.title, pay: j.pay, coords: j.coords, type: 'quest', src: 'demo' });
@@ -8388,13 +8390,16 @@ async function runSearch(query) {
   }
 
   // Supabase oppdrag
+  // qSafe: komma/parenteser knekker PostgREST .or()-syntaksen stille → fjernes
+  const qSafe = query.replace(/[,()]/g, ' ').replace(/\s+/g, ' ').trim();
   try {
     const { data } = await sb.from('quests')
-      .select('id, title, category, pay, image_url, lat, lng')
+      .select('id, title, category, pay, image_url, lat, lng, requires_adult')
       .in('status', ['open', 'expired'])
-      .or('title.ilike.%' + query + '%,category.ilike.%' + query + '%')
+      .or('title.ilike.%' + qSafe + '%,category.ilike.%' + qSafe + '%,description.ilike.%' + qSafe + '%')
       .limit(8);
     for(const r of (data||[])) {
+      if(isQuestHiddenForMinor(r)) continue; // 18+ skjules for mindreårige, som på kartet
       hits.push({ id: r.id, title: r.title, pay: r.pay, img: r.image_url, coords: [r.lng, r.lat], type: 'quest', src: 'db' });
     }
   } catch(e) {}
@@ -8404,7 +8409,7 @@ async function runSearch(query) {
     const { data } = await sb.from('services')
       .select('id, title, category, price, image_url, lat, lng')
       .eq('status', 'active')
-      .or('title.ilike.%' + query + '%,category.ilike.%' + query + '%')
+      .or('title.ilike.%' + qSafe + '%,category.ilike.%' + qSafe + '%,description.ilike.%' + qSafe + '%')
       .limit(4);
     for(const r of (data||[])) {
       hits.push({ id: r.id, title: r.title, pay: r.price, img: r.image_url, coords: [r.lng, r.lat], type: 'service', src: 'db' });
