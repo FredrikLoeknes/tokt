@@ -54,7 +54,7 @@
   --shadow-sm: 0 1px 4px rgba(0,0,0,0.07);
   --shadow: 0 4px 20px rgba(0,0,0,0.10);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.13);
-  --radius: 14px;
+  --radius: 12px;
   --xp-bar: #d6427e;
   --grad: linear-gradient(135deg,#F36E37,#CD618C,#B359D5);
 }
@@ -263,7 +263,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 #leaderboard {
   position:fixed; left:18px; bottom:24px; z-index:90;
   background:var(--surface); border:1px solid var(--border);
-  border-radius:18px; width:340px; max-width:calc(100vw - 36px);
+  border-radius:16px; width:340px; max-width:calc(100vw - 36px);
   max-height:72vh; overflow-y:auto;
   box-shadow:var(--shadow-lg);
 }
@@ -324,7 +324,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   will-change:transform;
 }
 @media(min-width:769px){
-  #list-view { left:50%; right:auto; width:560px; margin-left:-280px; border-radius:18px 18px 0 0; }
+  #list-view { left:50%; right:auto; width:560px; margin-left:-280px; border-radius:16px 16px 0 0; }
   /* Tips-bar: legg den helt under topbaren (unngå at toppen kuttes) + ~33% tykkere, tekst loddrett sentrert */
   #tips-bar { top:70px !important; min-height:40px !important; padding-top:9px !important; padding-bottom:9px !important; }
 }
@@ -343,11 +343,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   background:var(--surface2); border:1px solid var(--border); color:var(--muted);
   font-family:inherit; font-size:18px; line-height:1; cursor:pointer;
 }
-.lv-see {
-  margin-top:6px; background:none; border:none; padding:0;
-  color:var(--accent); font-family:inherit; font-weight:800; font-size:11.5px; cursor:pointer;
-}
-.lv-see-svc { color:var(--accent2); }
 .lv-card.active { background:linear-gradient(90deg,rgba(249,115,22,.10),transparent); }
 .lv-card.active::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--orange); }
 .mapbox-marker.marker-focus { filter:drop-shadow(0 0 6px rgba(249,115,22,.95)); z-index:7 !important; }
@@ -395,22 +390,25 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
   .lv-rows { padding-bottom:calc(72px + env(safe-area-inset-bottom)); }
 }
 .lv-card {
-  display:flex; gap:12px; align-items:center; padding:13px 16px;
+  display:flex; gap:10px; align-items:center; padding:9px 14px;
   border-bottom:1px solid var(--border); cursor:pointer; position:relative; background:var(--surface);
 }
 .lv-card:active { background:var(--surface2); }
 .lv-card.rec { background:linear-gradient(90deg,rgba(15,169,104,.06),rgba(214,66,126,.04)); }
 .lv-thumb {
-  width:48px; height:48px; border-radius:13px; background:var(--surface2);
-  display:flex; align-items:center; justify-content:center; font-size:22px;
+  width:40px; height:40px; border-radius:12px; background:var(--surface2);
+  display:flex; align-items:center; justify-content:center; font-size:19px;
   flex-shrink:0; position:relative;
 }
 .lv-thumb > svg { display:block; }
 .lv-em { position:absolute; bottom:-4px; right:-4px; border:2px solid var(--surface); }
 .lv-info { flex:1; min-width:0; }
-.lv-title { font-size:14.5px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:5px; }
+.lv-title { font-size:14px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:5px; }
+.lv-kb { flex-shrink:0; color:#fff; font-size:8px; font-weight:800; letter-spacing:.4px; border-radius:4px; padding:2px 5px; background:var(--accent); }
+.lv-kb.svc { background:var(--accent2); }
+.lv-open { flex-shrink:0; background:none; border:none; color:var(--muted); opacity:.55; font-size:20px; font-weight:700; cursor:pointer; font-family:inherit; padding:6px 2px 6px 8px; line-height:1; }
 .lv-vchk { width:14px; height:14px; fill:#2563eb; flex-shrink:0; }
-.lv-meta { font-size:11.5px; color:var(--muted); margin-top:3px; }
+.lv-meta { font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .lv-star { color:var(--gold); font-weight:700; }
 .lv-new { color:var(--orange); font-weight:700; }
 .lv-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:5px; }
@@ -520,7 +518,7 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
 }
 
 /* ── PROFILSIDE ── */
-.pp-tab { flex:1; padding:9px 8px; border:1.5px solid var(--border); border-radius:10px; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); background:var(--surface2); text-align:center; transition:all .15s; }
+.pp-tab { flex:1; padding:9px 8px; border:1.5px solid var(--border); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); background:var(--surface2); text-align:center; transition:all .15s; }
 .pp-tab.active { border-color:var(--accent); color:var(--accent); background:rgba(214,66,126,0.08); }
 .pp-rank-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
 .pp-rank-row:last-child { border-bottom:none; }
@@ -537,7 +535,7 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
 .bgd-list { display:flex; flex-direction:column; }
 .bgd-row { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); }
 .bgd-row:last-child { border-bottom:none; }
-.bgd-ic { flex-shrink:0; width:42px; height:42px; display:grid; place-items:center; border-radius:13px; }
+.bgd-ic { flex-shrink:0; width:42px; height:42px; display:grid; place-items:center; border-radius:12px; }
 .bgd-ic svg { width:21px; height:21px; stroke-width:1.7; }
 .bgd-row.on .bgd-ic { background:rgba(201,144,10,0.10); color:var(--gold); }
 .bgd-row.off .bgd-ic { background:var(--surface2); color:var(--muted); }
@@ -597,9 +595,9 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
    icon/photo/coin always stay upright regardless of the shape. */
 .qp-emblem {
   position:relative; z-index:2;
-  width:42px; height:42px;
+  width:35px; height:35px;
   display:flex; align-items:center; justify-content:center;
-  font-size:18px; line-height:1;
+  font-size:15.5px; line-height:1;
   transition:transform .15s;
 }
 .qp-shape {
@@ -614,8 +612,8 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 
 /* shape variants – form følger alltid type: sirkel = oppdrag · firkant = tjeneste.
    Status (mitt/jobber/søkt/pauset) = farge + glød + badge, aldri form. */
-.shape-square  .qp-shape { border-radius:11px; }
-.shape-square  .qp-img   { border-radius:8px; }
+.shape-square  .qp-shape { border-radius:9px; }
+.shape-square  .qp-img   { border-radius:7px; }
 
 /* type colours (border on the shape) */
 .quest-pin.haste   .qp-shape { border-color:var(--red); }
@@ -623,16 +621,16 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 .quest-pin.service .qp-shape { border-color:var(--accent2); }
 /* pulsing ring for haste (circle only) */
 .quest-pin.haste.shape-circle .qp-emblem::before {
-  content:''; position:absolute; inset:-5px; border-radius:50%;
+  content:''; position:absolute; inset:-4px; border-radius:50%;
   border:2px solid var(--red); opacity:.5; animation:pulse 1.4s infinite;
 }
 /* price coin */
 .qp-coin {
-  position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); z-index:3;
+  position:absolute; bottom:-5px; left:50%; transform:translateX(-50%); z-index:3;
   background:var(--accent); color:#fff;
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; font-weight:700; font-size:10.5px; line-height:1;
-  padding:3px 8px; border-radius:50px;
-  border:2px solid var(--surface); box-shadow:var(--shadow-sm);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; font-weight:700; font-size:9.5px; line-height:1;
+  padding:2px 7px; border-radius:50px;
+  border:1.5px solid var(--surface); box-shadow:var(--shadow-sm);
   white-space:nowrap;
 }
 .quest-pin.haste   .qp-coin { background:var(--red); }
@@ -640,12 +638,13 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 .quest-pin.service .qp-coin { background:var(--accent2); }
 /* name under emblem – single line, truncated if too long */
 .qp-name {
-  margin-top:7px; max-width:110px;
+  margin-top:6px; max-width:96px;
   font-size:10px; font-weight:600; line-height:1.1; color:var(--text);
   text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   text-shadow:0 1px 3px var(--bg), 0 0 2px var(--bg);
 }
 /* expired */
+body.map-zoomed-out .mapbox-marker .qp-name { display:none; }
 .quest-pin.expired { opacity:.6; filter:grayscale(.6); }
 .quest-pin.expired .qp-shape { border-color:var(--muted); }
 .quest-pin.expired .qp-coin { background:var(--muted); }
@@ -659,13 +658,13 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 .quest-pin.working .qp-coin  { background:#14a89b; color:#fff; }
 .quest-pin.working .qp-badge { background:#14a89b; color:#fff; border:1px solid rgba(255,255,255,.35); }
 .quest-pin.working .qp-emblem::before {
-  content:''; position:absolute; inset:-5px; border-radius:50%;
+  content:''; position:absolute; inset:-4px; border-radius:50%;
   border:2px solid #14a89b; opacity:.5; animation:pulse 1.4s infinite;
 }
-.quest-pin.working.shape-square .qp-emblem::before { border-radius:15px; }
+.quest-pin.working.shape-square .qp-emblem::before { border-radius:11px; }
 /* quest you've applied for (taker + pending) = toned down with a "Søkt" badge */
 .qp-badge {
-  position:absolute; top:-13px; left:50%; transform:translateX(-50%); z-index:5;
+  position:absolute; top:-12px; left:50%; transform:translateX(-50%); z-index:5;
   font-size:8.5px; font-weight:800; letter-spacing:.3px;
   padding:2px 7px; border-radius:50px; white-space:nowrap; box-shadow:var(--shadow-sm);
 }
@@ -675,12 +674,12 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 .quest-pin.paused .qp-badge { background:#475569; color:#fff; border:1px solid rgba(255,255,255,.25); }
 
 /* live preview card in the "Legg ut" modal */
-.qpreview-card { background:var(--surface2); border:1px solid var(--border); border-radius:14px; padding:12px 12px 6px; margin-bottom:18px; }
+.qpreview-card { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:12px 12px 6px; margin-bottom:18px; }
 .qpreview-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
 .qpreview-label { font-size:12px; font-weight:700; color:var(--text); }
 .qpreview-hint { font-size:10px; color:var(--muted); }
 .qpreview-stage {
-  position:relative; height:104px; border-radius:10px; overflow:hidden;
+  position:relative; height:104px; border-radius:8px; overflow:hidden;
   display:flex; align-items:center; justify-content:center;
   background:
     linear-gradient(0deg, var(--surface) 0 2px, transparent 2px) 0 34px / 100% 44px,
@@ -726,9 +725,9 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 .tag.charity-tag { background:rgba(15,169,104,0.1); color:var(--green); }
 
 .panel-body { padding:14px 16px; }
-.popup-desc { font-size:12px; color:var(--muted); line-height:1.65; margin-bottom:14px; }
+.popup-desc { font-size:13.5px; color:var(--text); opacity:.85; line-height:1.6; margin-bottom:14px; }
 
-.popup-meta { display:flex; flex-direction:column; gap:0; margin-bottom:14px; background:var(--surface2); border-radius:10px; overflow:hidden; }
+.popup-meta { display:flex; flex-direction:column; gap:0; margin-bottom:14px; background:var(--surface2); border-radius:8px; overflow:hidden; }
 .meta-price { padding:12px 14px; display:flex; align-items:baseline; gap:8px; border-bottom:1px solid var(--border); }
 .meta-price-val { font-family:'Skranji',cursive; font-size:24px; font-weight:700; letter-spacing:.5px; color:var(--green); line-height:1; }
 .meta-price-lbl { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
@@ -751,12 +750,12 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 .panel-actions { padding:12px 16px; border-top:1px solid var(--border); display:flex; gap:8px; }
 .btn-apply {
   flex:1; background:linear-gradient(135deg,var(--accent),var(--accent2));
-  color:#fff; border:none; border-radius:10px; padding:10px;
+  color:#fff; border:none; border-radius:8px; padding:10px;
   font-size:13px; font-weight:700; cursor:pointer; font-family:inherit;
   transition:all .15s; box-shadow:0 2px 10px var(--accent-glow);
 }
 .btn-apply:hover { transform:translateY(-1px); box-shadow:0 4px 16px var(--accent-glow); }
-.btn-save { background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:10px; padding:10px 13px; font-size:14px; cursor:pointer; transition:background .15s; }
+.btn-save { background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px 13px; font-size:14px; cursor:pointer; transition:background .15s; }
 .btn-save:hover { background:var(--surface); }
 
 .payment-note { margin:0 16px 14px; padding:9px 11px; background:rgba(255,91,36,0.07); border:1px solid rgba(255,91,36,0.2); border-radius:8px; font-size:10px; color:#e07050; display:flex; align-items:center; gap:6px; }
@@ -786,11 +785,11 @@ body:has(#list-view.open) #bottom-nav { z-index:121; }
 }
 #app-install-banner.show{ transform:translateY(0); opacity:1; pointer-events:auto; }
 @media(min-width:769px){ #app-install-banner{ left:auto; right:18px; width:380px; bottom:24px; } }
-#app-install-banner .aib-ico{ width:40px; height:40px; border-radius:11px; background:linear-gradient(135deg,#f97316,#a855f7); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+#app-install-banner .aib-ico{ width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,#f97316,#a855f7); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
 #app-install-banner .aib-tx{ flex:1; min-width:0; }
 #app-install-banner .aib-tx b{ font-size:12.5px; font-weight:800; display:block; }
 #app-install-banner .aib-tx small{ font-size:10.5px; color:var(--muted); }
-#app-install-banner .aib-go{ background:linear-gradient(135deg,#f97316,#a855f7); color:#fff; border:none; border-radius:10px; padding:9px 14px; font-size:12px; font-weight:800; font-family:inherit; flex-shrink:0; cursor:pointer; }
+#app-install-banner .aib-go{ background:linear-gradient(135deg,#f97316,#a855f7); color:#fff; border:none; border-radius:8px; padding:9px 14px; font-size:12px; font-weight:800; font-family:inherit; flex-shrink:0; cursor:pointer; }
 #app-install-x{ position:absolute; top:5px; right:9px; font-size:16px; line-height:1; color:var(--muted); background:none; border:none; cursor:pointer; }
 /* Hold de andre bunn-kontrollene unna mens banneret vises */
 body.app-banner-open #corner-widgets,
@@ -832,9 +831,9 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   transform:translateY(100%); transition:transform .35s cubic-bezier(.32,.72,0,1);
 }
 #get-app-overlay.show #get-app-sheet{ transform:translateY(0); }
-.gas-icon{ width:58px; height:58px; border-radius:14px; margin:4px auto 12px; display:block; box-shadow:0 6px 18px rgba(168,85,247,.28); }
+.gas-icon{ width:58px; height:58px; border-radius:12px; margin:4px auto 12px; display:block; box-shadow:0 6px 18px rgba(168,85,247,.28); }
 .gas-badges{ display:flex; flex-direction:column; gap:10px; margin-top:14px; }
-.gas-badge{ display:flex; align-items:center; justify-content:center; gap:12px; width:100%; box-sizing:border-box; background:#000; color:#fff; border:1px solid #333; border-radius:13px; padding:10px 16px; cursor:pointer; font-family:inherit; text-decoration:none; }
+.gas-badge{ display:flex; align-items:center; justify-content:center; gap:12px; width:100%; box-sizing:border-box; background:#000; color:#fff; border:1px solid #333; border-radius:12px; padding:10px 16px; cursor:pointer; font-family:inherit; text-decoration:none; }
 .gas-badge svg{ width:24px; height:24px; flex-shrink:0; fill:#fff; }
 .gas-badge .tx{ text-align:left; line-height:1.15; }
 .gas-badge .tx small{ display:block; font-size:9.5px; font-weight:500; opacity:.85; letter-spacing:.3px; }
@@ -920,7 +919,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .hiw-play .hiw-step:nth-child(5){animation-delay:.7s}.hiw-play .hiw-step:nth-child(6){animation-delay:.9s}
 .hiw-play .hiw-step:nth-child(7){animation-delay:1.1s}.hiw-play .hiw-step:nth-child(8){animation-delay:1.3s}
 @keyframes hiwIn{to{opacity:1;transform:none}}
-.hiw-node{width:42px;height:42px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;z-index:2;position:relative;background:var(--grad);box-shadow:0 3px 10px var(--accent-glow);border:3px solid var(--surface)}
+.hiw-node{width:42px;height:42px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;z-index:2;position:relative;background:var(--grad);box-shadow:0 3px 10px var(--accent-glow);border:3px solid var(--surface)}
 .hiw-node svg{width:21px;height:21px;stroke:#fff;stroke-width:2;fill:none}
 .hiw-node.reward{background:linear-gradient(135deg,var(--gold-light),var(--gold));box-shadow:0 3px 12px rgba(201,144,10,.4)}
 .hiw-bd{padding-top:3px}
@@ -928,7 +927,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .hiw-bd p{margin:0;font-size:12px;color:var(--muted);line-height:1.55}
 .hiw-bd .free{color:var(--green);font-weight:700}
 .hiw-foot{padding:6px 22px 22px}
-.hiw-ref{border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px}
+.hiw-ref{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
 .hiw-ref summary{list-style:none;cursor:pointer;padding:13px 15px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;background:var(--surface2)}
 .hiw-ref summary::-webkit-details-marker{display:none}
 .hiw-ref summary .chev{transition:.2s;color:var(--muted);font-size:11px}
@@ -951,11 +950,11 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .hiw-sw.c-faded{background:var(--accent);opacity:.4}
 .hiw-sw.pulse::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--red);opacity:.6;animation:hiwPls 1.4s ease-out infinite}
 @keyframes hiwPls{0%{transform:scale(.7);opacity:.7}100%{transform:scale(1.5);opacity:0}}
-.hiw-cond{background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.18);border-radius:14px;padding:14px 15px;margin-bottom:14px;font-size:11.5px;color:var(--muted);line-height:1.7}
+.hiw-cond{background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.18);border-radius:12px;padding:14px 15px;margin-bottom:14px;font-size:11.5px;color:var(--muted);line-height:1.7}
 .hiw-cond b{color:var(--text)}
 .hiw-cond .row{display:flex;gap:8px}.hiw-cond .row span:first-child{flex-shrink:0}
 .hiw-terms{display:block;text-align:center;font-size:11.5px;color:var(--accent);text-decoration:underline;margin-bottom:14px}
-.hiw-cta{width:100%;background:var(--grad);color:#fff;border:none;border-radius:13px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.2px}
+.hiw-cta{width:100%;background:var(--grad);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.2px}
 /* Diskré «se hit»-pulsering på legend-knappen for nye brukere */
 @keyframes legendHint {
   0%   { box-shadow:var(--shadow), 0 0 0 0 rgba(214,66,126,0.45); }
@@ -964,7 +963,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 }
 #legend-toggle.hint { border-color:var(--accent); animation:legendHint 1.8s ease-out infinite; }
 /* Rapporter-grunner */
-.report-reason { width:100%; text-align:left; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; padding:11px 14px; font-size:13px; font-weight:600; color:var(--text); cursor:pointer; font-family:inherit; transition:border-color .15s, background .15s; }
+.report-reason { width:100%; text-align:left; background:var(--surface2); border:1.5px solid var(--border); border-radius:8px; padding:11px 14px; font-size:13px; font-weight:600; color:var(--text); cursor:pointer; font-family:inherit; transition:border-color .15s, background .15s; }
 .report-reason:hover { border-color:var(--accent); }
 .report-reason.sel { border-color:var(--accent); background:rgba(214,66,126,0.10); }
 
@@ -984,11 +983,11 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .modal-close { background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer; }
 .form-group { margin-bottom:16px; }
 .form-label { font-size:11px; font-weight:700; color:var(--muted); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:.6px; }
-.form-input,.form-select,.form-textarea { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 14px; font-size:14px; color:var(--text); font-family:inherit; outline:none; transition:border-color .15s,box-shadow .15s; }
+.form-input,.form-select,.form-textarea { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-size:14px; color:var(--text); font-family:inherit; outline:none; transition:border-color .15s,box-shadow .15s; }
 .form-input:focus,.form-select:focus,.form-textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
 /* 24-timers tidsvelger (erstatter native type=time som viser AM/PM) */
 .tp-wrap { display:flex; align-items:center; gap:6px; width:100%; }
-.tp-sel { flex:1; -webkit-appearance:none; appearance:none; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 10px; font-size:15px; color:var(--text); font-family:inherit; outline:none; text-align:center; text-align-last:center; cursor:pointer; transition:border-color .15s,box-shadow .15s; }
+.tp-sel { flex:1; -webkit-appearance:none; appearance:none; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 10px; font-size:15px; color:var(--text); font-family:inherit; outline:none; text-align:center; text-align-last:center; cursor:pointer; transition:border-color .15s,box-shadow .15s; }
 .tp-sel:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
 .tp-colon { font-weight:800; color:var(--muted); font-size:15px; }
 /* Kort puls på et nyopprettet oppdrag så det er lett å se på kartet */
@@ -1007,15 +1006,15 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .toggle-row:last-child { border-bottom:none; }
 .toggle-info { display:flex; flex-direction:column; gap:2px; }
 .toggle-label { font-size:13px; font-weight:500; }
-.toggle-sub { font-size:11px; color:var(--muted); }
+.toggle-sub { font-size:12px; color:var(--muted); }
 .toggle { width:44px; height:24px; background:var(--surface2); border-radius:12px; border:1px solid var(--border); position:relative; cursor:pointer; transition:background .2s; flex-shrink:0; }
 .toggle.on { background:var(--accent); border-color:var(--accent); }
 .toggle::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .2s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
 .toggle.on::after { left:22px; }
-.disclaimer { background:var(--accent-glow); border:1px solid rgba(214,66,126,0.2); border-radius:10px; padding:12px; font-size:11px; color:var(--muted); line-height:1.65; margin-top:4px; }
+.disclaimer { background:var(--accent-glow); border:1px solid rgba(214,66,126,0.2); border-radius:12px; padding:12px; font-size:12px; color:var(--muted); line-height:1.65; margin-top:4px; }
 .disclaimer strong { color:var(--text); }
 .quest-mode-toggle { display:flex; gap:8px; margin-bottom:8px; }
-.mode-btn { flex:1; padding:10px 8px; border:2px solid var(--border); border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; color:var(--muted); background:var(--surface2); text-align:center; transition:all .15s; }
+.mode-btn { flex:1; padding:10px 8px; border:2px solid var(--border); border-radius:8px; cursor:pointer; font-size:13px; font-weight:600; color:var(--muted); background:var(--surface2); text-align:center; transition:all .15s; }
 .mode-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(214,66,126,0.08); }
 .day-btn { padding:6px 10px; border:2px solid var(--border); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); background:var(--surface2); transition:all .15s; user-select:none; }
 .day-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(214,66,126,0.1); }
@@ -1047,7 +1046,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   position:fixed; bottom:calc(80px + env(safe-area-inset-bottom, 0px)); left:50%; transform:translateX(-50%); z-index:99999;
   display:none; align-items:center; gap:9px;
   background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent);
-  color:var(--text); padding:9px 13px; border-radius:11px;
+  color:var(--text); padding:9px 13px; border-radius:12px;
   font-size:12.5px; font-weight:600; line-height:1.3;
   max-width:min(520px,96vw); box-shadow:var(--shadow-lg);
   animation:toastIn .26s cubic-bezier(.32,.72,0,1);
@@ -1076,7 +1075,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 }
 .search-result-item:last-child { border-bottom:none; }
 .search-result-item:hover { background:var(--surface2); }
-.search-result-thumb { width:40px;height:40px;border-radius:10px;flex-shrink:0;object-fit:cover; }
+.search-result-thumb { width:40px;height:40px;border-radius:8px;flex-shrink:0;object-fit:cover; }
 .search-result-info { flex:1;min-width:0; }
 .search-result-title { font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 .search-result-meta { font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
@@ -1521,7 +1520,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   .fsheet-apply {
     width: 100%;
     background: linear-gradient(135deg,#f97316,#a855f7);
-    color: #fff; border: none; border-radius: 14px;
+    color: #fff; border: none; border-radius: 12px;
     padding: 15px; font-size: 15px; font-weight: 700;
     cursor: pointer; font-family: inherit;
   }
@@ -1569,7 +1568,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 <body>
 
 <div id="map"></div>
-<div id="map-empty" style="display:none;position:fixed;top:43%;left:50%;transform:translate(-50%,-50%);z-index:60;width:min(340px,86vw);background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-lg);padding:24px 22px;text-align:center;animation:popIn .2s ease">
+<div id="map-empty" style="display:none;position:fixed;top:43%;left:50%;transform:translate(-50%,-50%);z-index:60;width:min(340px,86vw);background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);padding:24px 22px;text-align:center;animation:popIn .2s ease">
   <button onclick="dismissMapEmpty()" aria-label="Lukk" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:22px;line-height:1;color:var(--muted);cursor:pointer;font-family:inherit">×</button>
   <div style="font-size:40px;margin-bottom:6px">🧭</div>
   <div id="map-empty-title" style="font-size:16px;font-weight:800;margin-bottom:6px">Ingen oppdrag her ennå</div>
@@ -1696,7 +1695,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 </div>
 
 <!-- SEARCH RESULTS DROPDOWN -->
-<div id="search-results" style="display:none;position:fixed;top:108px;left:50%;transform:translateX(-50%);width:min(500px,90vw);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);z-index:200;overflow:hidden;max-height:400px;overflow-y:auto;animation:popIn .15s ease"></div>
+<div id="search-results" style="display:none;position:fixed;top:108px;left:50%;transform:translateX(-50%);width:min(500px,90vw);background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);z-index:200;overflow:hidden;max-height:400px;overflow-y:auto;animation:popIn .15s ease"></div>
 
 <!-- FILTER OVERLAY -->
 <div id="filter-overlay" onclick="closeFilters()"></div>
@@ -1758,7 +1757,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
           <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Fra</div>
           <div style="position:relative">
             <input id="range-min" type="number" min="0" max="50000" value="0" placeholder="0"
-              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 36px 10px 12px;font-size:15px;font-weight:600;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s"
+              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 36px 10px 12px;font-size:15px;font-weight:600;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s"
               onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
               oninput="updateRangeInputs()">
             <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none">kr</span>
@@ -1769,7 +1768,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
           <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Til</div>
           <div style="position:relative">
             <input id="range-max" type="number" min="0" max="50000" value="50000" placeholder="50000"
-              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 36px 10px 12px;font-size:15px;font-weight:600;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s"
+              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 36px 10px 12px;font-size:15px;font-weight:600;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s"
               onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
               oninput="updateRangeInputs()">
             <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none">kr</span>
@@ -1883,7 +1882,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     <div class="popup-meta" id="panel-meta"></div>
     <div id="panel-applicants"></div>
   </div>
-  <div class="payment-note" style="margin:0 16px 12px;padding:10px 12px;background:rgba(255,91,36,0.07);border:1px solid rgba(255,91,36,0.2);border-radius:10px;font-size:11px;color:#e07050">
+  <div class="payment-note" style="margin:0 16px 12px;padding:10px 12px;background:rgba(255,91,36,0.07);border:1px solid rgba(255,91,36,0.2);border-radius:8px;font-size:11px;color:#e07050">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <span id="panel-payment-note">Betaling direkte mellom partene – Vipps eller annen avtalt metode</span>
@@ -1900,7 +1899,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   </div>
   <div class="panel-actions">
     <button class="btn-apply" onclick="applyJob()"><span id="panel-accept-btn">✦ Ta oppdraget</span></button>
-    <button id="panel-edit-btn" onclick="editQuestFromPanel()" style="display:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 14px;font-size:14px;cursor:pointer;font-family:inherit">✏️ Endre</button>
+    <button id="panel-edit-btn" onclick="editQuestFromPanel()" style="display:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 14px;font-size:14px;cursor:pointer;font-family:inherit">✏️ Endre</button>
     <button class="btn-save" onclick="shareQuest()" title="Del oppdraget">📤 Del</button>
   </div>
   <div style="padding:2px 16px 14px;text-align:center">
@@ -2236,7 +2235,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
             <div class="tp-wrap" data-tp-id="q-frist-time" data-tp-def=""></div>
           </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:flex-start;background:rgba(232,137,12,.09);border:1px solid rgba(232,137,12,.2);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:#8a5406;line-height:1.5"><span>⏳</span><div data-en="Shown as a deadline and removed from the map when the time is up.">Vises som frist og forsvinner fra kartet når tiden er ute.</div></div>
+        <div style="display:flex;gap:8px;align-items:flex-start;background:rgba(232,137,12,.09);border:1px solid rgba(232,137,12,.2);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:#8a5406;line-height:1.5"><span>⏳</span><div data-en="Shown as a deadline and removed from the map when the time is up.">Vises som frist og forsvinner fra kartet når tiden er ute.</div></div>
       </div>
 
       <!-- Tidsvindu -->
@@ -2268,12 +2267,12 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
             <div class="day-btn" data-day="0" onclick="toggleDay(this)" data-en="Sun">Søn</div>
           </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:flex-start;background:rgba(214,66,126,.07);border:1px solid rgba(214,66,126,.16);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:#7e2a50;line-height:1.5"><span>🕐</span><div data-en="Just info about when it suits. Stays up until someone takes it — the time never hides it.">Bare info om når det passer. Ligger ute til noen tar det – klokka skjuler det aldri.</div></div>
+        <div style="display:flex;gap:8px;align-items:flex-start;background:rgba(214,66,126,.07);border:1px solid rgba(214,66,126,.16);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:#7e2a50;line-height:1.5"><span>🕐</span><div data-en="Just info about when it suits. Stays up until someone takes it — the time never hides it.">Bare info om når det passer. Ligger ute til noen tar det – klokka skjuler det aldri.</div></div>
       </div>
 
       <!-- Når som helst -->
       <div id="schedule-any-fields" style="display:block">
-        <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11.5px;color:var(--muted);line-height:1.5"><span>📌</span><div data-en="No time constraint. Stays up until someone takes it.">Ingen tidsbinding. Oppdraget ligger ute til noen tar det.</div></div>
+        <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11.5px;color:var(--muted);line-height:1.5"><span>📌</span><div data-en="No time constraint. Stays up until someone takes it.">Ingen tidsbinding. Oppdraget ligger ute til noen tar det.</div></div>
       </div>
     </div>
 
@@ -2282,7 +2281,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
       <div class="cost-display"><span id="modal-price-display">250</span> <small>kr</small></div>
       <input id="modal-price" type="number" min="0" max="50000" value="250"
         oninput="document.getElementById('modal-price-display').textContent=this.value||0;updateQuestPreview()"
-        style="width:100%;margin-top:8px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text);font-size:15px;font-weight:600;font-family:inherit;outline:none"
+        style="width:100%;margin-top:8px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:15px;font-weight:600;font-family:inherit;outline:none"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
         placeholder="Skriv inn beløp…">
       <div class="cost-note">Høyere betaling = større markør på kartet</div>
@@ -2319,7 +2318,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
         <div class="toggle" id="adult-toggle" onclick="toggleAdultReq(this)"></div>
       </div>
     </div>
-    <div id="charity-note" style="display:none;background:rgba(15,169,104,0.08);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:12px;font-size:12px;color:var(--green);margin-bottom:12px;line-height:1.6">
+    <div id="charity-note" style="display:none;background:rgba(15,169,104,0.08);border:1px solid rgba(15,169,104,0.25);border-radius:8px;padding:12px;font-size:12px;color:var(--green);margin-bottom:12px;line-height:1.6">
       💚 <strong>Veldedighetsoppdrag:</strong> Betaling settes til 0 kr. Utfører gjør dette frivillig og får et spesielt achievement. Perfekt for å hjelpe andre som trenger det.
     </div>
     <div style="text-align:center;margin:8px 0 4px;font-size:11px;color:var(--muted)">
@@ -3330,6 +3329,11 @@ function initMap() {
 
   window.map.on('click', closePanel);
   window.map.on('moveend', clusterMarkers);
+  // Utzoomet (< nabolagsnivå): skjul navnene under markørene – de er hovedkilden
+  // til visuelt rot i oversikt. Navn vises igjen når man zoomer inn.
+  const _updZoomCls = () => { try { document.body.classList.toggle('map-zoomed-out', window.map.getZoom() < 13); } catch(e) {} };
+  window.map.on('zoom', _updZoomCls);
+  _updZoomCls();
   window.map.on('dragstart', dismissMapEmpty);   // skjul hilsenen så snart man surfer rundt
 
   window.map.on('move', () => {
@@ -3463,7 +3467,7 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
   const pausedClass = paused ? 'paused' : '';
   const displayIcon = expired ? '⏰' : icon;
   const _mkKey = expired ? null : catKeyFromEmoji(displayIcon);
-  const _mkIcon = _mkKey ? catIconSvg(_mkKey, {size:22, stroke:2}) : displayIcon;
+  const _mkIcon = _mkKey ? catIconSvg(_mkKey, {size:18, stroke:2}) : displayIcon;
 
   // Form følger ALLTID type: sirkel = oppdrag, firkant = tjeneste.
   // Status (mitt/jobber/søkt/pauset) vises med farge + glød + badge – aldri form.
@@ -3903,7 +3907,7 @@ function clusterMarkers() {
   const map = window.map;
   if(!map || !window.mapMarkers || typeof map.project !== 'function') return;
   clearClusterMarkers();
-  const CELL = 58; // grid size in screen px
+  const CELL = 44; // grid size in screen px (44: mindre markører tåler å stå tettere)
 
   // Eligible = not filtered out, with coordinates
   const eligible = window.mapMarkers.filter(m =>
@@ -4094,7 +4098,7 @@ function showPanel(job) {
   if(job.image) {
     const imgEl = document.createElement('div');
     imgEl.id = 'panel-image';
-    imgEl.style.cssText = 'margin:0 0 12px;border-radius:10px;overflow:hidden;max-height:160px';
+    imgEl.style.cssText = 'margin:0 0 12px;border-radius:8px;overflow:hidden;max-height:160px';
     imgEl.innerHTML = `<img src="${job.image}" style="width:100%;height:160px;object-fit:cover" onerror="this.parentElement.remove()">`;
     document.getElementById('panel-desc').before(imgEl);
   }
@@ -4158,7 +4162,7 @@ function showPanel(job) {
     if(title) {
       const schedDiv = document.createElement('div');
       schedDiv.id = 'panel-schedule';
-      schedDiv.style.cssText = `margin:0 0 12px;padding:10px 12px;background:rgba(${accent},0.08);border:1px solid rgba(${accent},0.2);border-radius:10px;display:flex;align-items:flex-start;gap:8px;font-size:12px`;
+      schedDiv.style.cssText = `margin:0 0 12px;padding:10px 12px;background:rgba(${accent},0.08);border:1px solid rgba(${accent},0.2);border-radius:8px;display:flex;align-items:flex-start;gap:8px;font-size:12px`;
       schedDiv.innerHTML = `<span style="font-size:16px">${icon}</span><div><div style="font-weight:600;color:var(--text)">${title}</div>${sub ? `<div style="color:var(--muted);margin-top:1px">${sub}</div>` : ''}</div>`;
       document.getElementById('panel-meta').after(schedDiv);
     }
@@ -4233,7 +4237,7 @@ function showPanel(job) {
   if(isExpired) {
     const banner = document.createElement('div');
     banner.id = 'panel-expired-banner';
-    banner.style.cssText = 'margin:0 16px 12px;padding:10px 12px;background:rgba(107,114,128,0.1);border:1px solid rgba(107,114,128,0.25);border-radius:10px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)';
+    banner.style.cssText = 'margin:0 16px 12px;padding:10px 12px;background:rgba(107,114,128,0.1);border:1px solid rgba(107,114,128,0.25);border-radius:8px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)';
     banner.innerHTML = `<span style="font-size:16px">⏰</span><div><div style="font-weight:600">Dette oppdraget er utløpt</div><div style="margin-top:1px">Forsvinner fra kartet om mindre enn 24 timer</div></div>`;
     document.getElementById('panel-quest-type').after(banner);
     if(applyBtn) { applyBtn.disabled = true; applyBtn.style.opacity = '0.4'; applyBtn.style.cursor = 'not-allowed'; }
@@ -4628,7 +4632,7 @@ function updateQuestPreview() {
 
   // icon from the category emoji
   const iconEl = document.getElementById('qpreview-icon');
-  if(iconEl) { const _k = catKeyFromString(cat); iconEl.innerHTML = _k ? catIconSvg(_k,{size:22,stroke:2}) : (firstEmoji(cat) || '✨'); }
+  if(iconEl) { const _k = catKeyFromString(cat); iconEl.innerHTML = _k ? catIconSvg(_k,{size:18,stroke:2}) : (firstEmoji(cat) || '✨'); }
 
   // price mirrors postJob: charity → free, urgent → +100
   let payText;
@@ -5285,17 +5289,17 @@ function renderListView() {
     else if(m.ownership === 'working') tags.push('<span class="lv-tag lv-tag-work">Jobber på</span>');
     else if(m.ownership === 'applied') tags.push('<span class="lv-tag lv-tag-app">Søkt</span>');
     const tagsHtml = tags.length ? `<div class="lv-tags">${tags.join('')}</div>` : '';
+    const kindChip = `<span class="lv-kb${isSvc?' svc':''}">${isSvc ? NE('TJENESTE','SERVICE') : NE('OPPDRAG','TASK')}</span>`;
     return `<div class="lv-card ${rec ? 'rec' : ''}" id="lv-card-${i}" onclick="locateListResult(${i})">
       ${rec ? '<div class="lv-recbadge">✨ Anbefalt</div>' : ''}
       <div class="lv-thumb">${icon}${medal}</div>
       <div class="lv-info">
-        <div class="lv-title">${m.title || NE('Uten tittel','Untitled')}${ver}</div>
-        <div class="lv-meta">${ratingTxt}${dist} · ${rankName(RANKS[ri])}</div>
-        ${m.createdAt ? `<div class="lv-meta" style="margin-top:2px">${questAgeHtml(m.createdAt)}</div>` : ''}
+        <div class="lv-title">${kindChip}${m.title || NE('Uten tittel','Untitled')}${ver}</div>
+        <div class="lv-meta">${ratingTxt}${dist} · ${rankName(RANKS[ri])}${m.createdAt ? ' · ' + questAgeHtml(m.createdAt) : ''}</div>
         ${tagsHtml}
-        <button class="lv-see${isSvc?' lv-see-svc':''}" onclick="event.stopPropagation();openListResult(${i})">${seeLabel}</button>
       </div>
       <div class="lv-price">${price}</div>
+      <button class="lv-open" aria-label="${seeLabel.replace(' →','')}" onclick="event.stopPropagation();openListResult(${i})">›</button>
     </div>`;
   }).join('');
 }
@@ -6595,7 +6599,7 @@ async function loadProfileReviews(userId) {
       </div>`;
     }).join('');
     if(withText.length > shown.length) {
-      listHtml += `<button onclick="expandAllReviews(this)" data-uid="${userId}" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--accent);border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">Vis alle ${withText.length} vurderinger</button>`;
+      listHtml += `<button onclick="expandAllReviews(this)" data-uid="${userId}" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--accent);border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">Vis alle ${withText.length} vurderinger</button>`;
     }
   }
 
@@ -7261,7 +7265,7 @@ async function loadMyQuests() {
   const postedEl = document.getElementById('mq-posted');
   const visiblePosted = (posted || []).filter(q => q.status !== 'closed' && q.status !== 'deleted');
   if(visiblePosted.length === 0) {
-    postedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">'+NE('Du har ikke lagt ut noen oppdrag ennå.',"You haven't posted any tasks yet.")+'<br><span style="font-size:10px;opacity:0.6">'+NE('(0 aktive oppdrag funnet for denne kontoen)','(0 active tasks found for this account)')+'</span><br><br><button onclick="closeMyQuests();openModal()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">'+NE('Legg ut ditt første oppdrag','Post your first task')+'</button></div>';
+    postedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">'+NE('Du har ikke lagt ut noen oppdrag ennå.',"You haven't posted any tasks yet.")+'<br><span style="font-size:10px;opacity:0.6">'+NE('(0 aktive oppdrag funnet for denne kontoen)','(0 active tasks found for this account)')+'</span><br><br><button onclick="closeMyQuests();openModal()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">'+NE('Legg ut ditt første oppdrag','Post your first task')+'</button></div>';
   } else {
     try {
       const grp = { tildelt:[], aktive:[], pauset:[], historikk:[] };
@@ -7326,7 +7330,7 @@ async function loadMyQuests() {
   const appliedEl = document.getElementById('mq-applied');
   if(myApplied.length === 0) {
     const ab = document.getElementById('mq-applied-badge'); if(ab) ab.style.display = 'none';
-    appliedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke søkt på noen oppdrag ennå.<br><br><button onclick="closeMyQuests()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Finn oppdrag på kartet</button></div>';
+    appliedEl.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">Du har ikke søkt på noen oppdrag ennå.<br><br><button onclick="closeMyQuests()" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Finn oppdrag på kartet</button></div>';
   } else {
     const appliedCard = (c, active) => {
       const q = c.quest;
@@ -7336,7 +7340,7 @@ async function loadMyQuests() {
       const statusChip = c.status==='completed'?'🏆 Fullført':c.status==='accepted'?'🔥 Aktivt – ditt oppdrag!':c.status==='rejected'?'✕ Ikke valgt':'⏳ Venter svar';
       const chipBg = c.status==='completed'?'rgba(214,66,126,0.1)':c.status==='accepted'?'rgba(15,169,104,0.1)':c.status==='rejected'?'rgba(107,114,128,0.1)':'rgba(249,115,22,0.1)';
       const chipCol = c.status==='completed'?'var(--accent)':c.status==='accepted'?'var(--green)':c.status==='rejected'?'var(--muted)':'#f97316';
-      return `<div style="background:var(--surface);border:1.5px solid ${active?'var(--green)':'var(--border)'};border-radius:14px;overflow:hidden${active?';box-shadow:0 2px 12px rgba(15,169,104,0.15)':''}">
+      return `<div style="background:var(--surface);border:1.5px solid ${active?'var(--green)':'var(--border)'};border-radius:12px;overflow:hidden${active?';box-shadow:0 2px 12px rgba(15,169,104,0.15)':''}">
         <div style="padding:14px 16px">
           <div style="font-size:15px;font-weight:700;margin-bottom:6px">${q.title}</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${active?'2px':'10px'}">
@@ -7346,22 +7350,22 @@ async function loadMyQuests() {
           </div>
           ${active ? `
             ${completionTracker(paid, false)}
-            <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5">
+            <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5">
               <span>${paid?'💸':(c.work_done_at?'⏳':'ℹ️')}</span>
               <div>${paid?'<b style="color:var(--text)">Oppdragsgiver har markert betalt.</b> Sjekk at beløpet er på Vipps, og bekreft under.':(c.work_done_at?'Du har meldt oppdraget utført. Venter på betaling fra oppdragsgiver.':'Meld fra når du er ferdig, så får oppdragsgiver beskjed om å betale.')}</div>
             </div>
             ${c.work_done_at
               ? `<div style="display:flex;align-items:center;gap:7px;margin-top:12px;font-size:12px;font-weight:700;color:var(--green)">🔨 Du meldte oppdraget utført</div>`
-              : `<button onclick="markWorkDone('${c.id}','${q.id}')" style="width:100%;background:var(--surface);border:1.5px solid var(--green);color:var(--green);border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">🔨 Jeg er ferdig – gi beskjed</button>`}
-            <button onclick="if(confirm(NE('Bekrefte at du har mottatt betaling? Dette fullfører oppdraget.','Confirm that you have received payment? This completes the task.'))) confirmPaymentReceived('${c.id}','${q.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Jeg har mottatt betaling</button>
+              : `<button onclick="markWorkDone('${c.id}','${q.id}')" style="width:100%;background:var(--surface);border:1.5px solid var(--green);color:var(--green);border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">🔨 Jeg er ferdig – gi beskjed</button>`}
+            <button onclick="if(confirm(NE('Bekrefte at du har mottatt betaling? Dette fullfører oppdraget.','Confirm that you have received payment? This completes the task.'))) confirmPaymentReceived('${c.id}','${q.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Jeg har mottatt betaling</button>
             <div style="display:flex;gap:8px;margin-top:8px">
-              <button onclick="showChatPaymentInfoFor('${c.id}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>
-              <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
+              <button onclick="showChatPaymentInfoFor('${c.id}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>
+              <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
             </div>
           ` : `
-            ${c.status === 'pending' ? `<div style="display:flex;align-items:center;gap:8px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.22);border-radius:10px;padding:11px 12px;margin-bottom:10px;font-size:12.5px;color:#d97a30;font-weight:700">⏳ Venter på svar fra oppdragsgiver</div>` : ''}
+            ${c.status === 'pending' ? `<div style="display:flex;align-items:center;gap:8px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.22);border-radius:8px;padding:11px 12px;margin-bottom:10px;font-size:12.5px;color:#d97a30;font-weight:700">⏳ Venter på svar fra oppdragsgiver</div>` : ''}
             <div style="display:flex;gap:8px">
-              <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
+              <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
             </div>
           `}
         </div>
@@ -7394,7 +7398,7 @@ async function loadMyQuests() {
       ]);
     }
     if(active.length) {
-      html += `<div style="background:linear-gradient(180deg,rgba(15,169,104,.07),rgba(15,169,104,.02));border:1px solid rgba(15,169,104,.22);border-radius:18px;padding:14px 12px;margin-bottom:20px">`
+      html += `<div style="background:linear-gradient(180deg,rgba(15,169,104,.07),rgba(15,169,104,.02));border:1px solid rgba(15,169,104,.22);border-radius:16px;padding:14px 12px;margin-bottom:20px">`
         + secHead(active.length, 'var(--green)', '#fff', 'var(--green)', '🔥 Aktive oppdrag', '— du har fått disse')
         + `<div style="display:flex;flex-direction:column;gap:12px">` + active.map(c => appliedCard(c, true)).join('') + `</div>`
         + `</div>`;
@@ -7551,26 +7555,26 @@ function giverTakenBlock(q, conv) {
   const workDone = !!conv.work_done_at;
   const safeTitle = (q.title || 'Oppdrag').replace(/'/g, "\\'");
   const tracker = completionTracker(paid, false);
-  const chatBtn = `<button onclick="openChat('${conv.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>`;
+  const chatBtn = `<button onclick="openChat('${conv.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>`;
   if (paid) {
     return `${tracker}
-      <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Du har markert betalt. Venter på at utfører bekrefter mottatt betaling.</div></div>
+      <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Du har markert betalt. Venter på at utfører bekrefter mottatt betaling.</div></div>
       <div style="margin-top:12px">
-        <button disabled style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:11px;padding:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:not-allowed">⏳ Venter på utførers bekreftelse</button>
+        <button disabled style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:12px;font-size:13px;font-weight:700;font-family:inherit;cursor:not-allowed">⏳ Venter på utførers bekreftelse</button>
         <div style="display:flex;gap:8px;margin-top:8px">
-          <button onclick="showChatPaymentInfoFor('${conv.id}')" style="flex:1;background:#0fa968;color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">💸 Vipps</button>
+          <button onclick="showChatPaymentInfoFor('${conv.id}')" style="flex:1;background:#0fa968;color:#fff;border:none;border-radius:8px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">💸 Vipps</button>
           ${chatBtn}
         </div>
       </div>`;
   }
   return `${tracker}
     ${workDone
-      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>🔨</span><div><b>Utfører melder at oppdraget er utført</b> – klar for betaling. Betal (Vipps eller annen avtalt metode) og marker «Jeg har betalt».</div></div>`
-      : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>Betal utfører (Vipps eller annen avtalt metode) når jobben er gjort, og marker så <b style="color:var(--text)">«Jeg har betalt»</b>.</div></div>`}
+      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>🔨</span><div><b>Utfører melder at oppdraget er utført</b> – klar for betaling. Betal (Vipps eller annen avtalt metode) og marker «Jeg har betalt».</div></div>`
+      : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>Betal utfører (Vipps eller annen avtalt metode) når jobben er gjort, og marker så <b style="color:var(--text)">«Jeg har betalt»</b>.</div></div>`}
     <div style="margin-top:12px">
-      <button onclick="showChatPaymentInfoFor('${conv.id}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💸 Betal med Vipps</button>
+      <button onclick="showChatPaymentInfoFor('${conv.id}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💸 Betal med Vipps</button>
       <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="markGiverPaid('${conv.id}','${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>
+        <button onclick="markGiverPaid('${conv.id}','${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:8px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>
         ${chatBtn}
       </div>
     </div>`;
@@ -7620,7 +7624,7 @@ function questCard(q, type) {
   else if(q.status === 'paused') { cardBorder = '1.5px solid rgba(245,158,11,0.45)'; }
   const dim = (isCompleted || isExpired) ? ';opacity:.82' : '';
 
-  return `<div style="background:var(--surface);border:${cardBorder};border-radius:14px;overflow:hidden${cardShadow}">
+  return `<div style="background:var(--surface);border:${cardBorder};border-radius:12px;overflow:hidden${cardShadow}">
     <div style="padding:14px 16px${dim}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div style="font-size:15px;font-weight:700;flex:1;margin-right:8px">${q.title}</div>
@@ -7631,7 +7635,7 @@ function questCard(q, type) {
         <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);font-weight:700">${q.pay} kr</span>
         <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:var(--surface2);color:var(--muted)">👤 ${applicants.length} søker${applicants.length!==1?'e':''}</span>
       </div>
-      ${(!taken && !isCompleted && !isExpired && pendingCount > 0) ? `<div style="background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.2);border-radius:10px;padding:9px 11px;margin-bottom:11px;font-size:11.5px;font-weight:700;color:#d97a30">🔔 ${pendingCount} ny${pendingCount!==1?'e':''} søker${pendingCount!==1?'e':''} venter på svar</div>` : ''}
+      ${(!taken && !isCompleted && !isExpired && pendingCount > 0) ? `<div style="background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.2);border-radius:8px;padding:9px 11px;margin-bottom:11px;font-size:11.5px;font-weight:700;color:#d97a30">🔔 ${pendingCount} ny${pendingCount!==1?'e':''} søker${pendingCount!==1?'e':''} venter på svar</div>` : ''}
       ${applicants.length > 0 ? `
         <div style="border-top:1px solid var(--border);padding-top:10px;margin-bottom:10px">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px">Søkere</div>
@@ -7653,12 +7657,12 @@ function questCard(q, type) {
       ` : ''}
       ${activeConv ? giverTakenBlock(q, activeConv) : `
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${applicants.length > 0 ? `<button onclick="openChat('${applicants[0]?.id||''}','${q.title}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : ''}
-        ${(q.status==='open'||q.status==='paused') ? `<button onclick="sb.from('quests').select('*').eq('id','${q.id}').single().then(r=>r.data&&showEditQuestModal(r.data))" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✏️ Endre</button>` : ''}
-        ${q.status==='open' ? `<button onclick="pauseQuest('${q.id}')" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:10px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⏸️ Pause</button>` : ''}
-        ${q.status==='paused' ? `<button onclick="resumeQuest('${q.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">▶️ Aktiver</button>` : ''}
-        ${((q.status==='open'||q.status==='paused') && !activeConv) ? `<button onclick="closeQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button>` : ''}
-        ${isExpired ? `<button onclick="repostQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔄 Legg ut på nytt</button>` : ''}
+        ${applicants.length > 0 ? `<button onclick="openChat('${applicants[0]?.id||''}','${q.title}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : ''}
+        ${(q.status==='open'||q.status==='paused') ? `<button onclick="sb.from('quests').select('*').eq('id','${q.id}').single().then(r=>r.data&&showEditQuestModal(r.data))" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✏️ Endre</button>` : ''}
+        ${q.status==='open' ? `<button onclick="pauseQuest('${q.id}')" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⏸️ Pause</button>` : ''}
+        ${q.status==='paused' ? `<button onclick="resumeQuest('${q.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">▶️ Aktiver</button>` : ''}
+        ${((q.status==='open'||q.status==='paused') && !activeConv) ? `<button onclick="closeQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:8px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button>` : ''}
+        ${isExpired ? `<button onclick="repostQuest('${q.id}')" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔄 Legg ut på nytt</button>` : ''}
       </div>`}
     </div>
   </div>`;
@@ -7752,7 +7756,7 @@ function showPhoneRequired(msg) {
       <div style="font-size:18px;font-weight:800;margin-bottom:8px">Telefonnummer mangler</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5">${msg}</div>
       <input id="popup-phone" type="tel" name="tel" autocomplete="tel" inputmode="numeric" placeholder="Ditt Vipps-nummer (8 siffer)" maxlength="8"
-        style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:inherit;background:var(--surface2);color:var(--text);outline:none;margin-bottom:12px;box-sizing:border-box;text-align:center"
+        style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-family:inherit;background:var(--surface2);color:var(--text);outline:none;margin-bottom:12px;box-sizing:border-box;text-align:center"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
         onkeydown="if(event.key==='Enter') savePhoneAndClose()">
       <button onclick="savePhoneAndClose()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
@@ -7841,7 +7845,7 @@ async function showPaymentInfoPopup(giverProfile, takerProfile, convId, questId,
         <div style="font-size:13px;color:var(--muted);margin-top:4px">${role === 'giver' ? 'Betalingsinformasjon for utfører' : 'Oppdragsgiver betaler deg direkte'}</div>
       </div>
 
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px">${role === 'giver' ? '📤 Send betaling til' : '📥 Du mottar betaling fra'}</div>
         <div style="display:flex;align-items:center;gap:12px">
           <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">${otherName[0]?.toUpperCase()}</div>
@@ -8458,7 +8462,7 @@ async function runSearch(query) {
   const renderHit = h => {
     const icon = h.type === 'service' ? '🏪' : '✨';
     const thumb = h.img
-      ? '<img src="' + h.img + '" class="search-result-thumb" style="border-radius:10px;object-fit:cover">'
+      ? '<img src="' + h.img + '" class="search-result-thumb" style="border-radius:8px;object-fit:cover">'
       : '<div class="search-result-thumb" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px">' + icon + '</div>';
     const coordStr = JSON.stringify(h.coords || [0,0]);
     return '<div class="search-result-item" onclick="selectSearchResult(\'' + h.id + '\',' + coordStr + ')">' +
@@ -8887,21 +8891,21 @@ function openBookingRequest(kind) {
 
     const whenFields = recurring ? `
           <div style="margin-bottom:12px"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Hyppighet</label>
-            <select id="bk-freq" onchange="bkFreqChanged()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none">
+            <select id="bk-freq" onchange="bkFreqChanged()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none">
               <option value="weekly">Hver uke</option><option value="biweekly">Annenhver uke</option><option value="monthly">Hver måned</option><option value="weekdays">Hverdager (man–fre)</option><option value="permonth">Inntil N ganger per måned (ved behov)</option></select></div>
           <div id="bk-permonth-wrap" style="display:none;margin-bottom:12px"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Antall per måned</label>
-            <input id="bk-permonth" type="number" min="1" max="31" value="3" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
+            <input id="bk-permonth" type="number" min="1" max="31" value="3" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
           <div style="display:flex;gap:10px;margin-bottom:12px">
             <div id="bk-dow-wrap" style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Ukedag</label>
-              <select id="bk-dow" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none">${dayOpts}</select></div>
+              <select id="bk-dow" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none">${dayOpts}</select></div>
             <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Starter</label>
-              <input id="bk-date" type="date" min="${new Date().toISOString().slice(0,10)}" value="${tomorrow}" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
+              <input id="bk-date" type="date" min="${new Date().toISOString().slice(0,10)}" value="${tomorrow}" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
           </div>
           <div style="font-size:10.5px;color:var(--muted);margin:-6px 2px 12px">Ukedag brukes for ukentlig/annenhver. «Hver måned» bruker datoen i startdatoen. «Ved behov» har ingen fast dag – økter registreres når de utføres.</div>`
       : `
           <div style="display:flex;gap:10px;margin-bottom:12px">
             <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Dato</label>
-              <input id="bk-date" type="date" min="${new Date().toISOString().slice(0,10)}" value="${tomorrow}" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
+              <input id="bk-date" type="date" min="${new Date().toISOString().slice(0,10)}" value="${tomorrow}" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"></div>
             <div style="flex:1"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Tid</label>
               <div class="tp-wrap" data-tp-id="bk-time" data-tp-def="12:00"></div></div>
           </div>`;
@@ -8910,7 +8914,7 @@ function openBookingRequest(kind) {
     if(!m) { m = document.createElement('div'); m.id = 'booking-modal'; document.body.appendChild(m); }
     m.style.cssText = 'position:fixed;inset:0;z-index:1150;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom));box-sizing:border-box';
     m.innerHTML = `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)">
         <div style="padding:16px 18px 12px;border-bottom:1px solid var(--border)">
           <div style="font-family:'Skranji',cursive;font-size:18px">${recurring?'🔄 Be om fast avtale':'📅 Be om avtale'}</div>
           <div style="font-size:12.5px;color:var(--muted);margin-top:2px">${svc.title}</div>
@@ -8918,10 +8922,10 @@ function openBookingRequest(kind) {
         <div style="padding:16px 18px">
           ${whenFields}
           <div style="margin-bottom:12px"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Melding til tilbyder (valgfritt)</label>
-            <textarea id="bk-note" rows="2" placeholder="F.eks. adresse, portkode, ønsker…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;resize:none"></textarea></div>
+            <textarea id="bk-note" rows="2" placeholder="F.eks. adresse, portkode, ønsker…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;resize:none"></textarea></div>
           <div style="margin-bottom:14px"><label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:5px">Avtalt pris ${recurring?'(per gang)':(ptLabel?'('+ptLabel+')':'')}</label>
-            <div style="display:flex;align-items:center;gap:8px"><input id="bk-price" type="number" value="${svc.price||0}" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"><span style="font-size:14px;font-weight:700;color:var(--muted)">kr</span></div></div>
-          <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>${recurring?'Tilbyder bekrefter avtalen. Hver gjennomført gang gjøres opp direkte (Vipps eller annen avtalt metode) – Tokt tar ingen provisjon.':'Tilbyder må bekrefte før avtalen er aktiv. Betaling skjer direkte mellom partene (Vipps eller annen avtalt metode) – Tokt tar ingen provisjon.'}</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><input id="bk-price" type="number" value="${svc.price||0}" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none"><span style="font-size:14px;font-weight:700;color:var(--muted)">kr</span></div></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.5"><span>ℹ️</span><div>${recurring?'Tilbyder bekrefter avtalen. Hver gjennomført gang gjøres opp direkte (Vipps eller annen avtalt metode) – Tokt tar ingen provisjon.':'Tilbyder må bekrefte før avtalen er aktiv. Betaling skjer direkte mellom partene (Vipps eller annen avtalt metode) – Tokt tar ingen provisjon.'}</div></div>
           <div style="display:flex;gap:10px">
             <button onclick="closeBookingModal()" style="flex:0 0 auto;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Avbryt</button>
             <button id="bk-submit" onclick="submitBookingRequest()" style="flex:1;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(124,92,252,.3)">${NE('Send forespørsel →','Send request →')}</button>
@@ -9057,7 +9061,7 @@ async function renderTilbud() {
     .select('*').eq('user_id', currentUser.id)
     .neq('status','deleted')
     .order('created_at', { ascending:false });
-  const addBtn = `<button onclick="closeTjenester();openServiceModal()" style="width:100%;background:linear-gradient(135deg,rgba(124,92,252,.1),rgba(214,66,126,.1));border:1px dashed rgba(124,92,252,0.4);color:var(--accent2);border-radius:13px;padding:13px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px">+ Legg ut ny tjeneste</button>`;
+  const addBtn = `<button onclick="closeTjenester();openServiceModal()" style="width:100%;background:linear-gradient(135deg,rgba(124,92,252,.1),rgba(214,66,126,.1));border:1px dashed rgba(124,92,252,0.4);color:var(--accent2);border-radius:12px;padding:13px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px">+ Legg ut ny tjeneste</button>`;
   if(error) { el.innerHTML = '<div style="padding:16px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.3);border-radius:12px;font-size:12px;color:var(--red)">⚠️ Kunne ikke hente tjenester: '+error.message+'</div>' + addBtn; return; }
   if(!services || services.length === 0) {
     el.innerHTML = '<div style="text-align:center;padding:36px 20px;color:var(--muted);font-size:13px">Du tilbyr ingen tjenester ennå.<br>Legg ut det du kan hjelpe andre med 🏪</div>' + addBtn;
@@ -9102,7 +9106,7 @@ function tilbudRow(s) {
   const toggleBtn = paused
     ? `<button onclick="event.stopPropagation();resumeService('${s.id}')" style="background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:9px;padding:7px 10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">▶️ Aktiver</button>`
     : `<button onclick="event.stopPropagation();pauseService('${s.id}')" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:9px;padding:7px 10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⏸ Pause</button>`;
-  return `<div onclick="editServiceById('${s.id}')" style="display:flex;align-items:center;gap:10px;padding:13px;background:var(--surface);border:1.5px solid ${ringCol};border-radius:13px;box-shadow:${ringShadow};cursor:pointer">
+  return `<div onclick="editServiceById('${s.id}')" style="display:flex;align-items:center;gap:10px;padding:13px;background:var(--surface);border:1.5px solid ${ringCol};border-radius:12px;box-shadow:${ringShadow};cursor:pointer">
     <div style="flex:1;min-width:0">
       <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.title}</div>
       <div style="font-size:11.5px;color:var(--muted);margin-top:2px">${s.category || ''}${s.category?' · ':''}${s.price} kr${rec}</div>
@@ -9255,7 +9259,7 @@ function bookingCard(b, nameMap, sessions) {
     completed:['🏆 Fullført','var(--accent)'], declined:['✕ Avslått','var(--muted)'], cancelled:['✕ Avlyst','var(--muted)']
   };
   const [stLabel, stCol] = statusMap[b.status] || ['•','var(--muted)'];
-  const chatBtn = convId ? `<button onclick="window._chatOtherName='${safeName}';openChat('${convId}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : '';
+  const chatBtn = convId ? `<button onclick="window._chatOtherName='${safeName}';openChat('${convId}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : '';
 
   const head = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
@@ -9271,29 +9275,29 @@ function bookingCard(b, nameMap, sessions) {
   let body = '';
   if(b.status === 'requested') {
     body = isProvider
-      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>📩</span><div><b>Ny forespørsel fra <span onclick="event.stopPropagation();viewOtherProfile('${otherId}')" style="color:var(--accent);cursor:pointer;text-decoration:underline">${otherName} ›</span></b> – ${when}, ${b.price} kr.${b.note?'<br>«'+b.note+'»':''}</div></div>
-         <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft avtale</button>
-         <div style="display:flex;gap:8px;margin-top:8px">${chatBtn}<button onclick="declineBooking('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslå</button></div>`
-      : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Venter på at ${otherName} bekrefter tid og pris.</div></div>
+      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>📩</span><div><b>Ny forespørsel fra <span onclick="event.stopPropagation();viewOtherProfile('${otherId}')" style="color:var(--accent);cursor:pointer;text-decoration:underline">${otherName} ›</span></b> – ${when}, ${b.price} kr.${b.note?'<br>«'+b.note+'»':''}</div></div>
+         <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft avtale</button>
+         <div style="display:flex;gap:8px;margin-top:8px">${chatBtn}<button onclick="declineBooking('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:8px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslå</button></div>`
+      : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Venter på at ${otherName} bekrefter tid og pris.</div></div>
          <div style="display:flex;gap:8px;margin-top:12px">${chatBtn}</div>`;
   } else if(b.status === 'confirmed') {
     const tracker = completionTracker(paid, false);
     if(isProvider) {
       // provider = utfører (taker)
       body = `${tracker}
-        <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>${b.work_done_at?'⏳':'ℹ️'}</span><div>${b.work_done_at?'Du har meldt avtalen utført. Venter på betaling fra kunden.':'Meld fra når jobben er gjort, så får kunden beskjed om å betale.'}</div></div>
+        <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>${b.work_done_at?'⏳':'ℹ️'}</span><div>${b.work_done_at?'Du har meldt avtalen utført. Venter på betaling fra kunden.':'Meld fra når jobben er gjort, så får kunden beskjed om å betale.'}</div></div>
         ${b.work_done_at
           ? `<div style="display:flex;align-items:center;gap:7px;margin-top:12px;font-size:12px;font-weight:700;color:var(--green)">🔨 Du meldte avtalen utført</div>`
-          : `<button onclick="bookingMarkDone('${b.id}')" style="width:100%;background:var(--surface);border:1.5px solid var(--green);color:var(--green);border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">🔨 Jeg er ferdig – gi beskjed</button>`}
-        <button onclick="bookingConfirmReceived('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Jeg har mottatt betaling</button>
-        <div style="display:flex;gap:8px;margin-top:8px"><button onclick="showChatPaymentInfoFor('${convId}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>${chatBtn}</div>`;
+          : `<button onclick="bookingMarkDone('${b.id}')" style="width:100%;background:var(--surface);border:1.5px solid var(--green);color:var(--green);border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">🔨 Jeg er ferdig – gi beskjed</button>`}
+        <button onclick="bookingConfirmReceived('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Jeg har mottatt betaling</button>
+        <div style="display:flex;gap:8px;margin-top:8px"><button onclick="showChatPaymentInfoFor('${convId}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>${chatBtn}</div>`;
     } else {
       // customer = betaler (giver)
       body = `${tracker}
-        <div style="display:flex;gap:8px;align-items:flex-start;background:${b.work_done_at?'rgba(15,169,104,0.09)':'var(--surface2)'};${b.work_done_at?'border:1px solid rgba(15,169,104,0.25);':''}border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:${b.work_done_at?'var(--text)':'var(--muted)'};line-height:1.5"><span>${b.work_done_at?'🔨':'📅'}</span><div>${b.work_done_at?'<b>Tilbyder melder utført.</b> Betal (Vipps eller annen avtalt metode) og marker betalt.':'Avtale bekreftet. Møt opp til avtalt tid.'}</div></div>
-        <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">💸 Betal med Vipps</button>
+        <div style="display:flex;gap:8px;align-items:flex-start;background:${b.work_done_at?'rgba(15,169,104,0.09)':'var(--surface2)'};${b.work_done_at?'border:1px solid rgba(15,169,104,0.25);':''}border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:${b.work_done_at?'var(--text)':'var(--muted)'};line-height:1.5"><span>${b.work_done_at?'🔨':'📅'}</span><div>${b.work_done_at?'<b>Tilbyder melder utført.</b> Betal (Vipps eller annen avtalt metode) og marker betalt.':'Avtale bekreftet. Møt opp til avtalt tid.'}</div></div>
+        <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">💸 Betal med Vipps</button>
         <div style="display:flex;gap:8px;margin-top:8px">
-          ${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="bookingMarkPaid('${b.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}
+          ${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="bookingMarkPaid('${b.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:8px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}
           ${chatBtn}
         </div>`;
     }
@@ -9301,9 +9305,9 @@ function bookingCard(b, nameMap, sessions) {
     body = `<div style="display:flex;align-items:center;gap:10px;background:rgba(214,66,126,0.07);border:1px solid rgba(214,66,126,0.22);border-radius:12px;padding:13px 15px;margin-top:12px">
       <span style="font-size:22px">🏆</span>
       <div style="font-size:13px;font-weight:700;color:var(--accent)">Avtale fullført${isProvider?' – betaling bekreftet':' – du betalte'}<small style="display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px">${isProvider?'Vurder kunden fra varselet, om du vil.':'Vil du vurdere tilbyderen?'}</small></div></div>
-      ${!isProvider && convId?`<button onclick="showRating('${safeName}','${convId}','${b.provider_id}','')" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">⭐ Gi vurdering</button>`:''}`;
+      ${!isProvider && convId?`<button onclick="showRating('${safeName}','${convId}','${b.provider_id}','')" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">⭐ Gi vurdering</button>`:''}`;
   } else {
-    body = `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>•</span><div>${b.status==='declined'?'Forespørselen ble avslått.':'Avtalen er avlyst.'}</div></div>`;
+    body = `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>•</span><div>${b.status==='declined'?'Forespørselen ble avslått.':'Avtalen er avlyst.'}</div></div>`;
   }
 
   const active = b.status === 'confirmed';
@@ -9311,7 +9315,7 @@ function bookingCard(b, nameMap, sessions) {
   const waiting = b.status === 'requested' && b.provider_id !== currentUser.id;    // søkt på (venter) → oransje ring
   const cardBorder = (active || incoming) ? 'var(--green)' : waiting ? '#f97316' : 'var(--border)';
   const cardShadow = (active || incoming) ? ';box-shadow:0 2px 12px rgba(15,169,104,0.15)' : waiting ? ';box-shadow:0 2px 12px rgba(249,115,22,0.13)' : '';
-  return `<div style="background:var(--surface);border:1.5px solid ${cardBorder};border-radius:14px;overflow:hidden${cardShadow}">
+  return `<div style="background:var(--surface);border:1.5px solid ${cardBorder};border-radius:12px;overflow:hidden${cardShadow}">
     <div style="padding:14px 16px">${head}${body}</div></div>`;
 }
 
@@ -9333,14 +9337,14 @@ function sessionHandshake(s, isProvider, convId, chatBtn) {
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Åpen økt · ${dateTxt}</div>${tracker}${inner}</div>`;
   if(isProvider) {
     return wrap(`
-      <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:var(--muted);line-height:1.5"><span>${paid?'💸':'⏳'}</span><div>${paid?'<b style="color:var(--text)">Kunden har markert betalt.</b> Bekreft mottak for å gjøre opp økten.':'Venter på at kunden betaler for økten.'}</div></div>
-      <button onclick="sessionConfirmReceived('${s.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Bekreft mottatt betaling</button>
-      <div style="display:flex;gap:8px;margin-top:8px"><button onclick="showChatPaymentInfoFor('${convId}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>${chatBtn}</div>`);
+      <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:8px;padding:10px 12px;margin-top:12px;font-size:12px;color:var(--muted);line-height:1.5"><span>${paid?'💸':'⏳'}</span><div>${paid?'<b style="color:var(--text)">Kunden har markert betalt.</b> Bekreft mottak for å gjøre opp økten.':'Venter på at kunden betaler for økten.'}</div></div>
+      <button onclick="sessionConfirmReceived('${s.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Bekreft mottatt betaling</button>
+      <div style="display:flex;gap:8px;margin-top:8px"><button onclick="showChatPaymentInfoFor('${convId}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>${chatBtn}</div>`);
   }
   return wrap(`
-    <div style="display:flex;gap:8px;align-items:flex-start;background:${paid?'var(--surface2)':'rgba(15,169,104,0.09)'};${paid?'':'border:1px solid rgba(15,169,104,0.25);'}border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:${paid?'var(--muted)':'var(--text)'};line-height:1.5"><span>${paid?'⏳':'🔨'}</span><div>${paid?'Du har markert betalt. Venter på tilbyders bekreftelse.':'<b>Tilbyder registrerte en økt.</b> Betal (Vipps eller annen avtalt metode) og marker betalt.'}</div></div>
-    <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px">💸 Betal med Vipps</button>
-    <div style="display:flex;gap:8px;margin-top:8px">${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="sessionMarkPaid('${s.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}${chatBtn}</div>`);
+    <div style="display:flex;gap:8px;align-items:flex-start;background:${paid?'var(--surface2)':'rgba(15,169,104,0.09)'};${paid?'':'border:1px solid rgba(15,169,104,0.25);'}border-radius:8px;padding:10px 12px;margin-top:12px;font-size:12px;color:${paid?'var(--muted)':'var(--text)'};line-height:1.5"><span>${paid?'⏳':'🔨'}</span><div>${paid?'Du har markert betalt. Venter på tilbyders bekreftelse.':'<b>Tilbyder registrerte en økt.</b> Betal (Vipps eller annen avtalt metode) og marker betalt.'}</div></div>
+    <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px">💸 Betal med Vipps</button>
+    <div style="display:flex;gap:8px;margin-top:8px">${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="sessionMarkPaid('${s.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:8px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}${chatBtn}</div>`);
 }
 
 function recurringCard(b, nameMap, sessions) {
@@ -9352,7 +9356,7 @@ function recurringCard(b, nameMap, sessions) {
   const safeTitle = title.replace(/'/g, "\\'");
   const convId = b.conversation_id || '';
   const recLabel = recurrenceLabel(b.recurrence);
-  const chatBtn = convId ? `<button onclick="window._chatOtherName='${safeName}';openChat('${convId}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : '';
+  const chatBtn = convId ? `<button onclick="window._chatOtherName='${safeName}';openChat('${convId}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : '';
 
   const statusMap = {
     requested:['⏳ Forespurt','#f97316'], active:['🔄 Aktiv','var(--green)'],
@@ -9374,10 +9378,10 @@ function recurringCard(b, nameMap, sessions) {
   let body = '';
   if(b.status === 'requested') {
     body = isProvider
-      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>📩</span><div><b>Forespørsel om fast avtale fra <span onclick="event.stopPropagation();viewOtherProfile('${otherId}')" style="color:var(--accent);cursor:pointer;text-decoration:underline">${otherName} ›</span></b> – ${recLabel}, fra ${formatDateShort(b.scheduled_at)}, ${b.price} kr/gang.${b.note?'<br>«'+b.note+'»':''}</div></div>
-         <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft fast avtale</button>
-         <div style="display:flex;gap:8px;margin-top:8px">${chatBtn}<button onclick="declineBooking('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslå</button></div>`
-      : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Venter på at ${otherName} bekrefter den faste avtalen (${recLabel}).</div></div>
+      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>📩</span><div><b>Forespørsel om fast avtale fra <span onclick="event.stopPropagation();viewOtherProfile('${otherId}')" style="color:var(--accent);cursor:pointer;text-decoration:underline">${otherName} ›</span></b> – ${recLabel}, fra ${formatDateShort(b.scheduled_at)}, ${b.price} kr/gang.${b.note?'<br>«'+b.note+'»':''}</div></div>
+         <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft fast avtale</button>
+         <div style="display:flex;gap:8px;margin-top:8px">${chatBtn}<button onclick="declineBooking('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:8px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslå</button></div>`
+      : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Venter på at ${otherName} bekrefter den faste avtalen (${recLabel}).</div></div>
          <div style="display:flex;gap:8px;margin-top:12px">${chatBtn}</div>`;
   } else if(b.status === 'active' || b.status === 'paused') {
     const open = sessions.find(s => s.status !== 'completed');
@@ -9403,7 +9407,7 @@ function recurringCard(b, nameMap, sessions) {
     ) : '';
 
     const pauseBadge = b.status === 'paused'
-      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(245,158,11,0.09);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:10px 12px;margin-top:14px;font-size:12px;color:#b45309;line-height:1.5"><span>⏸️</span><div>Avtalen er på pause. ${isProvider?'Trykk gjenoppta for å fortsette.':'Tilbyder har satt avtalen på pause.'}</div></div>`
+      ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(245,158,11,0.09);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px 12px;margin-top:14px;font-size:12px;color:#b45309;line-height:1.5"><span>⏸️</span><div>Avtalen er på pause. ${isProvider?'Trykk gjenoppta for å fortsette.':'Tilbyder har satt avtalen på pause.'}</div></div>`
       : '';
 
     const rows = [];
@@ -9417,19 +9421,19 @@ function recurringCard(b, nameMap, sessions) {
     if(isProvider) {
       const quotaFull = target && monthCount >= target;
       const registerBtn = (b.status === 'active' && !open && !quotaFull)
-        ? `<button onclick="registerSession('${b.id}')" style="width:100%;background:var(--surface);border:1.5px solid var(--green);color:var(--green);border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:14px">➕ Registrer økt</button>`
+        ? `<button onclick="registerSession('${b.id}')" style="width:100%;background:var(--surface);border:1.5px solid var(--green);color:var(--green);border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:14px">➕ Registrer økt</button>`
         : '';
       const pauseResume = b.status === 'active'
-        ? `<button onclick="pauseAgreement('${b.id}')" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">⏸️ Pause</button>`
-        : `<button onclick="resumeAgreement('${b.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">▶️ Gjenoppta</button>`;
-      actions = `${registerBtn}<div style="display:flex;gap:8px;margin-top:8px">${open?chatBtn:pauseResume}<button onclick="cancelAgreement('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button></div>${open?`<div style="display:flex;gap:8px;margin-top:8px">${pauseResume}</div>`:''}`;
+        ? `<button onclick="pauseAgreement('${b.id}')" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:8px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">⏸️ Pause</button>`
+        : `<button onclick="resumeAgreement('${b.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:8px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">▶️ Gjenoppta</button>`;
+      actions = `${registerBtn}<div style="display:flex;gap:8px;margin-top:8px">${open?chatBtn:pauseResume}<button onclick="cancelAgreement('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:8px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button></div>${open?`<div style="display:flex;gap:8px;margin-top:8px">${pauseResume}</div>`:''}`;
     } else {
-      actions = `<div style="display:flex;gap:8px;margin-top:14px">${chatBtn}<button onclick="cancelAgreement('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button></div>`;
+      actions = `<div style="display:flex;gap:8px;margin-top:14px">${chatBtn}<button onclick="cancelAgreement('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:8px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button></div>`;
     }
 
     body = `${pauseBadge}${headerBlock}${log}${handshake}${actions}`;
   } else {
-    body = `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>•</span><div>${b.status==='declined'?'Forespørselen om fast avtale ble avslått.':'Den faste avtalen er avsluttet.'}</div></div>`;
+    body = `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>•</span><div>${b.status==='declined'?'Forespørselen om fast avtale ble avslått.':'Den faste avtalen er avsluttet.'}</div></div>`;
   }
 
   const recIncoming = b.status === 'requested' && b.provider_id === currentUser.id; // forespørsel til deg → grønn
@@ -9438,7 +9442,7 @@ function recurringCard(b, nameMap, sessions) {
   const recShadow = (b.status === 'active' || recIncoming) ? ';box-shadow:0 2px 12px rgba(15,169,104,0.15)'
                   : b.status === 'paused' ? ';box-shadow:0 2px 12px rgba(245,158,11,0.13)'
                   : recWaiting ? ';box-shadow:0 2px 12px rgba(249,115,22,0.13)' : '';
-  return `<div style="background:var(--surface);border:1.5px solid ${recBorder};border-radius:14px;overflow:hidden${recShadow}">
+  return `<div style="background:var(--surface);border:1.5px solid ${recBorder};border-radius:12px;overflow:hidden${recShadow}">
     <div style="padding:14px 16px">${head}${body}</div></div>`;
 }
 
@@ -9459,7 +9463,7 @@ function providerOverview(agreements, sessionsByParent, nameMap) {
       muted:  'background:var(--surface2);border:1px solid var(--border);color:var(--muted)'
     };
     const dis = kind === 'muted' ? 'disabled' : '';
-    return `<button ${dis} ${onclick?`onclick="${onclick}"`:''} style="flex-shrink:0;${styles[kind]};border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;cursor:${kind==='muted'?'not-allowed':'pointer'};font-family:inherit;white-space:nowrap">${label}</button>`;
+    return `<button ${dis} ${onclick?`onclick="${onclick}"`:''} style="flex-shrink:0;${styles[kind]};border-radius:8px;padding:8px 11px;font-size:12px;font-weight:700;cursor:${kind==='muted'?'not-allowed':'pointer'};font-family:inherit;white-space:nowrap">${label}</button>`;
   };
 
   let oweCount = 0, earned = 0;
@@ -9511,7 +9515,7 @@ function providerOverview(agreements, sessionsByParent, nameMap) {
   }).join('');
 
   const activeCount = list.filter(a => a.status === 'active').length;
-  const stat = (v, l, col) => `<div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 8px;text-align:center;box-shadow:var(--shadow-sm)"><div style="font-size:17px;font-weight:800;${col?'color:'+col:''}">${v}</div><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);margin-top:2px">${l}</div></div>`;
+  const stat = (v, l, col) => `<div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;box-shadow:var(--shadow-sm)"><div style="font-size:17px;font-weight:800;${col?'color:'+col:''}">${v}</div><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);margin-top:2px">${l}</div></div>`;
 
   return `
     <div style="font-size:18px;font-weight:800;margin-bottom:2px">Faste avtaler</div>
@@ -9732,7 +9736,7 @@ function updateSvcPreview() {
 
   // ikon fra kategori (samme logikk som markerIcon for tjenester)
   const iconEl = document.getElementById('svcpreview-icon');
-  if(iconEl) { const _k = catKeyFromString(cat); iconEl.innerHTML = _k ? catIconSvg(_k,{size:22,stroke:2}) : (firstEmoji(cat) || '🏪'); }
+  if(iconEl) { const _k = catKeyFromString(cat); iconEl.innerHTML = _k ? catIconSvg(_k,{size:18,stroke:2}) : (firstEmoji(cat) || '🏪'); }
 
   const coinEl = document.getElementById('svcpreview-coin');
   if(coinEl) coinEl.textContent = price + ' kr';
@@ -9919,7 +9923,7 @@ function shareQuest() {
 
   const dropdown = document.createElement('div');
   dropdown.id = 'share-dropdown';
-  dropdown.style.cssText = 'position:fixed;right:18px;bottom:140px;z-index:500;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:8px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:4px;min-width:200px;animation:popIn .15s ease';
+  dropdown.style.cssText = 'position:fixed;right:18px;bottom:140px;z-index:500;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:4px;min-width:200px;animation:popIn .15s ease';
   dropdown.innerHTML = `
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:4px 8px 6px">Del oppdraget</div>
     <button onclick="shareToFacebook()" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;background:none;cursor:pointer;border-radius:8px;font-size:13px;font-weight:500;color:var(--text);font-family:inherit;width:100%;text-align:left" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">
@@ -10287,7 +10291,7 @@ function showPostChoice() {
     <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:24px 20px 90px;box-sizing:border-box;animation:slideIn .2s ease">
       <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px"></div>
       <div style="font-size:17px;font-weight:800;text-align:center;margin-bottom:18px">Hva vil du legge ut?</div>
-      <button onclick="document.getElementById('post-choice-overlay').remove();openModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(214,66,126,0.07);border:1.5px solid rgba(214,66,126,0.3);border-radius:14px;padding:16px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:10px">
+      <button onclick="document.getElementById('post-choice-overlay').remove();openModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(214,66,126,0.07);border:1.5px solid rgba(214,66,126,0.3);border-radius:12px;padding:16px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:10px">
         <span style="font-size:28px">📋</span>
         <span style="flex:1">
           <span style="display:block;font-size:15px;font-weight:700;color:var(--text)">Oppdrag</span>
@@ -10295,7 +10299,7 @@ function showPostChoice() {
         </span>
         <span style="color:var(--muted)">›</span>
       </button>
-      <button onclick="document.getElementById('post-choice-overlay').remove();openServiceModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(168,85,247,0.07);border:1.5px solid rgba(168,85,247,0.3);border-radius:14px;padding:16px;cursor:pointer;font-family:inherit;text-align:left">
+      <button onclick="document.getElementById('post-choice-overlay').remove();openServiceModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(168,85,247,0.07);border:1.5px solid rgba(168,85,247,0.3);border-radius:12px;padding:16px;cursor:pointer;font-family:inherit;text-align:left">
         <span style="font-size:28px">🏪</span>
         <span style="flex:1">
           <span style="display:block;font-size:15px;font-weight:700;color:var(--text)">Tjeneste</span>
@@ -10654,7 +10658,7 @@ function openTermsGate() {
   `;
 
   gate.innerHTML = `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;width:100%;max-width:440px;max-height:88vh;max-height:88dvh;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow-lg)">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:440px;max-height:88vh;max-height:88dvh;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow-lg)">
       <div style="padding:16px 18px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
         <div style="font-family:'Skranji',cursive;font-size:18px;color:var(--text)">${en?'Terms & privacy':'Brukervilkår & personvern'}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px">${en?'Read and accept to continue':'Les og godta for å fortsette'} · v${TERMS_VERSION}</div>
@@ -11041,7 +11045,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
 
     <!-- Tabs -->
-    <div style="display:flex;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:20px">
+    <div style="display:flex;background:var(--surface2);border-radius:8px;padding:3px;margin-bottom:20px">
       <button id="tab-login" onclick="switchTab('login')" data-en="Log in" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">Logg inn</button>
       <button id="tab-register" onclick="switchTab('register')" data-en="Sign up" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s">Registrer</button>
     </div>
@@ -11050,11 +11054,11 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div id="form-login">
       <div style="margin-bottom:12px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Email">E-post</label>
-        <input id="login-email" type="email" name="email" autocomplete="email" placeholder="din@epost.no" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <input id="login-email" type="email" name="email" autocomplete="email" placeholder="din@epost.no" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
       </div>
       <div style="margin-bottom:16px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Password">Passord</label>
-        <input id="login-password" type="password" name="current-password" autocomplete="current-password" placeholder="••••••••" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doLogin()">
+        <input id="login-password" type="password" name="current-password" autocomplete="current-password" placeholder="••••••••" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
       <div id="login-error" style="display:none;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--red);margin-bottom:12px"></div>
       <button onclick="doLogin()" id="login-btn" data-en="Log in" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">Logg inn</button>
@@ -11066,33 +11070,33 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div style="display:flex;gap:10px;margin-bottom:12px">
         <div style="flex:1">
           <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="First name">Fornavn</label>
-          <input id="reg-firstname" type="text" placeholder="Ola" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <input id="reg-firstname" type="text" placeholder="Ola" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         </div>
         <div style="flex:1">
           <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Last name">Etternavn</label>
-          <input id="reg-lastname" type="text" placeholder="Nordmann" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <input id="reg-lastname" type="text" placeholder="Nordmann" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         </div>
       </div>
       <div style="margin-bottom:12px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Date of birth">Fødselsdato</label>
-        <input id="reg-birthdate" type="date" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <input id="reg-birthdate" type="date" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         <div style="font-size:10px;color:var(--muted);margin-top:4px" data-en="🔞 You must be at least 15. Ages 15–17 have some restrictions.">🔞 Du må være minst 15 år. 15–17 år får noen begrensninger.</div>
       </div>
       <div style="margin-bottom:12px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Mobilnummer <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(valgfritt)</span></label>
         <div style="display:flex;gap:8px">
-          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--muted);white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:6px"><svg viewBox="0 0 22 16" width="18" height="13" style="border-radius:2px"><rect width="22" height="16" fill="#ba0c2f"/><rect x="6" width="4" height="16" fill="#fff"/><rect y="6" width="22" height="4" fill="#fff"/><rect x="7" width="2" height="16" fill="#002868"/><rect y="7" width="22" height="2" fill="#002868"/></svg> +47</div>
-          <input id="reg-phone" type="tel" name="tel" autocomplete="tel" inputmode="numeric" placeholder="12 34 56 78" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" maxlength="8">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--muted);white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:6px"><svg viewBox="0 0 22 16" width="18" height="13" style="border-radius:2px"><rect width="22" height="16" fill="#ba0c2f"/><rect x="6" width="4" height="16" fill="#fff"/><rect y="6" width="22" height="4" fill="#fff"/><rect x="7" width="2" height="16" fill="#002868"/><rect y="7" width="22" height="2" fill="#002868"/></svg> +47</div>
+          <input id="reg-phone" type="tel" name="tel" autocomplete="tel" inputmode="numeric" placeholder="12 34 56 78" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" maxlength="8">
         </div>
         <div style="font-size:10px;color:var(--muted);margin-top:4px" data-en="Just enter 8 digits – no spaces needed">Skriv bare 8 siffer – ingen mellomrom nødvendig</div>
       </div>
       <div style="margin-bottom:12px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Email">E-post</label>
-        <input id="reg-email" type="email" name="email" autocomplete="email" placeholder="din@epost.no" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <input id="reg-email" type="email" name="email" autocomplete="email" placeholder="din@epost.no" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
       </div>
       <div style="margin-bottom:16px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Password">Passord</label>
-        <input id="reg-password" type="password" name="new-password" autocomplete="new-password" placeholder="Minimum 6 tegn" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doRegister()">
+        <input id="reg-password" type="password" name="new-password" autocomplete="new-password" placeholder="Minimum 6 tegn" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')doRegister()">
       </div>
       <div id="reg-error" style="display:none;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--red);margin-bottom:12px"></div>
       <button onclick="doRegister()" id="register-btn" data-en="Create account" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)">Opprett konto</button>
@@ -11115,7 +11119,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div id="profile-rank-desc" style="font-size:11px;color:rgba(255,255,255,0.75);margin-top:6px;line-height:1.4;padding:0 12px;font-style:italic;max-width:280px;margin-left:auto;margin-right:auto"></div>
   </div>
   <div style="padding:14px">
-    <div style="display:flex;gap:0;background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:14px">
+    <div style="display:flex;gap:0;background:var(--surface2);border-radius:8px;overflow:hidden;margin-bottom:14px">
       <div style="flex:1;padding:10px;text-align:center;border-right:1px solid var(--border)">
         <div id="profile-quests" style="font-size:18px;font-weight:800;color:var(--accent)">0</div>
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Oppdrag</div>
@@ -11138,10 +11142,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
         <div id="profile-xp-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#f97316,#a855f7);border-radius:3px;transition:width .5s ease"></div>
       </div>
     </div>
-    <button onclick="document.getElementById('profile-panel').style.display='none';openProfilePage()" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s"><span data-en="👤 My profile">👤 Min profil</span></button>
-    <button onclick="openMyQuests('posted')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s"><span data-en="📋 My tasks">📋 Mine oppdrag</span></button>
-    <button onclick="openTjenester('tilbud')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s"><span data-en="🏪 Services">🏪 Tjenester</span></button>
-<button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s"><span data-en="Log out">Logg ut</span></button>
+    <button onclick="document.getElementById('profile-panel').style.display='none';openProfilePage()" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s"><span data-en="👤 My profile">👤 Min profil</span></button>
+    <button onclick="openMyQuests('posted')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s"><span data-en="📋 My tasks">📋 Mine oppdrag</span></button>
+    <button onclick="openTjenester('tilbud')" style="width:100%;background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(168,85,247,0.1));border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:all .15s"><span data-en="🏪 Services">🏪 Tjenester</span></button>
+<button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s"><span data-en="Log out">Logg ut</span></button>
   </div>
 </div>
 
@@ -11166,16 +11170,16 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
 
     <!-- TOPP-BRYTER: Oppdrag / Tjenester -->
-    <div style="display:flex;background:var(--surface2);border-radius:14px;padding:4px;margin-bottom:16px;border:1px solid var(--border)">
-      <button id="act-seg-oppdrag" onclick="switchActivitySide('oppdrag')" style="flex:1;padding:11px 6px;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px">📋 <span id="act-seg-oppdrag-label">Oppdrag</span><span id="act-badge-oppdrag" style="display:none;min-width:17px;height:17px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:800;align-items:center;justify-content:center;padding:0 4px">0</span></button>
-      <button id="act-seg-tjenester" onclick="switchActivitySide('tjenester')" style="flex:1;padding:11px 6px;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px">🏪 <span id="act-seg-tjenester-label">Tjenester</span><span id="act-badge-tjenester" style="display:none;min-width:17px;height:17px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:800;align-items:center;justify-content:center;padding:0 4px">0</span></button>
+    <div style="display:flex;background:var(--surface2);border-radius:12px;padding:4px;margin-bottom:16px;border:1px solid var(--border)">
+      <button id="act-seg-oppdrag" onclick="switchActivitySide('oppdrag')" style="flex:1;padding:11px 6px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px">📋 <span id="act-seg-oppdrag-label">Oppdrag</span><span id="act-badge-oppdrag" style="display:none;min-width:17px;height:17px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:800;align-items:center;justify-content:center;padding:0 4px">0</span></button>
+      <button id="act-seg-tjenester" onclick="switchActivitySide('tjenester')" style="flex:1;padding:11px 6px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px">🏪 <span id="act-seg-tjenester-label">Tjenester</span><span id="act-badge-tjenester" style="display:none;min-width:17px;height:17px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:800;align-items:center;justify-content:center;padding:0 4px">0</span></button>
     </div>
 
     <!-- ===== OPPDRAG-SIDE ===== -->
     <div id="act-side-oppdrag">
       <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:20px;border:1px solid var(--border)">
-        <button id="mq-tab-posted" onclick="switchMqTab('posted')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s"><span data-en="📋 Posted">📋 Lagt ut</span></button>
-        <button id="mq-tab-applied" onclick="switchMqTab('applied')" style="flex:1;padding:9px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:5px"><span data-en="Active &amp; applied">Aktive &amp; søkt</span><span id="mq-applied-badge" style="display:none;font-size:10px;font-weight:800;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span></button>
+        <button id="mq-tab-posted" onclick="switchMqTab('posted')" style="flex:1;padding:9px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s"><span data-en="📋 Posted">📋 Lagt ut</span></button>
+        <button id="mq-tab-applied" onclick="switchMqTab('applied')" style="flex:1;padding:9px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:5px"><span data-en="Active &amp; applied">Aktive &amp; søkt</span><span id="mq-applied-badge" style="display:none;font-size:10px;font-weight:800;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span></button>
       </div>
       <div id="mq-posted" style="display:flex;flex-direction:column;gap:12px"></div>
       <div id="mq-applied" style="display:none;flex-direction:column;gap:12px"></div>
@@ -11184,9 +11188,9 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <!-- ===== TJENESTER-SIDE ===== -->
     <div id="act-side-tjenester" style="display:none">
       <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:20px;border:1px solid var(--border)">
-        <button id="tj-tab-tilbud" onclick="switchTjTab('tilbud')" style="flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">🏪 Mine tilbud</button>
-        <button id="tj-tab-engangs" onclick="switchTjTab('engangs')" style="flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:4px">📅 Engangs<span id="tj-eng-badge-g" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span><span id="tj-eng-badge-o" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:#f97316;color:#fff;align-items:center;justify-content:center">0</span></button>
-        <button id="tj-tab-faste" onclick="switchTjTab('faste')" style="flex:1;padding:9px 4px;border:none;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:4px">🔄 Faste<span id="tj-fast-badge-g" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span><span id="tj-fast-badge-o" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:#f97316;color:#fff;align-items:center;justify-content:center">0</span></button>
+        <button id="tj-tab-tilbud" onclick="switchTjTab('tilbud')" style="flex:1;padding:9px 4px;border:none;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);transition:all .2s">🏪 Mine tilbud</button>
+        <button id="tj-tab-engangs" onclick="switchTjTab('engangs')" style="flex:1;padding:9px 4px;border:none;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:4px">📅 Engangs<span id="tj-eng-badge-g" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span><span id="tj-eng-badge-o" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:#f97316;color:#fff;align-items:center;justify-content:center">0</span></button>
+        <button id="tj-tab-faste" onclick="switchTjTab('faste')" style="flex:1;padding:9px 4px;border:none;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:4px">🔄 Faste<span id="tj-fast-badge-g" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--green);color:#fff;align-items:center;justify-content:center">0</span><span id="tj-fast-badge-o" style="display:none;font-size:9.5px;font-weight:800;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:#f97316;color:#fff;align-items:center;justify-content:center">0</span></button>
       </div>
       <div id="tj-tilbud" style="display:flex;flex-direction:column;gap:9px"></div>
       <div id="tj-engangs" style="display:none;flex-direction:column;gap:0"></div>
@@ -11210,7 +11214,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
 
     <!-- Provider -->
-    <div id="service-provider-row" style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:10px">
+    <div id="service-provider-row" style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:8px">
       <div id="service-provider-avatar" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0"></div>
       <div style="flex:1;min-width:0">
         <div id="service-provider-name" style="font-size:13px;font-weight:600"></div>
@@ -11267,7 +11271,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div id="upp-rank" style="display:inline-block;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:50px;margin-top:3px"></div>
   </div>
   <div style="padding:12px 14px">
-    <div style="display:flex;gap:0;background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:12px">
+    <div style="display:flex;gap:0;background:var(--surface2);border-radius:8px;overflow:hidden;margin-bottom:12px">
       <div style="flex:1;padding:8px;text-align:center;border-right:1px solid var(--border)">
         <div id="upp-quests" style="font-size:16px;font-weight:800;color:var(--accent)">0</div>
         <div style="font-size:9px;color:var(--muted);text-transform:uppercase"><span data-en="Completed">Fullført</span></div>
@@ -11278,7 +11282,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       </div>
     </div>
     <div id="upp-badges" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px"></div>
-    <button onclick="startChatWithUser()" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💬 Send melding</button>
+    <button onclick="startChatWithUser()" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💬 Send melding</button>
   </div>
 </div>
 
@@ -11408,7 +11412,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div class="cost-display"><span id="svc-price-display">350</span> <small>kr</small></div>
       <input id="svc-price" type="number" min="0" max="50000" value="350"
         oninput="document.getElementById('svc-price-display').textContent=this.value||0;updateSvcPreview()"
-        style="width:100%;margin-top:8px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text);font-size:15px;font-weight:600;font-family:inherit;outline:none"
+        style="width:100%;margin-top:8px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:15px;font-weight:600;font-family:inherit;outline:none"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
         placeholder="Skriv inn beløp…" data-en-ph="Enter amount…">
       <div id="svc-minor-price-note" style="display:none;font-size:11px;color:var(--muted);margin-top:4px" data-en="Under 18: max price is 2000 kr">Under 18: makspris er 2000 kr</div>
@@ -11509,10 +11513,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
       <!-- Buttons -->
       <div style="display:flex;flex-direction:column;gap:10px">
-        <button onclick="dismissWelcome('register')" data-en="Get started – free 🚀" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 16px rgba(168,85,247,0.3)">
+        <button onclick="dismissWelcome('register')" data-en="Get started – free 🚀" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 16px rgba(168,85,247,0.3)">
           Kom i gang – gratis 🚀
         </button>
-        <button onclick="dismissWelcome('explore')" data-en="Explore the map first 🗺️" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:14px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
+        <button onclick="dismissWelcome('explore')" data-en="Explore the map first 🗺️" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
           Utforsk kartet først 🗺️
         </button>
         <button onclick="dismissWelcome('login')" data-en="Have an account? Log in" style="width:100%;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit;padding:4px">
@@ -11625,12 +11629,12 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <!-- Last ned app (kun egen profil, kun når installerbar) -->
   <div id="pp-install-section" style="display:none;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
     <div onclick="triggerInstall()" style="display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,rgba(249,115,22,.10),rgba(168,85,247,.10));border:1px solid rgba(168,85,247,.22);border-radius:16px;padding:13px 14px;cursor:pointer">
-      <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;box-shadow:0 4px 14px rgba(168,85,247,.3)">📲</div>
+      <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;box-shadow:0 4px 14px rgba(168,85,247,.3)">📲</div>
       <div style="flex:1;min-width:0">
         <div id="pp-install-title" style="font-size:13.5px;font-weight:800">Last ned Tokt-appen</div>
         <div id="pp-install-sub" style="font-size:11px;color:var(--muted);line-height:1.4;margin-top:1px">Hent den gratis fra App Store eller Google Play</div>
       </div>
-      <button onclick="event.stopPropagation();triggerInstall()" id="pp-install-btn" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:11px;padding:10px 15px;font-size:12.5px;font-weight:800;font-family:inherit;flex-shrink:0;box-shadow:0 4px 12px rgba(168,85,247,.28);cursor:pointer">Hent appen</button>
+      <button onclick="event.stopPropagation();triggerInstall()" id="pp-install-btn" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:10px 15px;font-size:12.5px;font-weight:800;font-family:inherit;flex-shrink:0;box-shadow:0 4px 12px rgba(168,85,247,.28);cursor:pointer">Hent appen</button>
     </div>
   </div>
 
@@ -11645,7 +11649,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px" data-en="Phone (Vipps number)">Telefon (Vipps-nummer)</div>
       <input id="pp-edit-phone" class="form-input" type="tel" name="tel" autocomplete="tel" inputmode="numeric" placeholder="8 siffer" maxlength="8" style="width:100%;box-sizing:border-box">
     </div>
-    <button onclick="saveProfileEdits()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit"><span data-en="💾 Save changes">💾 Lagre endringer</span></button>
+    <button onclick="saveProfileEdits()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit"><span data-en="💾 Save changes">💾 Lagre endringer</span></button>
   </div>
 
   <!-- Anmeldelser -->
@@ -11682,7 +11686,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 #okonomi-page .oko-chip.on{background:var(--text);color:#fff;border-color:var(--text)}
 #okonomi-page .oko-tx{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
 #okonomi-page .oko-tx:last-child{border-bottom:none}
-#okonomi-page .oko-tx-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+#okonomi-page .oko-tx-ico{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 #okonomi-page .oko-tx-ico.q{background:rgba(214,66,126,.12)}
 #okonomi-page .oko-tx-ico.s{background:rgba(15,169,104,.12)}
 #okonomi-page .oko-tx-mid{flex:1;min-width:0}
@@ -11756,7 +11760,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
     <div id="oko-ledger"></div>
     <button onclick="exportOkonomiCsv()" id="oko-export-btn" style="width:100%;margin-top:16px;background:linear-gradient(135deg,var(--green),#0c8f58);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px">⬇️ <span id="oko-export-label">Last ned CSV</span></button>
-    <div id="oko-note" style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:13px;padding:10px 12px;background:var(--surface2);border-radius:10px"></div>
+    <div id="oko-note" style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:13px;padding:10px 12px;background:var(--surface2);border-radius:8px"></div>
     <a id="oko-skatt-link" href="/skatt.html" target="_blank" style="display:block;text-align:center;font-size:12px;color:var(--accent);text-decoration:underline;margin-top:10px"></a>
   </div>
 
@@ -11844,7 +11848,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <button type="button" class="report-reason" data-reason="spam" onclick="selectReportReason(this)">Spam eller villedende</button>
       <button type="button" class="report-reason" data-reason="annet" onclick="selectReportReason(this)">Annet</button>
     </div>
-    <textarea id="report-details" placeholder="Beskriv kort hva som er galt (valgfritt)…" style="width:100%;min-height:70px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;resize:vertical;margin-bottom:16px;box-sizing:border-box"></textarea>
+    <textarea id="report-details" placeholder="Beskriv kort hva som er galt (valgfritt)…" style="width:100%;min-height:70px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;resize:vertical;margin-bottom:16px;box-sizing:border-box"></textarea>
     <button onclick="submitReport()" id="report-submit-btn" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Send rapport</button>
   </div>
 </div>
