@@ -40,8 +40,8 @@
   --surface: #ffffff;
   --surface2: #eef0f7;
   --border: rgba(0,0,0,0.07);
-  --accent: #3b6ff5;
-  --accent-glow: rgba(168,85,247,0.15);
+  --accent: #d6427e;
+  --accent-glow: rgba(214,66,126,0.13);
   --accent2: #7c5cfc;
   --green: #0fa968;
   --red: #e53935;
@@ -55,8 +55,8 @@
   --shadow: 0 4px 20px rgba(0,0,0,0.10);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.13);
   --radius: 14px;
-  --xp-bar: #3b6ff5;
-  --grad: linear-gradient(135deg,#f97316,#a855f7,#3b6ff5);
+  --xp-bar: #d6427e;
+  --grad: linear-gradient(135deg,#F36E37,#CD618C,#B359D5);
 }
 
 /* ── DARK MODE ── */
@@ -65,8 +65,8 @@ body.dark {
   --surface: #161926;
   --surface2: #1e2235;
   --border: rgba(255,255,255,0.07);
-  --accent: #4f8ef7;
-  --accent-glow: rgba(79,142,247,0.2);
+  --accent: #e85d95;
+  --accent-glow: rgba(232,93,149,0.22);
   --accent2: #9b7cff;
   --green: #2de08a;
   --red: #ff4f4f;
@@ -294,7 +294,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .lb-right { text-align:right; flex-shrink:0; }
 .lb-cnt { font-size:15px; font-weight:800; color:var(--accent); line-height:1.1; }
 .lb-cntl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
-.lb-mine { position:sticky; bottom:0; z-index:2; display:flex; align-items:center; gap:11px; padding:11px 16px; background-color:var(--surface); background-image:linear-gradient(90deg,rgba(59,111,245,.10),rgba(124,92,252,.10)); border-top:2px solid var(--accent); cursor:pointer; }
+.lb-mine { position:sticky; bottom:0; z-index:2; display:flex; align-items:center; gap:11px; padding:11px 16px; background-color:var(--surface); background-image:linear-gradient(90deg,rgba(214,66,126,.10),rgba(124,92,252,.10)); border-top:2px solid var(--accent); cursor:pointer; }
 .lb-mine .lb-pos { color:var(--accent); font-size:14px; }
 .lb-mine .lb-av { background:linear-gradient(135deg,#f97316,#a855f7); }
 .lb-mine .lb-nm { font-weight:800; }
@@ -332,7 +332,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .lv-handle .lv-bar { width:38px; height:4px; border-radius:2px; background:var(--border); }
 .lv-avgrens {
   display:flex; align-items:center; gap:6px; flex-shrink:0;
-  padding:7px 12px; border:1.5px solid var(--accent); background:rgba(59,111,245,.08);
+  padding:7px 12px; border:1.5px solid var(--accent); background:rgba(214,66,126,.08);
   color:var(--accent); font-family:inherit; font-weight:800; font-size:12.5px;
   border-radius:50px; cursor:pointer;
 }
@@ -368,7 +368,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   color:var(--muted); font-family:inherit; font-weight:700; font-size:12px;
   padding:7px 13px; border-radius:50px; cursor:pointer; white-space:nowrap;
 }
-.lv-sortpill.on { background:rgba(59,111,245,.12); color:var(--accent); border-color:var(--accent); }
+.lv-sortpill.on { background:rgba(214,66,126,.12); color:var(--accent); border-color:var(--accent); }
 .lv-catrow {
   display:flex; gap:7px; padding:10px 16px 0; overflow-x:auto;
   background:var(--surface);
@@ -378,13 +378,13 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
   color:var(--text); font-family:inherit; font-weight:700; font-size:12px;
   padding:7px 12px; border-radius:50px; cursor:pointer; white-space:nowrap;
 }
-.lv-catchip.on { background:rgba(59,111,245,.1); color:var(--accent); border-color:var(--accent); }
+.lv-catchip.on { background:rgba(214,66,126,.1); color:var(--accent); border-color:var(--accent); }
 .lv-catchip, .lv-sortpill, .vt-btn { display:inline-flex; align-items:center; gap:6px; }
 /* Gradient-scrollbar i søkelista (tema + sortering) – tydeligere at man kan dra */
 .lv-catrow, .lv-sortrow { scrollbar-width:thin; scrollbar-color:#a855f7 rgba(0,0,0,.05); }
 .lv-catrow::-webkit-scrollbar, .lv-sortrow::-webkit-scrollbar { height:7px; }
 .lv-catrow::-webkit-scrollbar-track, .lv-sortrow::-webkit-scrollbar-track { background:rgba(0,0,0,.05); border-radius:50px; margin:0 12px; }
-.lv-catrow::-webkit-scrollbar-thumb, .lv-sortrow::-webkit-scrollbar-thumb { background:linear-gradient(90deg,#f97316,#a855f7,#3b6ff5); border-radius:50px; }
+.lv-catrow::-webkit-scrollbar-thumb, .lv-sortrow::-webkit-scrollbar-thumb { background:linear-gradient(90deg,#F36E37,#CD618C,#B359D5); border-radius:50px; }
 body.dark .lv-catrow, body.dark .lv-sortrow { scrollbar-color:#a855f7 rgba(255,255,255,.07); }
 body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-scrollbar-track { background:rgba(255,255,255,.07); }
 .sort-pill { display:inline-flex; align-items:center; gap:6px; }
@@ -399,7 +399,7 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
   border-bottom:1px solid var(--border); cursor:pointer; position:relative; background:var(--surface);
 }
 .lv-card:active { background:var(--surface2); }
-.lv-card.rec { background:linear-gradient(90deg,rgba(15,169,104,.06),rgba(59,111,245,.04)); }
+.lv-card.rec { background:linear-gradient(90deg,rgba(15,169,104,.06),rgba(214,66,126,.04)); }
 .lv-thumb {
   width:48px; height:48px; border-radius:13px; background:var(--surface2);
   display:flex; align-items:center; justify-content:center; font-size:22px;
@@ -424,7 +424,7 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
 .lv-recbadge {
   position:absolute; top:10px; right:14px; font-size:9px; font-weight:800;
   text-transform:uppercase; letter-spacing:.5px;
-  background:linear-gradient(135deg,#0fa968,#3b6ff5); color:#fff;
+  background:linear-gradient(135deg,#0fa968,#0c9d7f); color:#fff;
   padding:3px 9px; border-radius:20px;
 }
 .lv-empty { padding:40px 24px; text-align:center; font-size:13px; color:var(--muted); line-height:1.6; }
@@ -521,7 +521,7 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
 
 /* ── PROFILSIDE ── */
 .pp-tab { flex:1; padding:9px 8px; border:1.5px solid var(--border); border-radius:10px; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); background:var(--surface2); text-align:center; transition:all .15s; }
-.pp-tab.active { border-color:var(--accent); color:var(--accent); background:rgba(59,111,245,0.08); }
+.pp-tab.active { border-color:var(--accent); color:var(--accent); background:rgba(214,66,126,0.08); }
 .pp-rank-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
 .pp-rank-row:last-child { border-bottom:none; }
 /* ── BRAGDER (achievements – rolig liste) ── */
@@ -570,8 +570,8 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 .mapbox-marker:hover { transform: scale(1.1) translateY(-2px); }
 /* Tillit/rangering: grønn glød = godt vurdert + verifisert, blå = beste treff */
 .mapbox-marker.marker-trusted { filter: drop-shadow(0 0 4px rgba(15,169,104,.85)); }
-.mapbox-marker.marker-top { filter: drop-shadow(0 0 8px rgba(59,111,245,.95)); z-index: 6 !important; }
-.mapbox-marker.marker-top.marker-trusted { filter: drop-shadow(0 0 5px rgba(15,169,104,.9)) drop-shadow(0 0 8px rgba(59,111,245,.95)); }
+.mapbox-marker.marker-top { filter: drop-shadow(0 0 8px rgba(214,66,126,.95)); z-index: 6 !important; }
+.mapbox-marker.marker-top.marker-trusted { filter: drop-shadow(0 0 5px rgba(15,169,104,.9)) drop-shadow(0 0 8px rgba(214,66,126,.95)); }
 /* Force ALL Mapbox markers to allow clicks */
 .mapboxgl-marker,
 .mapboxgl-marker *,
@@ -584,8 +584,9 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-/* ── QUEST MARKERS (shape = type/ownership) ──
-   circle = quest · square = service · triangle = your own · diamond = working on */
+/* ── QUEST MARKERS ──
+   Form = type: sirkel = oppdrag · firkant = tjeneste.
+   Status = farge + glød + badge: gull 👑 = mitt · teal 🔨 = jobber med. */
 .quest-pin {
   display:flex; flex-direction:column; align-items:center;
   position:relative;
@@ -609,18 +610,12 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 }
 .qp-icon { position:relative; z-index:1; pointer-events:none; }
 .qp-icon svg { display:block; }
-.shape-triangle .qp-icon svg { width:18px; height:18px; }
 .qp-img  { position:absolute; top:2.5px; left:2.5px; width:calc(100% - 5px); height:calc(100% - 5px); z-index:1; border-radius:50%; object-fit:cover; }
 
-/* shape variants */
+/* shape variants – form følger alltid type: sirkel = oppdrag · firkant = tjeneste.
+   Status (mitt/jobber/søkt/pauset) = farge + glød + badge, aldri form. */
 .shape-square  .qp-shape { border-radius:11px; }
 .shape-square  .qp-img   { border-radius:8px; }
-.shape-diamond .qp-shape { inset:auto; top:6px; left:6px; width:30px; height:30px; border-radius:7px; transform:rotate(45deg); }
-.shape-diamond .qp-img   { border-radius:0; clip-path:polygon(50% 2%,98% 50%,50% 98%,2% 50%); }
-.shape-triangle .qp-shape svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; filter:drop-shadow(var(--shadow-sm)); }
-.qp-tri-path { fill:var(--surface); stroke:#f0a500; stroke-width:2.5; stroke-linejoin:round; }
-.shape-triangle .qp-icon { font-size:15px; transform:translateY(4px); }
-.shape-triangle .qp-img  { border-radius:0; clip-path:polygon(50% 14%,92% 88%,8% 88%); }
 
 /* type colours (border on the shape) */
 .quest-pin.haste   .qp-shape { border-color:var(--red); }
@@ -640,7 +635,6 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
   border:2px solid var(--surface); box-shadow:var(--shadow-sm);
   white-space:nowrap;
 }
-.shape-triangle .qp-coin { bottom:-2px; }
 .quest-pin.haste   .qp-coin { background:var(--red); }
 .quest-pin.charity .qp-coin { background:var(--green); }
 .quest-pin.service .qp-coin { background:var(--accent2); }
@@ -654,17 +648,21 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
 /* expired */
 .quest-pin.expired { opacity:.6; filter:grayscale(.6); }
 .quest-pin.expired .qp-shape { border-color:var(--muted); }
-.quest-pin.expired .qp-tri-path { stroke:var(--muted); }
 .quest-pin.expired .qp-coin { background:var(--muted); }
 /* ── YOUR OWN / ACTIVE QUESTS (only the logged-in owner/taker sees these) ── */
-/* your own quest = gold (triangle) */
+/* eget innlegg = gull (farge + glød + 👑-badge; formen følger typen) */
 .quest-pin.mine .qp-shape { border-color:#f0a500; box-shadow:0 0 0 3px rgba(240,165,0,.20), var(--shadow); }
 .quest-pin.mine .qp-coin  { background:#f0a500; color:#241a00; }
-/* quest you're currently working on = teal (diamond) */
+.quest-pin.mine .qp-badge { background:#f0a500; color:#241a00; border:1px solid rgba(255,255,255,.4); }
+/* oppdrag du jobber med = teal (farge + glød + 🔨-badge + pulserende ring) */
 .quest-pin.working .qp-shape { border-color:#14a89b; box-shadow:0 0 0 3px rgba(20,168,155,.22), var(--shadow); }
 .quest-pin.working .qp-coin  { background:#14a89b; color:#fff; }
-/* triangle gets its outline from the SVG, so no box ring/border on the shape div */
-.quest-pin.shape-triangle .qp-shape { background:none; border:none; box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none; }
+.quest-pin.working .qp-badge { background:#14a89b; color:#fff; border:1px solid rgba(255,255,255,.35); }
+.quest-pin.working .qp-emblem::before {
+  content:''; position:absolute; inset:-5px; border-radius:50%;
+  border:2px solid #14a89b; opacity:.5; animation:pulse 1.4s infinite;
+}
+.quest-pin.working.shape-square .qp-emblem::before { border-radius:15px; }
 /* quest you've applied for (taker + pending) = toned down with a "Søkt" badge */
 .qp-badge {
   position:absolute; top:-13px; left:50%; transform:translateX(-50%); z-index:5;
@@ -895,8 +893,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .lg-sw { width:16px; height:16px; flex-shrink:0; background:var(--surface); border:2.5px solid var(--accent); box-sizing:border-box; }
 .lg-sw.circle  { border-radius:50%; }
 .lg-sw.square  { border-radius:5px; }
-.lg-sw.diamond { width:13px; height:13px; border-radius:3px; transform:rotate(45deg); margin:1px 2px; }
-.lg-sw.tri { width:0; height:0; border:none; background:none; border-left:8px solid transparent; border-right:8px solid transparent; border-bottom:15px solid #f0a500; border-radius:0; }
+.lg-sw.c-gold   { border-color:#f0a500; }
 .lg-sw.c-blue   { border-color:var(--accent); }
 .lg-sw.c-red    { border-color:var(--red); }
 .lg-sw.c-green  { border-color:var(--green); }
@@ -946,11 +943,12 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .hiw-sw{width:18px;height:18px;flex-shrink:0;position:relative}
 .hiw-sw.circle{border-radius:50%}
 .hiw-sw.square{border-radius:5px}
-.hiw-sw.diamond{width:15px;height:15px;border-radius:4px;transform:rotate(45deg);margin:1px 2px}
-.hiw-sw.tri{width:0;height:0;background:none;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:16px solid var(--gold)}
-.hiw-sw.c-blue{background:#3b6ff5}.hiw-sw.c-purple{background:var(--accent2)}.hiw-sw.c-green{background:var(--green)}
+
+.hiw-sw.c-gold{background:#f0a500}
+.hiw-sw.c-teal.pulse::after{border-color:#14a89b}
+.hiw-sw.c-blue{background:var(--accent)}.hiw-sw.c-purple{background:var(--accent2)}.hiw-sw.c-green{background:var(--green)}
 .hiw-sw.c-red{background:var(--red)}.hiw-sw.c-teal{background:#14a89b}.hiw-sw.c-grey{background:#9aa3b2}
-.hiw-sw.c-faded{background:#3b6ff5;opacity:.4}
+.hiw-sw.c-faded{background:var(--accent);opacity:.4}
 .hiw-sw.pulse::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--red);opacity:.6;animation:hiwPls 1.4s ease-out infinite}
 @keyframes hiwPls{0%{transform:scale(.7);opacity:.7}100%{transform:scale(1.5);opacity:0}}
 .hiw-cond{background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.18);border-radius:14px;padding:14px 15px;margin-bottom:14px;font-size:11.5px;color:var(--muted);line-height:1.7}
@@ -960,15 +958,15 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .hiw-cta{width:100%;background:var(--grad);color:#fff;border:none;border-radius:13px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.2px}
 /* Diskré «se hit»-pulsering på legend-knappen for nye brukere */
 @keyframes legendHint {
-  0%   { box-shadow:var(--shadow), 0 0 0 0 rgba(59,111,245,0.45); }
-  70%  { box-shadow:var(--shadow), 0 0 0 10px rgba(59,111,245,0); }
-  100% { box-shadow:var(--shadow), 0 0 0 0 rgba(59,111,245,0); }
+  0%   { box-shadow:var(--shadow), 0 0 0 0 rgba(214,66,126,0.45); }
+  70%  { box-shadow:var(--shadow), 0 0 0 10px rgba(214,66,126,0); }
+  100% { box-shadow:var(--shadow), 0 0 0 0 rgba(214,66,126,0); }
 }
 #legend-toggle.hint { border-color:var(--accent); animation:legendHint 1.8s ease-out infinite; }
 /* Rapporter-grunner */
 .report-reason { width:100%; text-align:left; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; padding:11px 14px; font-size:13px; font-weight:600; color:var(--text); cursor:pointer; font-family:inherit; transition:border-color .15s, background .15s; }
 .report-reason:hover { border-color:var(--accent); }
-.report-reason.sel { border-color:var(--accent); background:rgba(59,111,245,0.10); }
+.report-reason.sel { border-color:var(--accent); background:rgba(214,66,126,0.10); }
 
 /* ── MODAL ── */
 #modal-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.5); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; }
@@ -1014,13 +1012,13 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .toggle.on { background:var(--accent); border-color:var(--accent); }
 .toggle::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .2s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
 .toggle.on::after { left:22px; }
-.disclaimer { background:var(--accent-glow); border:1px solid rgba(59,111,245,0.2); border-radius:10px; padding:12px; font-size:11px; color:var(--muted); line-height:1.65; margin-top:4px; }
+.disclaimer { background:var(--accent-glow); border:1px solid rgba(214,66,126,0.2); border-radius:10px; padding:12px; font-size:11px; color:var(--muted); line-height:1.65; margin-top:4px; }
 .disclaimer strong { color:var(--text); }
 .quest-mode-toggle { display:flex; gap:8px; margin-bottom:8px; }
 .mode-btn { flex:1; padding:10px 8px; border:2px solid var(--border); border-radius:10px; cursor:pointer; font-size:13px; font-weight:600; color:var(--muted); background:var(--surface2); text-align:center; transition:all .15s; }
-.mode-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(59,111,245,0.08); }
+.mode-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(214,66,126,0.08); }
 .day-btn { padding:6px 10px; border:2px solid var(--border); border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); background:var(--surface2); transition:all .15s; user-select:none; }
-.day-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(59,111,245,0.1); }
+.day-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(214,66,126,0.1); }
 .rating-tag { display:inline-block; padding:6px 12px; border:1.5px solid var(--border); border-radius:50px; cursor:pointer; font-size:12px; font-weight:500; color:var(--muted); background:var(--surface2); transition:all .15s; user-select:none; }
 .rating-tag.active { border-color:var(--gold); color:var(--gold); background:rgba(201,144,10,0.1); }
 .publish-btn { width:100%; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; transition:all .15s; box-shadow:0 3px 14px var(--accent-glow); }
@@ -1058,7 +1056,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 #toast.t-1line { flex-wrap:nowrap; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 #toast.t-success { border-left-color:var(--green); background:linear-gradient(0deg,rgba(15,169,104,.07),rgba(15,169,104,.07)),var(--surface); }
-#toast.t-info { border-left-color:var(--accent); background:linear-gradient(0deg,rgba(59,111,245,.06),rgba(59,111,245,.06)),var(--surface); }
+#toast.t-info { border-left-color:var(--accent); background:linear-gradient(0deg,rgba(214,66,126,.06),rgba(214,66,126,.06)),var(--surface); }
 #toast.t-warn { border-left-color:var(--t-warn); background:linear-gradient(0deg,rgba(224,140,11,.09),rgba(224,140,11,.09)),var(--surface); }
 #toast.t-error { border-left-color:var(--t-error); background:linear-gradient(0deg,rgba(229,72,77,.08),rgba(229,72,77,.08)),var(--surface); }
 
@@ -1726,7 +1724,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
     <div class="fsection">
       <div class="fsection-title"><span id="fsec-category">Category</span></div>
       <div class="fcat-grid">
-        <div class="fcat-item active" onclick="toggleCat(this)" data-cat="all"><div class="fcat-icon" style="--ink:#3b6ff5"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg></div><div class="fcat-label">Alle</div></div>
+        <div class="fcat-item active" onclick="toggleCat(this)" data-cat="all"><div class="fcat-icon" style="--ink:#d6427e"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg></div><div class="fcat-label">Alle</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="hjem"><div class="fcat-icon" style="--ink:#d97706"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v9h14v-9"/><path d="M10 19v-6h4v6"/></svg></div><div class="fcat-label">Hjem</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="kjøring"><div class="fcat-icon" style="--ink:#3b6ff5"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 9.5V3M9.8 13.3 4.2 17M14.2 13.3 19.8 17"/></svg></div><div class="fcat-label">Kjøring</div></div>
         <div class="fcat-item" onclick="toggleCat(this)" data-cat="handel"><div class="fcat-icon" style="--ink:#7c5cfc"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.5 12h10L20 7H6"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg></div><div class="fcat-label">Handel</div></div>
@@ -1955,8 +1953,8 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
           </div>
           <div class="hiw-leg-grp mt">Din status</div>
           <div class="hiw-leg-grid">
-            <div class="hiw-leg"><span class="hiw-sw tri"></span><span><b>Mitt</b> <span class="lt">— eget oppdrag</span></span></div>
-            <div class="hiw-leg"><span class="hiw-sw diamond c-teal"></span><span><b>Jobber med</b> <span class="lt">— tildelt deg</span></span></div>
+            <div class="hiw-leg"><span class="hiw-sw circle c-gold"></span><span><b>Mitt</b> <span class="lt">— 👑-merke</span></span></div>
+            <div class="hiw-leg"><span class="hiw-sw circle c-teal pulse"></span><span><b>Jobber med</b> <span class="lt">— pulserer</span></span></div>
             <div class="hiw-leg"><span class="hiw-sw circle c-faded"></span><span><b>Søkt</b> <span class="lt">— du har søkt</span></span></div>
             <div class="hiw-leg"><span class="hiw-sw circle c-grey"></span><span><b>Utløpt</b> <span class="lt">— frist passert</span></span></div>
           </div>
@@ -2022,7 +2020,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   </div>
   <div style="padding:6px 14px 2px"><div style="display:flex;gap:4px;background:var(--surface2);border-radius:50px;padding:4px"><button class="vt-btn active" data-vm="all" onclick="setViewMode('all')" style="flex:1;justify-content:center"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg><span data-en="All">Alt</span></button><button class="vt-btn" data-vm="quests" onclick="setViewMode('quests')" style="flex:1;justify-content:center"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 10h6M9 14h6"/></svg><span data-en="Quests">Oppdrag</span></button><button class="vt-btn" data-vm="services" onclick="setViewMode('services')" style="flex:1;justify-content:center"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-4h14l1 4"/><path d="M5 11v8h14v-8"/></svg><span data-en="Services">Tjenester</span></button></div></div>
   <div class="lv-catrow" id="lv-catrow">
-    <button class="lv-catchip on" data-lvcat="all" onclick="pickListCategory('all')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="#3b6ff5" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>Alle</button>
+    <button class="lv-catchip on" data-lvcat="all" onclick="pickListCategory('all')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="#d6427e" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>Alle</button>
     <button class="lv-catchip" data-lvcat="rengjøring" onclick="pickListCategory('rengjøring')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="#0fa9a0" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 3l-5 5"/><path d="M15.5 6.5 13 9l-7 7 2 2 7-7 2.5-2.5"/><path d="M4 21h5"/></svg>Rengjøring</button>
     <button class="lv-catchip" data-lvcat="hjem" onclick="pickListCategory('hjem')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v9h14v-9"/><path d="M10 19v-6h4v6"/></svg>Hjem</button>
     <button class="lv-catchip" data-lvcat="hagearbeid" onclick="pickListCategory('hagearbeid')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="#0fa968" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20C7 20 4 17 4 13c0-5 4-9 9-9 1 6-1 11-2 16Z"/><path d="M11 20c0-4 2-7 6-9"/></svg>Hage</button>
@@ -2091,8 +2089,8 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
   <div class="lg-row"><span class="lg-sw circle c-green"></span><span class="lg-txt"><b>Veldedighet</b> – gratis oppdrag</span></div>
   <div class="lg-row"><span class="lg-sw square c-purple"></span><span class="lg-txt"><b>Tjeneste</b> – noen tilbyr hjelp</span></div>
   <div class="lg-gtitle">Din status</div>
-  <div class="lg-row"><span class="lg-sw tri"></span><span class="lg-txt"><b>Mitt oppdrag/tilbud</b> – vises som trekant</span></div>
-  <div class="lg-row"><span class="lg-sw diamond c-teal"></span><span class="lg-txt"><b>Jobber med</b> – tildelt deg (rombe)</span></div>
+  <div class="lg-row"><span class="lg-sw circle c-gold"></span><span class="lg-txt"><b>Mitt oppdrag/tilbud</b> – gull med 👑-merke</span></div>
+  <div class="lg-row"><span class="lg-sw circle c-teal pulse"></span><span class="lg-txt"><b>Jobber med</b> – tildelt deg (pulserer)</span></div>
   <div class="lg-row"><span class="lg-sw circle c-faded"></span><span class="lg-txt"><b>Søkt på</b> – merket «✓ Søkt»</span></div>
   <div class="lg-row"><span class="lg-sw circle c-grey"></span><span class="lg-txt"><b>Utløpt</b> – vises med ⏰</span></div>
 </div>
@@ -2270,7 +2268,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
             <div class="day-btn" data-day="0" onclick="toggleDay(this)" data-en="Sun">Søn</div>
           </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:flex-start;background:rgba(59,111,245,.07);border:1px solid rgba(59,111,245,.16);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:#2b4a86;line-height:1.5"><span>🕐</span><div data-en="Just info about when it suits. Stays up until someone takes it — the time never hides it.">Bare info om når det passer. Ligger ute til noen tar det – klokka skjuler det aldri.</div></div>
+        <div style="display:flex;gap:8px;align-items:flex-start;background:rgba(214,66,126,.07);border:1px solid rgba(214,66,126,.16);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:#7e2a50;line-height:1.5"><span>🕐</span><div data-en="Just info about when it suits. Stays up until someone takes it — the time never hides it.">Bare info om når det passer. Ligger ute til noen tar det – klokka skjuler det aldri.</div></div>
       </div>
 
       <!-- Når som helst -->
@@ -3378,7 +3376,7 @@ function questToJob(q) {
 // ── SENTRAL IKON-MODELL (linje-ikoner, variant C) ──────────────────
 // Kategori-ikoner: nøkkel → {c: farge, p: svg-paths}. Delt av filter, chips, kartnåler og lister.
 const CAT_ICONS = {
-  all:        {c:'#3b6ff5', p:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/>'},
+  all:        {c:'#d6427e', p:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/>'},
   hjem:       {c:'#d97706', p:'<path d="M3 11 12 4l9 7"/><path d="M5 10v9h14v-9"/><path d="M10 19v-6h4v6"/>'},
   kjøring:    {c:'#3b6ff5', p:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 9.5V3M9.8 13.3 4.2 17M14.2 13.3 19.8 17"/>'},
   handel:     {c:'#7c5cfc', p:'<path d="M3 4h2l2.5 12h10L20 7H6"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/>'},
@@ -3467,29 +3465,27 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
   const _mkKey = expired ? null : catKeyFromEmoji(displayIcon);
   const _mkIcon = _mkKey ? catIconSvg(_mkKey, {size:22, stroke:2}) : displayIcon;
 
-  // Shape encodes type/ownership at a glance.
-  // Eierskap (egen/jobber-på) vinner over type, så egne tjenester også blir trekant.
-  const shape = ownership === 'mine' ? 'triangle'
-    : ownership === 'working' ? 'diamond'
-    : type === 'service' ? 'square'
-    : 'circle';
+  // Form følger ALLTID type: sirkel = oppdrag, firkant = tjeneste.
+  // Status (mitt/jobber/søkt/pauset) vises med farge + glød + badge – aldri form.
+  const shape = type === 'service' ? 'square' : 'circle';
 
-  const triSvg = shape === 'triangle'
-    ? `<svg viewBox="0 0 42 42" preserveAspectRatio="none"><path class="qp-tri-path" d="M21 3.5 L37.5 35 Q39.5 38.5 35 38.5 L7 38.5 Q2.5 38.5 4.5 35 Z"/></svg>`
+  const badge = paused ? `<div class="qp-badge">⏸ ${NE('Pauset','Paused')}</div>`
+    : ownership === 'applied' ? `<div class="qp-badge">✓ ${NE('Søkt','Applied')}</div>`
+    : ownership === 'mine' ? `<div class="qp-badge">👑 ${NE('Mitt','Mine')}</div>`
+    : ownership === 'working' ? `<div class="qp-badge">🔨 ${NE('Jobber','Working')}</div>`
     : '';
 
-  const badge = paused ? `<div class="qp-badge">⏸ Pauset</div>`
-    : ownership === 'applied' ? `<div class="qp-badge">✓ Søkt</div>`
-    : '';
+  // Haste får ⚡ i prisknappen som ekstra skille mot magenta-oppdrag
+  const coinText = priceText ? (typeClass === 'haste' ? '⚡ ' + priceText : priceText) : '';
 
   el.innerHTML = `
     <div class="quest-pin ${typeClass} ${ownerClass} ${pausedClass} shape-${shape}">
       ${badge}
       <div class="qp-emblem">
-        <div class="qp-shape">${triSvg}</div>
+        <div class="qp-shape"></div>
         <span class="qp-icon">${_mkIcon}</span>
         ${imageUrl ? `<img class="qp-img" src="${imageUrl}" onerror="this.remove()">` : ''}
-        ${priceText ? `<div class="qp-coin">${priceText}</div>` : ''}
+        ${coinText ? `<div class="qp-coin">${coinText}</div>` : ''}
       </div>
       ${name ? `<div class="qp-name">${name}</div>` : ''}
     </div>`;
@@ -4031,7 +4027,7 @@ function showPanel(job) {
     kindBadge.style.cssText = 'display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:50px;margin-bottom:6px;background:rgba(245,197,24,0.16);color:var(--gold);border:1px solid var(--gold)';
     kindBadge.textContent = '🧪 EKSEMPEL';
   } else {
-    kindBadge.style.cssText = 'display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:50px;margin-bottom:6px;background:rgba(59,111,245,0.12);color:var(--accent);border:1px solid var(--accent)';
+    kindBadge.style.cssText = 'display:inline-block;font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:50px;margin-bottom:6px;background:rgba(214,66,126,0.12);color:var(--accent);border:1px solid var(--accent)';
     kindBadge.textContent = '📋 OPPDRAG';
   }
   document.getElementById('panel-title').textContent = job.title;
@@ -4056,7 +4052,7 @@ function showPanel(job) {
     if(trustParts.length) trustLine = trustParts.join(' · ');
     else trustLine = memberSinceText(createdAt) || t('newUserLabel');
     const verifiedPill = verified
-      ? ` <span style="font-size:9px;padding:2px 7px;border-radius:50px;background:rgba(59,111,245,0.12);color:var(--accent);border:1px solid var(--accent);font-weight:700;white-space:nowrap">${t('verifiedLabel')}</span>`
+      ? ` <span style="font-size:9px;padding:2px 7px;border-radius:50px;background:rgba(214,66,126,0.12);color:var(--accent);border:1px solid var(--accent);font-weight:700;white-space:nowrap">${t('verifiedLabel')}</span>`
       : '';
     const row = document.createElement('div');
     row.id = 'panel-giver-row';
@@ -4140,14 +4136,14 @@ function showPanel(job) {
     const dateLong = job.scheduledDate
       ? new Date(job.scheduledDate).toLocaleDateString('nb-NO', { weekday:'long', day:'numeric', month:'long' })
       : '';
-    let icon = '📅', accent = '59,111,245', title = '', sub = '';
+    let icon = '📅', accent = '214,66,126', title = '', sub = '';
 
     if(mode === 'frist' && (job.scheduledDate || job.scheduledTimeTo)) {
       icon = '⏳'; accent = '229,72,77';
       title = NE('Frist','Deadline') + (dateLong ? ': ' + dateLong : '');
       if(job.scheduledTimeTo) sub = NE('Innen kl. ','By ') + trimTime(job.scheduledTimeTo);
     } else if(mode === 'vindu' && (job.scheduledTimeFrom || job.scheduledTimeTo || job.scheduledDate || job.scheduleDays)) {
-      icon = '🕐'; accent = '59,111,245';
+      icon = '🕐'; accent = '214,66,126';
       const win = job.scheduledTimeFrom
         ? (job.scheduledTimeTo ? `${trimTime(job.scheduledTimeFrom)}–${trimTime(job.scheduledTimeTo)}` : NE('fra ','from ') + trimTime(job.scheduledTimeFrom))
         : (job.scheduledTimeTo ? NE('til ','until ') + trimTime(job.scheduledTimeTo) : '');
@@ -4986,7 +4982,7 @@ function showQuestPostedPopup(title) {
       <div style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px">Oppdrag lagt ut!</div>
       <div style="font-size:14px;color:var(--muted);margin-bottom:6px">«${title}»</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.5">er nå synlig på kartet. Du vil bli varslet når noen søker!</div>
-      <div style="background:linear-gradient(135deg,rgba(59,111,245,0.08),rgba(124,92,252,0.08));border:1px solid rgba(59,111,245,0.15);border-radius:12px;padding:12px 16px;margin-bottom:24px;font-size:12px;color:var(--muted);line-height:1.6">
+      <div style="background:linear-gradient(135deg,rgba(214,66,126,0.08),rgba(124,92,252,0.08));border:1px solid rgba(214,66,126,0.15);border-radius:12px;padding:12px 16px;margin-bottom:24px;font-size:12px;color:var(--muted);line-height:1.6">
         💡 Tips: Del oppdraget med venner for å finne utfører raskere!
       </div>
       <button onclick="document.getElementById('quest-posted-popup').remove()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
@@ -6546,7 +6542,7 @@ async function loadProfileReviews(userId) {
   };
 
   const stars = n => '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n);
-  const avatarGrads = ['linear-gradient(135deg,#0ea5e9,#6366f1)','linear-gradient(135deg,#f97316,#a855f7)','linear-gradient(135deg,#0fa968,#3b6ff5)','linear-gradient(135deg,#ec4899,#8b5cf6)'];
+  const avatarGrads = ['linear-gradient(135deg,#0ea5e9,#6366f1)','linear-gradient(135deg,#f97316,#a855f7)','linear-gradient(135deg,#0fa968,#0c9d7f)','linear-gradient(135deg,#ec4899,#8b5cf6)'];
 
   // Sammendrag-HTML
   const distRows = [5,4,3,2,1].map(star => {
@@ -7338,7 +7334,7 @@ async function loadMyQuests() {
       const safeTitle = (q.title||'Oppdrag').replace(/'/g,"\\'");
       const paid = !!c.giver_paid_at;
       const statusChip = c.status==='completed'?'🏆 Fullført':c.status==='accepted'?'🔥 Aktivt – ditt oppdrag!':c.status==='rejected'?'✕ Ikke valgt':'⏳ Venter svar';
-      const chipBg = c.status==='completed'?'rgba(59,111,245,0.1)':c.status==='accepted'?'rgba(15,169,104,0.1)':c.status==='rejected'?'rgba(107,114,128,0.1)':'rgba(249,115,22,0.1)';
+      const chipBg = c.status==='completed'?'rgba(214,66,126,0.1)':c.status==='accepted'?'rgba(15,169,104,0.1)':c.status==='rejected'?'rgba(107,114,128,0.1)':'rgba(249,115,22,0.1)';
       const chipCol = c.status==='completed'?'var(--accent)':c.status==='accepted'?'var(--green)':c.status==='rejected'?'var(--muted)':'#f97316';
       return `<div style="background:var(--surface);border:1.5px solid ${active?'var(--green)':'var(--border)'};border-radius:14px;overflow:hidden${active?';box-shadow:0 2px 12px rgba(15,169,104,0.15)':''}">
         <div style="padding:14px 16px">
@@ -7357,7 +7353,7 @@ async function loadMyQuests() {
             ${c.work_done_at
               ? `<div style="display:flex;align-items:center;gap:7px;margin-top:12px;font-size:12px;font-weight:700;color:var(--green)">🔨 Du meldte oppdraget utført</div>`
               : `<button onclick="markWorkDone('${c.id}','${q.id}')" style="width:100%;background:var(--surface);border:1.5px solid var(--green);color:var(--green);border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">🔨 Jeg er ferdig – gi beskjed</button>`}
-            <button onclick="if(confirm(NE('Bekrefte at du har mottatt betaling? Dette fullfører oppdraget.','Confirm that you have received payment? This completes the task.'))) confirmPaymentReceived('${c.id}','${q.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Jeg har mottatt betaling</button>
+            <button onclick="if(confirm(NE('Bekrefte at du har mottatt betaling? Dette fullfører oppdraget.','Confirm that you have received payment? This completes the task.'))) confirmPaymentReceived('${c.id}','${q.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Jeg har mottatt betaling</button>
             <div style="display:flex;gap:8px;margin-top:8px">
               <button onclick="showChatPaymentInfoFor('${c.id}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>
               <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
@@ -7534,7 +7530,7 @@ async function showChatPaymentInfoFor(convId) {
 function completionTracker(paid, done) {
   const dotBase = 'width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0;';
   const doneDot = c => `<div style="${dotBase}background:var(--green);color:#fff;border:2px solid var(--green)">${c}</div>`;
-  const curDot  = c => `<div style="${dotBase}background:var(--surface);color:var(--accent);border:2px solid var(--accent);box-shadow:0 0 0 4px rgba(59,111,245,.15)">${c}</div>`;
+  const curDot  = c => `<div style="${dotBase}background:var(--surface);color:var(--accent);border:2px solid var(--accent);box-shadow:0 0 0 4px rgba(214,66,126,.15)">${c}</div>`;
   const idleDot = c => `<div style="${dotBase}background:var(--surface2);color:var(--muted);border:2px solid var(--border)">${c}</div>`;
   const cap = (col, txt) => `<div style="font-size:10px;font-weight:700;margin-top:6px;color:${col};white-space:nowrap">${txt}</div>`;
   const conn = on => `<div style="flex:1;height:3px;border-radius:3px;margin:15px 4px 0;background:${on?'var(--green)':'var(--border)'}"></div>`;
@@ -7574,7 +7570,7 @@ function giverTakenBlock(q, conv) {
     <div style="margin-top:12px">
       <button onclick="showChatPaymentInfoFor('${conv.id}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💸 Betal med Vipps</button>
       <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="markGiverPaid('${conv.id}','${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>
+        <button onclick="markGiverPaid('${conv.id}','${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>
         ${chatBtn}
       </div>
     </div>`;
@@ -7619,7 +7615,7 @@ function questCard(q, type) {
   // Farge rundt kortet – som på «Aktive & søkt»
   let cardBorder = '1px solid var(--border)';
   let cardShadow = '';
-  if(taken) { cardBorder = '1.5px solid var(--accent)'; cardShadow = ';box-shadow:0 2px 12px rgba(59,111,245,0.15)'; }
+  if(taken) { cardBorder = '1.5px solid var(--accent)'; cardShadow = ';box-shadow:0 2px 12px rgba(214,66,126,0.15)'; }
   else if(q.status === 'open') { cardBorder = '1.5px solid var(--green)'; cardShadow = ';box-shadow:0 2px 12px rgba(15,169,104,0.13)'; }
   else if(q.status === 'paused') { cardBorder = '1.5px solid rgba(245,158,11,0.45)'; }
   const dim = (isCompleted || isExpired) ? ';opacity:.82' : '';
@@ -8480,7 +8476,7 @@ async function runSearch(query) {
 
   let resultHtml = '';
   if(questHits.length) {
-    resultHtml += '<div class="search-section-title" style="background:rgba(59,111,245,0.06);color:var(--accent)">📋 Oppdrag (' + questHits.length + ')</div>' + questHits.map(renderHit).join('');
+    resultHtml += '<div class="search-section-title" style="background:rgba(214,66,126,0.06);color:var(--accent)">📋 Oppdrag (' + questHits.length + ')</div>' + questHits.map(renderHit).join('');
   }
   if(svcHits.length) {
     resultHtml += '<div class="search-section-title" style="background:rgba(168,85,247,0.06);color:var(--accent2)">🏪 Tilbud (' + svcHits.length + ')</div>' + svcHits.map(renderHit).join('');
@@ -8634,7 +8630,7 @@ function showServicePanel(svc) {
       const pname = pp.full_name || 'Tilbyder';
       const pinit = pname.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
       const provVerifiedPill = pp.verified
-        ? ` <span style="font-size:9px;padding:2px 7px;border-radius:50px;background:rgba(59,111,245,0.12);color:var(--accent);border:1px solid var(--accent);font-weight:700;white-space:nowrap">${t('verifiedLabel')}</span>`
+        ? ` <span style="font-size:9px;padding:2px 7px;border-radius:50px;background:rgba(214,66,126,0.12);color:var(--accent);border:1px solid var(--accent);font-weight:700;white-space:nowrap">${t('verifiedLabel')}</span>`
         : '';
       document.getElementById('service-provider-name').innerHTML = pname + provVerifiedPill;
       av.textContent = pinit;
@@ -9061,7 +9057,7 @@ async function renderTilbud() {
     .select('*').eq('user_id', currentUser.id)
     .neq('status','deleted')
     .order('created_at', { ascending:false });
-  const addBtn = `<button onclick="closeTjenester();openServiceModal()" style="width:100%;background:linear-gradient(135deg,rgba(124,92,252,.1),rgba(59,111,245,.1));border:1px dashed rgba(124,92,252,0.4);color:var(--accent2);border-radius:13px;padding:13px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px">+ Legg ut ny tjeneste</button>`;
+  const addBtn = `<button onclick="closeTjenester();openServiceModal()" style="width:100%;background:linear-gradient(135deg,rgba(124,92,252,.1),rgba(214,66,126,.1));border:1px dashed rgba(124,92,252,0.4);color:var(--accent2);border-radius:13px;padding:13px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px">+ Legg ut ny tjeneste</button>`;
   if(error) { el.innerHTML = '<div style="padding:16px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.3);border-radius:12px;font-size:12px;color:var(--red)">⚠️ Kunne ikke hente tjenester: '+error.message+'</div>' + addBtn; return; }
   if(!services || services.length === 0) {
     el.innerHTML = '<div style="text-align:center;padding:36px 20px;color:var(--muted);font-size:13px">Du tilbyr ingen tjenester ennå.<br>Legg ut det du kan hjelpe andre med 🏪</div>' + addBtn;
@@ -9152,7 +9148,7 @@ function tjSec(kind, count, title, sub) {
   const map = {
     green:  ['var(--green)', '#fff', 'var(--green)'],
     orange: ['rgba(249,115,22,.14)', '#f97316', '#f97316'],
-    accent: ['rgba(59,111,245,0.12)', 'var(--accent)', 'var(--accent)'],
+    accent: ['rgba(214,66,126,0.12)', 'var(--accent)', 'var(--accent)'],
     muted:  ['var(--surface2)', 'var(--muted)', 'var(--muted)']
   };
   const [badgeBg, badgeCol, titleCol] = map[kind] || map.muted;
@@ -9276,7 +9272,7 @@ function bookingCard(b, nameMap, sessions) {
   if(b.status === 'requested') {
     body = isProvider
       ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>📩</span><div><b>Ny forespørsel fra <span onclick="event.stopPropagation();viewOtherProfile('${otherId}')" style="color:var(--accent);cursor:pointer;text-decoration:underline">${otherName} ›</span></b> – ${when}, ${b.price} kr.${b.note?'<br>«'+b.note+'»':''}</div></div>
-         <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft avtale</button>
+         <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft avtale</button>
          <div style="display:flex;gap:8px;margin-top:8px">${chatBtn}<button onclick="declineBooking('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslå</button></div>`
       : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Venter på at ${otherName} bekrefter tid og pris.</div></div>
          <div style="display:flex;gap:8px;margin-top:12px">${chatBtn}</div>`;
@@ -9289,7 +9285,7 @@ function bookingCard(b, nameMap, sessions) {
         ${b.work_done_at
           ? `<div style="display:flex;align-items:center;gap:7px;margin-top:12px;font-size:12px;font-weight:700;color:var(--green)">🔨 Du meldte avtalen utført</div>`
           : `<button onclick="bookingMarkDone('${b.id}')" style="width:100%;background:var(--surface);border:1.5px solid var(--green);color:var(--green);border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">🔨 Jeg er ferdig – gi beskjed</button>`}
-        <button onclick="bookingConfirmReceived('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Jeg har mottatt betaling</button>
+        <button onclick="bookingConfirmReceived('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Jeg har mottatt betaling</button>
         <div style="display:flex;gap:8px;margin-top:8px"><button onclick="showChatPaymentInfoFor('${convId}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>${chatBtn}</div>`;
     } else {
       // customer = betaler (giver)
@@ -9297,12 +9293,12 @@ function bookingCard(b, nameMap, sessions) {
         <div style="display:flex;gap:8px;align-items:flex-start;background:${b.work_done_at?'rgba(15,169,104,0.09)':'var(--surface2)'};${b.work_done_at?'border:1px solid rgba(15,169,104,0.25);':''}border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:${b.work_done_at?'var(--text)':'var(--muted)'};line-height:1.5"><span>${b.work_done_at?'🔨':'📅'}</span><div>${b.work_done_at?'<b>Tilbyder melder utført.</b> Betal (Vipps eller annen avtalt metode) og marker betalt.':'Avtale bekreftet. Møt opp til avtalt tid.'}</div></div>
         <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">💸 Betal med Vipps</button>
         <div style="display:flex;gap:8px;margin-top:8px">
-          ${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="bookingMarkPaid('${b.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}
+          ${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="bookingMarkPaid('${b.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}
           ${chatBtn}
         </div>`;
     }
   } else if(b.status === 'completed') {
-    body = `<div style="display:flex;align-items:center;gap:10px;background:rgba(59,111,245,0.07);border:1px solid rgba(59,111,245,0.22);border-radius:12px;padding:13px 15px;margin-top:12px">
+    body = `<div style="display:flex;align-items:center;gap:10px;background:rgba(214,66,126,0.07);border:1px solid rgba(214,66,126,0.22);border-radius:12px;padding:13px 15px;margin-top:12px">
       <span style="font-size:22px">🏆</span>
       <div style="font-size:13px;font-weight:700;color:var(--accent)">Avtale fullført${isProvider?' – betaling bekreftet':' – du betalte'}<small style="display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:2px">${isProvider?'Vurder kunden fra varselet, om du vil.':'Vil du vurdere tilbyderen?'}</small></div></div>
       ${!isProvider && convId?`<button onclick="showRating('${safeName}','${convId}','${b.provider_id}','')" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:11px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">⭐ Gi vurdering</button>`:''}`;
@@ -9321,7 +9317,7 @@ function bookingCard(b, nameMap, sessions) {
 
 function sessionRow(s) {
   let label, col, bg;
-  if(s.status === 'completed') { label = 'Gjort opp ✓'; col = 'var(--accent)'; bg = 'rgba(59,111,245,.1)'; }
+  if(s.status === 'completed') { label = 'Gjort opp ✓'; col = 'var(--accent)'; bg = 'rgba(214,66,126,.1)'; }
   else if(s.giver_paid_at) { label = 'Betalt – bekreftes'; col = 'var(--green)'; bg = 'rgba(15,169,104,.1)'; }
   else { label = 'Venter betaling'; col = '#f97316'; bg = 'rgba(249,115,22,.12)'; }
   return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
@@ -9338,13 +9334,13 @@ function sessionHandshake(s, isProvider, convId, chatBtn) {
   if(isProvider) {
     return wrap(`
       <div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:var(--muted);line-height:1.5"><span>${paid?'💸':'⏳'}</span><div>${paid?'<b style="color:var(--text)">Kunden har markert betalt.</b> Bekreft mottak for å gjøre opp økten.':'Venter på at kunden betaler for økten.'}</div></div>
-      <button onclick="sessionConfirmReceived('${s.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Bekreft mottatt betaling</button>
+      <button onclick="sessionConfirmReceived('${s.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;box-shadow:0 3px 14px rgba(15,169,104,.25)">✅ Bekreft mottatt betaling</button>
       <div style="display:flex;gap:8px;margin-top:8px"><button onclick="showChatPaymentInfoFor('${convId}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>${chatBtn}</div>`);
   }
   return wrap(`
     <div style="display:flex;gap:8px;align-items:flex-start;background:${paid?'var(--surface2)':'rgba(15,169,104,0.09)'};${paid?'':'border:1px solid rgba(15,169,104,0.25);'}border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:${paid?'var(--muted)':'var(--text)'};line-height:1.5"><span>${paid?'⏳':'🔨'}</span><div>${paid?'Du har markert betalt. Venter på tilbyders bekreftelse.':'<b>Tilbyder registrerte en økt.</b> Betal (Vipps eller annen avtalt metode) og marker betalt.'}</div></div>
     <button onclick="showChatPaymentInfoFor('${convId}')" style="width:100%;background:#0fa968;color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px">💸 Betal med Vipps</button>
-    <div style="display:flex;gap:8px;margin-top:8px">${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="sessionMarkPaid('${s.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}${chatBtn}</div>`);
+    <div style="display:flex;gap:8px;margin-top:8px">${paid?`<button disabled style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:not-allowed">✓ Markert betalt</button>`:`<button onclick="sessionMarkPaid('${s.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:10px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>`}${chatBtn}</div>`);
 }
 
 function recurringCard(b, nameMap, sessions) {
@@ -9371,7 +9367,7 @@ function recurringCard(b, nameMap, sessions) {
     </div>
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:4px">
       <span onclick="event.stopPropagation();viewOtherProfile('${otherId}')" style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(124,92,252,0.12);color:var(--accent2);font-weight:700;cursor:pointer">${isProvider?'👤 Kunde: ':'🏪 Tilbyder: '}${otherName} ›</span>
-      <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(59,111,245,0.1);color:var(--accent);font-weight:700">🔄 ${recLabel}</span>
+      <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(214,66,126,0.1);color:var(--accent);font-weight:700">🔄 ${recLabel}</span>
       <span style="font-size:11px;padding:3px 8px;border-radius:50px;background:rgba(15,169,104,0.1);color:var(--green);font-weight:700">${b.price} kr/gang</span>
     </div>`;
 
@@ -9379,7 +9375,7 @@ function recurringCard(b, nameMap, sessions) {
   if(b.status === 'requested') {
     body = isProvider
       ? `<div style="display:flex;gap:8px;align-items:flex-start;background:rgba(15,169,104,0.09);border:1px solid rgba(15,169,104,0.25);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--text);line-height:1.5"><span>📩</span><div><b>Forespørsel om fast avtale fra <span onclick="event.stopPropagation();viewOtherProfile('${otherId}')" style="color:var(--accent);cursor:pointer;text-decoration:underline">${otherName} ›</span></b> – ${recLabel}, fra ${formatDateShort(b.scheduled_at)}, ${b.price} kr/gang.${b.note?'<br>«'+b.note+'»':''}</div></div>
-         <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft fast avtale</button>
+         <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft fast avtale</button>
          <div style="display:flex;gap:8px;margin-top:8px">${chatBtn}<button onclick="declineBooking('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslå</button></div>`
       : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:10px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Venter på at ${otherName} bekrefter den faste avtalen (${recLabel}).</div></div>
          <div style="display:flex;gap:8px;margin-top:12px">${chatBtn}</div>`;
@@ -9392,12 +9388,12 @@ function recurringCard(b, nameMap, sessions) {
 
     const headerBlock = (b.status === 'active' && !open) ? (
       target
-        ? `<div style="background:rgba(59,111,245,.07);border:1px solid rgba(59,111,245,.2);border-radius:12px;padding:12px 14px;margin-top:14px">
+        ? `<div style="background:rgba(214,66,126,.07);border:1px solid rgba(214,66,126,.2);border-radius:12px;padding:12px 14px;margin-top:14px">
             <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:8px"><span>Økter denne måneden</span><span>${monthCount} av ${target}</span></div>
             <div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden"><div style="height:100%;background:var(--accent);border-radius:4px;width:${Math.min(monthCount/target*100,100)}%"></div></div>
           </div>`
         : (next ? `
-          <div style="display:flex;align-items:center;gap:12px;background:rgba(59,111,245,.07);border:1px solid rgba(59,111,245,.2);border-radius:12px;padding:12px 14px;margin-top:14px">
+          <div style="display:flex;align-items:center;gap:12px;background:rgba(214,66,126,.07);border:1px solid rgba(214,66,126,.2);border-radius:12px;padding:12px 14px;margin-top:14px">
             <div style="width:42px;height:46px;border-radius:9px;background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
               <div style="font-size:8px;font-weight:800;letter-spacing:.5px;background:var(--accent);color:#fff;width:100%;text-align:center;padding:1px 0">${next.toLocaleDateString('nb-NO',{month:'short'}).toUpperCase()}</div>
               <div style="font-size:18px;font-weight:800;line-height:1.3">${next.getDate()}</div>
@@ -9459,7 +9455,7 @@ function providerOverview(agreements, sessionsByParent, nameMap) {
   const qBtn = (onclick, label, kind) => {
     const styles = {
       green:  'background:var(--surface);border:1.5px solid var(--green);color:var(--green)',
-      fill:   'background:linear-gradient(135deg,#0fa968,#3b6ff5);color:#fff;border:none',
+      fill:   'background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none',
       muted:  'background:var(--surface2);border:1px solid var(--border);color:var(--muted)'
     };
     const dis = kind === 'muted' ? 'disabled' : '';
@@ -9725,7 +9721,7 @@ function closeServiceModal() {
 }
 
 // Live markør-forhåndsvisning i «Tilby tjeneste» – speiler addServiceMarker
-// (lilla firkant = slik ANDRE ser tjenesten; eieren selv ser trekant på kartet)
+// (lilla firkant = slik tjenesten vises på kartet; eget innlegg får 👑-badge)
 function updateSvcPreview() {
   const pin = document.getElementById('svcpreview-pin');
   if(!pin) return;
@@ -10060,7 +10056,7 @@ function updateProfileAchievements(quests, rating) {
     if(quests >= 10) badges.push('⚡ Erfaren');
     if(rating >= 4.8) badges.push('⭐ Topp-rated');
     badgesEl.innerHTML = badges.length
-      ? badges.map(b => `<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(59,111,245,0.1);color:var(--accent);border:1px solid var(--accent);font-weight:600">${b}</span>`).join('')
+      ? badges.map(b => `<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(214,66,126,0.1);color:var(--accent);border:1px solid var(--accent);font-weight:600">${b}</span>`).join('')
       : '<span style="font-size:11px;color:var(--muted)">Ingen badges ennå</span>';
   }
 }
@@ -10291,7 +10287,7 @@ function showPostChoice() {
     <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:24px 20px 90px;box-sizing:border-box;animation:slideIn .2s ease">
       <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px"></div>
       <div style="font-size:17px;font-weight:800;text-align:center;margin-bottom:18px">Hva vil du legge ut?</div>
-      <button onclick="document.getElementById('post-choice-overlay').remove();openModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(59,111,245,0.07);border:1.5px solid rgba(59,111,245,0.3);border-radius:14px;padding:16px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:10px">
+      <button onclick="document.getElementById('post-choice-overlay').remove();openModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(214,66,126,0.07);border:1.5px solid rgba(214,66,126,0.3);border-radius:14px;padding:16px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:10px">
         <span style="font-size:28px">📋</span>
         <span style="flex:1">
           <span style="display:block;font-size:15px;font-weight:700;color:var(--text)">Oppdrag</span>
@@ -11238,7 +11234,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     </div>
 
     <!-- Recurring badge -->
-    <div id="service-recurring" style="display:none;background:rgba(59,111,245,0.08);border:1px solid rgba(59,111,245,0.2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--accent);margin-bottom:12px">
+    <div id="service-recurring" style="display:none;background:rgba(214,66,126,0.08);border:1px solid rgba(214,66,126,0.2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--accent);margin-bottom:12px">
       🔄 <span id="service-recurring-text"></span>
     </div>
 
@@ -11246,7 +11242,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div id="service-tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
 
     <div id="service-cta-group">
-    <button id="service-cta-recurring" onclick="openBookingRequest('recurring')" style="display:none;width:100%;background:linear-gradient(135deg,#3b6ff5,#6366f1);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-bottom:8px">
+    <button id="service-cta-recurring" onclick="openBookingRequest('recurring')" style="display:none;width:100%;background:linear-gradient(135deg,#7c5cfc,#6366f1);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-bottom:8px">
       🔄 Be om fast avtale
     </button>
     <button onclick="openBookingRequest('once')" style="width:100%;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-bottom:8px">
@@ -11451,7 +11447,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div class="disclaimer">
       <strong data-en="Important:">Viktig:</strong> <span data-en="As a provider you are responsible for the quality of the service. All payment happens directly between you and the customer (Vipps or another agreed method).">Som tilbyder er du selv ansvarlig for kvaliteten på tjenesten. All betaling skjer direkte mellom deg og kunden (Vipps eller annen avtalt metode).</span>
     </div>
-    <button onclick="postService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#3b6ff5);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)" data-en="🏪 Publish service">
+    <button onclick="postService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#7c5cfc);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)" data-en="🏪 Publish service">
       🏪 Publiser tjeneste
     </button>
   </div>
@@ -11462,7 +11458,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <div id="welcome-modal" style="background:var(--surface);border:1px solid var(--border);border-radius:24px;width:100%;max-width:420px;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);max-height:calc(100svh - 40px);overflow-y:auto;overflow-x:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:popIn .3s ease">
     
     <!-- Top gradient banner -->
-    <div style="background:linear-gradient(135deg,#f97316,#a855f7,#3b6ff5);padding:36px 28px 28px;text-align:center;position:relative">
+    <div style="background:linear-gradient(135deg,#F36E37,#CD618C,#B359D5);padding:36px 28px 28px;text-align:center;position:relative">
       <div style="display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:6px">
         <svg viewBox="0 0 24 28" width="29" height="34" aria-hidden="true" style="display:block;flex-shrink:0;filter:drop-shadow(0 2px 8px rgba(0,0,0,.18))">
           <path d="M3 4 H21 V14 C21 20.5 17 24.5 12 26.5 C7 24.5 3 20.5 3 14 Z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
@@ -11687,7 +11683,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 #okonomi-page .oko-tx{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
 #okonomi-page .oko-tx:last-child{border-bottom:none}
 #okonomi-page .oko-tx-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-#okonomi-page .oko-tx-ico.q{background:rgba(59,111,245,.12)}
+#okonomi-page .oko-tx-ico.q{background:rgba(214,66,126,.12)}
 #okonomi-page .oko-tx-ico.s{background:rgba(15,169,104,.12)}
 #okonomi-page .oko-tx-mid{flex:1;min-width:0}
 #okonomi-page .oko-tx-title{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -11742,7 +11738,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div class="oko-label" id="oko-l-split">⚖️ Fordeling</div>
     <div class="oko-split-row">
       <div class="oko-split-top"><span id="oko-split-q-name">📋 Oppdrag</span><span id="oko-split-q-amt" style="font-variant-numeric:tabular-nums">0 kr</span></div>
-      <div class="oko-split-bar"><div class="oko-split-fill" id="oko-split-q-bar" style="width:0%;background:linear-gradient(90deg,#3b6ff5,#7c5cfc)"></div></div>
+      <div class="oko-split-bar"><div class="oko-split-fill" id="oko-split-q-bar" style="width:0%;background:linear-gradient(90deg,#d6427e,#CD618C)"></div></div>
     </div>
     <div class="oko-split-row">
       <div class="oko-split-top"><span id="oko-split-s-name">🏪 Tjenester</span><span id="oko-split-s-amt" style="font-variant-numeric:tabular-nums">0 kr</span></div>
