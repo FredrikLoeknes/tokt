@@ -4390,7 +4390,17 @@ function requestLocation() {
   navigator.geolocation.getCurrentPosition(pos => {
     const { latitude: lat, longitude: lng } = pos.coords;
     window.userLngLat = [lng, lat];
-    map.flyTo({ center: [lng, lat], zoom: 14, speed: 1.4, curve: 1.4 });
+    // Kort avstand: rolig glidning uten flyTo-ens zoom-ut/inn-bue (den hakker på
+    // trege enheter ved førstegangs lasting og ser ut som kartet «hopper»).
+    // Lang avstand (f.eks. Nord-Norge): hopp direkte – panorering over hele
+    // landet på zoom 14 blir bare en grå tile-smørje.
+    const _c = map.getCenter();
+    const _distKm = getDistanceKm([_c.lng, _c.lat], [lng, lat]);
+    if(_distKm != null && _distKm > 40) {
+      map.jumpTo({ center: [lng, lat], zoom: 14 });
+    } else {
+      map.easeTo({ center: [lng, lat], zoom: 14, duration: 800 });
+    }
     const el = document.createElement('div');
     el.className = 'user-dot';
     el.innerHTML = '<div class="user-pulse"></div><div class="user-center"></div>';
