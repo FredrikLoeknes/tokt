@@ -11575,7 +11575,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div id="pp-medal-emblem" class="medal sm pp-medal-emblem m-iron"><span class="sym">I</span></div>
       <div id="pp-star-badge" class="pp-star-badge" title="Stjerneutfører"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 5.9 6.5.95-4.7 4.6 1.1 6.5L12 18.9 6.2 21l1.1-6.5L2.6 9.9l6.5-.95z"/></svg></div>
       <label id="pp-av-upload" class="pp-av-upload" for="pp-av-input" onclick="window._avPickPending=Date.now();startAvatarWatch()" title="Endre profilbilde" aria-label="Endre profilbilde"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L8 6H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-4l-1.5-2Z"/><circle cx="12" cy="12.5" r="3.2"/></svg></label>
-      <input type="file" id="pp-av-input" style="display:none" onchange="uploadProfilePhoto(this)">
+      <input type="file" id="pp-av-input" accept="image/*" style="display:none" onchange="uploadProfilePhoto(this)">
     </div>
     <div id="pp-name" style="font-size:23px;font-weight:800;letter-spacing:-.3px">Laster…</div>
     <div id="pp-verified" style="display:none;margin-top:9px"></div>
