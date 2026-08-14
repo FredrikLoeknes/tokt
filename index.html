@@ -10275,6 +10275,48 @@ async function logEvent(name, meta){
   } catch(e) { /* aldri la logging stoppe noe */ }
 }
 
+// ── Global feillogging til Supabase (events-tabellen, name='js_error') ──
+// Fanger uventede JS-feil og avviste promises så bugs kan finnes uten å være
+// avhengig av tilbakemeldinger fra brukere. Flomvern: samme feil logges kun én
+// gang per økt, og maks 10 feil totalt per økt (så en løkke-bug ikke fyller
+// tabellen). Feil i selve loggingen svelges alltid stille via logEvent.
+(function initErrorLogging(){
+  const seen = {};
+  let count = 0;
+  const MAX_ERRORS_PER_SESSION = 10;
+  function logJsError(kind, msg, src, line, col, stack){
+    try {
+      msg = String(msg || '').slice(0, 300);
+      if(!msg) return;
+      const key = kind + '|' + msg + '|' + (src || '') + ':' + (line || 0);
+      if(seen[key] || count >= MAX_ERRORS_PER_SESSION) return;
+      seen[key] = true; count++;
+      logEvent('js_error', {
+        kind: kind,                                        // 'error' | 'promise'
+        msg: msg,
+        src: String(src || '').slice(0, 200),
+        line: line || null,
+        col: col || null,
+        stack: String(stack || '').slice(0, 600),
+        url: (location.pathname || '') + String(location.hash || '').slice(0, 60),
+        ua: String(navigator.userAgent || '').slice(0, 160),
+        lang: (typeof currentLang !== 'undefined') ? currentLang : null
+      });
+    } catch(e) { /* logging skal aldri selv kunne feile videre */ }
+  }
+  window.addEventListener('error', function(e){
+    // Ressursfeil (img/script som ikke lastet) har ikke .message – hopp over dem,
+    // de gir mest støy (karttiles, avatarer på treg link) og lite verdi.
+    if(!e || !e.message) return;
+    logJsError('error', e.message, e.filename, e.lineno, e.colno, e.error && e.error.stack);
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    const r = e && e.reason;
+    const msg = r ? (r.message || (typeof r === 'string' ? r : 'Unhandled rejection')) : 'Unhandled rejection';
+    logJsError('promise', msg, '', null, null, r && r.stack);
+  });
+})();
+
 let currentUser = null;
 
 // ── AUTH FUNCTIONS ──
