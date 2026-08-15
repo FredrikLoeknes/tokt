@@ -3668,6 +3668,19 @@ async function refreshMapData() {
 // await hvis en nyere kjøring har startet.
 window._mkRun = 0;
 async function addMarkers() {
+  // Vakt: kartet må være ferdig initialisert før markører kan legges til.
+  // Feilloggen fanget 'e.getCanvasContainer is not a function' når addMarkers
+  // vant kappløpet mot kart-initialiseringen (f.eks. auth-endring rett etter
+  // oppstart). Utsett kjøringen til kartet er klart i stedet for å krasje.
+  if(!window.map || typeof window.map.getCanvasContainer !== 'function'){
+    if(!window._pendingAddMarkers){
+      window._pendingAddMarkers = true;
+      const retry = () => { window._pendingAddMarkers = false; addMarkers(); };
+      if(window.map && typeof window.map.once === 'function') window.map.once('load', retry);
+      else setTimeout(retry, 500);
+    }
+    return;
+  }
   const run = ++window._mkRun;
   const stale = () => run !== window._mkRun;
 
