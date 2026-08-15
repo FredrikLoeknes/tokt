@@ -10315,6 +10315,15 @@ async function logEvent(name, meta){
     const msg = r ? (r.message || (typeof r === 'string' ? r : 'Unhandled rejection')) : 'Unhandled rejection';
     logJsError('promise', msg, '', null, null, r && r.stack);
   });
+  // Skjult testknagg: åpne tokt.app/#test-feillogg for å utløse én kontrollert
+  // testfeil (verifiserer hele kjeden nettleser → logEvent → events-tabellen).
+  // Hash-en fjernes umiddelbart så den ikke henger igjen ved refresh/deling.
+  if(String(window.location.hash || '') === '#test-feillogg'){
+    try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {}
+    setTimeout(function(){
+      logJsError('error', 'Testfeil fra #test-feillogg', 'index.html', 0, 0, 'manuell test av feillogging');
+    }, 1500);
+  }
 })();
 
 let currentUser = null;
