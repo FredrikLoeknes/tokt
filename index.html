@@ -7189,9 +7189,18 @@ function showBrowserNotification(title, body, url='/') {
 }
 
 // Subscribe to realtime notifications
+// Kalles fra loadProfile, som kjører flere ganger per økt (oppstart, token-
+// fornyelse, etter fullført oppdrag). Uten opprydding ga andre kall feilen
+// 'cannot add postgres_changes callbacks for realtime:notifs:<id>' – og hvis
+// første abonnement døde (nettverk/bakgrunn) mistet brukeren varsler stille.
+// Nå: fjern forrige kanal først, så det alltid finnes nøyaktig ett aktivt.
 function subscribeToNotifications() {
   if(!currentUser) return;
-  sb.channel('notifs:' + currentUser.id)
+  if(window._notifSub){
+    try { sb.removeChannel(window._notifSub); } catch(e) {}
+    window._notifSub = null;
+  }
+  window._notifSub = sb.channel('notifs:' + currentUser.id)
     .on('postgres_changes', {
       event: 'INSERT', schema: 'public', table: 'notifications',
       filter: `user_id=eq.${currentUser.id}`
