@@ -10751,6 +10751,7 @@ function cleanOAuthUrl() {
 // Modalen kan ikke lukkes – bare fullføres eller logges ut av.
 function needsProfileCompletion(user, profile) {
   if(!user || !isOAuthUser(user)) return false;
+  if(window._cpDoneFor === user.id) return false;   // fullført i denne økten – aldri gjenåpne
   if(!profile) return true;
   return !profile.birth_date || !profile.terms_accepted_at;
 }
@@ -10826,13 +10827,20 @@ async function finishCompleteProfile() {
   const acceptedAt = new Date().toISOString();
   const fullName = (first + ' ' + last).trim();
   const fields = { full_name: fullName, phone, birth_date: birthdate, is_adult: isAdult, terms_accepted_at: acceptedAt, terms_version: TERMS_VERSION };
-  let error = null;
+  let error = null, rows = null;
   if(window._cpProfile) {
     // Profilraden finnes – oppdater bare det vi spurte om (ikke rør rang/oppdragstall)
-    ({ error } = await sb.from('profiles').update(fields).eq('id', user.id));
+    ({ data: rows, error } = await sb.from('profiles').update(fields).eq('id', user.id).select('id,birth_date,terms_accepted_at'));
   } else {
-    ({ error } = await sb.from('profiles').upsert(Object.assign({ id: user.id, level: 1, xp_current: 0, quests_completed: 0, rating: null }, fields), { onConflict: 'id' }));
+    ({ data: rows, error } = await sb.from('profiles').upsert(Object.assign({ id: user.id, level: 1, xp_current: 0, quests_completed: 0, rating: null }, fields), { onConflict: 'id' }).select('id,birth_date,terms_accepted_at'));
   }
+  // Supabase gir ikke feil når update treffer 0 rader (RLS/manglende rad) – sjekk selv
+  if(!error && (!rows || rows.length === 0)) {
+    // Fallback: prøv upsert (insert) hvis update ikke traff noe
+    ({ data: rows, error } = await sb.from('profiles').upsert(Object.assign({ id: user.id, level: 1, xp_current: 0, quests_completed: 0, rating: null }, fields), { onConflict: 'id' }).select('id,birth_date,terms_accepted_at'));
+    if(!error && (!rows || rows.length === 0)) error = { message: NE('profilen ble ikke lagret (0 rader)','profile was not saved (0 rows)') };
+  }
+  logEvent('cp_debug', { hadProfile: !!window._cpProfile, rows: rows ? rows.length : null, err: error ? String(error.message || '').slice(0, 150) : null, saved: rows && rows[0] ? { bd: rows[0].birth_date, ta: !!rows[0].terms_accepted_at } : null });
   if(error) {
     closeTermsGate();
     if(gateBtn){ gateBtn.textContent = NE('Godta og fullfør','Accept and finish'); gateBtn.disabled = false; }
@@ -10846,6 +10854,7 @@ async function finishCompleteProfile() {
   // Sett lokalt med en gang – da kan modalen ikke komme tilbake selv om re-hentingen under feiler
   window.currentProfile = Object.assign({}, window._cpProfile || { id: user.id, level: 1, quests_completed: 0 }, fields);
   window._cpProfile = window.currentProfile;
+  window._cpDoneFor = user.id;
   logEvent('signup', { via: 'oauth' });
   showToast(NE('✅ Profilen er klar – du kan legge ut og ta oppdrag!','✅ Profile complete – you can post and take quests!'), null, true);
   // Last profilen på nytt så navn, aldersregler og UI stemmer
