@@ -6221,7 +6221,25 @@ async function loadProfilePage(userId, isOwn) {
   // Telefon hentes fra user_contacts for egen profil (profiles.phone droppes i Fase 3)
   if(isOwn) profile.phone = await getContactPhone(userId);
 
-  const name = profile.full_name || 'Bruker';
+  // Selvhelbredende navn: profilraden kan mangle navn (trigger-opprettet rad ved
+  // Apple/Google-innlogging eller kontokobling) mens auth-metadata har det.
+  // Vis metadata-navnet med en gang og skriv det tilbake til profiles, så
+  // leaderboard/popups/andre brukere også ser riktig navn.
+  if(isOwn && !(profile.full_name || '').trim() && currentUser && currentUser.id === userId) {
+    const m = currentUser.user_metadata || {};
+    const metaName = String(m.full_name || ((m.first_name || '') + ' ' + (m.last_name || '')).trim() || m.name || '').trim();
+    if(metaName) {
+      profile.full_name = metaName;
+      requireSession().then(u => u && sb.from('profiles').update({ full_name: metaName }).eq('id', userId))
+        .then(r => { if(r && r.error) console.warn('name self-heal:', r.error.message); })
+        .catch(() => {});
+      logEvent('profile_name_healed', {});
+    } else {
+      logEvent('profile_name_missing', { provs: (currentUser.app_metadata && currentUser.app_metadata.providers) || null });
+    }
+  }
+
+  const name = profile.full_name || NE('Bruker','User');
   const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
   renderAvatar(document.getElementById('pp-avatar'), profile.avatar_url, initials);
   const ppAvUp = document.getElementById('pp-av-upload');
@@ -10828,7 +10846,8 @@ async function finishCompleteProfile() {
   const isAdult = ageFromBirthdate(birthdate) >= 18;
   const acceptedAt = new Date().toISOString();
   const fullName = (first + ' ' + last).trim();
-  const fields = { full_name: fullName, phone, birth_date: birthdate, is_adult: isAdult, terms_accepted_at: acceptedAt, terms_version: TERMS_VERSION };
+  const fields = { full_name: fullName, birth_date: birthdate, is_adult: isAdult, terms_accepted_at: acceptedAt, terms_version: TERMS_VERSION };
+  if(phone) fields.phone = phone;   // ikke overskriv eksisterende nummer med null
   let error = null, rows = null;
   if(window._cpProfile) {
     // Profilraden finnes – oppdater bare det vi spurte om (ikke rør rang/oppdragstall)
@@ -10849,8 +10868,10 @@ async function finishCompleteProfile() {
     cpShowError(NE('Kunne ikke lagre: ','Could not save: ') + error.message);
     return;
   }
+  // Telefon leses fra user_contacts i resten av appen – lagre dit også
+  if(phone) { try { await saveContactPhone(phone); } catch(e) {} }
   // Speil i auth-metadata (primærbevis for samtykke, og navn til avatar/initialer)
-  try { await sb.auth.updateUser({ data: { first_name: first, last_name: last, full_name: fullName, phone, birth_date: birthdate, is_adult: isAdult, terms_accepted_at: acceptedAt, terms_version: TERMS_VERSION } }); } catch(e) {}
+  try { const md = { first_name: first, last_name: last, full_name: fullName, birth_date: birthdate, is_adult: isAdult, terms_accepted_at: acceptedAt, terms_version: TERMS_VERSION }; if(phone) md.phone = phone; await sb.auth.updateUser({ data: md }); } catch(e) {}
   closeTermsGate();
   const ov = document.getElementById('complete-profile-overlay'); if(ov) ov.style.display = 'none';
   // Sett lokalt med en gang – da kan modalen ikke komme tilbake selv om re-hentingen under feiler
