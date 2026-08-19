@@ -11139,6 +11139,8 @@ async function loadUserProfile(user) {
   cleanOAuthUrl();
   // OAuth-bruker uten fødselsdato/vilkår → må fullføre profilen før appen brukes
   if(!_profileFetchFailed && needsProfileCompletion(user, window.currentProfile)) {
+    const _cp = window.currentProfile;
+    logEvent('cp_open', { hadRow: !!_cp, bd: _cp ? (_cp.birth_date || null) : null, ta: _cp ? !!_cp.terms_accepted_at : null, provs: (user.app_metadata && user.app_metadata.providers) || null });
     closeAuth();
     openCompleteProfile(user, profile);
   }
