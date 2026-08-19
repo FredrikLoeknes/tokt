@@ -10862,6 +10862,11 @@ async function finishCompleteProfile() {
   // Last profilen på nytt så navn, aldersregler og UI stemmer
   const { data: { user: fresh } } = await sb.auth.getUser().catch(() => ({ data: { user: null } }));
   await loadUserProfile(fresh || user);
+  // Hvis profilsiden allerede er rendret med plassholdere («Bruker»), tegn den på nytt
+  try {
+    const pp = document.getElementById('profile-page');
+    if(pp && pp.dataset.viewUserId === user.id) await loadProfilePage(user.id, true);
+  } catch(e) {}
 }
 
 function openTermsGate(onAccept, acceptLabel) {
