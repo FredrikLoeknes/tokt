@@ -10333,6 +10333,8 @@ async function logEvent(name, meta){
     // Ressursfeil (img/script som ikke lastet) har ikke .message – hopp over dem,
     // de gir mest støy (karttiles, avatarer på treg link) og lite verdi.
     if(!e || !e.message) return;
+    // Støy fra Facebook/Instagram sin in-app-nettleser (iabjs://…) – ikke vår kode
+    if(/iabjs:\/\/|navigation_performance_logger/.test(String(e.filename || '') + String(e.message || '') + String((e.error && e.error.stack) || ''))) return;
     logJsError('error', e.message, e.filename, e.lineno, e.colno, e.error && e.error.stack);
   });
   window.addEventListener('unhandledrejection', function(e){
@@ -11120,7 +11122,12 @@ async function loadUserProfile(user) {
   const _pn = document.getElementById('profile-name'); if(_pn) _pn.textContent = name;
 
   // Try load profile from DB
-  const { data: profile, error: _pErr } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  let { data: profile, error: _pErr } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  if(_pErr) {
+    // Rett etter OAuth-redirect kan første kall treffe et token-bytte → prøv én gang til
+    await new Promise(r => setTimeout(r, 1200));
+    ({ data: profile, error: _pErr } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle());
+  }
   // Ved hentefeil (nett/timeout) behold forrige profil – ikke tolk det som «mangler profil»
   const _profileFetchFailed = !!_pErr;
   if(_profileFetchFailed) logEvent('profile_fetch_error', { msg: String(_pErr.message || '').slice(0, 200) });
