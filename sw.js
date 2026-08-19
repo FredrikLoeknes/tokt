@@ -2,7 +2,7 @@
 // Handles push notifications and offline caching
 
 // Bump ved endring her → gammel cache slettes automatisk i 'activate'.
-const CACHE_NAME = 'tokt-v38';
+const CACHE_NAME = 'tokt-v40';
 const STATIC_ASSETS = ['/', '/index.html', '/terms.html'];
 
 // Install
@@ -37,6 +37,14 @@ self.addEventListener('fetch', e => {
   const isHTML = req.mode === 'navigate' ||
     (req.headers.get('accept') || '').includes('text/html');
 
+  // API-kall (Supabase REST/Auth/Realtime/RPC) skal ALDRI caches – ellers serveres
+  // gamle profiler/oppdrag/meldinger helt til neste cache-bump. Kun statiske
+  // filer (egne assets, fonter, kart-tiles, offentlige storage-bilder) caches.
+  let url; try { url = new URL(req.url); } catch(e) { return; }
+  const isSupabase = /supabase\.(co|in)$/.test(url.hostname);
+  const isPublicStorage = isSupabase && url.pathname.startsWith('/storage/v1/object/public/');
+  if(isSupabase && !isPublicStorage) return;          // nettverk direkte, ingen cache
+  if(url.hostname.includes('mapbox.com') && /\/(geocoding|search|directions)\//.test(url.pathname)) return; // søk/geokoding: alltid ferskt
   if(isHTML) {
     e.respondWith(
       fetch(req, { cache: 'no-store' }).then(res => {
@@ -51,8 +59,10 @@ self.addEventListener('fetch', e => {
     e.respondWith(
       caches.match(req).then(cached =>
         cached || fetch(req).then(res => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(req, copy));
+          if(res && res.ok) {             // aldri cache feilsvar
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(req, copy));
+          }
           return res;
         })
       )
