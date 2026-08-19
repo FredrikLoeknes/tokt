@@ -10843,6 +10843,9 @@ async function finishCompleteProfile() {
   try { await sb.auth.updateUser({ data: { first_name: first, last_name: last, full_name: fullName, phone, birth_date: birthdate, is_adult: isAdult, terms_accepted_at: acceptedAt, terms_version: TERMS_VERSION } }); } catch(e) {}
   closeTermsGate();
   const ov = document.getElementById('complete-profile-overlay'); if(ov) ov.style.display = 'none';
+  // Sett lokalt med en gang – da kan modalen ikke komme tilbake selv om re-hentingen under feiler
+  window.currentProfile = Object.assign({}, window._cpProfile || { id: user.id, level: 1, quests_completed: 0 }, fields);
+  window._cpProfile = window.currentProfile;
   logEvent('signup', { via: 'oauth' });
   showToast(NE('✅ Profilen er klar – du kan legge ut og ta oppdrag!','✅ Profile complete – you can post and take quests!'), null, true);
   // Last profilen på nytt så navn, aldersregler og UI stemmer
@@ -10909,7 +10912,7 @@ function openTermsGate(onAccept, acceptLabel) {
       <div style="padding:12px 18px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface)">
         <div id="terms-gate-hint" style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px">↓ ${en?'Scroll to the bottom to continue':'Scroll til bunnen for å fortsette'}</div>
         <label id="terms-gate-checkrow" style="display:flex;align-items:flex-start;gap:10px;cursor:not-allowed;opacity:.45;margin-bottom:12px;transition:opacity .2s">
-          <input type="checkbox" id="terms-gate-check" disabled style="width:18px;height:18px;margin-top:1px;flex-shrink:0;accent-color:var(--accent);cursor:inherit" onchange="document.getElementById('terms-gate-accept').disabled=!this.checked">
+          <input type="checkbox" id="terms-gate-check" disabled style="width:18px;height:18px;margin-top:1px;flex-shrink:0;accent-color:var(--accent);cursor:inherit" onchange="var b=document.getElementById('terms-gate-accept');b.disabled=!this.checked;b.style.opacity=this.checked?'1':'.5'">
           <span style="font-size:13px;color:var(--text);line-height:1.5">${en?'I have read and accept the Terms of Service and Privacy Policy.':'Jeg har lest og godtar brukervilkårene og personvernerklæringen.'}</span>
         </label>
         <div style="display:flex;gap:10px">
@@ -10951,7 +10954,7 @@ function closeTermsGate() {
   const chk = document.getElementById('terms-gate-check');
   const acceptBtn = document.getElementById('terms-gate-accept');
   if (chk) chk.checked = false;
-  if (acceptBtn) acceptBtn.disabled = true;
+  if (acceptBtn) { acceptBtn.disabled = true; acceptBtn.style.opacity = '.5'; }
 }
 
 async function doResetPassword() {
@@ -11108,19 +11111,24 @@ async function loadUserProfile(user) {
   const _pn = document.getElementById('profile-name'); if(_pn) _pn.textContent = name;
 
   // Try load profile from DB
-  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
-  window.currentProfile = profile || null;   // brukes av aldersgrense-sjekken
+  const { data: profile, error: _pErr } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  // Ved hentefeil (nett/timeout) behold forrige profil – ikke tolk det som «mangler profil»
+  const _profileFetchFailed = !!_pErr;
+  if(_profileFetchFailed) logEvent('profile_fetch_error', { msg: String(_pErr.message || '').slice(0, 200) });
+  window.currentProfile = profile || (_profileFetchFailed ? window.currentProfile : null);   // brukes av aldersgrense-sjekken
   if(window.currentProfile && window.currentProfile.birth_date){
     const _a = ageFromBirthdate(window.currentProfile.birth_date);
     if(_a !== null) window.currentProfile.is_adult = _a >= 18;   // korrekt selv etter bursdag
   }
   cleanOAuthUrl();
   // OAuth-bruker uten fødselsdato/vilkår → må fullføre profilen før appen brukes
-  if(needsProfileCompletion(user, profile)) {
+  if(!_profileFetchFailed && needsProfileCompletion(user, window.currentProfile)) {
     closeAuth();
     openCompleteProfile(user, profile);
   }
-  if(profile) {
+  const profile2 = window.currentProfile;
+  if(profile2) {
+    const profile = profile2;
     const quests = profile.quests_completed || 0;
     const rank = getRank(quests);
     const rankLevel = RANKS.indexOf(rank) + 1;
