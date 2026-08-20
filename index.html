@@ -5662,7 +5662,7 @@ function switchLbScope(scope) {
 // Beholdt for bakoverkompatibilitet (ikke lenger i bruk)
 function lbScopeSoon() { switchLbScope('all'); }
 // «Lokalt» / «Denne uka» er ikke aktivert ennå – vis «kommer snart», behold «Alle»
-function lbSegSoon(no, en) { showToast(L(no, en)); }
+function lbSegSoon(no, en) { showToast(NE(no, en)); }
 
 function toggleProfile() {
   if(currentUser) {
