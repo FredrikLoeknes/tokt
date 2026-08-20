@@ -10323,6 +10323,12 @@ async function logEvent(name, meta){
 // avhengig av tilbakemeldinger fra brukere. Flomvern: samme feil logges kun én
 // gang per økt, og maks 10 feil totalt per økt (så en løkke-bug ikke fyller
 // tabellen). Feil i selve loggingen svelges alltid stille via logEvent.
+// Skygg nettleserens "named element access": uten dette peker window.map på
+// <div id="map"> før Mapbox er initialisert, og if(window.map)-guards slipper
+// gjennom kall som window.map.flyTo(...) -> TypeError. Med null her er alle
+// guards trygge til ekte kart-init overskriver verdien.
+window.map = null;
+
 (function initErrorLogging(){
   const seen = {};
   let count = 0;
