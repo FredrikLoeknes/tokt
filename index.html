@@ -5268,21 +5268,30 @@ async function _postJobInner() {
   const btn = document.querySelector('.publish-btn');
   if(btn) { btn.disabled = true; btn.innerHTML = '<span>⏳ Publiserer…</span>'; }
 
-  // Use address coordinates if set, otherwise fall back to GPS
-  let lat = 59.911491, lng = 10.757933;
-  if(questLat && questLng) {
-    lat = questLat;
-    lng = questLng;
-  } else {
-    // Try GPS as fallback
+  // Posisjon er PÅKREVD: valgt adresse, eller ekte GPS-treff (da hentes
+  // adresse/område via reverse geocoding). Den gamle stille fallbacken til
+  // Oslo sentrum stablet alle uplasserte oppdrag på samme punkt og er fjernet.
+  let lat = questLat, lng = questLng;
+  if(!lat || !lng) {
     try {
       await new Promise(resolve => {
         navigator.geolocation.getCurrentPosition(
           p => { lat = p.coords.latitude; lng = p.coords.longitude; resolve(); },
-          resolve, { timeout: 4000 }
+          resolve, { timeout: 6000 }
         );
       });
     } catch(e) {}
+    if(lat && lng) {
+      const rg = await reverseGeocode(lat, lng);
+      if(rg) { questAddress = rg.address; questArea = rg.area; }
+    }
+  }
+  if(!lat || !lng) {
+    showToast(NE('📍 Velg adresse fra forslagene (eller tillat posisjon) før du publiserer','📍 Pick an address from the suggestions (or allow location) before publishing'));
+    const ai = document.getElementById('quest-address-input');
+    if(ai) { ai.focus(); ai.style.borderColor = 'var(--red)'; setTimeout(() => ai.style.borderColor = 'var(--border)', 2000); }
+    if(btn) { btn.disabled = false; btn.innerHTML = '<span>Publiser oppdrag</span>'; }
+    return;
   }
 
   // Sesjonsvakt: unngå kryptisk RLS-feil ved utløpt token (se requireSession).
@@ -5314,7 +5323,9 @@ async function _postJobInner() {
     schedule_days: scheduleDays,
     status: 'open',
     lat,
-    lng
+    lng,
+    address: questAddress || null,
+    area: questArea || null
   }).select().single();
 
   if(error && error.code === '23505' && window._questDraftId) {
@@ -5369,7 +5380,7 @@ async function _postJobInner() {
   safeReset('q-frist-date');
   safeReset('q-vindu-date');
   document.getElementById('address-confirmed').style.display = 'none';
-  questLat = null; questLng = null;
+  questLat = null; questLng = null; questAddress = null; questArea = null;
   setTimePicker('q-frist-time','');
   setTimePicker('q-vindu-from','');
   setTimePicker('q-vindu-to','');
@@ -7178,8 +7189,29 @@ function closeLeaderboard() {
 }
 
 // Quest mode toggle
-let questLat = null, questLng = null;
-let svcLat = null, svcLng = null;
+let questLat = null, questLng = null, questAddress = null, questArea = null;
+let svcLat = null, svcLng = null, svcAddress = null, svcArea = null;
+
+// Områdenavn fra en geocoding-feature: nabolag > bydel/tettsted > by.
+// Vises offentlig i oppdragsboksen; full adresse deles først ved aksept.
+function areaFromFeature(f) {
+  if(!f) return null;
+  if((f.place_type || []).some(t => t === 'neighborhood' || t === 'locality')) return f.text || null;
+  const ctx = f.context || [];
+  const pick = p => { const c = ctx.find(x => String(x.id||'').startsWith(p)); return c && c.text; };
+  return pick('neighborhood') || pick('locality') || pick('place') || null;
+}
+// GPS-posisjon -> adresse + område (brukes når oppdragsgiver står på stedet)
+async function reverseGeocode(lat, lng) {
+  try {
+    const token = mapboxgl.accessToken;
+    const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&language=no&limit=1&types=address,neighborhood,locality,place`);
+    const data = await res.json();
+    const f = data.features && data.features[0];
+    if(!f) return null;
+    return { address: (f.place_name || '').replace(/,?\s*Norge$/, ''), area: areaFromFeature(f) };
+  } catch(e) { return null; }
+}
 
 async function searchSvcAddress(query) {
   if(query.length < 3) { document.getElementById('svc-address-suggestions').style.display = 'none'; return; }
@@ -7190,7 +7222,7 @@ async function searchSvcAddress(query) {
   if(!data.features?.length) { box.style.display = 'none'; return; }
   box.style.display = 'block';
   box.innerHTML = data.features.map(f => `
-    <div onclick="selectSvcAddress('${f.place_name.replace(/'/g,"\\'")}',${f.center[1]},${f.center[0]})"
+    <div onclick="selectSvcAddress('${f.place_name.replace(/'/g,"\\'")}',${f.center[1]},${f.center[0]},'${(areaFromFeature(f)||'').replace(/'/g,"\\'")}')"
       style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s"
       onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
       <div style="font-weight:600">${f.text}</div>
@@ -7198,9 +7230,11 @@ async function searchSvcAddress(query) {
     </div>`).join('');
 }
 
-function selectSvcAddress(name, lat, lng) {
+function selectSvcAddress(name, lat, lng, area) {
   svcLat = lat;
   svcLng = lng;
+  svcAddress = String(name || '').replace(/,?\s*Norge$/, '');
+  svcArea = area || null;
   document.getElementById('svc-address-input').value = name;
   document.getElementById('svc-address-suggestions').style.display = 'none';
   document.getElementById('svc-address-confirmed').style.display = 'block';
@@ -7217,7 +7251,7 @@ async function searchAddress(query) {
   if(!data.features?.length) { box.style.display = 'none'; return; }
   box.style.display = 'block';
   box.innerHTML = data.features.map(f => `
-    <div onclick="selectAddress('${f.place_name.replace(/'/g,"\\'")}',${f.center[1]},${f.center[0]})"
+    <div onclick="selectAddress('${f.place_name.replace(/'/g,"\\'")}',${f.center[1]},${f.center[0]},'${(areaFromFeature(f)||'').replace(/'/g,"\\'")}')"
       style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s"
       onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
       <div style="font-weight:600">${f.text}</div>
@@ -7225,9 +7259,11 @@ async function searchAddress(query) {
     </div>`).join('');
 }
 
-function selectAddress(name, lat, lng) {
+function selectAddress(name, lat, lng, area) {
   questLat = lat;
   questLng = lng;
+  questAddress = String(name || '').replace(/,?\s*Norge$/, '');
+  questArea = area || null;
   document.getElementById('quest-address-input').value = name;
   document.getElementById('address-suggestions').style.display = 'none';
   document.getElementById('address-confirmed').style.display = 'block';
@@ -10271,7 +10307,7 @@ function resetServiceForm() {
   try { setSvcEquipment('own'); } catch(e) {}
   setVal('svc-address-input', '');
   const ac = document.getElementById('svc-address-confirmed'); if(ac) ac.style.display = 'none';
-  svcLat = null; svcLng = null;
+  svcLat = null; svcLng = null; svcAddress = null; svcArea = null;
   updateSvcPreview();
 }
 
@@ -10336,7 +10372,8 @@ async function postService() {
   const { data, error } = await sb.from('services').insert({
     user_id: authUser.id, title, description: svcFullDesc, category,
     price, price_type: priceType, is_recurring: isRecurring,
-    recurring_info: recurringInfo || null, lat, lng, status: 'active'
+    recurring_info: recurringInfo || null, lat, lng, status: 'active',
+    address: svcAddress || null, area: svcArea || null
   }).select().single();
 
   if(error) { showToast('❌ ' + error.message); return; }
