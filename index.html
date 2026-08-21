@@ -30,7 +30,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
-<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.26.0/mapbox-gl.css" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -604,7 +604,10 @@ body.dark .bgd-row.on .bgd-ic { background:rgba(245,197,24,0.12); }
   position:absolute; inset:0; z-index:0;
   background:var(--surface); border:2.5px solid var(--accent);
   border-radius:50%;
-  box-shadow:var(--shadow); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+  box-shadow:var(--shadow);
+  /* backdrop-filter fjernet med vilje: blur per markør tvang frem eget
+     kompositor-lag for hver pin og var hovedårsaken til at markørene
+     hang etter kartet ved panorering på mobil. Skiven er uansett solid. */
 }
 .qp-icon { position:relative; z-index:1; pointer-events:none; }
 .qp-icon svg { display:block; }
@@ -2347,7 +2350,7 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 
 <div id="toast"></div>
 
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.26.0/mapbox-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ══════════════════════════════════════
