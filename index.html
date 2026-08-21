@@ -1045,22 +1045,37 @@ body.app-banner-open #list-toggle-btn{ opacity:0; pointer-events:none; }
 .achieve-desc { font-size:11px; color:var(--muted); }
 
 /* ── TOAST ── */
+/* Toast: rent, rolig varselkort – flat flate, statusikon i myk fargechip,
+   ingen fargede kanter eller emojier. Emoji i meldingene strippes ved visning
+   (typen utledes av den først), så alle 137 kallsteder virker uendret. */
 #toast {
-  position:fixed; bottom:calc(80px + env(safe-area-inset-bottom, 0px)); left:50%; transform:translateX(-50%); z-index:99999;
-  display:none; align-items:center; gap:9px;
-  background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent);
-  color:var(--text); padding:9px 13px; border-radius:12px;
-  font-size:12.5px; font-weight:600; line-height:1.3;
-  max-width:min(520px,96vw); box-shadow:var(--shadow-lg);
-  animation:toastIn .26s cubic-bezier(.32,.72,0,1);
+  --tc: var(--accent);
+  position:fixed; bottom:calc(84px + env(safe-area-inset-bottom, 0px)); left:50%; transform:translateX(-50%); z-index:99999;
+  display:none; align-items:center; gap:11px;
+  background:var(--surface); border:1px solid var(--border);
+  color:var(--text); padding:11px 16px 11px 11px; border-radius:14px;
+  font-size:13px; font-weight:600; line-height:1.35; letter-spacing:.1px;
+  max-width:min(480px,92vw);
+  box-shadow:0 6px 16px rgba(22,23,24,.10), 0 1px 3px rgba(22,23,24,.08);
+  animation:toastIn .34s cubic-bezier(.16,1,.3,1);
 }
-/* Hold velkomst/innlogget-meldinger på én linje (faller tilbake til … hvis ekstremt langt navn) */
-#toast.t-1line { flex-wrap:nowrap; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-#toast.t-success { border-left-color:var(--green); background:linear-gradient(0deg,rgba(15,169,104,.07),rgba(15,169,104,.07)),var(--surface); }
-#toast.t-info { border-left-color:var(--accent); background:linear-gradient(0deg,rgba(214,66,126,.06),rgba(214,66,126,.06)),var(--surface); }
-#toast.t-warn { border-left-color:var(--t-warn); background:linear-gradient(0deg,rgba(224,140,11,.09),rgba(224,140,11,.09)),var(--surface); }
-#toast.t-error { border-left-color:var(--t-error); background:linear-gradient(0deg,rgba(229,72,77,.08),rgba(229,72,77,.08)),var(--surface); }
+body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
+#toast .toast-ic {
+  flex-shrink:0; width:28px; height:28px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb, var(--tc) 12%, transparent); color:var(--tc);
+}
+#toast .toast-ic svg { width:15px; height:15px; }
+#toast .toast-msg { min-width:0; }
+#toast.t-1line .toast-msg { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(14px) scale(.97)} to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)} }
+@keyframes sheetUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes toastOut { to{opacity:0;transform:translateX(-50%) translateY(8px) scale(.98)} }
+#toast.t-out { animation:toastOut .22s ease forwards; }
+#toast.t-success { --tc:var(--green); }
+#toast.t-info    { --tc:var(--accent); }
+#toast.t-warn    { --tc:var(--t-warn); }
+#toast.t-error   { --tc:var(--t-error); }
 
 /* mapbox */
 .mapboxgl-ctrl-logo,.mapboxgl-ctrl-attrib,.mapboxgl-ctrl-group { display:none!important; }
@@ -3965,7 +3980,8 @@ function clusterMarkers() {
       clusterFeats.push({
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [clng, clat] },
-        properties: { img: glEnsureClusterImage(group.length) }
+        properties: { img: glEnsureClusterImage(group.length),
+                      mids: JSON.stringify(group.map(g => g.id)) }
       });
       return;
     }
@@ -4322,7 +4338,12 @@ function glEnsureLayer() {
     map.on('click', 'tokt-clusters', e => {
       const f = e.features && e.features[0];
       if(!f) return;
-      map.easeTo({ center: f.geometry.coordinates, zoom: Math.min(map.getZoom() + 2, 18) });
+      let mids = [];
+      try { mids = JSON.parse(f.properties.mids || '[]'); } catch(err) {}
+      // Små klynger: vis innholdet som liste (raskere enn zoome-jaget).
+      // Store klynger: zoom inn som før – en liste på 20+ gir ikke oversikt.
+      if(mids.length >= 2 && mids.length <= 12) showClusterSheet(mids, f.geometry.coordinates);
+      else map.easeTo({ center: f.geometry.coordinates, zoom: Math.min(map.getZoom() + 2, 18) });
     });
     map.on('mouseenter', 'tokt-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'tokt-clusters', () => { map.getCanvas().style.cursor = ''; });
@@ -4397,6 +4418,49 @@ function glPulseTimer(on) {
     try { map.setPaintProperty('tokt-pulse', 'icon-opacity', 1); } catch(e) {}
   }
 }
+// ── Klynge-ark: bunnliste over det som ligger i en klyngeboble ──
+function closeClusterSheet() { document.getElementById('cluster-sheet')?.remove(); }
+function showClusterSheet(mids, center) {
+  closeClusterSheet();
+  const items = mids.map(id => (window.mapMarkers || []).find(m => String(m.id) === String(id))).filter(Boolean);
+  if(!items.length) return;
+  const sheet = document.createElement('div');
+  sheet.id = 'cluster-sheet';
+  sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:600;background:var(--surface);border-top:1px solid var(--border);border-radius:20px 20px 0 0;box-shadow:0 -8px 30px rgba(22,23,24,.18);padding:8px 0 max(10px,env(safe-area-inset-bottom));max-height:60vh;display:flex;flex-direction:column;animation:sheetUp .28s cubic-bezier(.16,1,.3,1)';
+  const zoomAttr = center ? `onclick="closeClusterSheet();window.map&&window.map.easeTo({center:[${center[0]},${center[1]}],zoom:Math.min(window.map.getZoom()+2,18)})"` : 'style="display:none"';
+  const rows = items.map((m, i) => {
+    const isSvc = m.kind === 'service';
+    const _ck = catKeyFromString(m.category || '');
+    const icon = _ck ? catIconSvg(_ck, {size:24, stroke:1.9})
+                     : uiIconSvg(isSvc ? 'store' : 'clipboard', {size:23, stroke:1.9, color:'var(--muted)'});
+    const price = m.pay ? m.pay + ' kr' : (isSvc ? '' : 'Gratis');
+    const kindChip = `<span class="lv-kb${isSvc?' svc':''}">${isSvc ? NE('TJENESTE','SERVICE') : NE('OPPDRAG','TASK')}</span>`;
+    return `<div class="lv-card" onclick="_openClusterItem(${i})">
+      <div class="lv-thumb">${icon}</div>
+      <div class="lv-info" style="min-width:0">
+        <div style="font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(m.title || '')}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:7px">${kindChip}<span>${price}</span></div>
+      </div>
+      <span style="color:var(--muted);font-size:15px;padding-right:4px">›</span>
+    </div>`;
+  }).join('');
+  sheet.innerHTML = `
+    <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:2px auto 8px"></div>
+    <div style="display:flex;align-items:center;gap:10px;padding:0 16px 8px">
+      <div style="flex:1;font-size:14.5px;font-weight:800">${items.length} ${NE('i dette området','in this area')}</div>
+      <button ${zoomAttr} style="background:var(--surface2);border:1px solid var(--border);border-radius:50px;padding:6px 13px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;font-family:inherit">${NE('Zoom inn','Zoom in')}</button>
+      <button onclick="closeClusterSheet()" style="background:none;border:none;font-size:21px;color:var(--muted);cursor:pointer;padding:2px 4px">×</button>
+    </div>
+    <div style="overflow-y:auto;padding:0 4px">${rows}</div>`;
+  window._clusterSheetItems = items;
+  document.body.appendChild(sheet);
+}
+function _openClusterItem(i) {
+  const m = (window._clusterSheetItems || [])[i];
+  closeClusterSheet();
+  if(m && m.open) m.open();
+}
+
 let _glSyncT = null;
 function glScheduleSync() {
   if(_glSyncT) return;
@@ -10729,18 +10793,27 @@ function closeTipsBar(e) {
   localStorage.setItem('tokt-tips-closed', '1');
 }
 
+const TOAST_ICONS = {
+  success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  info:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5"/><path d="M12 7.6h.01"/></svg>',
+  warn:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 4.1 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.1a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4"/><path d="M12 17.4h.01"/></svg>',
+  error:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="m15 9-6 6M9 9l6 6"/></svg>'
+};
 function showToast(msg, type, oneLine) {
   const t = document.getElementById('toast');
   if(!t) return;
-  t.textContent = msg;
   const k = type || toastType(msg);
-  t.classList.remove('t-success','t-info','t-warn','t-error');
+  // Strip ledende emoji – statusen formidles av ikon-chipen i stedet
+  const clean = String(msg || '').replace(/^(?:[\p{Extended_Pictographic}\u{FE0F}\u{200D}\u{20E3}]+\s*)+/u, '').trim() || String(msg || '');
+  t.innerHTML = '<span class="toast-ic">' + (TOAST_ICONS[k] || TOAST_ICONS.info) + '</span><span class="toast-msg"></span>';
+  t.querySelector('.toast-msg').textContent = clean;
+  t.classList.remove('t-success','t-info','t-warn','t-error','t-out');
   t.classList.add('t-' + k);
   t.classList.toggle('t-1line', !!oneLine);
   t.style.display = 'flex';
   t.style.animation = 'none'; void t.offsetWidth; t.style.animation = ''; // spill av animasjonen på nytt hver gang
-  clearTimeout(t._t);
-  t._t = setTimeout(() => t.style.display = 'none', 3000);
+  clearTimeout(t._t); clearTimeout(t._t2);
+  t._t = setTimeout(() => { t.classList.add('t-out'); t._t2 = setTimeout(() => { t.style.display = 'none'; t.classList.remove('t-out'); }, 220); }, 3000);
 }
 // Utled toast-type fra emojien meldingen starter med (så de 137 kall-stedene ikke må endres)
 function toastType(msg) {
@@ -12703,6 +12776,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   // [id, åpen-test, lukke-funksjon] – sortert ca. etter z-index (øverst først)
   var LAYERS = [
     // Dynamisk opprettede overlays (finnes kun i DOM mens de er åpne)
+    ['cluster-sheet',         function(el){ return !!el; }, function(el){ el.remove(); }],
     ['quest-posted-popup',    function(el){ return !!el; }, function(el){ el.remove(); }],
     ['phone-required-popup',  function(el){ return !!el; }, function(el){ el.remove(); }],
     ['payment-info-popup',    function(el){ return !!el; }, function(el){ el.remove(); }],
