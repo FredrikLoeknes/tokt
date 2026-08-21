@@ -3984,7 +3984,9 @@ try {
 window.GL_PINS_ON = (function(){ try { return localStorage.getItem('tokt-gl-pins') !== 'off'; } catch(e){ return true; } })();
 
 function glPinEligible(spec) {
-  return !!spec && !spec.imageUrl && !spec.ownerClass && !spec.paused &&
+  // Etappe 2: foto-pins støttes (lastes asynkront inn i pin-bildet).
+  // Eier-status, pauset, utløpt og haste-puls gjenstår som HTML til etappe 3.
+  return !!spec && !spec.ownerClass && !spec.paused &&
          !spec.expired && spec.typeClass !== 'haste';
 }
 
@@ -4030,7 +4032,7 @@ function glPinImageId(spec) {
          (spec.catKey || spec.emoji || '') + '|' + (spec.coinText || '') + '|' +
          (document.body.classList.contains('dark') ? 'd' : 'l');
 }
-function glMakePinImage(spec) {
+function glMakePinImage(spec, photoImg) {
   const dpr = Math.min(Math.max(window.devicePixelRatio || 1, 1), 3);
   const col = glPinColors(spec.typeClass);
   const D = 35;                                  // skivediameter (som .qp-emblem)
@@ -4061,8 +4063,24 @@ function glMakePinImage(spec) {
   ctx.restore();
   ctx.lineWidth = 2.5; ctx.strokeStyle = col.border; ctx.stroke();
 
+  // Foto (etappe 2): tegnes som dagens .qp-img – dekker skiven innenfor kanten,
+  // klippet til sirkel/avrundet firkant, cover-skalert og sentrert.
+  if(photoImg) {
+    const inset = 2.5, d = D - inset * 2;
+    ctx.save();
+    ctx.beginPath();
+    if(spec.shape === 'square') ctx.roundRect(cx - D/2 + inset, top + inset, d, d, 7);
+    else ctx.arc(cx, top + D/2, d/2, 0, Math.PI * 2);
+    ctx.clip();
+    const iw = photoImg.naturalWidth || photoImg.width, ih = photoImg.naturalHeight || photoImg.height;
+    const sc = Math.max(d / iw, d / ih);
+    ctx.drawImage(photoImg, cx - (iw * sc)/2, top + D/2 - (ih * sc)/2, iw * sc, ih * sc);
+    ctx.restore();
+    ctx.lineWidth = 2.5; ctx.strokeStyle = col.border; ctx.stroke();  // kant over fotokanten
+  }
+
   // Ikon: samme SVG-path som HTML-pinnene (Path2D), ellers emoji som tekst
-  const iconObj = spec.catKey && CAT_ICONS[spec.catKey];
+  const iconObj = !photoImg && spec.catKey && CAT_ICONS[spec.catKey];
   if(iconObj) {
     ctx.save();
     const S = 18 / 24;                           // 18px ikon i 24-viewBox, som i dag
@@ -4080,7 +4098,7 @@ function glMakePinImage(spec) {
       return _;
     });
     ctx.restore();
-  } else if(spec.emoji) {
+  } else if(!photoImg && spec.emoji) {
     ctx.font = (15.5) + 'px sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(spec.emoji, cx, top + D/2 + 1);
@@ -4100,18 +4118,53 @@ function glMakePinImage(spec) {
   }
   return { canvas: cv, pixelRatio: dpr };
 }
+function _glAddCanvas(map, id, made) {
+  map.addImage(id, made.canvas.getContext('2d').getImageData(0, 0, made.canvas.width, made.canvas.height), { pixelRatio: made.pixelRatio });
+}
+function _glUrlHash(u) {   // kort, stabil nøkkel av foto-URL
+  let h = 0; u = String(u);
+  for(let i = 0; i < u.length; i++) { h = ((h << 5) - h + u.charCodeAt(i)) | 0; }
+  return (h >>> 0).toString(36);
+}
+const _glPhoto = {};        // fotoId -> 'loading' | Image (klar) | 'failed'
 function glEnsureImage(spec) {
-  const id = glPinImageId(spec);
+  const baseId = glPinImageId(spec);
   const map = window.map;
-  if(!map) return id;
-  if(!map.hasImage(id)) {
-    try {
-      const img = glMakePinImage(spec);
-      map.addImage(id, img.canvas.getContext('2d').getImageData(0, 0, img.canvas.width, img.canvas.height), { pixelRatio: img.pixelRatio });
-      _glImgCache.add(id);
-    } catch(e) { console.warn('glEnsureImage:', e); }
+  if(!map) return baseId;
+
+  // Basisversjonen (ikon) finnes alltid – vises mens fotoet laster, og permanent
+  // hvis fotoet feiler (samme fallback som dagens <img onerror>).
+  if(!map.hasImage(baseId)) {
+    try { _glAddCanvas(map, baseId, glMakePinImage(spec)); }
+    catch(e) { console.warn('glEnsureImage:', e); }
   }
-  return id;
+  if(!spec.imageUrl) return baseId;
+
+  const photoId = baseId + '|p' + _glUrlHash(spec.imageUrl);
+  const st = _glPhoto[photoId];
+  if(st === 'failed') return baseId;
+  if(st && st !== 'loading') {                     // Image klar
+    if(!map.hasImage(photoId)) {                   // f.eks. etter temabytte/setStyle
+      try { _glAddCanvas(map, photoId, glMakePinImage(spec, st)); }
+      catch(e) { _glPhoto[photoId] = 'failed'; return baseId; }
+    }
+    return photoId;
+  }
+  if(!st) {
+    _glPhoto[photoId] = 'loading';
+    const im = new Image();
+    im.crossOrigin = 'anonymous';                  // uten dette taintes canvasen
+    im.onload = () => {
+      try {
+        _glAddCanvas(map, photoId, glMakePinImage(spec, im));
+        _glPhoto[photoId] = im;                    // behold for regenerering
+        glScheduleSync();                          // bytt pin til foto-versjonen
+      } catch(e) { _glPhoto[photoId] = 'failed'; } // CORS-taint e.l. -> ikon
+    };
+    im.onerror = () => { _glPhoto[photoId] = 'failed'; };
+    im.src = spec.imageUrl;
+  }
+  return baseId;                                   // ikon til fotoet er klart
 }
 
 // ── Source + layer + interaksjon ──
