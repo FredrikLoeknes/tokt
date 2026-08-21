@@ -3818,6 +3818,7 @@ function serviceToSvc(s) {
     recurring: s.is_recurring, recurringInfo: s.recurring_info,
     rating: 5.0, reviews: 0,
     coords: [s.lng, s.lat],
+    area: s.area || null,
     image: s.image_url,
     provider: { name: 'Bruker', initials: '?', color: '#a855f7' },
     raw: s
@@ -9160,6 +9161,17 @@ function showServicePanel(svc) {
   }
   document.getElementById('service-title').textContent = svc.title;
   document.getElementById('service-desc').textContent = svc.desc;
+
+  // Sted: områdenavn vises for alle (tilbyders fulle adresse deles ikke her –
+  // hvor selve jobben skjer avtales uansett i chatten ved bestilling)
+  document.getElementById('service-location-row')?.remove();
+  if(svc.area) {
+    const lr = document.createElement('div');
+    lr.id = 'service-location-row';
+    lr.style.cssText = 'margin:0 16px 10px;display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)';
+    lr.innerHTML = `<span>📍</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(svc.area)}</span>`;
+    document.getElementById('service-desc').before(lr);
+  }
   document.getElementById('service-price').textContent = svc.price + ' kr';
   const priceTypes = { per_visit:'per besøk', per_time:'per time', per_tur:'per tur', per_mnd:'per mnd', per_stk:'per stk' };
   document.getElementById('service-price-type').textContent = priceTypes[svc.priceType] || svc.priceType || '';
