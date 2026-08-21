@@ -12187,13 +12187,24 @@ sb.auth.onAuthStateChange(async (event, session) => {
   var gid    = function(id){ return document.getElementById(id); };
   var shown  = function(el){ return !!el && !!el.style.display && el.style.display !== 'none'; };
   var hasOpen= function(el){ return !!el && el.classList.contains('open'); };
+  var hasOpenC = function(cls){ return function(el){ return !!el && el.classList.contains(cls); }; };
 
   // [id, åpen-test, lukke-funksjon] – sortert ca. etter z-index (øverst først)
   var LAYERS = [
+    // Dynamisk opprettede overlays (finnes kun i DOM mens de er åpne)
+    ['quest-posted-popup',    function(el){ return !!el; }, function(el){ el.remove(); }],
+    ['phone-required-popup',  function(el){ return !!el; }, function(el){ el.remove(); }],
+    ['payment-info-popup',    function(el){ return !!el; }, function(el){ el.remove(); }],
+    ['edit-quest-overlay',    function(el){ return !!el; }, function(el){ el.remove(); }],
+    ['post-choice-overlay',   function(el){ return !!el; }, function(el){ el.remove(); }],
     ['report-overlay',        shown,   function(){ try{ closeReport(); }catch(e){} }],
     ['how-it-works-overlay',  shown,   function(el){ el.style.display='none'; }],
     ['welcome-overlay',       shown,   function(el){ el.style.display='none'; }],
     ['auth-overlay',          shown,   function(){ try{ closeAuth(); }catch(e){} }],
+    ['get-app-overlay',       hasOpenC('show'), function(){ try{ closeGetAppSheet(); }catch(e){} }],
+    ['ios-install-overlay',   hasOpenC('show'), function(){ try{ closeIosInstallSheet(); }catch(e){} }],
+    ['booking-modal',         shown,   function(){ try{ closeBookingModal(); }catch(e){} }],
+    ['user-profile-popup',    shown,   function(el){ el.style.display='none'; }],
     ['service-modal-overlay', shown,   function(){ try{ closeServiceModal(); }catch(e){} }],
     ['modal-overlay',         hasOpen, function(){ try{ closeModal(); }catch(e){} }],
     ['rating-panel',          function(el){ return !!el; }, function(el){ el.remove(); }],
