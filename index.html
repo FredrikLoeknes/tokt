@@ -3383,6 +3383,8 @@ function questToJob(q) {
     scheduleMode: q.schedule_mode || (q.scheduled_date ? 'vindu' : 'any'),
     scheduleDays: q.schedule_days || null,
     coords: [q.lng, q.lat],
+    address: q.address || null,
+    area: q.area || null,
     people: [],
     raw: q
   };
@@ -4491,6 +4493,25 @@ function showPanel(job) {
   document.getElementById('panel-title').textContent = job.title;
   document.getElementById('panel-tags').innerHTML = job.tags.map(t=>`<span class="tag ${t.cls||''}">${t.t}</span>`).join('');
   document.getElementById('panel-desc').textContent = job.desc;
+
+  // ── Sted: område («Nordstrand») vises for alle. Full adresse + veibeskrivelse
+  //    deles kun med oppdragsgiveren selv og en utfører som er akseptert –
+  //    hjemmeadresser skal ikke ligge åpent for hvem som helst på kartet.
+  document.getElementById('panel-location-row')?.remove();
+  const locIsOwner = !!(currentUser && job.raw?.user_id === currentUser.id);
+  const locIsAccepted = !!(window._workingQuestIds && window._workingQuestIds.has(job.id));
+  const showFull = (locIsOwner || locIsAccepted) && job.address;
+  const locText = showFull ? job.address : (job.area || null);
+  if(locText) {
+    const lr = document.createElement('div');
+    lr.id = 'panel-location-row';
+    lr.style.cssText = 'margin:0 16px 10px;display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)';
+    const dirLink = (showFull && job.coords && job.coords[0] != null)
+      ? ` <a href="https://www.google.com/maps/dir/?api=1&destination=${job.coords[1]},${job.coords[0]}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap">${NE('Veibeskrivelse','Directions')} ›</a>`
+      : '';
+    lr.innerHTML = `<span>📍</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(locText)}</span>${dirLink}`;
+    document.getElementById('panel-desc').before(lr);
+  }
 
   // Oppdragsgiver-rad – vises for ALLE oppdrag (demo og ekte), likt utseende
   const existingGiver = document.getElementById('panel-giver-row');
