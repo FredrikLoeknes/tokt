@@ -3330,7 +3330,15 @@ function initMap() {
     setTimeout(() => { if(localStorage.getItem('tokt-welcome-seen')) initTipsBar(); }, 1200);
   });
 
-  window.map.on('click', closePanel);
+  window.map.on('click', (e) => {
+    // GL-pins ligger i canvasen: et pin-klikk fyrer også kartets click.
+    // Uten denne vakten ville panelet lukkes i samme øyeblikk det åpnes.
+    try {
+      if(window.map.getLayer('tokt-pins') &&
+         window.map.queryRenderedFeatures(e.point, { layers: ['tokt-pins'] }).length) return;
+    } catch(err) {}
+    closePanel();
+  });
   window.map.on('moveend', clusterMarkers);
   // Utzoomet (< nabolagsnivå): skjul navnene under markørene – de er hovedkilden
   // til visuelt rot i oversikt. Navn vises igjen når man zoomer inn.
@@ -3499,6 +3507,11 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
 
   el.addEventListener('click', e => { e.stopPropagation(); onClick && onClick(); });
   el.style.cursor = 'pointer';
+  // Spec for GL-pins (etappe 1): lar attachPin gjenskape utseendet i selve
+  // kart-canvasen. HTML-elementet beholdes som tilstandsbærer (display/visibility
+  // styres av filtre og klynging som før) og som fallback.
+  el._pinSpec = { shape, typeClass, ownerClass, paused, expired,
+                  catKey: _mkKey, emoji: displayIcon, coinText, imageUrl, name };
   return el;
 }
 
@@ -3589,9 +3602,7 @@ function addQuestMarker(q) {
     open: () => showPanel(job),
     lng: coords && coords[0], lat: coords && coords[1]
   });
-  new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-    .setLngLat(coords)
-    .addTo(window.map);
+  attachPin(el, coords);
 }
 
 // ── EXPIRED QUEST LOGIC ──
@@ -3838,9 +3849,7 @@ function loadDemoMarkers() {
       open: () => showPanel(job),
       lng: coords && coords[0], lat: coords && coords[1]
     });
-    new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-      .setLngLat(coords)
-      .addTo(window.map);
+    attachPin(el, coords);
   });
   DEMO_SERVICES.forEach(svc => addServiceMarker(svc));
 }
@@ -3872,9 +3881,7 @@ function addServiceMarker(svc) {
     contact: () => { activeService = svc; contactService(); },
     lng: coords && coords[0], lat: coords && coords[1]
   });
-  new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-    .setLngLat(coords)
-    .addTo(window.map);
+  attachPin(el, coords);
 }
 
 // ── Clustering: group overlapping markers into a count bubble ──
@@ -3960,6 +3967,225 @@ function clusterMarkers() {
     const cm = new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat([clng, clat]).addTo(map);
     window._clusterMarkers.push(cm);
   });
+  glScheduleSync();   // GL-pins følger samme synlighet som HTML-pinnene
+}
+
+// ═══════════ GL-PINS (etappe 1) ═══════════
+// Markørene tegnes i selve WebGL-canvasen (symbol layer) i stedet for som
+// HTML-elementer oppå kartet. Da beveger de seg i NØYAKTIG samme frame som
+// kartet – etterslepet ved panorering er fysisk umulig. Etappe 1 dekker
+// vanlige oppdrag/dugnad/tjenester uten foto; foto-pins, eier-status og
+// haste-puls beholder HTML-markør til etappe 2-3.
+// Nødbryter uten deploy: åpne tokt.app/#pins-html (tilbake: #pins-gl).
+try {
+  if(location.hash === '#pins-html') localStorage.setItem('tokt-gl-pins','off');
+  if(location.hash === '#pins-gl')  localStorage.removeItem('tokt-gl-pins');
+} catch(e) {}
+window.GL_PINS_ON = (function(){ try { return localStorage.getItem('tokt-gl-pins') !== 'off'; } catch(e){ return true; } })();
+
+function glPinEligible(spec) {
+  return !!spec && !spec.imageUrl && !spec.ownerClass && !spec.paused &&
+         !spec.expired && spec.typeClass !== 'haste';
+}
+
+// Felles for alle markør-kallsteder: GL-sti når mulig, ellers HTML som før.
+function attachPin(el, coords) {
+  if(!coords || coords[0] == null) return;
+  const m = (window.mapMarkers || []).find(x => x.el === el);
+  if(window.GL_PINS_ON && el._pinSpec && glPinEligible(el._pinSpec) && m) {
+    if(m.id == null) m.id = 'glpin-' + (++attachPin._seq || (attachPin._seq = 1));  // demo/tjenester mangler id
+    m._gl = true;                       // syncGlPins tar den herfra
+    glScheduleSync();
+    return;
+  }
+  new mapboxgl.Marker({ element: el, anchor: 'bottom' }).setLngLat(coords).addTo(window.map);
+}
+
+// ── Pin-bilde: tegnes på canvas fra samme SVG-paths og farger som HTML-pinnene ──
+const _glImgCache = new Set();
+
+// roundRect mangler i eldre Safari (< 16) – enkel polyfill
+if(typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    r = Math.min(r, w/2, h/2);
+    this.moveTo(x+r, y); this.arcTo(x+w, y, x+w, y+h, r); this.arcTo(x+w, y+h, x, y+h, r);
+    this.arcTo(x, y+h, x, y, r); this.arcTo(x, y, x+w, y, r); this.closePath();
+    return this;
+  };
+}
+
+function _cssVar(name, fb) {
+  try { const v = getComputedStyle(document.body).getPropertyValue(name).trim(); return v || fb; }
+  catch(e) { return fb; }
+}
+function glPinColors(typeClass) {
+  const accent = _cssVar('--accent', '#d6427e');
+  const border = typeClass === 'charity' ? _cssVar('--green', '#30a46c')
+              : typeClass === 'service' ? _cssVar('--accent2', '#7c5cfc')
+              : accent;
+  return { border, coin: border, surface: _cssVar('--surface', '#ffffff'), text: '#ffffff' };
+}
+function glPinImageId(spec) {
+  return 'pin|' + spec.shape + '|' + (spec.typeClass || 'n') + '|' +
+         (spec.catKey || spec.emoji || '') + '|' + (spec.coinText || '') + '|' +
+         (document.body.classList.contains('dark') ? 'd' : 'l');
+}
+function glMakePinImage(spec) {
+  const dpr = Math.min(Math.max(window.devicePixelRatio || 1, 1), 3);
+  const col = glPinColors(spec.typeClass);
+  const D = 35;                                  // skivediameter (som .qp-emblem)
+  const ctx0 = document.createElement('canvas').getContext('2d');
+  ctx0.font = '700 ' + (9.5 * dpr) + 'px Inter, -apple-system, sans-serif';
+  const coinTextW = spec.coinText ? ctx0.measureText(spec.coinText).width / dpr : 0;
+  const coinW = spec.coinText ? Math.ceil(coinTextW + 15) : 0;
+  const W = Math.max(D + 10, coinW + 6);
+  const coinH = 14, coinOverlap = 8;
+  const H = D + (spec.coinText ? (coinH - coinOverlap + 1) : 0) + 4;
+  const cv = document.createElement('canvas');
+  cv.width = W * dpr; cv.height = H * dpr;
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const cx = W / 2, top = 2;
+
+  // Skive (sirkel = oppdrag, avrundet firkant = tjeneste) – hvit flate, farget kant
+  ctx.save();
+  ctx.shadowColor = 'rgba(22,23,24,.25)'; ctx.shadowBlur = 3; ctx.shadowOffsetY = 1.5;
+  ctx.beginPath();
+  if(spec.shape === 'square') {
+    const r = 9, x = cx - D/2, y = top;
+    ctx.roundRect(x, y, D, D, r);
+  } else {
+    ctx.arc(cx, top + D/2, D/2 - 1, 0, Math.PI * 2);
+  }
+  ctx.fillStyle = col.surface; ctx.fill();
+  ctx.restore();
+  ctx.lineWidth = 2.5; ctx.strokeStyle = col.border; ctx.stroke();
+
+  // Ikon: samme SVG-path som HTML-pinnene (Path2D), ellers emoji som tekst
+  const iconObj = spec.catKey && CAT_ICONS[spec.catKey];
+  if(iconObj) {
+    ctx.save();
+    const S = 18 / 24;                           // 18px ikon i 24-viewBox, som i dag
+    ctx.translate(cx - 9, top + D/2 - 9);
+    ctx.scale(S, S);
+    ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = iconObj.c || col.border; ctx.fillStyle = 'none';
+    String(iconObj.p).replace(/(?:d|points)="([^"]+)"/g, function(_, d){
+      try { ctx.stroke(new Path2D(d)); } catch(e) {}
+      return _;
+    });
+    // circle-elementer i pathene (radius/senter fra attributtene)
+    String(iconObj.p).replace(/<circle[^>]*cx="([\d.]+)"[^>]*cy="([\d.]+)"[^>]*r="([\d.]+)"/g, function(_, x, y, r){
+      ctx.beginPath(); ctx.arc(+x, +y, +r, 0, Math.PI*2); ctx.stroke();
+      return _;
+    });
+    ctx.restore();
+  } else if(spec.emoji) {
+    ctx.font = (15.5) + 'px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(spec.emoji, cx, top + D/2 + 1);
+  }
+
+  // Priscoin – pill med hvit kant, som i dag
+  if(spec.coinText) {
+    const y = top + D - coinOverlap + 3;
+    const x = cx - coinW/2;
+    ctx.beginPath(); ctx.roundRect(x, y, coinW, coinH, 7);
+    ctx.fillStyle = col.coin; ctx.fill();
+    ctx.lineWidth = 1.5; ctx.strokeStyle = col.surface; ctx.stroke();
+    ctx.font = '700 9.5px Inter, -apple-system, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = col.text;
+    ctx.fillText(spec.coinText, cx, y + coinH/2 + 0.5);
+  }
+  return { canvas: cv, pixelRatio: dpr };
+}
+function glEnsureImage(spec) {
+  const id = glPinImageId(spec);
+  const map = window.map;
+  if(!map) return id;
+  if(!map.hasImage(id)) {
+    try {
+      const img = glMakePinImage(spec);
+      map.addImage(id, img.canvas.getContext('2d').getImageData(0, 0, img.canvas.width, img.canvas.height), { pixelRatio: img.pixelRatio });
+      _glImgCache.add(id);
+    } catch(e) { console.warn('glEnsureImage:', e); }
+  }
+  return id;
+}
+
+// ── Source + layer + interaksjon ──
+function glEnsureLayer() {
+  const map = window.map;
+  if(!map || typeof map.getSource !== 'function' || !map.isStyleLoaded()) return false;
+  if(map.getSource('tokt-pins-src')) return true;
+  try {
+    map.addSource('tokt-pins-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({
+      id: 'tokt-pins', type: 'symbol', source: 'tokt-pins-src',
+      layout: {
+        'icon-image': ['get', 'img'],
+        'icon-anchor': 'bottom',
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true,
+        // Navn under pinnen: kartets egen tekstmotor – kolliderende navn
+        // skjules automatisk, og alt skjules utzoomet (< 13) som i dag.
+        'text-field': ['step', ['zoom'], '', 13, ['get', 'name']],
+        'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+        'text-size': 10.5,
+        'text-anchor': 'top',
+        'text-offset': [0, 0.25],
+        'text-max-width': 8,
+        'text-optional': true
+      },
+      paint: {
+        'text-color': _cssVar('--text', '#1a1523'),
+        'text-halo-color': _cssVar('--bg', '#ffffff'),
+        'text-halo-width': 1.2
+      }
+    });
+    map.on('click', 'tokt-pins', e => {
+      const f = e.features && e.features[0];
+      if(!f) return;
+      const m = (window.mapMarkers || []).find(x => String(x.id) === String(f.properties.mid));
+      if(m && m.open) {
+        m.open();
+        if(document.getElementById('list-view')?.classList.contains('open')) highlightListCard(m, true);
+      }
+    });
+    map.on('mouseenter', 'tokt-pins', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'tokt-pins', () => { map.getCanvas().style.cursor = ''; });
+  } catch(e) { console.warn('glEnsureLayer:', e); return false; }
+  return true;
+}
+
+// ── Synk: bygg features fra samme tilstand som HTML-pinnene styres av ──
+function syncGlPins() {
+  const map = window.map;
+  if(!window.GL_PINS_ON || !map || typeof map.getSource !== 'function') return;
+  if(!glEnsureLayer()) {                         // stil ikke klar (f.eks. rett etter temabytte)
+    try { map.once('style.load', () => syncGlPins()); } catch(e) {}
+    return;
+  }
+  const feats = [];
+  (window.mapMarkers || []).forEach(m => {
+    if(!m._gl || m.lng == null) return;
+    const st = m.el && m.el.style;
+    if(st && (st.display === 'none' || st.visibility === 'hidden')) return;  // filtre/klynging
+    if(m.listOnly) return;
+    const spec = m.el._pinSpec;
+    feats.push({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [m.lng, m.lat] },
+      properties: { mid: m.id, img: glEnsureImage(spec), name: spec.name || '' }
+    });
+  });
+  try { map.getSource('tokt-pins-src').setData({ type: 'FeatureCollection', features: feats }); } catch(e) {}
+}
+let _glSyncT = null;
+function glScheduleSync() {
+  if(_glSyncT) return;
+  _glSyncT = setTimeout(() => { _glSyncT = null; syncGlPins(); }, 60);
 }
 
 // Close lang dropdown on outside click
