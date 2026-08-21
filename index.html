@@ -3984,10 +3984,9 @@ try {
 window.GL_PINS_ON = (function(){ try { return localStorage.getItem('tokt-gl-pins') !== 'off'; } catch(e){ return true; } })();
 
 function glPinEligible(spec) {
-  // Etappe 2: foto-pins støttes (lastes asynkront inn i pin-bildet).
-  // Eier-status, pauset, utløpt og haste-puls gjenstår som HTML til etappe 3.
-  return !!spec && !spec.ownerClass && !spec.paused &&
-         !spec.expired && spec.typeClass !== 'haste';
+  // Etappe 3: alle pins er GL – status (mitt/jobber/søkt/pauset) bakes inn i
+  // pin-bildet, og haste/jobber-pulsen ligger som eget blinkende ringlag.
+  return !!spec && !spec.expired;
 }
 
 // Felles for alle markør-kallsteder: GL-sti når mulig, ellers HTML som før.
@@ -4020,34 +4019,80 @@ function _cssVar(name, fb) {
   try { const v = getComputedStyle(document.body).getPropertyValue(name).trim(); return v || fb; }
   catch(e) { return fb; }
 }
-function glPinColors(typeClass) {
+function glPinColors(typeClass, ownerClass) {
   const accent = _cssVar('--accent', '#d6427e');
-  const border = typeClass === 'charity' ? _cssVar('--green', '#30a46c')
-              : typeClass === 'service' ? _cssVar('--accent2', '#7c5cfc')
-              : accent;
-  return { border, coin: border, surface: _cssVar('--surface', '#ffffff'), text: '#ffffff' };
+  // Eier-status overstyrer type-farge, som i CSS-en (.mine/.working)
+  let border = ownerClass === 'mine' ? '#f0a500'
+            : ownerClass === 'working' ? '#14a89b'
+            : typeClass === 'haste' ? _cssVar('--red', '#e5484d')
+            : typeClass === 'charity' ? _cssVar('--green', '#30a46c')
+            : typeClass === 'service' ? _cssVar('--accent2', '#7c5cfc')
+            : accent;
+  return { border, coin: border,
+           surface: _cssVar('--surface', '#ffffff'),
+           text: ownerClass === 'mine' ? '#241a00' : '#ffffff' };
+}
+function glPinBadge(spec) {
+  if(spec.paused)                 return { txt: '⏸ ' + NE('Pauset','Paused'), bg: '#475569', fg: '#ffffff' };
+  if(spec.ownerClass==='applied') return { txt: '✓ ' + NE('Søkt','Applied'), bg: _cssVar('--surface','#fff'), fg: _cssVar('--muted','#6f6e77') };
+  if(spec.ownerClass==='mine')    return { txt: '👑 ' + NE('Mitt','Mine'), bg: '#f0a500', fg: '#241a00' };
+  if(spec.ownerClass==='working') return { txt: '🔨 ' + NE('Jobber','Working'), bg: '#14a89b', fg: '#ffffff' };
+  return null;
 }
 function glPinImageId(spec) {
-  return 'pin|' + spec.shape + '|' + (spec.typeClass || 'n') + '|' +
-         (spec.catKey || spec.emoji || '') + '|' + (spec.coinText || '') + '|' +
-         (document.body.classList.contains('dark') ? 'd' : 'l');
+  return 'pin|' + spec.shape + '|' + (spec.typeClass || 'n') + '|' + (spec.ownerClass || '') +
+         '|' + (spec.paused ? 'p' : '') + '|' + (spec.catKey || spec.emoji || '') + '|' +
+         (spec.coinText || '') + '|' + (document.body.classList.contains('dark') ? 'd' : 'l') +
+         '|' + (currentLang === 'en' ? 'e' : 'n');
 }
-function glMakePinImage(spec, photoImg) {
+function glMakePinImage(spec, photoImg, ringOnly) {
   const dpr = Math.min(Math.max(window.devicePixelRatio || 1, 1), 3);
-  const col = glPinColors(spec.typeClass);
+  const col = glPinColors(spec.typeClass, spec.ownerClass);
+  const badge = glPinBadge(spec);
+  const glow = spec.ownerClass === 'mine' || spec.ownerClass === 'working';
+  const pulse = spec.typeClass === 'haste' || spec.ownerClass === 'working';
   const D = 35;                                  // skivediameter (som .qp-emblem)
   const ctx0 = document.createElement('canvas').getContext('2d');
   ctx0.font = '700 ' + (9.5 * dpr) + 'px Inter, -apple-system, sans-serif';
   const coinTextW = spec.coinText ? ctx0.measureText(spec.coinText).width / dpr : 0;
   const coinW = spec.coinText ? Math.ceil(coinTextW + 15) : 0;
-  const W = Math.max(D + 10, coinW + 6);
+  ctx0.font = '800 ' + (8.5 * dpr) + 'px Inter, -apple-system, sans-serif';
+  const badgeW = badge ? Math.ceil(ctx0.measureText(badge.txt).width / dpr + 15) : 0;
+  // Marger: glød/puls trenger luft rundt skiven, badge trenger plass over
+  const side = (glow || pulse) ? 7 : 0;
+  const W = Math.max(D + 10 + side * 2, coinW + 6, badgeW + 4);
   const coinH = 14, coinOverlap = 8;
-  const H = D + (spec.coinText ? (coinH - coinOverlap + 1) : 0) + 4;
+  const top = badge ? 17 : (glow || pulse) ? 7 : 2;
+  const H = top + D + (spec.coinText ? (coinH - coinOverlap + 1) : 0) + 4;
   const cv = document.createElement('canvas');
   cv.width = W * dpr; cv.height = H * dpr;
   const ctx = cv.getContext('2d');
   ctx.scale(dpr, dpr);
-  const cx = W / 2, top = 2;
+  const cx = W / 2;
+
+  // Ring-modus: samme lerretstørrelse som pinnen, men KUN pulsringen rundt
+  // skiveposisjonen – ankres 'bottom' som pinnen og overlapper da perfekt.
+  if(ringOnly) {
+    ctx.beginPath();
+    if(spec.shape === 'square') ctx.roundRect(cx - D/2 - 4, top - 4, D + 8, D + 8, 11);
+    else ctx.arc(cx, top + D/2, D/2 + 3.5, 0, Math.PI * 2);
+    ctx.lineWidth = 2; ctx.strokeStyle = col.border; ctx.stroke();
+    return { canvas: cv, pixelRatio: dpr };
+  }
+
+  // Dempet uttrykk for «Søkt» og pauset (som CSS opacity/-filter)
+  if(spec.ownerClass === 'applied') { ctx.globalAlpha = .62; try { ctx.filter = 'saturate(.6)'; } catch(e) {} }
+  if(spec.paused)                   { ctx.globalAlpha = .7;  try { ctx.filter = 'grayscale(.55)'; } catch(e) {} }
+
+  // Glød (mitt = gull, jobber = teal): myk ring utenfor kanten
+  if(glow) {
+    ctx.beginPath();
+    if(spec.shape === 'square') ctx.roundRect(cx - D/2 - 2, top - 2, D + 4, D + 4, 10.5);
+    else ctx.arc(cx, top + D/2, D/2 + 1.2, 0, Math.PI * 2);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = spec.ownerClass === 'mine' ? 'rgba(240,165,0,.20)' : 'rgba(20,168,155,.22)';
+    ctx.stroke();
+  }
 
   // Skive (sirkel = oppdrag, avrundet firkant = tjeneste) – hvit flate, farget kant
   ctx.save();
@@ -4116,6 +4161,18 @@ function glMakePinImage(spec, photoImg) {
     ctx.fillStyle = col.text;
     ctx.fillText(spec.coinText, cx, y + coinH/2 + 0.5);
   }
+  // Status-badge over pinnen (👑 Mitt / 🔨 Jobber / ✓ Søkt / ⏸ Pauset)
+  if(badge) {
+    ctx.globalAlpha = 1; try { ctx.filter = 'none'; } catch(e) {}
+    const bx = cx - badgeW/2, by = 1, bh = 13;
+    ctx.beginPath(); ctx.roundRect(bx, by, badgeW, bh, 6.5);
+    ctx.fillStyle = badge.bg; ctx.fill();
+    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.stroke();
+    ctx.font = '800 8.5px Inter, -apple-system, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = badge.fg;
+    ctx.fillText(badge.txt, cx, by + bh/2 + 0.5);
+  }
   return { canvas: cv, pixelRatio: dpr };
 }
 function _glAddCanvas(map, id, made) {
@@ -4173,6 +4230,14 @@ function glEnsureLayer() {
   if(!map || typeof map.getSource !== 'function' || !map.isStyleLoaded()) return false;
   if(map.getSource('tokt-pins-src')) return true;
   try {
+    // Pulsring-lag FØRST så det ligger under selve pinnene
+    map.addSource('tokt-pulse-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({
+      id: 'tokt-pulse', type: 'symbol', source: 'tokt-pulse-src',
+      layout: { 'icon-image': ['get', 'img'], 'icon-anchor': 'bottom',
+                'icon-allow-overlap': true, 'icon-ignore-placement': true },
+      paint: { 'icon-opacity': 1 }
+    });
     map.addSource('tokt-pins-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
     map.addLayer({
       id: 'tokt-pins', type: 'symbol', source: 'tokt-pins-src',
@@ -4220,7 +4285,7 @@ function syncGlPins() {
     try { map.once('style.load', () => syncGlPins()); } catch(e) {}
     return;
   }
-  const feats = [];
+  const feats = [], pulseFeats = [];
   (window.mapMarkers || []).forEach(m => {
     if(!m._gl || m.lng == null) return;
     const st = m.el && m.el.style;
@@ -4232,8 +4297,41 @@ function syncGlPins() {
       geometry: { type: 'Point', coordinates: [m.lng, m.lat] },
       properties: { mid: m.id, img: glEnsureImage(spec), name: spec.name || '' }
     });
+    // Blinkende ring for haste og «jobber på» – som dagens CSS-puls
+    if(spec.typeClass === 'haste' || spec.ownerClass === 'working') {
+      const rid = glPinImageId(spec) + '|ring';
+      if(!map.hasImage(rid)) {
+        try { _glAddCanvas(map, rid, glMakePinImage(spec, null, true)); } catch(e) {}
+      }
+      pulseFeats.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [m.lng, m.lat] },
+        properties: { img: rid }
+      });
+    }
   });
   try { map.getSource('tokt-pins-src').setData({ type: 'FeatureCollection', features: feats }); } catch(e) {}
+  try { map.getSource('tokt-pulse-src').setData({ type: 'FeatureCollection', features: pulseFeats }); } catch(e) {}
+  glPulseTimer(pulseFeats.length > 0);
+}
+
+// Blink-takt som CSS-en (opacity 1 -> .4 -> 1 over 1.4s). Timeren kjører KUN
+// når det finnes pulserende pins i kartet – null kostnad ellers.
+let _glPulseInt = null;
+function glPulseTimer(on) {
+  const map = window.map;
+  if(on && !_glPulseInt) {
+    _glPulseInt = setInterval(() => {
+      try {
+        const t = (Date.now() % 1400) / 1400;                 // 0..1
+        const op = 1 - 0.6 * Math.sin(t * Math.PI);           // 1 -> .4 -> 1
+        map.setPaintProperty('tokt-pulse', 'icon-opacity', op);
+      } catch(e) {}
+    }, 90);
+  } else if(!on && _glPulseInt) {
+    clearInterval(_glPulseInt); _glPulseInt = null;
+    try { map.setPaintProperty('tokt-pulse', 'icon-opacity', 1); } catch(e) {}
+  }
 }
 let _glSyncT = null;
 function glScheduleSync() {
