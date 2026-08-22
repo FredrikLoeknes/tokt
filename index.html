@@ -485,7 +485,10 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
 .pp-prog .bar{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
 .pp-prog .f{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--m1,#7d8794),var(--m2,#d3dae3));transition:width .4s ease}
 .pp-prog .lbl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:6px;font-weight:600}.pp-prog .lbl b{color:var(--text)}
-.pp-mladder{display:flex;align-items:center;gap:7px;justify-content:center;margin-top:16px}
+/* Mini-stigen vises kun når hele stigen er utvidet - i sammenslått tilstand
+   holder progressbaren + neste-mål (kritikk: rangseksjonen tok en hel skjerm) */
+.pp-mladder{display:none;align-items:center;gap:7px;justify-content:center;margin-top:16px}
+#pp-journey.ladder-open .pp-mladder{display:flex}
 .pp-mladder .step{display:flex;flex-direction:column;align-items:center;gap:5px;width:58px;text-align:center}
 .pp-mladder .step .nm{font-size:9.5px;font-weight:700}
 .pp-mladder .step.dim{opacity:.45;filter:grayscale(.5)}
@@ -504,8 +507,8 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
 .fl-row.locked .medal{filter:grayscale(.75);opacity:.45}
 .fl-row.locked .nm{color:var(--muted)}
 .fl-you{font-size:8px;font-weight:800;background:var(--grad);color:#fff;padding:2px 6px;border-radius:50px;letter-spacing:.4px}
-.pp-lbpos{display:flex;align-items:center;gap:11px;background:rgba(201,144,10,.07);border:1px solid rgba(201,144,10,.25);border-radius:12px;padding:11px 13px;margin-top:15px}
-.pp-lbpos .r{font-size:18px;font-weight:800;color:var(--gold);white-space:nowrap}
+.pp-lbpos{display:flex;align-items:center;gap:9px;padding:4px 2px 0;margin-top:12px}
+.pp-lbpos .r{font-size:13px;font-weight:800;color:var(--gold);white-space:nowrap}
 .pp-lbpos .tx{flex:1;font-size:11.5px;color:var(--muted);line-height:1.4}.pp-lbpos .tx b{color:var(--text)}
 
 /* Profil: sentrert innholdskolonne på desktop – mobil er helt uendret */
@@ -7021,8 +7024,9 @@ function toggleFullLadder() {
   if(!el) return;
   const open = el.style.display !== 'none';
   el.style.display = open ? 'none' : 'block';
+  document.getElementById('pp-journey')?.classList.toggle('ladder-open', !open);
   if(chev) chev.style.transform = open ? '' : 'rotate(180deg)';
-  if(tx) tx.textContent = open ? NE('Vis hele rangstigen','Show the full rank ladder') : NE('Skjul rangstigen','Hide the rank ladder');
+  if(tx) tx.textContent = open ? NE('Rangstigen','Rank ladder') : NE('Skjul rangstigen','Hide the rank ladder');
 }
 
 // Engelske oversettelser for prestasjoner (id -> [title, desc])
@@ -12563,7 +12567,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div class="lbl"><span id="pp-prog-left"><b>0 / 2</b> oppdrag til neste</span><span id="pp-prog-right"></span></div>
     </div>
     <div class="pp-mladder" id="pp-mini-ladder"></div>
-    <button id="pp-ladder-toggle" class="pp-ladder-toggle" onclick="toggleFullLadder()"><span id="pp-ladder-toggle-tx" data-en="Show the full rank ladder">Vis hele rangstigen</span> <span id="pp-ladder-chev" style="display:inline-block;transition:transform .25s">▾</span></button>
+    <button id="pp-ladder-toggle" class="pp-ladder-toggle" onclick="toggleFullLadder()"><span id="pp-ladder-toggle-tx" data-en="Rank ladder">Rangstigen</span> <span id="pp-ladder-chev" style="display:inline-block;transition:transform .25s">▾</span></button>
     <div id="pp-rank-ladder" class="pp-full-ladder" style="display:none"></div>
     <div class="pp-lbpos" id="pp-lbpos" style="display:none"><div class="r" id="pp-lbpos-rank">–</div><div class="tx" id="pp-lbpos-text"></div></div>
   </div>
