@@ -462,6 +462,12 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
 
 /* ── PROFIL: avatar-emblem, reise-kort, mini-stige ── */
 .pp-avwrap{position:relative;display:inline-block;margin:0 auto 11px}
+/* Edit-modus på profilsiden: «Rediger profil» er en egen visning i samme side.
+   Visningsinnholdet skjules, kun skjema + logg ut/slett vises. Ingen DOM
+   flyttes - all lagringslogikk (pp-edit-name/-phone osv.) er urørt. */
+#profile-page.pp-editing .pp-viewsec { display:none !important; }
+#profile-page:not(.pp-editing) #pp-edit-section,
+#profile-page:not(.pp-editing) #pp-logout-section { display:none !important; }
 .pp-medal-emblem{position:absolute;bottom:-5px;right:-5px;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .pp-star-badge{position:absolute;top:-3px;right:-3px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f5c518,#c9900a);border:2.5px solid #fff;box-shadow:0 2px 7px rgba(201,144,10,.45);display:none;align-items:center;justify-content:center;color:#fff}
 .pp-star-badge svg{width:17px;height:17px}
@@ -6760,9 +6766,36 @@ window.startAvatarWatch = function(){
   }, true);
 })();
 
+function openProfileEdit() {
+  const pg = document.getElementById('profile-page');
+  if(!pg) return;
+  pg.classList.add('pp-editing');
+  document.getElementById('pp-edit-section').style.display = 'block';
+  document.getElementById('pp-logout-section').style.display = 'block';
+  const t = document.getElementById('pp-header-title');
+  if(t) t.textContent = NE('Rediger profil','Edit profile');
+  pg.scrollTop = 0;
+}
+function closeProfileEdit() {
+  const pg = document.getElementById('profile-page');
+  if(!pg) return;
+  pg.classList.remove('pp-editing');
+  const t = document.getElementById('pp-header-title');
+  if(t) t.textContent = NE('Min profil','My profile');
+}
+// Tilbakeknappen i headeren: ett steg tilbake (edit -> profil -> lukk)
+function ppHeaderBack() {
+  const pg = document.getElementById('profile-page');
+  if(pg && pg.classList.contains('pp-editing')) closeProfileEdit();
+  else closeProfilePage();
+}
+
 async function loadProfilePage(userId, isOwn) {
+  closeProfileEdit();                     // alltid start i visningsmodus
   // Vis/skjul egne seksjoner
   document.getElementById('pp-edit-section').style.display = isOwn ? 'block' : 'none';
+  const ppEditRow = document.getElementById('pp-editrow');
+  if(ppEditRow) ppEditRow.style.display = isOwn ? 'block' : 'none';
   const ppQuick = document.getElementById('pp-quicknav');
   if(ppQuick) ppQuick.style.display = isOwn ? 'block' : 'none';
   const ppLogout = document.getElementById('pp-logout-section');
@@ -12492,13 +12525,13 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
   <!-- Header med tilbakeknapp -->
   <div style="position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px">
-    <button onclick="closeProfilePage()" style="background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:16px;color:var(--text)">←</button>
+    <button onclick="ppHeaderBack()" style="background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:16px;color:var(--text)">←</button>
     <div style="font-size:16px;font-weight:800" id="pp-header-title">Min profil</div>
     <button id="pp-report-btn" onclick="reportUserFromProfile()" style="display:none;margin-left:auto;background:none;border:1px solid var(--border);border-radius:50px;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;padding:6px 12px">⚠️ Rapporter</button>
   </div>
 
   <!-- Hero: identitet + tillit -->
-  <div style="background:linear-gradient(135deg,#f97316,#a855f7);padding:24px 20px 44px;text-align:center;color:#fff">
+  <div class="pp-viewsec" style="background:linear-gradient(135deg,#f97316,#a855f7);padding:24px 20px 44px;text-align:center;color:#fff">
     <div class="pp-avwrap">
       <div id="pp-avatar" style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.25);border:3px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800">?</div>
       <div id="pp-medal-emblem" class="medal sm pp-medal-emblem m-iron"><span class="sym">I</span></div>
@@ -12520,7 +12553,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
 
   <!-- Reise-kort (rang nedtonet: progresjon + mini-stige + topplisteplass) -->
-  <div id="pp-journey" class="pp-journey">
+  <div id="pp-journey" class="pp-viewsec" class="pp-journey">
     <div class="pp-jhead">
       <div class="rk" id="pp-rank-name">Jern</div>
       <div class="lv" id="pp-rank-level">Nivå 1 av 9</div>
@@ -12536,7 +12569,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
 
   <!-- Tillit-stripe -->
-  <div style="display:flex;gap:1px;background:var(--border);border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:14px">
+  <div class="pp-viewsec" style="display:flex;gap:1px;background:var(--border);border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:14px">
     <div style="flex:1;background:var(--surface);padding:16px 8px;text-align:center">
       <div id="pp-stat-quests" style="font-size:20px;font-weight:800;color:var(--accent)">0</div>
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)"><span data-en="Completed">Fullført</span></div>
@@ -12552,7 +12585,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
 
   <!-- Hurtigmeny (kun egen profil) -->
-  <div id="pp-quicknav" style="display:none;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
+  <div id="pp-quicknav" class="pp-viewsec" style="display:none;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
     <div style="display:flex;gap:8px">
       <button onclick="openMyQuests('posted')" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 4px;cursor:pointer;font-family:inherit;color:var(--text);transition:.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <span id="pp-nav-quests-badge" style="display:none;position:absolute;top:8px;right:10px;background:var(--green);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;padding:0 5px;border-radius:999px;align-items:center;justify-content:center">0</span>
@@ -12566,7 +12599,15 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
 
   <!-- Last ned app (kun egen profil, kun når installerbar) -->
-  <div id="pp-install-section" style="display:none;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
+  <div id="pp-editrow" class="pp-viewsec" style="display:none;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
+    <button onclick="openProfileEdit()" style="width:100%;display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px 15px;cursor:pointer;font-family:inherit;color:var(--text)">
+      <svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+      <span style="flex:1;text-align:left;font-size:13.5px;font-weight:700" data-en="Edit profile">Rediger profil</span>
+      <span style="color:var(--muted)">›</span>
+    </button>
+  </div>
+
+  <div id="pp-install-section" class="pp-viewsec" style="display:none;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
     <div onclick="triggerInstall()" style="display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,rgba(249,115,22,.10),rgba(168,85,247,.10));border:1px solid rgba(168,85,247,.22);border-radius:16px;padding:13px 14px;cursor:pointer">
       <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#f97316,#a855f7);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;box-shadow:0 4px 14px rgba(168,85,247,.3)">📲</div>
       <div style="flex:1;min-width:0">
@@ -12592,13 +12633,13 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
 
   <!-- Anmeldelser -->
-  <div style="padding:18px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
+  <div class="pp-viewsec" style="padding:18px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
     <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px" data-en="⭐ Ratings">⭐ Vurderinger</div>
     <div id="pp-reviews"><div style="font-size:13px;color:var(--muted);padding:8px 0">Laster vurderinger…</div></div>
   </div>
 
   <!-- Bragder -->
-  <div style="padding:16px 20px 24px;background:var(--surface)">
+  <div class="pp-viewsec" style="padding:16px 20px 24px;background:var(--surface)">
     <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px" data-en="Achievements">Bragder</div>
     <div id="pp-achievements"></div>
   </div>
@@ -12826,6 +12867,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     ['rating-panel',          function(el){ return !!el; }, function(el){ el.remove(); }],
     ['list-view',             hasOpen, function(){ try{ closeListView(); }catch(e){} }],
     ['okonomi-page',          shown,   function(){ try{ closeOkonomi(); }catch(e){} }],
+    ['profile-page-edit',     function(){ const p=document.getElementById('profile-page'); return !!p && p.style.display!=='none' && p.classList.contains('pp-editing'); }, function(){ try{ closeProfileEdit(); }catch(e){} }],
     ['profile-page',          shown,   function(){ try{ closeProfilePage(); }catch(e){} }],
     ['myquests-panel',        shown,   function(){ try{ closeMyQuests(); }catch(e){} }],
     ['chat-panel',            shown,   function(){ try{ closeChat(); }catch(e){} }],
