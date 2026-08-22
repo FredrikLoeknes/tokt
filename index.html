@@ -6917,7 +6917,7 @@ async function loadProfilePage(userId, isOwn) {
 
   // Tillit-stripe
   document.getElementById('pp-stat-quests').textContent = questsDone;
-  document.getElementById('pp-stat-rating').textContent = avgRating ? '★ ' + avgRating.toFixed(1) : '–';
+  document.getElementById('pp-stat-rating').textContent = avgRating ? '★ ' + avgRating.toFixed(1) : NE('Ny','New');
   const ratLabel = document.getElementById('pp-stat-rating-label');
   if(ratLabel) ratLabel.textContent = ratings?.length ? (currentLang==='en' ? `${ratings.length} rating${ratings.length===1?'':'s'}` : `${ratings.length} vurdering${ratings.length===1?'':'er'}`) : NE('Vurdering','Rating');
   const memShort = profile.created_at
@@ -12553,7 +12553,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   </div>
 
   <!-- Reise-kort (rang nedtonet: progresjon + mini-stige + topplisteplass) -->
-  <div id="pp-journey" class="pp-viewsec" class="pp-journey">
+  <div id="pp-journey" class="pp-viewsec pp-journey">
     <div class="pp-jhead">
       <div class="rk" id="pp-rank-name">Jern</div>
       <div class="lv" id="pp-rank-level">Nivå 1 av 9</div>
@@ -12582,6 +12582,12 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <div id="pp-stat-member" style="font-size:20px;font-weight:800;color:var(--green)">–</div>
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)"><span data-en="Member since">Medlem siden</span></div>
     </div>
+  </div>
+
+  <!-- Anmeldelser -->
+  <div class="pp-viewsec" style="padding:18px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px" data-en="⭐ Ratings">⭐ Vurderinger</div>
+    <div id="pp-reviews"><div style="font-size:13px;color:var(--muted);padding:8px 0">Laster vurderinger…</div></div>
   </div>
 
   <!-- Hurtigmeny (kun egen profil) -->
@@ -12630,12 +12636,6 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <input id="pp-edit-phone" class="form-input" type="tel" name="tel" autocomplete="tel" inputmode="numeric" placeholder="8 siffer" maxlength="8" style="width:100%;box-sizing:border-box">
     </div>
     <button onclick="saveProfileEdits()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit"><span data-en="💾 Save changes">💾 Lagre endringer</span></button>
-  </div>
-
-  <!-- Anmeldelser -->
-  <div class="pp-viewsec" style="padding:18px 20px;background:var(--surface);border-bottom:1px solid var(--border)">
-    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px" data-en="⭐ Ratings">⭐ Vurderinger</div>
-    <div id="pp-reviews"><div style="font-size:13px;color:var(--muted);padding:8px 0">Laster vurderinger…</div></div>
   </div>
 
   <!-- Bragder -->
