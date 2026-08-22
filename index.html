@@ -1621,10 +1621,10 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
 <!-- KART-CHIPS: Alt / Oppdrag / Tjenester / Haster / Dugnad / Filter -->
 <div id="view-toggle" style="position:fixed;top:120px;left:0;right:0;z-index:95;display:flex;gap:7px;padding:0 12px;overflow-x:auto;justify-content:flex-start;pointer-events:none">
   <button style="pointer-events:auto" class="vt-btn active" id="vt-all" data-vm="all" onclick="setViewMode('all')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg><span data-en="All">Alt</span></button>
-  <button style="pointer-events:auto" class="vt-btn" id="vt-quests" data-vm="quests" onclick="setViewMode('quests')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 10h6M9 14h6M9 18h4"/></svg><span data-en="Quests">Oppdrag</span></button>
-  <button style="pointer-events:auto" class="vt-btn" id="vt-services" data-vm="services" onclick="setViewMode('services')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-4h14l1 4"/><path d="M4 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 11v8h14v-8"/><path d="M9 19v-4h4v4"/></svg><span data-en="Offers">Tilbud</span></button>
+  <button style="pointer-events:auto" class="vt-btn" id="vt-quests" data-vm="quests" onclick="setViewMode('quests')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 10h6M9 14h6M9 18h4"/></svg><span data-en="Quests">Oppdrag</span><span class="vt-cnt" id="vt-cnt-quests" style="display:none"></span></button>
+  <button style="pointer-events:auto" class="vt-btn" id="vt-services" data-vm="services" onclick="setViewMode('services')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-4h14l1 4"/><path d="M4 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 11v8h14v-8"/><path d="M9 19v-4h4v4"/></svg><span data-en="Offers">Tilbud</span><span class="vt-cnt" id="vt-cnt-services" style="display:none"></span></button>
   <button style="pointer-events:auto" class="vt-btn" id="vt-haste" data-vm="haste" onclick="setViewMode('haste')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg><span data-en="Urgent">Haster</span><span class="vt-cnt" id="vt-cnt-haste" style="display:none"></span></button>
-  <button style="pointer-events:auto" class="vt-btn" id="vt-dugnad" data-vm="dugnad" onclick="setViewMode('dugnad')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><span data-en="Volunteer">Dugnad</span></button>
+  <button style="pointer-events:auto" class="vt-btn" id="vt-dugnad" data-vm="dugnad" onclick="setViewMode('dugnad')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><span data-en="Volunteer">Dugnad</span><span class="vt-cnt" id="vt-cnt-dugnad" style="display:none"></span></button>
   <button style="pointer-events:auto" class="vt-btn" id="vt-filter" onclick="openFilters()"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span data-en="Filter">Filter</span><span id="vt-filter-count" style="display:none;background:var(--accent);color:#fff;border-radius:50px;padding:1px 6px;font-size:9.5px;font-weight:800"></span></button>
 </div>
 
@@ -5957,12 +5957,18 @@ function updateListToggleCount() {
     (m._listPass !== undefined ? m._listPass : (m.el && m.el.style.display !== 'none'))
     && m.lng != null).length;
   c.textContent = n;
-  // Haster-chipen viser antall når > 0 (som Finn: du ser at det finnes noe)
-  const hc = document.getElementById('vt-cnt-haste');
-  if(hc) {
-    const nh = (window.mapMarkers || []).filter(m => m.kind === 'quest' && m.isUrgent && !m.listOnly).length;
-    hc.textContent = nh; hc.style.display = nh > 0 ? '' : 'none';
-  }
+  // Chips-antall (som Finn: du ser hva som finnes før du velger)
+  const ms = (window.mapMarkers || []).filter(m => !m.listOnly && m.lng != null);
+  const chipCounts = {
+    'vt-cnt-quests':   ms.filter(m => m.kind === 'quest').length,
+    'vt-cnt-services': ms.filter(m => m.kind === 'service').length,
+    'vt-cnt-haste':    ms.filter(m => m.kind === 'quest' && m.isUrgent).length,
+    'vt-cnt-dugnad':   ms.filter(m => m.kind === 'quest' && m.isCharity).length
+  };
+  Object.entries(chipCounts).forEach(([id, cnt]) => {
+    const el = document.getElementById(id);
+    if(el) { el.textContent = cnt; el.style.display = cnt > 0 ? '' : 'none'; }
+  });
 }
 function clearFilters() {
   document.querySelectorAll('.fcat-item').forEach((el,i) => el.classList.toggle('active', i===0));
