@@ -5441,11 +5441,13 @@ async function _postJobInner() {
   const imgInput = document.getElementById('quest-image-input');
   if(imgInput?.files[0] && quest) {
     const file = imgInput.files[0];
-    const ext = file.name.split('.').pop().toLowerCase();
+    let upBlob = file, ext = file.name.split('.').pop().toLowerCase(), ctype = file.type;
+    try { upBlob = await compressUploadImage(file); ext = 'jpg'; ctype = 'image/jpeg'; }
+    catch(e) { console.warn('compress fallback (rå fil):', e.message); }
     const path = `${currentUser.id}/${quest.id}.${ext}`;
     const { data: imgData, error: imgError } = await sb.storage
       .from('quest-images')
-      .upload(path, file, { upsert: true, contentType: file.type });
+      .upload(path, upBlob, { upsert: true, contentType: ctype });
 
     if(imgError) {
       console.warn('Image upload failed:', imgError.message);
@@ -6602,6 +6604,32 @@ function applyMyAvatar(url){
 // skalerer til maks 512×512 og eksporterer som JPEG (~50 kB). Løser tre ting:
 // HEIC/ukjente formater (feiler ærlig i stedet for tom sirkel), store filer,
 // og gir perfekt kvadrat til den runde avataren.
+// Komprimer opplastingsbilder: maks 1600 px lengste side, JPEG ~0.82.
+// Et 5-10 MB kamerabilde blir ~200-400 KB - visuelt likt på mobil, men
+// ~95 % mindre egress hver gang det vises på kartet. (Bakgrunn: Supabase-
+// kvoten røk fordi quest-/tjenestebilder gikk opp rått fra kameraet.)
+function compressUploadImage(file, maxDim = 1600, quality = 0.82){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try{
+        const w = img.naturalWidth, h = img.naturalHeight;
+        if(!w || !h) throw new Error('decode');
+        const sc = Math.min(1, maxDim / Math.max(w, h));
+        const cw = Math.round(w * sc), ch = Math.round(h * sc);
+        const canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        canvas.getContext('2d').drawImage(img, 0, 0, cw, ch);
+        URL.revokeObjectURL(url);
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('encode')), 'image/jpeg', quality);
+      } catch(e){ URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
+    img.src = url;
+  });
+}
+
 function processAvatarImage(file){
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -10480,9 +10508,12 @@ async function postService() {
   if(imgInput.files[0] && data) {
     const file = imgInput.files[0];
     const ext = file.name.split('.').pop();
-    const { error: upErr } = await sb.storage.from('quest-images').upload(`svc-${data.id}.${ext}`, file, {upsert:true});
+    let svcBlob = file, svcType = file.type || 'image/jpeg', svcExt = ext;
+    try { svcBlob = await compressUploadImage(file); svcExt = 'jpg'; svcType = 'image/jpeg'; }
+    catch(e) { console.warn('compress fallback (rå fil):', e.message); }
+    const { error: upErr } = await sb.storage.from('quest-images').upload(`svc-${data.id}.${svcExt}`, svcBlob, {upsert:true, contentType: svcType});
     if(!upErr) {
-      const { data: urlData } = sb.storage.from('quest-images').getPublicUrl(`svc-${data.id}.${ext}`);
+      const { data: urlData } = sb.storage.from('quest-images').getPublicUrl(`svc-${data.id}.${svcExt}`);
       await sb.from('services').update({ image_url: urlData.publicUrl }).eq('id', data.id);
       data.image_url = urlData.publicUrl;
     }
