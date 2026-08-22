@@ -395,17 +395,28 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
 }
 .lv-card:active { background:var(--surface2); }
 .lv-card.rec { background:linear-gradient(90deg,rgba(15,169,104,.06),rgba(214,66,126,.04)); }
+/* Listekort (redesign, godkjent mockup): foto som thumb når det finnes,
+   type som etikett PÅ bildet, rang ute av kortet - tillit vises som rating. */
 .lv-thumb {
-  width:40px; height:40px; border-radius:12px; background:var(--surface2);
+  width:56px; height:56px; border-radius:13px; background:var(--surface2);
   display:flex; align-items:center; justify-content:center; font-size:19px;
-  flex-shrink:0; position:relative;
+  flex-shrink:0; position:relative; overflow:hidden;
 }
 .lv-thumb > svg { display:block; }
+.lv-thumb img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .lv-em { position:absolute; bottom:-4px; right:-4px; border:2px solid var(--surface); }
 .lv-info { flex:1; min-width:0; }
-.lv-title { font-size:14px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:5px; }
-.lv-kb { flex-shrink:0; color:#fff; font-size:8px; font-weight:800; letter-spacing:.4px; border-radius:4px; padding:2px 5px; background:var(--accent); }
-.lv-kb.svc { background:var(--accent2); }
+.lv-title { font-size:13.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:5px; }
+.lv-kb {
+  position:absolute; bottom:0; left:0; right:0; z-index:2; text-align:center;
+  color:#fff; font-size:7.5px; font-weight:800; letter-spacing:.5px; padding:2.5px 0;
+  background:rgba(26,21,35,.62);
+}
+.lv-kb.svc { background:rgba(124,92,252,.8); }
+.lv-kb.haste { background:rgba(229,72,77,.84); }
+.lv-kb.dugnad { background:rgba(15,169,104,.84); }
+.lv-price .lv-pval { font-size:14px; font-weight:800; display:block; }
+.lv-price .lv-pfree { color:var(--green); }
 .lv-open { flex-shrink:0; background:none; border:none; color:var(--muted); opacity:.55; font-size:20px; font-weight:700; cursor:pointer; font-family:inherit; padding:6px 2px 6px 8px; line-height:1; }
 .lv-vchk { width:14px; height:14px; fill:#2563eb; flex-shrink:0; }
 .lv-meta { font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -5846,12 +5857,16 @@ function renderListView() {
     const ri = RANKS.indexOf(getRank(m.questsCompleted || 0));
     const ratingTxt = (m.rating != null)
       ? `<span class="lv-star">★ ${m.rating.toFixed(1)}</span>`
-      : `<span class="lv-new">${NE('Ny','New')}</span>`;
-    const dist = (m.distKm != null) ? ` · 📍 ${formatDistance(m.distKm)}` : '';
+      : `<span class="lv-new">${isSvc ? t('newProviderLabel') : NE('Ny utlegger','New poster')}</span>`;
+    const dist = (m.distKm != null) ? ` · ${formatDistance(m.distKm)}` : '';
     const ver = m.verified ? ' ' + vchk : '';
     const rec = (sort === 'rec' && i === 0);
-    const medal = `<div class="medal xs ${rankMetalClass(ri)} lv-em"><span class="sym">${rankSym(ri)}</span></div>`;
-    const price = m.pay ? `${m.pay} kr` : (isSvc ? '' : 'Gratis');
+    const spec = m.el && m.el._pinSpec || {};
+    const isCharity = spec.typeClass === 'charity' || (!isSvc && !m.pay);
+    const isHaste = spec.typeClass === 'haste';
+    const price = m.pay
+      ? `<span class="lv-pval">${m.pay} kr</span>`
+      : (isSvc ? '' : `<span class="lv-pval lv-pfree">Gratis</span>`);
     const seeLabel = isSvc ? NE('Se tilbyder →','See provider →') : NE('Se oppdrag →','See task →');
     const tags = [];
     if(m.isDemo) tags.push('<span class="lv-tag" style="background:rgba(240,165,0,0.12);color:var(--gold);border:1px solid rgba(240,165,0,0.3)">🧪 ' + NE('Eksempel','Example') + '</span>');
@@ -5861,17 +5876,22 @@ function renderListView() {
     else if(m.ownership === 'working') tags.push('<span class="lv-tag lv-tag-work">Jobber på</span>');
     else if(m.ownership === 'applied') tags.push('<span class="lv-tag lv-tag-app">Søkt</span>');
     const tagsHtml = tags.length ? `<div class="lv-tags">${tags.join('')}</div>` : '';
-    const kindChip = `<span class="lv-kb${isSvc?' svc':''}">${isSvc ? NE('TJENESTE','SERVICE') : NE('OPPDRAG','TASK')}</span>`;
-    return `<div class="lv-card ${rec ? 'rec' : ''}" id="lv-card-${i}" onclick="locateListResult(${i})">
+    // Type-etikett PÅ thumben: HASTER > DUGNAD > TJENESTE > OPPDRAG
+    const kindChip = isHaste ? `<span class="lv-kb haste">${NE('HASTER','URGENT')}</span>`
+                  : isCharity ? `<span class="lv-kb dugnad">${NE('DUGNAD','VOLUNTEER')}</span>`
+                  : isSvc ? `<span class="lv-kb svc">${NE('TJENESTE','SERVICE')}</span>`
+                  : `<span class="lv-kb">${NE('OPPDRAG','TASK')}</span>`;
+    // Foto som thumb når oppdraget/tjenesten har bilde (fallback: kategori-ikon)
+    const photo = spec.imageUrl ? `<img src="${spec.imageUrl}" loading="lazy" onerror="this.remove()">` : '';
+    return `<div class="lv-card ${rec ? 'rec' : ''}" id="lv-card-${i}" onclick="openListResult(${i})">
       ${rec ? '<div class="lv-recbadge">✨ Anbefalt</div>' : ''}
-      <div class="lv-thumb">${icon}${medal}</div>
+      <div class="lv-thumb">${icon}${photo}${kindChip}</div>
       <div class="lv-info">
-        <div class="lv-title">${kindChip}${m.title || NE('Uten tittel','Untitled')}${ver}</div>
-        <div class="lv-meta">${ratingTxt}${dist} · ${rankName(RANKS[ri])}${m.createdAt ? ' · ' + questAgeHtml(m.createdAt) : ''}</div>
+        <div class="lv-title">${m.title || NE('Uten tittel','Untitled')}${ver}</div>
+        <div class="lv-meta">${ratingTxt}${dist}${m.createdAt ? ' · ' + questAgeHtml(m.createdAt) : ''}</div>
         ${tagsHtml}
       </div>
       <div class="lv-price">${price}</div>
-      <button class="lv-open" aria-label="${seeLabel.replace(' →','')}" onclick="event.stopPropagation();openListResult(${i})">›</button>
     </div>`;
   }).join('');
 }
