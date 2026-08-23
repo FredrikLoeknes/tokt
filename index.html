@@ -11530,7 +11530,13 @@ function cleanOAuthUrl() {
 // vilkårsaksept (samme gate som e-postregistrering) og valgfritt telefon.
 // Modalen kan ikke lukkes – bare fullføres eller logges ut av.
 function needsProfileCompletion(user, profile) {
-  if(!user || !isOAuthUser(user)) return false;
+  // Gjaldt opprinnelig kun OAuth-brukere (Apple/Google), men gamle
+  // e-postkontoer fra før fødselsdato-feltet fantes har også tomt
+  // birth_date - og uten alder virker ingen av aldersreglene (18+-
+  // kategorier, sperrede kategorier for mindreårige). Prompten treffer
+  // derfor nå alle innloggede som mangler fødselsdato eller vilkår -
+  // én gang, så er kontoen komplett.
+  if(!user) return false;
   if(window._cpDoneFor === user.id) return false;   // fullført i denne økten – aldri gjenåpne
   if(!profile) return true;
   return !profile.birth_date || !profile.terms_accepted_at;
@@ -11563,7 +11569,7 @@ function openCompleteProfile(user, profile) {
         <div style="flex:1"><label style="${lbl}">${NE('Fornavn','First name')}</label><input id="cp-first" type="text" autocomplete="given-name" value="${first.replace(/"/g,'&quot;')}" style="${inp}"></div>
         <div style="flex:1"><label style="${lbl}">${NE('Etternavn','Last name')}</label><input id="cp-last" type="text" autocomplete="family-name" value="${last.replace(/"/g,'&quot;')}" style="${inp}"></div>
       </div>
-      <div style="margin-bottom:12px"><label style="${lbl}">${NE('Fødselsdato','Date of birth')}</label><input id="cp-birthdate" type="date" style="${inp}"></div>
+      <div style="margin-bottom:12px"><label style="${lbl}">${NE('Fødselsdato','Date of birth')}</label><input id="cp-birthdate" type="date" value="${(profile && profile.birth_date) ? String(profile.birth_date).slice(0,10) : ''}" style="${inp}"></div>
       <div style="margin-bottom:12px"><label style="${lbl}">${NE('Telefon (valgfritt)','Phone (optional)')}</label>
         <div style="display:flex;gap:8px;align-items:center"><span style="font-size:14px;color:var(--muted);font-weight:600">+47</span><input id="cp-phone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="912 34 567" value="${phone}" style="${inp}"></div>
       </div>
