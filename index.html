@@ -1344,7 +1344,8 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
 
   /* LEGEND – flyttes til høyre kant på mobil (under view-toggle, klar av bunn-nav) */
   #legend-toggle {
-    bottom:auto; top:124px; left:auto; right:12px; transform:none;
+    /* Under chips-raden (som fyller hele bredden på top:120px) – ikke bak den */
+    bottom:auto; top:170px; left:auto; right:12px; transform:none;
     width:36px; height:36px; padding:0; justify-content:center; border-radius:50%; font-size:15px;
   }
   #legend-toggle:active { transform:scale(0.96); }
