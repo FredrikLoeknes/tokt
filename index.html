@@ -11430,7 +11430,8 @@ async function proceedRegister() {
     let msg = error.message;
     if(msg.includes('already registered') || msg.includes('already exists') || msg.includes('User already registered')) msg = 'Denne e-posten er allerede registrert. Prøv å logge inn i stedet.';
     else if(msg.includes('invalid') && msg.includes('email')) msg = 'Ugyldig e-postadresse. Sjekk at du har skrevet riktig.';
-    else if(msg.includes('weak') || msg.includes('password')) msg = 'Passordet er for svakt. Bruk minst 6 tegn.';
+    else if(msg.includes('known to be weak') || msg.includes('easy to guess')) msg = NE('Dette passordet er kjent fra passordlekkasjer på nettet og kan ikke brukes – det handler ikke om lengde. Tips: tre tilfeldige ord, f.eks. «BlåKaffeVinter» 🔒','This password appears in known data breaches and can\'t be used – it\'s not about length. Tip: three random words, e.g. "BlueCoffeeWinter" 🔒');
+    else if(msg.includes('weak') || msg.includes('password')) msg = NE('Passordet er for svakt. Bruk minst 8 tegn.','Password is too weak. Use at least 8 characters.');
     else if(msg.includes('rate limit') || msg.includes('too many') || msg.includes('over_email_send_rate_limit')) msg = 'For mange forsøk. Vent noen minutter og prøv igjen.';
     else if(msg.includes('email') && msg.includes('confirm')) msg = 'Konto opprettet! Sjekk e-posten din for bekreftelseslenke (sjekk også søppelpost).';
     else msg = 'Feil: ' + msg; // Show real error for debugging
