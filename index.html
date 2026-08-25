@@ -6871,6 +6871,43 @@ window.startAvatarWatch = function(){
   }, true);
 })();
 
+// ═══════════ iOS-APP PUSH-BRO (push-prosjektet, økt 2) ═══════════
+// Wrapperen (WKWebView) sender FCM-enhetstoken via 'push-token'-eventet og
+// tillatelsessvar via 'push-permission-request'. Vi lagrer tokenet i
+// push_tokens (RLS: kun egne rader), som backend-avsenderen leser i økt 3.
+function savePushToken(token) {
+  if(!token || typeof token !== 'string' || token.length < 10) return;
+  requireSession().then(u => {
+    if(!u) return;
+    sb.from('push_tokens')
+      .upsert({ token, user_id: u.id, platform: 'ios', updated_at: new Date().toISOString() })
+      .then(r => { if(r.error) console.warn('push_tokens:', r.error.message); });
+  }).catch(() => {});
+}
+window.addEventListener('push-token', e => savePushToken(e.detail));
+window.addEventListener('push-permission-request', e => {
+  if(e.detail === 'granted') {
+    logEvent('push_granted', {});
+    // Hent token også her: dekker enheter der tillatelsen alt var gitt
+    try { window.webkit.messageHandlers['push-token'].postMessage('{}'); } catch(err) {}
+  } else {
+    logEvent('push_denied', {});
+  }
+});
+// Spør om push-tillatelse: kun i iOS-appen, kun innlogget, én gang per økt.
+// 4 sek forsinkelse så dialogen ikke smeller i ansiktet ved oppstart.
+function initIOSPush() {
+  try {
+    if(window._iosPushInit) return;
+    if(!window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers['push-permission-request']) return;
+    if(!currentUser) return;
+    window._iosPushInit = true;
+    setTimeout(() => {
+      try { window.webkit.messageHandlers['push-permission-request'].postMessage('{}'); } catch(err) {}
+    }, 4000);
+  } catch(err) {}
+}
+
 function openProfileEdit() {
   const pg = document.getElementById('profile-page');
   if(!pg) return;
@@ -11931,6 +11968,7 @@ async function loadUserProfile(user) {
   }
   cleanOAuthUrl();
   // OAuth-bruker uten fødselsdato/vilkår → må fullføre profilen før appen brukes
+  initIOSPush();   // iOS-app: be om push-tillatelse (no-op i nettleser/Android)
   if(!_profileFetchFailed && needsProfileCompletion(user, window.currentProfile)) {
     const _cp = window.currentProfile;
     logEvent('cp_open', { hadRow: !!_cp, bd: _cp ? (_cp.birth_date || null) : null, ta: _cp ? !!_cp.terms_accepted_at : null, provs: (user.app_metadata && user.app_metadata.providers) || null });
