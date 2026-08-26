@@ -11274,6 +11274,25 @@ function ageFromBirthdate(d){
   if(m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
   return age;
 }
+// Les fødselsdato fra tre felt (prefix-bd-day/month/year) → 'YYYY-MM-DD', eller '' hvis
+// ufullstendig eller ugyldig dato (f.eks. 31.02). Krever firesifret årstall (unngår
+// JS-Date-quirken der år 0–99 tolkes som 1900+).
+function readBirthdateFields(prefix){
+  const d = parseInt(document.getElementById(prefix + '-bd-day')?.value, 10);
+  const m = parseInt(document.getElementById(prefix + '-bd-month')?.value, 10);
+  const y = parseInt(document.getElementById(prefix + '-bd-year')?.value, 10);
+  if(!d || !m || !y) return '';
+  if(y < 1900 || m < 1 || m > 12 || d < 1 || d > 31) return '';
+  const dt = new Date(y, m - 1, d);
+  if(dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return '';
+  const pad = n => (n < 10 ? '0' : '') + n;
+  return y + '-' + pad(m) + '-' + pad(d);
+}
+// Kun siffer i feltet, og hopp automatisk til neste felt når maks lengde er nådd
+function bdAutoAdvance(el, maxLen, nextId){
+  el.value = el.value.replace(/\D/g, '').slice(0, maxLen);
+  if(el.value.length >= maxLen && nextId){ const n = document.getElementById(nextId); if(n) n.focus(); }
+}
 function isCurrentUserAdult(){
   // ukjent = voksen (til Vipps-verifisering er på plass)
   return !(window.currentProfile && window.currentProfile.is_adult === false);
@@ -11437,9 +11456,9 @@ async function doRegister() {
   const btn = document.getElementById('register-btn');
   if(!firstName || !email || !password) { showAuthError('reg','Fyll inn alle feltene'); return; }
   if(password.length < 6) { showAuthError('reg','Passordet må være minst 6 tegn'); return; }
-  const birthdate = document.getElementById('reg-birthdate')?.value || '';
+  const birthdate = readBirthdateFields('reg');
   const age = ageFromBirthdate(birthdate);
-  if(age === null || age < 0 || age > 120) { showAuthError('reg','Fyll inn en gyldig fødselsdato'); return; }
+  if(age === null || age < 0 || age > 120) { showAuthError('reg', NE('Fyll inn en gyldig fødselsdato (dag, måned og firesifret år)','Enter a valid date of birth (day, month and 4-digit year)')); return; }
   if(age < 15) { showAuthError('reg','Du må være minst 15 år for å bruke Tokt.'); return; }
   // Alt validert → vis brukervilkår som MÅ leses (scroll til bunn) og godtas FØR konto opprettes
   openTermsGate();
@@ -11454,7 +11473,7 @@ async function proceedRegister() {
   const phone = rawPhone ? '+47' + rawPhone.replace(/^\+47/, '') : null;
   const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
-  const birthdate = document.getElementById('reg-birthdate')?.value || '';
+  const birthdate = readBirthdateFields('reg');
   const isAdult = ageFromBirthdate(birthdate) >= 18;
   const gateBtn = document.getElementById('terms-gate-accept');
   const en = currentLang === 'en';
@@ -11588,6 +11607,7 @@ function openCompleteProfile(user, profile) {
   if(!first && meta.name) { const parts = String(meta.name).trim().split(/\s+/); first = parts.shift() || ''; last = parts.join(' '); }
   if(profile && profile.full_name && !first) { const parts = String(profile.full_name).trim().split(/\s+/); first = parts.shift() || ''; last = parts.join(' '); }
   const phone = (profile && profile.phone) ? String(profile.phone).replace(/^\+47/, '') : '';
+  const cpBd = (profile && profile.birth_date) ? String(profile.birth_date).slice(0,10) : '';
   const inp = 'width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none';
   const lbl = 'font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px';
   if(!ov) {
@@ -11607,7 +11627,13 @@ function openCompleteProfile(user, profile) {
         <div style="flex:1"><label style="${lbl}">${NE('Fornavn','First name')}</label><input id="cp-first" type="text" autocomplete="given-name" value="${first.replace(/"/g,'&quot;')}" style="${inp}"></div>
         <div style="flex:1"><label style="${lbl}">${NE('Etternavn','Last name')}</label><input id="cp-last" type="text" autocomplete="family-name" value="${last.replace(/"/g,'&quot;')}" style="${inp}"></div>
       </div>
-      <div style="margin-bottom:12px"><label style="${lbl}">${NE('Fødselsdato','Date of birth')}</label><input id="cp-birthdate" type="date" value="${(profile && profile.birth_date) ? String(profile.birth_date).slice(0,10) : ''}" style="${inp}"></div>
+      <div style="margin-bottom:12px"><label style="${lbl}">${NE('Fødselsdato','Date of birth')}</label>
+        <div style="display:flex;gap:8px">
+          <input id="cp-bd-day" type="text" inputmode="numeric" maxlength="2" placeholder="DD" autocomplete="bday-day" oninput="bdAutoAdvance(this,2,'cp-bd-month')" value="${cpBd.slice(8,10)}" style="${inp};flex:1;min-width:0;text-align:center;padding:10px 8px">
+          <input id="cp-bd-month" type="text" inputmode="numeric" maxlength="2" placeholder="MM" autocomplete="bday-month" oninput="bdAutoAdvance(this,2,'cp-bd-year')" value="${cpBd.slice(5,7)}" style="${inp};flex:1;min-width:0;text-align:center;padding:10px 8px">
+          <input id="cp-bd-year" type="text" inputmode="numeric" maxlength="4" placeholder="${NE('ÅÅÅÅ','YYYY')}" autocomplete="bday-year" oninput="bdAutoAdvance(this,4,null)" value="${cpBd.slice(0,4)}" style="${inp};flex:1.5;min-width:0;text-align:center;padding:10px 8px">
+        </div>
+      </div>
       <div style="margin-bottom:12px"><label style="${lbl}">${NE('Telefon (valgfritt)','Phone (optional)')}</label>
         <div style="display:flex;gap:8px;align-items:center"><span style="font-size:14px;color:var(--muted);font-weight:600">+47</span><input id="cp-phone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="912 34 567" value="${phone}" style="${inp}"></div>
       </div>
@@ -11627,11 +11653,11 @@ async function cancelCompleteProfile() {
 function submitCompleteProfile() {
   const first = (document.getElementById('cp-first')?.value || '').trim();
   const last = (document.getElementById('cp-last')?.value || '').trim();
-  const birthdate = document.getElementById('cp-birthdate')?.value || '';
+  const birthdate = readBirthdateFields('cp');
   const age = ageFromBirthdate(birthdate);
   const e = document.getElementById('cp-error'); if(e) e.style.display = 'none';
   if(!first) { cpShowError(NE('Skriv inn fornavn.','Enter your first name.')); return; }
-  if(!birthdate || age === null) { cpShowError(NE('Velg fødselsdato.','Choose your date of birth.')); return; }
+  if(!birthdate || age === null) { cpShowError(NE('Fyll inn gyldig fødselsdato (dag, måned og firesifret år).','Enter a valid date of birth (day, month and 4-digit year).')); return; }
   if(age < 15) { cpShowError(NE('Du må være minst 15 år for å bruke Tokt.','You must be at least 15 to use Tokt.')); return; }
   if(age > 120) { cpShowError(NE('Sjekk fødselsdatoen.','Please check the date of birth.')); return; }
   // Samme vilkårsgate som e-postregistrering – ved godkjenning lagres profilen
@@ -11646,7 +11672,7 @@ async function finishCompleteProfile() {
   const last = (document.getElementById('cp-last')?.value || '').trim();
   const rawPhone = (document.getElementById('cp-phone')?.value || '').replace(/\s/g, '').trim();
   const phone = rawPhone ? '+47' + rawPhone.replace(/^\+47/, '') : null;
-  const birthdate = document.getElementById('cp-birthdate')?.value || '';
+  const birthdate = readBirthdateFields('cp');
   const isAdult = ageFromBirthdate(birthdate) >= 18;
   const acceptedAt = new Date().toISOString();
   const fullName = (first + ' ' + last).trim();
@@ -12202,7 +12228,11 @@ sb.auth.onAuthStateChange(async (event, session) => {
       </div>
       <div style="margin-bottom:12px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px" data-en="Date of birth">Fødselsdato</label>
-        <input id="reg-birthdate" type="date" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="display:flex;gap:8px">
+          <input id="reg-bd-day" type="text" inputmode="numeric" maxlength="2" placeholder="DD" autocomplete="bday-day" oninput="bdAutoAdvance(this,2,'reg-bd-month')" style="flex:1;min-width:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 8px;font-size:14px;color:var(--text);font-family:inherit;outline:none;text-align:center" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <input id="reg-bd-month" type="text" inputmode="numeric" maxlength="2" placeholder="MM" autocomplete="bday-month" oninput="bdAutoAdvance(this,2,'reg-bd-year')" style="flex:1;min-width:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 8px;font-size:14px;color:var(--text);font-family:inherit;outline:none;text-align:center" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <input id="reg-bd-year" type="text" inputmode="numeric" maxlength="4" placeholder="ÅÅÅÅ" data-en-ph="YYYY" autocomplete="bday-year" oninput="bdAutoAdvance(this,4,null)" style="flex:1.5;min-width:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 8px;font-size:14px;color:var(--text);font-family:inherit;outline:none;text-align:center" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
         <div style="font-size:10px;color:var(--muted);margin-top:4px" data-en="🔞 You must be at least 15. Ages 15–17 have some restrictions.">🔞 Du må være minst 15 år. 15–17 år får noen begrensninger.</div>
       </div>
       <div style="margin-bottom:12px">
