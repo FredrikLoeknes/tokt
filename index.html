@@ -3246,7 +3246,7 @@ async function renderLeaderboardPosition(myDone){
 //   oppdrag i området, så de ekte ikke drukner i eksemplene.
 // SHOW_DEMO_LEADERBOARD: falske topp-utførere. Holdes AV til du har
 //   ekte rangerte brukere – da fyller leaderboarden seg selv.
-window.SHOW_DEMO = true;
+window.SHOW_DEMO = false;
 window.SHOW_DEMO_LEADERBOARD = false;
 // ──────────────────────────────────────────────────────────────
 
@@ -5017,7 +5017,7 @@ async function confirmPaymentReceived(convId, questId) {
     .select('giver_id, quest:quest_id(title)').eq('id', convId).single();
 
   if(conv) {
-    await sb.from('notifications').insert({
+    await notifyUser({
       user_id: conv.giver_id,
       type: 'completed',
       title: '✅ Oppdrag fullført!',
@@ -5048,7 +5048,7 @@ async function markGiverPaid(convId, questId) {
   if(!confirm(NE('Bekrefte at du har betalt utføreren?','Confirm that you have paid the taker?'))) return;
 
   await sb.from('conversations').update({ giver_paid_at: new Date().toISOString() }).eq('id', convId);
-  await sb.from('notifications').insert({
+  await notifyUser({
     user_id: conv.taker_id,
     type: 'payment',
     title: '💸 Betaling sendt',
@@ -5075,7 +5075,7 @@ async function markWorkDone(convId, questId) {
     // Fallback hvis RPC ikke er installert ennå – direkte skriv
     await sb.from('conversations').update({ work_done_at: new Date().toISOString() }).eq('id', convId);
     const { data: c2 } = await sb.from('conversations').select('giver_id, quest:quest_id(title)').eq('id', convId).single();
-    if(c2) await sb.from('notifications').insert({
+    if(c2) await notifyUser({
       user_id: c2.giver_id, type: 'work_done', title: '🔨 Oppdrag meldt utført',
       body: `${c2.quest?.title || 'Oppdraget'} – utfører melder at jobben er gjort. Klar for betaling.`,
       link_id: convId
@@ -5083,6 +5083,16 @@ async function markWorkDone(convId, questId) {
   }
   showToast(NE('🔨 Oppdragsgiver er varslet. Klar for betaling!','🔨 The poster has been notified. Ready for payment!'));
   loadMyQuests();
+}
+
+// Varsle en annen bruker via SECURITY DEFINER-RPC (direkte insert blokkeres av RLS).
+// Returnerer { error } så eksisterende feilhåndtering fungerer uendret.
+async function notifyUser(n){
+  try {
+    const { error } = await sb.rpc('notify_user', { p_user_id: n.user_id, p_type: n.type, p_title: n.title, p_body: n.body, p_link_id: n.link_id || null });
+    if(error) console.error('notify_user rpc:', error.message);
+    return { error };
+  } catch(e) { console.error('notify_user rpc:', e); return { error: e }; }
 }
 
 async function applyJob() {
@@ -5120,11 +5130,15 @@ async function applyJob() {
     return;
   }
 
-  if(!questId || !giverId) {
-    // Demo quest
-    closePanel();
-    showToast(t('toastApplied'));
-    setTimeout(() => showAchievement('✦', t('firstQuestTitle'), t('firstQuestDesc')), 1800);
+  let effectiveGiverId = giverId;
+  if(questId && !effectiveGiverId) {
+    // Sikkerhetsnett: panelet manglet giver-id → hent fra databasen
+    const { data: qRow } = await sb.from('quests').select('user_id').eq('id', questId).single();
+    effectiveGiverId = qRow?.user_id || '';
+  }
+  if(!questId || !effectiveGiverId) {
+    // Ikke et ekte oppdrag (f.eks. eksempelinnhold) – vær ærlig, ikke lat som noe ble sendt
+    showToast(NE('⚠️ Dette oppdraget kan ikke søkes på. Prøv et annet – eller si fra hvis du mener det er en feil.',"⚠️ This task can't be applied to. Try another – or let us know if you think this is an error."));
     return;
   }
 
@@ -5144,7 +5158,7 @@ async function applyJob() {
   // Create new conversation
   const { data: conv, error } = await sb.from('conversations').insert({
     quest_id: questId,
-    giver_id: giverId,
+    giver_id: effectiveGiverId,
     taker_id: currentUser.id,
     status: 'pending'
   }).select().single();
@@ -5165,9 +5179,9 @@ async function applyJob() {
     setTimeout(() => showAchievement('⚡', NE('Første oppdrag!','First task!'), NE('Du fikk ditt første oppdrag – førstemann til mølla!','You got your first task – first in line!')), 1000);
     await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
     await sb.from('conversations').update({ status: 'accepted' }).eq('id', conv.id);
-    // Notify giver that quest was taken
-    await sb.from('notifications').insert({
-      user_id: giverId,
+    // Varsle at oppdraget ble TATT (kommer i tillegg til triggerens «ny søknad»-varsel)
+    await notifyUser({
+      user_id: effectiveGiverId,
       type: 'application',
       title: '⚡ Oppdraget ditt ble tatt!',
       body: `${applicantName} tok oppdraget «${questData?.title || 'Oppdrag'}» (førstemann til mølla). Åpne chatten for å avtale detaljer.`,
@@ -5176,14 +5190,7 @@ async function applyJob() {
   } else {
     showToast(NE('✦ Søknad sendt! Venter på godkjenning fra oppdragsgiver.',"✦ Application sent! Waiting for the poster's approval."));
     setTimeout(() => showAchievement('📨', NE('Første søknad!','First application!'), NE('Du har søkt på ditt første oppdrag. Venter på godkjenning!','You applied to your first task. Waiting for approval!')), 1800);
-    // Notify giver about new applicant
-    await sb.from('notifications').insert({
-      user_id: giverId,
-      type: 'application',
-      title: '📨 Ny søker på oppdraget ditt!',
-      body: `${applicantName} vil gjerne utføre «${questData?.title || 'Oppdrag'}». Gå til Mine oppdrag for å godkjenne.`,
-      link_id: conv.id
-    });
+    // Varsel til oppdragsgiver lages av databasetriggeren on_new_application
   }
   openChat(conv.id, applyPanel?.dataset?.questTitle || 'Oppdrag');
 }
@@ -8518,7 +8525,7 @@ async function acceptApplicant(convId, questId) {
   const takerProfile = { full_name: takerNameRow?.full_name || '', phone: await getContactPhone(conv.taker_id) };
 
   // Notify taker with giver's phone
-  await sb.from('notifications').insert({
+  await notifyUser({
     user_id: conv.taker_id,
     type: 'accepted',
     title: '🎉 Søknaden din ble godkjent!',
@@ -8527,7 +8534,7 @@ async function acceptApplicant(convId, questId) {
   });
 
   // Achievement notification for taker
-  await sb.from('notifications').insert({
+  await notifyUser({
     user_id: conv.taker_id,
     type: 'achievement',
     title: '🏅 Achievement: Oppdrag tildelt!',
@@ -8543,7 +8550,7 @@ async function acceptApplicant(convId, questId) {
     .neq('id', convId);
   if(others?.length) {
     for(const o of others) {
-      await sb.from('notifications').insert({
+      await notifyUser({
         user_id: o.taker_id,
         type: 'rejected',
         title: 'Oppdraget gikk til en annen',
@@ -8701,7 +8708,7 @@ async function rejectApplicant(convId) {
   const { error } = await sb.from('conversations').update({ status: 'rejected' }).eq('id', convId);
   if(error) { showToast(NE('❌ Kunne ikke avvise: ','❌ Could not decline: ') + error.message); return; }
   if(conv?.taker_id) {
-    await sb.from('notifications').insert({
+    await notifyUser({
       user_id: conv.taker_id,
       type: 'rejected',
       title: 'Søknaden ble ikke valgt',
@@ -8805,7 +8812,7 @@ async function completeQuest(questId) {
     await sb.from('conversations').update({ status: 'completed' }).eq('id', conv.id);
 
     // Notify taker
-    await sb.from('notifications').insert({
+    await notifyUser({
       user_id: conv.taker_id,
       type: 'completed',
       title: '🎉 Oppdrag fullført!',
@@ -9601,15 +9608,7 @@ async function contactService() {
 
   if(error) { showToast(NE('❌ Feil: ','❌ Error: ') + error.message); return; }
 
-  // Notify provider (also sends email via Edge Function)
-  const { error: contactNotifErr } = await sb.from('notifications').insert({
-    user_id: svc.raw.user_id,
-    type: 'application',
-    title: '🏪 Ny henvendelse på tjenesten din!',
-    body: `${myProfile.full_name || 'En bruker'} er interessert i «${svc.title}». Åpne chatten og avtal tid.`,
-    link_id: conv.id
-  });
-  if(contactNotifErr) console.error('service contact notif error:', contactNotifErr);
+  // Varsel til tilbyder lages av databasetriggeren on_new_application (tjeneste-gren)
 
   showToast(NE('💬 Chat åpnet! Avtal tid med tilbyderen.','💬 Chat opened! Arrange a time with the provider.'));
   openChat(conv.id, svc.title);
@@ -9831,7 +9830,7 @@ async function submitBookingRequest() {
   if(bErr) { showToast('❌ ' + bErr.message); if(btn){ btn.textContent=NE('Send forespørsel →','Send request →'); btn.disabled=false; } return; }
 
   const { data: me } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
-  const { error: notifErr } = await sb.from('notifications').insert({
+  const { error: notifErr } = await notifyUser({
     user_id: ctx.providerId, type: 'booking_request',
     title: recurring ? '🔄 Forespørsel om fast avtale' : '📅 Ny avtaleforespørsel',
     body: recurring
@@ -10379,7 +10378,7 @@ async function registerSession(id) {
     kind: 'session', scheduled_at: now, price: a.price, status: 'confirmed', work_done_at: now
   });
   if(error) { showToast('❌ ' + error.message); return; }
-  await sb.from('notifications').insert({ user_id: a.customer_id, type: 'booking_workdone', title: '🔨 Økt utført', body: `${a.service?.title || 'Fast avtale'} – tilbyder registrerte en utført økt. Klar for betaling.`, link_id: id });
+  await notifyUser({ user_id: a.customer_id, type: 'booking_workdone', title: '🔨 Økt utført', body: `${a.service?.title || 'Fast avtale'} – tilbyder registrerte en utført økt. Klar for betaling.`, link_id: id });
   showToast(NE('🔨 Økt registrert. Kunden er varslet.','🔨 Session registered. The customer has been notified.'));
   loadBookings();
 }
@@ -10390,7 +10389,7 @@ async function sessionMarkPaid(id) {
   if(s.status !== 'confirmed') { showToast(NE('⚠️ Økten er allerede gjort opp','⚠️ The session is already settled')); return; }
   if(!confirm(NE('Bekrefte at du har betalt for denne økten?','Confirm that you have paid for this session?'))) return;
   await sb.from('bookings').update({ giver_paid_at: new Date().toISOString() }).eq('id', id);
-  await sb.from('notifications').insert({ user_id: s.provider_id, type: 'booking_paid', title: '💸 Betaling sendt', body: `${s.service?.title || 'Fast avtale'} – kunden har betalt for en økt. Bekreft mottak.`, link_id: s.parent_id });
+  await notifyUser({ user_id: s.provider_id, type: 'booking_paid', title: '💸 Betaling sendt', body: `${s.service?.title || 'Fast avtale'} – kunden har betalt for en økt. Bekreft mottak.`, link_id: s.parent_id });
   showToast(NE('✅ Markert som betalt. Venter på tilbyders bekreftelse.','✅ Marked as paid. Waiting for the provider to confirm.'));
   loadBookings();
 }
@@ -10410,9 +10409,9 @@ async function sessionConfirmReceived(id) {
 
   if(firstDone) {
     // Kunden bes vurdere tilbyder (rating-flyt via booking_done, lenket til avtalen)
-    await sb.from('notifications').insert({ user_id: s.customer_id, type: 'booking_done', title: '🏆 Første økt fullført!', body: `${s.service?.title || 'Fast avtale'} – vil du vurdere tilbyderen?`, link_id: s.parent_id });
+    await notifyUser({ user_id: s.customer_id, type: 'booking_done', title: '🏆 Første økt fullført!', body: `${s.service?.title || 'Fast avtale'} – vil du vurdere tilbyderen?`, link_id: s.parent_id });
   } else {
-    await sb.from('notifications').insert({ user_id: s.customer_id, type: 'booking_session', title: '✅ Økt gjort opp', body: `${s.service?.title || 'Fast avtale'} – tilbyder bekreftet betaling for økten.`, link_id: s.parent_id });
+    await notifyUser({ user_id: s.customer_id, type: 'booking_session', title: '✅ Økt gjort opp', body: `${s.service?.title || 'Fast avtale'} – tilbyder bekreftet betaling for økten.`, link_id: s.parent_id });
   }
 
   await recomputeQuestsCompleted(currentUser.id);
@@ -10453,7 +10452,7 @@ async function cancelAgreement(id) {
   if(!a || (a.provider_id !== currentUser?.id && a.customer_id !== currentUser?.id)) return;
   await sb.from('bookings').update({ status: 'cancelled' }).eq('id', id);
   const other = a.provider_id === currentUser.id ? a.customer_id : a.provider_id;
-  await sb.from('notifications').insert({ user_id: other, type: 'booking_cancelled', title: 'Fast avtale avsluttet', body: `${a.service?.title || 'Den faste avtalen'} er avsluttet.`, link_id: id });
+  await notifyUser({ user_id: other, type: 'booking_cancelled', title: 'Fast avtale avsluttet', body: `${a.service?.title || 'Den faste avtalen'} er avsluttet.`, link_id: id });
   showToast('Avtale avsluttet');
   loadBookings();
 }
@@ -10464,7 +10463,7 @@ async function confirmBooking(id) {
   if(b.status !== 'requested') { showToast('Allerede behandlet'); return; }
   const recurring = b.kind === 'recurring';
   await sb.from('bookings').update({ status: recurring ? 'active' : 'confirmed' }).eq('id', id);
-  await sb.from('notifications').insert({
+  await notifyUser({
     user_id: b.customer_id, type: 'booking_confirmed',
     title: recurring ? '🤝 Fast avtale bekreftet!' : '🤝 Avtale bekreftet!',
     body: recurring
@@ -10481,7 +10480,7 @@ async function declineBooking(id) {
   const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, service:service_id(title)').eq('id', id).single();
   if(!b || b.provider_id !== currentUser?.id) return;
   await sb.from('bookings').update({ status: 'declined' }).eq('id', id);
-  await sb.from('notifications').insert({
+  await notifyUser({
     user_id: b.customer_id, type: 'booking_declined',
     title: 'Avtale avslått', body: `Tilbyder kunne dessverre ikke ta «${b.service?.title || 'avtalen'}» denne gangen.`,
     link_id: id
@@ -10500,7 +10499,7 @@ async function bookingMarkDone(id) {
   if(error) {
     await sb.from('bookings').update({ work_done_at: new Date().toISOString() }).eq('id', id);
     const { data: b2 } = await sb.from('bookings').select('customer_id, service:service_id(title)').eq('id', id).single();
-    if(b2) await sb.from('notifications').insert({
+    if(b2) await notifyUser({
       user_id: b2.customer_id, type: 'booking_workdone',
       title: '🔨 Tjeneste utført', body: `${b2.service?.title || 'Avtalen'} – tilbyder melder at jobben er gjort. Klar for betaling.`,
       link_id: id
@@ -10516,7 +10515,7 @@ async function bookingMarkPaid(id) {
   if(b.status !== 'confirmed') { showToast(NE('⚠️ Avtalen er ikke bekreftet','⚠️ The agreement is not confirmed')); return; }
   if(!confirm(NE('Bekrefte at du har betalt tilbyder?','Confirm that you have paid the provider?'))) return;
   await sb.from('bookings').update({ giver_paid_at: new Date().toISOString() }).eq('id', id);
-  await sb.from('notifications').insert({
+  await notifyUser({
     user_id: b.provider_id, type: 'booking_paid',
     title: '💸 Betaling sendt', body: `${b.service?.title || 'Avtalen'} – kunden har markert betaling som sendt. Bekreft når du har mottatt den.`,
     link_id: id
@@ -10531,7 +10530,7 @@ async function bookingConfirmReceived(id) {
   if(b.status !== 'confirmed') { showToast(NE('⚠️ Avtalen er ikke aktiv','⚠️ The agreement is not active')); return; }
   if(!confirm(NE('Bekrefte at du har mottatt betaling? Dette fullfører avtalen.','Confirm that you have received payment? This completes the agreement.'))) return;
   await sb.from('bookings').update({ status: 'completed', taker_confirmed_at: new Date().toISOString() }).eq('id', id);
-  await sb.from('notifications').insert({
+  await notifyUser({
     user_id: b.customer_id, type: 'booking_done',
     title: '🏆 Avtale fullført!', body: `${b.service?.title || 'Avtalen'} er bekreftet fullført. Vurder tilbyderen?`,
     link_id: id
