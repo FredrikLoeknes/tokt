@@ -1925,7 +1925,7 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
   <div class="payment-note" style="margin:0 16px 12px;padding:10px 12px;background:rgba(255,91,36,0.07);border:1px solid rgba(255,91,36,0.2);border-radius:8px;font-size:11px;color:#e07050">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span id="panel-payment-note">Betaling direkte mellom partene – Vipps eller annen avtalt metode</span>
+      <span id="panel-payment-note">Betaling direkte mellom partene – Vipps eller annen avtalt metode. Tokt er ikke part i oppgjøret.</span>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <span style="background:rgba(255,91,36,0.1);border-radius:50px;padding:2px 8px">📱 Vipps-nr kreves</span>
@@ -2362,7 +2362,7 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
       💚 <strong>Veldedighetsoppdrag:</strong> Betaling settes til 0 kr. Utfører gjør dette frivillig og får et spesielt achievement. Perfekt for å hjelpe andre som trenger det.
     </div>
     <div style="text-align:center;margin:8px 0 4px;font-size:11px;color:var(--muted)">
-      Ved å publisere godtar du <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">brukervilkårene</a>. Betal aldri forskudd.
+      Ved å publisere godtar du <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">brukervilkårene</a>. Betal aldri forskudd. <a href="/skatt.html" target="_blank" style="color:var(--muted);text-decoration:underline" data-en="Tax &amp; settlement">Skatt og oppgjør</a>
     </div>
     <div class="publish-btn-wrap">
       <button class="publish-btn" onclick="postJob()">
@@ -2459,7 +2459,7 @@ const LANGUAGES = {
     giverLabel: 'Oppdragsgiver', newUserLabel: 'Ny bruker', questsDoneShort: 'oppdrag fullført', newProviderLabel: 'Ny tilbyder',
     verifiedLabel: '✓ Verifisert', memberSince: 'Medlem siden',
     acceptQuest: '✦ Ta oppdraget',
-    paymentNote: 'Betaling direkte mellom partene – Vipps eller annen avtalt metode',
+    paymentNote: 'Betaling direkte mellom partene – Vipps eller annen avtalt metode. Tokt er ikke part i oppgjøret.',
     approvalRequired: '✋ Godkjenning kreves',
     firstComeServed: '⚡ Førstemann til mølla',
     noApplicants: 'Ingen søkere ennå – vær den første!',
@@ -2604,7 +2604,7 @@ const LANGUAGES = {
     giverLabel: 'Posted by', newUserLabel: 'New user', questsDoneShort: 'quests completed', newProviderLabel: 'New provider',
     verifiedLabel: '✓ Verified', memberSince: 'Member since',
     acceptQuest: '✦ Accept quest',
-    paymentNote: '<span id="panel-payment-note">Payment directly between parties – Vipps or another agreed method</span>',
+    paymentNote: '<span id="panel-payment-note">Payment directly between parties – Vipps or another agreed method. Tokt is not a party to the settlement.</span>',
     approvalRequired: '✋ Approval required',
     firstComeServed: '⚡ First come, first served',
     noApplicants: 'Ingen søkere ennå – vær den første!',
@@ -2814,7 +2814,7 @@ function applyLanguage() {
   safeText('modal-toggle-urgent-label', L.urgentToggle); safeText('modal-toggle-urgent-sub', L.urgentToggleSub);
   safeText('modal-toggle-location-label', L.locationToggle); safeText('modal-toggle-location-sub', L.locationToggleSub);
   safeText('modal-toggle-charity-label', L.charityToggle); safeText('modal-toggle-charity-sub', L.charityToggleSub);
-  safeHTML('modal-disclaimer', L.disclaimer);
+  // (modal-disclaimer fjernet – publiseringsmodalen bruker den korte linjen med skatt-lenke i stedet)
   safeText('modal-publish-btn', L.publishQuest);
 
   // Leaderboard
@@ -12601,7 +12601,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
       <input id="svc-image-input" type="file" accept="image/*" style="display:none" onchange="previewServiceImage(this)">
     </div>
     <div class="disclaimer">
-      <strong data-en="Important:">Viktig:</strong> <span data-en="As a provider you are responsible for the quality of the service. All payment happens directly between you and the customer (Vipps or another agreed method).">Som tilbyder er du selv ansvarlig for kvaliteten på tjenesten. All betaling skjer direkte mellom deg og kunden (Vipps eller annen avtalt metode).</span>
+      <strong data-en="Important:">Viktig:</strong> <span data-en="As a provider you are responsible for the quality of the service. All payment happens directly between you and the customer (Vipps or another agreed method).">Som tilbyder er du selv ansvarlig for kvaliteten på tjenesten. All betaling skjer direkte mellom deg og kunden (Vipps eller annen avtalt metode).</span> <a href="/skatt.html" target="_blank" style="color:var(--muted);text-decoration:underline" data-en="Tax &amp; settlement">Skatt og oppgjør</a>
     </div>
     <button onclick="postService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#7c5cfc);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)" data-en="🏪 Publish service">
       🏪 Publiser tjeneste
