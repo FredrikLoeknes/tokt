@@ -7674,7 +7674,7 @@ function showRating(name, convId='', ratedId='', questId='') {
   div.innerHTML = `
     <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px"></div>
     <div style="text-align:center">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--gold);margin-bottom:6px">⭐ Vurder utfører</div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--gold);margin-bottom:6px">⭐ ${NE('Gi din vurdering','Give your rating')}</div>
       <div style="font-size:20px;font-weight:700;margin-bottom:4px">Hvordan var ${name}?</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Din vurdering hjelper andre brukere å ta trygge valg</div>
       <div class="star-row" id="star-row">
@@ -7862,17 +7862,22 @@ async function handleNotifClick(notifId, type, linkId) {
       }, 700);
     }
   }
+  else if(type === 'confirm_done' && linkId) {
+    // Motparten har markert fullført – åpne chatten der bekreft-knappen ligger
+    openChat(linkId, NE('Melding','Message'));
+  }
   else if(type === 'completed' && linkId) {
-    // Taker can rate the giver
+    // Vurder alltid MOTPARTEN – varselet går begge veier, så rollen kan ikke antas
     openMyQuests();
     setTimeout(async () => {
       const { data: conv } = await sb.from('conversations')
-        .select('*, quest:quest_id(title,user_id)')
+        .select('id, quest_id, giver_id, taker_id')
         .eq('id', linkId).single();
-      if(conv) {
-        const { data: gp } = await sb.from('profiles').select('full_name').eq('id', conv.giver_id).single();
-        const giverName = gp?.full_name || 'Oppdragsgiver';
-        showRating(giverName, conv.id, conv.quest?.user_id, conv.quest_id);
+      if(conv && currentUser) {
+        const otherId = (conv.giver_id === currentUser.id) ? conv.taker_id : conv.giver_id;
+        if(!otherId || otherId === currentUser.id) return;
+        const { data: op } = await sb.from('profiles').select('full_name').eq('id', otherId).single();
+        showRating(op?.full_name || NE('Bruker','User'), conv.id, otherId, conv.quest_id || '');
       }
     }, 800);
   }
@@ -8880,12 +8885,67 @@ async function openChat(convId, title) {
 
   // Show Vipps button if conversation is accepted
   const { data: conv } = await sb.from('conversations')
-    .select('status').eq('id', convId).single();
+    .select('status, giver_id, taker_id, quest_id, service_id, completed_marked_by').eq('id', convId).single();
   const vippsBtn = document.getElementById('chat-payment-btn');
   if(vippsBtn) vippsBtn.style.display = conv?.status === 'accepted' ? 'block' : 'none';
+  renderChatDoneBar(conv);
 
   await loadMessages(convId);
   subscribeToMessages(convId);
+}
+
+// Fullført-linjen i chat: vis riktig tilstand ut fra hvem som ev. har markert
+function renderChatDoneBar(conv){
+  const bar = document.getElementById('chat-done-bar');
+  if(!bar) return;
+  window._chatConvMeta = conv || null;
+  if(!conv || conv.status !== 'accepted' || !currentUser){ bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  const other = escapeHtml(window._chatOtherName || NE('Motparten','The other party'));
+  const txtStyle = 'flex:1;color:var(--muted);line-height:1.35';
+  let html = '';
+  bar.style.borderColor = 'var(--border)';
+  if(!conv.completed_marked_by){
+    html = `<span style="${txtStyle}"><b style="color:var(--text)">${NE('Er jobben gjort?','Job done?')}</b> ${NE('Marker som fullført når dere er ferdige.','Mark as completed when you are done.')}</span>
+      <button onclick="chatMarkDone()" style="border:1px solid var(--green);background:transparent;color:var(--green);border-radius:9px;padding:8px 13px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">✔ ${NE('Fullført','Completed')}</button>`;
+  } else if(conv.completed_marked_by === currentUser.id){
+    html = `<span style="${txtStyle}">✔ ${NE('Du har markert som fullført – venter på bekreftelse fra','You marked this as completed – waiting for confirmation from')} <b style="color:var(--text)">${other}</b>.</span>`;
+  } else {
+    bar.style.borderColor = 'rgba(15,169,104,0.45)';
+    html = `<span style="${txtStyle}"><b style="color:var(--text)">${other}</b> ${NE('har markert jobben som fullført. Stemmer det?','marked the job as completed. Correct?')}</span>
+      <button onclick="chatMarkDone()" style="border:none;background:var(--green);color:#fff;border-radius:9px;padding:8px 13px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">${NE('Bekreft','Confirm')} ✓</button>`;
+  }
+  bar.innerHTML = html;
+  bar.style.display = 'flex';
+}
+
+// Marker/bekreft fullføring via SECURITY DEFINER-RPC (teller først ved motpart-bekreftelse)
+async function chatMarkDone(){
+  if(!activeChatId) return;
+  const authUser = await requireSession();
+  if(!authUser) return;
+  const { data, error } = await sb.rpc('mark_conversation_done', { p_conv_id: activeChatId });
+  if(error){ showToast('❌ ' + error.message); return; }
+  const st = data?.state;
+  const meta = window._chatConvMeta || {};
+  if(st === 'marked' || st === 'already_marked'){
+    showToast(NE('✔ Markert som fullført – venter på bekreftelse fra motparten',"✔ Marked as completed – waiting for the other party's confirmation"));
+    meta.completed_marked_by = currentUser.id;
+    renderChatDoneBar(meta);
+  } else if(st === 'confirmed'){
+    showToast(NE('🎉 Jobben er fullført og bekreftet av begge!','🎉 The job is completed and confirmed by both!'));
+    meta.status = 'completed';
+    renderChatDoneBar(meta);
+    const badge = document.getElementById('chat-status-badge');
+    if(badge) badge.textContent = NE('Fullført','Completed');
+    logEvent('job_completed_chat');
+    const otherId = (meta.giver_id === currentUser.id) ? meta.taker_id : meta.giver_id;
+    if(otherId) setTimeout(() => showRating(window._chatOtherName || NE('Bruker','User'), activeChatId, otherId, meta.quest_id || ''), 900);
+    if(typeof loadMyQuests === 'function') loadMyQuests();
+    if(typeof addMarkers === 'function') addMarkers();
+  } else if(st === 'invalid'){
+    showToast(NE('⚠️ Samtalen er ikke aktiv lenger','⚠️ This conversation is no longer active'));
+    renderChatDoneBar(null);
+  }
 }
 
 function closeChat() {
@@ -12458,6 +12518,9 @@ sb.auth.onAuthStateChange(async (event, session) => {
   <div id="chat-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px">
     <div style="text-align:center;font-size:11px;color:var(--muted);padding:8px">Starten på samtalen</div>
   </div>
+
+  <!-- Fullført-markering (vises kun i aksepterte samtaler) -->
+  <div id="chat-done-bar" style="display:none;margin:0 14px 10px;border:1px solid var(--border);background:var(--surface);border-radius:12px;padding:10px 12px;align-items:center;gap:10px;font-size:12.5px;flex-shrink:0"></div>
 
   <!-- Input -->
   <div id="chat-input-row" style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0">
