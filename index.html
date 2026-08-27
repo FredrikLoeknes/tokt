@@ -8924,16 +8924,17 @@ function renderChatDoneBar(conv){
   if(conv.status !== 'accepted'){ bar.style.display = 'none'; bar.innerHTML = ''; return; }
   const other = escapeHtml(window._chatOtherName || NE('Motparten','The other party'));
   const txtStyle = 'flex:1;color:var(--muted);line-height:1.35';
+  const cancelLink = `<br><a onclick="chatCancelJob()" style="color:var(--muted);font-size:11.5px;text-decoration:underline;cursor:pointer">${NE('Ble det ikke noe av?','Did it fall through?')}</a>`;
   let html = '';
   bar.style.borderColor = 'var(--border)';
   if(!conv.completed_marked_by){
-    html = `<span style="${txtStyle}"><b style="color:var(--text)">${NE('Er jobben gjort?','Job done?')}</b> ${NE('Marker som fullført når dere er ferdige.','Mark as completed when you are done.')}</span>
+    html = `<span style="${txtStyle}"><b style="color:var(--text)">${NE('Er jobben gjort?','Job done?')}</b> ${NE('Marker som fullført når dere er ferdige.','Mark as completed when you are done.')}${cancelLink}</span>
       <button onclick="chatMarkDone()" style="border:1px solid var(--green);background:transparent;color:var(--green);border-radius:9px;padding:8px 13px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">✔ ${NE('Fullført','Completed')}</button>`;
   } else if(conv.completed_marked_by === currentUser.id){
-    html = `<span style="${txtStyle}">✔ ${NE('Du har markert som fullført – venter på bekreftelse fra','You marked this as completed – waiting for confirmation from')} <b style="color:var(--text)">${other}</b>.</span>`;
+    html = `<span style="${txtStyle}">✔ ${NE('Du har markert som fullført – venter på bekreftelse fra','You marked this as completed – waiting for confirmation from')} <b style="color:var(--text)">${other}</b>.${cancelLink}</span>`;
   } else {
     bar.style.borderColor = 'rgba(15,169,104,0.45)';
-    html = `<span style="${txtStyle}"><b style="color:var(--text)">${other}</b> ${NE('har markert jobben som fullført. Stemmer det?','marked the job as completed. Correct?')}</span>
+    html = `<span style="${txtStyle}"><b style="color:var(--text)">${other}</b> ${NE('har markert jobben som fullført. Stemmer det?','marked the job as completed. Correct?')}${cancelLink}</span>
       <button onclick="chatMarkDone()" style="border:none;background:var(--green);color:#fff;border-radius:9px;padding:8px 13px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">${NE('Bekreft','Confirm')} ✓</button>`;
   }
   bar.innerHTML = html;
@@ -8947,6 +8948,33 @@ function chatOpenRating(){
   const otherId = (meta.giver_id === currentUser.id) ? meta.taker_id : meta.giver_id;
   if(!otherId || otherId === currentUser.id) return;
   showRating(window._chatOtherName || NE('Bruker','User'), activeChatId, otherId, meta.quest_id || '');
+}
+
+// «Ble det ikke noe av?» – avlys avtalen, oppdraget legges ut som åpent igjen
+async function chatCancelJob(){
+  if(!activeChatId) return;
+  const meta = window._chatConvMeta || {};
+  const msg = meta.quest_id
+    ? NE('Melde at det ikke ble noe av? Avtalen avlyses og oppdraget legges ut som åpent igjen, så andre kan søke.','Report that it fell through? The agreement is cancelled and the task is reopened so others can apply.')
+    : NE('Melde at det ikke ble noe av? Avtalen avlyses og motparten får beskjed.','Report that it fell through? The agreement is cancelled and the other party is notified.');
+  if(!confirm(msg)) return;
+  const authUser = await requireSession();
+  if(!authUser) return;
+  const { data, error } = await sb.rpc('cancel_conversation', { p_conv_id: activeChatId });
+  if(error){ showToast('❌ ' + error.message); return; }
+  if(data?.state === 'cancelled'){
+    showToast(NE('↩️ Avtalen er avlyst. Motparten har fått beskjed.','↩️ The agreement was cancelled. The other party has been notified.'));
+    meta.status = 'cancelled';
+    renderChatDoneBar(meta);
+    const badge = document.getElementById('chat-status-badge');
+    if(badge) badge.textContent = NE('Avlyst','Cancelled');
+    logEvent('job_cancelled_chat');
+    if(typeof loadMyQuests === 'function') loadMyQuests();
+    if(typeof addMarkers === 'function') addMarkers();
+  } else {
+    showToast(NE('⚠️ Samtalen er ikke aktiv lenger','⚠️ This conversation is no longer active'));
+    renderChatDoneBar(null);
+  }
 }
 
 // Marker/bekreft fullføring via SECURITY DEFINER-RPC (teller først ved motpart-bekreftelse)
