@@ -7776,6 +7776,11 @@ async function submitRating() {
   }
 
   showToast(NE('⭐ Vurdering sendt – takk!','⭐ Rating submitted – thanks!'));
+  // Skjul vurderings-nudgen i chatten hvis den gjaldt denne samtalen
+  if(window._chatConvMeta && activeChatId && ratingContext.convId === activeChatId){
+    window._chatConvMeta.myRated = true;
+    renderChatDoneBar(window._chatConvMeta);
+  }
   setTimeout(() => showAchievement('🏆', NE('Oppdrag fullført!','Task completed!'), NE('Du har fullført et oppdrag. XP er lagt til profilen din!','You completed a task. XP added to your profile!')), 600);
 
   // Reload profile to show updated rating
@@ -8888,6 +8893,12 @@ async function openChat(convId, title) {
     .select('status, giver_id, taker_id, quest_id, service_id, completed_marked_by').eq('id', convId).single();
   const vippsBtn = document.getElementById('chat-payment-btn');
   if(vippsBtn) vippsBtn.style.display = conv?.status === 'accepted' ? 'block' : 'none';
+  if(conv && conv.status === 'completed' && currentUser) {
+    const { count } = await sb.from('ratings')
+      .select('id', { count: 'exact', head: true })
+      .eq('conversation_id', convId).eq('rater_id', currentUser.id);
+    conv.myRated = (count || 0) > 0;
+  }
   renderChatDoneBar(conv);
 
   await loadMessages(convId);
@@ -8899,7 +8910,18 @@ function renderChatDoneBar(conv){
   const bar = document.getElementById('chat-done-bar');
   if(!bar) return;
   window._chatConvMeta = conv || null;
-  if(!conv || conv.status !== 'accepted' || !currentUser){ bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  if(!conv || !currentUser){ bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  // Fullført samtale der jeg ikke har vurdert ennå → vedvarende vurderings-nudge
+  if(conv.status === 'completed'){
+    if(conv.myRated){ bar.style.display = 'none'; bar.innerHTML = ''; return; }
+    const otherN = escapeHtml(window._chatOtherName || NE('motparten','the other party'));
+    bar.style.borderColor = 'rgba(230,180,60,0.45)';
+    bar.innerHTML = `<span style="flex:1;color:var(--muted);line-height:1.35">⭐ <b style="color:var(--text)">${NE('Hvordan var','How was')} ${otherN}?</b> ${NE('Din vurdering hjelper andre.','Your rating helps others.')}</span>
+      <button onclick="chatOpenRating()" style="border:1px solid var(--gold);background:transparent;color:var(--gold);border-radius:9px;padding:8px 13px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">${NE('Gi vurdering','Rate')}</button>`;
+    bar.style.display = 'flex';
+    return;
+  }
+  if(conv.status !== 'accepted'){ bar.style.display = 'none'; bar.innerHTML = ''; return; }
   const other = escapeHtml(window._chatOtherName || NE('Motparten','The other party'));
   const txtStyle = 'flex:1;color:var(--muted);line-height:1.35';
   let html = '';
@@ -8916,6 +8938,15 @@ function renderChatDoneBar(conv){
   }
   bar.innerHTML = html;
   bar.style.display = 'flex';
+}
+
+// Åpne vurderingspanelet fra chat-nudgen (fullførte samtaler)
+function chatOpenRating(){
+  const meta = window._chatConvMeta;
+  if(!meta || !currentUser || !activeChatId) return;
+  const otherId = (meta.giver_id === currentUser.id) ? meta.taker_id : meta.giver_id;
+  if(!otherId || otherId === currentUser.id) return;
+  showRating(window._chatOtherName || NE('Bruker','User'), activeChatId, otherId, meta.quest_id || '');
 }
 
 // Marker/bekreft fullføring via SECURITY DEFINER-RPC (teller først ved motpart-bekreftelse)
