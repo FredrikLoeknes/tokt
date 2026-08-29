@@ -6980,8 +6980,8 @@ function savePushToken(token) {
   }
   requireSession().then(u => {
     if(!u) { try { logEvent('push_token_nosession', {}); } catch(e) {} return; }
-    sb.from('push_tokens')
-      .upsert({ token, user_id: u.id, platform: 'ios', updated_at: new Date().toISOString() })
+    // RPC (SECURITY DEFINER) - direkte upsert ble blokkert av RLS i WKWebView
+    sb.rpc('register_push_token', { p_token: token, p_platform: 'ios' })
       .then(r => {
         if(r.error) { console.warn('push_tokens:', r.error.message); try { logEvent('push_token_saveerr', { msg: String(r.error.message).slice(0,80) }); } catch(e) {} }
         else { try { logEvent('push_token_saved', {}); } catch(e) {} }
