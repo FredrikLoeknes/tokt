@@ -6966,15 +6966,32 @@ window.startAvatarWatch = function(){
 // tillatelsessvar via 'push-permission-request'. Vi lagrer tokenet i
 // push_tokens (RLS: kun egne rader), som backend-avsenderen leser i økt 3.
 function savePushToken(token) {
-  if(!token || typeof token !== 'string' || token.length < 10) return;
+  // Wrapperen kan sende tokenet som streng, objekt eller JSON-streng – godta alle
+  try {
+    if(token && typeof token === 'object') token = token.token || token.value || token.detail || '';
+    if(typeof token === 'string' && token.trim().startsWith('{')) {
+      const parsed = JSON.parse(token);
+      token = parsed.token || parsed.value || '';
+    }
+  } catch(e) {}
+  if(!token || typeof token !== 'string' || token.length < 10) {
+    try { logEvent('push_token_invalid', { kind: typeof token, len: (token && token.length) || 0 }); } catch(e) {}
+    return;
+  }
   requireSession().then(u => {
-    if(!u) return;
+    if(!u) { try { logEvent('push_token_nosession', {}); } catch(e) {} return; }
     sb.from('push_tokens')
       .upsert({ token, user_id: u.id, platform: 'ios', updated_at: new Date().toISOString() })
-      .then(r => { if(r.error) console.warn('push_tokens:', r.error.message); });
+      .then(r => {
+        if(r.error) { console.warn('push_tokens:', r.error.message); try { logEvent('push_token_saveerr', { msg: String(r.error.message).slice(0,80) }); } catch(e) {} }
+        else { try { logEvent('push_token_saved', {}); } catch(e) {} }
+      });
   }).catch(() => {});
 }
-window.addEventListener('push-token', e => savePushToken(e.detail));
+window.addEventListener('push-token', e => {
+  try { logEvent('push_token_event', { kind: typeof e.detail }); } catch(err) {}
+  savePushToken(e.detail);
+});
 window.addEventListener('push-permission-request', e => {
   if(e.detail === 'granted') {
     logEvent('push_granted', {});
