@@ -1939,6 +1939,8 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
   </div>
   <div class="panel-actions">
     <button class="btn-apply" onclick="applyJob()"><span id="panel-accept-btn">✦ Ta oppdraget</span></button>
+    <button id="panel-question-btn" onclick="askQuestionOnQuest()" style="display:none;width:100%;margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:12px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">💬 <span data-en="Ask a question first">Still et spørsmål først</span></button>
+    <div id="panel-apply-hint" style="display:none;text-align:center;font-size:11px;color:var(--muted);margin-top:8px" data-en="Applying opens a chat – you can ask questions before agreeing to anything.">Å søke åpner en chat – du kan stille spørsmål før dere avtaler noe.</div>
     <button id="panel-edit-btn" onclick="editQuestFromPanel()" style="display:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 14px;font-size:14px;cursor:pointer;font-family:inherit">✏️ Endre</button>
     <button class="btn-save" onclick="shareQuest()" title="Del oppdraget">📤 Del</button>
   </div>
@@ -4657,6 +4659,13 @@ function showPanel(job) {
   const ownEditBtn = document.getElementById('panel-edit-btn');
   if(ownApplyBtn) ownApplyBtn.style.display = isOwner ? 'none' : 'flex';
   if(ownEditBtn) ownEditBtn.style.display = isOwner ? 'block' : 'none';
+  // Førstemann til mølla: spørre-knapp (søk = tildelt). Vanlige oppdrag: forklaringslinje.
+  const isFirstComeJob = !!(job.raw && job.raw.is_first_come);
+  jobPanelEl.dataset.firstCome = isFirstComeJob ? '1' : '';
+  const qBtnEl = document.getElementById('panel-question-btn');
+  const applyHintEl = document.getElementById('panel-apply-hint');
+  if(qBtnEl) qBtnEl.style.display = (!isOwner && isFirstComeJob) ? 'block' : 'none';
+  if(applyHintEl) applyHintEl.style.display = (!isOwner && !isFirstComeJob) ? 'block' : 'none';
 
   // Show image if available
   const existingImg = document.getElementById('panel-image');
@@ -4807,6 +4816,10 @@ function showPanel(job) {
     banner.innerHTML = `<span style="font-size:16px">⏰</span><div><div style="font-weight:600">Dette oppdraget er utløpt</div><div style="margin-top:1px">Forsvinner fra kartet om mindre enn 24 timer</div></div>`;
     document.getElementById('panel-quest-type').after(banner);
     if(applyBtn) { applyBtn.disabled = true; applyBtn.style.opacity = '0.4'; applyBtn.style.cursor = 'not-allowed'; }
+    const expQBtn = document.getElementById('panel-question-btn');
+    const expHint = document.getElementById('panel-apply-hint');
+    if(expQBtn) expQBtn.style.display = 'none';
+    if(expHint) expHint.style.display = 'none';
   } else {
     if(applyBtn) { applyBtn.disabled = false; applyBtn.style.opacity = '1'; applyBtn.style.cursor = 'pointer'; }
   }
@@ -5095,6 +5108,40 @@ async function notifyUser(n){
   } catch(e) { console.error('notify_user rpc:', e); return { error: e }; }
 }
 
+// Still et spørsmål uten å søke/ta oppdraget (viktig ved førstemann til mølla)
+async function askQuestionOnQuest(){
+  if(!currentUser){ openAuth('login'); showToast(NE('👋 Logg inn for å stille spørsmål','👋 Log in to ask a question')); return; }
+  const p = document.getElementById('job-panel');
+  const questId = p?.dataset?.questId;
+  let qGiverId = p?.dataset?.giverId;
+  if(!questId){ showToast(NE('⚠️ Fant ikke oppdraget','⚠️ Could not find the task')); return; }
+  if(qGiverId && qGiverId === currentUser.id) return;
+  const authUser = await requireSession();
+  if(!authUser) return;
+  if(!qGiverId){
+    const { data: qRow } = await sb.from('quests').select('user_id').eq('id', questId).single();
+    qGiverId = qRow?.user_id || '';
+  }
+  if(!qGiverId){ showToast(NE('⚠️ Fant ikke oppdragsgiveren','⚠️ Could not find the poster')); return; }
+  if(qGiverId === currentUser.id){ showToast(NE('⚠️ Dette er ditt eget oppdrag','⚠️ This is your own task')); return; }
+  // Finnes samtale fra før? Da åpner vi bare den.
+  const { data: existing } = await sb.from('conversations')
+    .select('id').eq('quest_id', questId).eq('taker_id', currentUser.id).single();
+  if(existing){ closePanel(); openChat(existing.id, p?.dataset?.questTitle || NE('Oppdrag','Task')); return; }
+  const { data: conv, error } = await sb.from('conversations').insert({
+    quest_id: questId,
+    giver_id: qGiverId,
+    taker_id: currentUser.id,
+    status: 'pending',
+    is_question: true
+  }).select().single();
+  if(error){ showToast('❌ ' + error.message); return; }
+  logEvent('quest_question');
+  closePanel();
+  showToast(NE('💬 Chat åpnet – still spørsmålet ditt! Oppdraget er fortsatt åpent for andre.','💬 Chat opened – ask away! The task is still open to others.'));
+  openChat(conv.id, p?.dataset?.questTitle || NE('Oppdrag','Task'));
+}
+
 async function applyJob() {
   if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å søke på oppdrag','👋 Log in to apply for tasks')); return; }
 
@@ -5144,12 +5191,43 @@ async function applyJob() {
 
   // Check if conversation already exists
   const { data: existing } = await sb.from('conversations')
-    .select('id')
+    .select('id, status, is_question')
     .eq('quest_id', questId)
     .eq('taker_id', currentUser.id)
     .single();
 
   if(existing) {
+    if(existing.is_question && existing.status === 'pending') {
+      // Spørsmåls-chat finnes fra før → gjør den om til reell søknad/tildeling
+      const { data: qMeta } = await sb.from('quests').select('is_first_come, title, status').eq('id', questId).single();
+      const { data: mp } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
+      const myName = mp?.full_name || 'En bruker';
+      if(qMeta?.is_first_come && qMeta?.status === 'open') {
+        await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
+        await sb.from('conversations').update({ status: 'accepted', is_question: false }).eq('id', existing.id);
+        showToast(NE('⚡ Oppdrag tildelt! Du er førstemann til mølla!','⚡ Task assigned! You were first in line!'));
+        await notifyUser({
+          user_id: effectiveGiverId,
+          type: 'application',
+          title: '⚡ Oppdraget ditt ble tatt!',
+          body: `${myName} tok oppdraget «${qMeta?.title || 'Oppdrag'}» (førstemann til mølla). Åpne chatten for å avtale detaljer.`,
+          link_id: existing.id
+        });
+      } else if(qMeta?.status === 'open') {
+        await sb.from('conversations').update({ is_question: false }).eq('id', existing.id);
+        showToast(NE('✦ Søknad sendt! Venter på godkjenning fra oppdragsgiver.',"✦ Application sent! Waiting for the poster's approval."));
+        // Trigger fyrer kun ved insert – varsle manuelt ved konvertering
+        await notifyUser({
+          user_id: effectiveGiverId,
+          type: 'application',
+          title: '🙋 Ny søknad på oppdraget ditt!',
+          body: `${myName} vil ta oppdraget: ${qMeta?.title || ''}`,
+          link_id: existing.id
+        });
+      } else {
+        showToast(NE('⚠️ Oppdraget er ikke lenger åpent','⚠️ This task is no longer open'));
+      }
+    }
     closePanel();
     openChat(existing.id, applyPanel?.dataset?.questTitle || 'Oppdrag');
     return;
