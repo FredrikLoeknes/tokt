@@ -4666,6 +4666,11 @@ function showPanel(job) {
   const applyHintEl = document.getElementById('panel-apply-hint');
   if(qBtnEl) qBtnEl.style.display = (!isOwner && isFirstComeJob) ? 'block' : 'none';
   if(applyHintEl) applyHintEl.style.display = (!isOwner && !isFirstComeJob) ? 'block' : 'none';
+  // Knappen skal si sannheten: vanlige oppdrag søkes (uforpliktende), førstemann tas (bindende)
+  const acceptLbl = document.getElementById('panel-accept-btn');
+  if(acceptLbl) acceptLbl.textContent = isFirstComeJob
+    ? NE('⚡ Ta oppdraget nå','⚡ Take this task now')
+    : NE('✦ Søk på oppdraget','✦ Apply for this task');
 
   // Show image if available
   const existingImg = document.getElementById('panel-image');
