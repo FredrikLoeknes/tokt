@@ -6992,6 +6992,14 @@ window.addEventListener('push-token', e => {
   try { logEvent('push_token_event', { kind: typeof e.detail }); } catch(err) {}
   savePushToken(e.detail);
 });
+// Fjerndiagnostikk fra wrapperen (økt 4): feil og Firebase-status logges som
+// events, så push-kjeden kan feilsøkes fra Supabase uten Mac.
+window.addEventListener('push-token-error', e => {
+  try { logEvent('push_token_error', { msg: String(e.detail).slice(0, 120) }); } catch(err) {}
+});
+window.addEventListener('push-firebase-state', e => {
+  try { logEvent('push_firebase_state', { state: String(e.detail).slice(0, 20) }); } catch(err) {}
+});
 window.addEventListener('push-permission-request', e => {
   if(e.detail === 'granted') {
     logEvent('push_granted', {});
