@@ -3656,7 +3656,10 @@ function addQuestMarker(q) {
 function questDeadlineMs(q) {
   if(!q.scheduled_date) return null;
   if(q.schedule_mode === 'frist') {
-    const t = q.scheduled_time_to || q.scheduled_time_from || '23:59:59';
+    let t = q.scheduled_time_to || q.scheduled_time_from || '23:59:59';
+    // «Innen kl. 00:00» betyr slutten av dagen, ikke starten (ellers utløper
+    // oppdraget i samme sekund det legges ut)
+    if(/^00:00/.test(t)) t = '23:59:59';
     return new Date(`${q.scheduled_date}T${t}`).getTime();
   }
   return new Date(`${q.scheduled_date}T23:59:59`).getTime();
@@ -5452,6 +5455,15 @@ async function _postJobInner() {
   const finalScheduledDate = scheduledDate;
   const finalTimeFrom = scheduledTimeFrom;
   const finalTimeTo = scheduledTimeTo;
+
+  // Ikke la noen publisere et oppdrag som allerede er utløpt
+  if(finalScheduledDate) {
+    const dl = questDeadlineMs({ schedule_mode: scheduleMode, scheduled_date: finalScheduledDate, scheduled_time_from: finalTimeFrom, scheduled_time_to: finalTimeTo });
+    if(dl != null && dl < Date.now()) {
+      showToast(NE('⏰ Fristen er allerede passert – velg en senere dato eller tid.','⏰ That deadline has already passed – pick a later date or time.'));
+      return;
+    }
+  }
 
   const isFirstCome = document.getElementById('mode-firstcome')?.classList.contains('active') || false;
   const isUrgent = document.querySelector('#modal .toggle')?.classList.contains('on') || false;
@@ -8887,17 +8899,24 @@ async function closeQuest(questId) {
   }
   if(!confirm(NE('Avslutte oppdraget? Det fjernes fra kartet og fra Mine oppdrag.','End the task? It will be removed from the map and from My tasks.'))) return;
   await sb.from('quests').update({ status: 'closed' }).eq('id', questId);
+  // Ventende søkere på et avsluttet oppdrag skal ikke telle som «nye søkere»
+  await sb.from('conversations').update({ status: 'rejected' }).eq('quest_id', questId).eq('status', 'pending');
   showToast(NE('🔴 Oppdrag avsluttet','🔴 Task ended'));
   loadMyQuests();
   addMarkers();
+  updateMyQuestsBadge();
+  updateProfileNavBadges();
 }
 
 async function deleteQuest(questId) {
   if(!confirm(NE('Slette dette oppdraget?','Delete this task?'))) return;
   await sb.from('quests').update({ status: 'deleted' }).eq('id', questId);
+  await sb.from('conversations').update({ status: 'rejected' }).eq('quest_id', questId).eq('status', 'pending');
   showToast(NE('🗑️ Oppdrag slettet','🗑️ Task deleted'));
   loadMyQuests();
   addMarkers();
+  updateMyQuestsBadge();
+  updateProfileNavBadges();
 }
 
 async function repostQuest(questId) {
@@ -9414,8 +9433,9 @@ async function updateMyQuestsBadge() {
   if(!currentUser) { setActivityBadges(0, 0); return; }
   try {
     const [oppRes, tjRes] = await Promise.all([
-      sb.from('conversations').select('id', { count: 'exact', head: true })
-        .eq('giver_id', currentUser.id).eq('status', 'pending'),
+      sb.from('conversations').select('id, quests!inner(status)', { count: 'exact', head: true })
+        .eq('giver_id', currentUser.id).eq('status', 'pending')
+        .in('quests.status', ['open','taken']),
       sb.from('bookings').select('id', { count: 'exact', head: true })
         .eq('provider_id', currentUser.id).eq('status', 'requested').is('parent_id', null)
     ]);
