@@ -7009,6 +7009,22 @@ window.addEventListener('push-permission-request', e => {
     logEvent('push_denied', {});
   }
 });
+// Trykk på push-varsel (iOS-wrapperen sender 'push-notification-click' med
+// FCM data-feltene type + link_id). Venter til brukeren er logget inn, så
+// gjenbrukes samme navigasjon som i varsellista.
+window.addEventListener('push-notification-click', e => {
+  let d = e.detail;
+  try { if(typeof d === 'string') d = JSON.parse(d); } catch(err) { d = {}; }
+  d = d || {};
+  const type = String(d.type || ''), linkId = String(d.link_id || '');
+  if(!type) return;
+  try { logEvent('push_click', { type }); } catch(err) {}
+  let tries = 0;
+  (function go() {
+    if(currentUser) { try { handleNotifClick('', type, linkId); } catch(err) {} return; }
+    if(++tries < 40) setTimeout(go, 500);
+  })();
+});
 // Spør om push-tillatelse: kun i iOS-appen, kun innlogget, én gang per økt.
 // 4 sek forsinkelse så dialogen ikke smeller i ansiktet ved oppstart.
 function initIOSPush() {
@@ -7938,8 +7954,8 @@ async function loadNotifications() {
 }
 
 async function handleNotifClick(notifId, type, linkId) {
-  // Mark as read
-  await sb.from('notifications').update({ read: true }).eq('id', notifId);
+  // Mark as read (notifId mangler når vi kommer fra et push-trykk)
+  if(notifId) await sb.from('notifications').update({ read: true }).eq('id', notifId);
   closeNotifications();
   if(type === 'accepted' && linkId) {
     // Show payment info popup for taker
