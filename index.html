@@ -12177,7 +12177,9 @@ function openTermsGate(onAccept, acceptLabel) {
   // Trykk på deaktivert «Godta»-knapp (knappen selv fyrer ikke klikk når disabled)
   const btnRow = document.getElementById('terms-gate-btnrow');
   if (btnRow) btnRow.addEventListener('click', (e) => {
-    if (e.target !== btnRow && e.target !== acceptBtn) return;
+    // Kun klikk som treffer selve raden (deaktivert knapp slipper klikket gjennom til forelder).
+    // Klikk på aktiv knapp bobler også hit etter at proceedRegister har deaktivert den – ignorer.
+    if (e.target !== btnRow) return;
     if (!acceptBtn.disabled) return;
     diag('tap_disabled_btn');
     showToast(en ? 'Tick the box first' : 'Huk av boksen først');
