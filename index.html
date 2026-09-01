@@ -12119,14 +12119,14 @@ function openTermsGate(onAccept, acceptLabel) {
         <div style="font-family:'Skranji',cursive;font-size:18px;color:var(--text)">${en?'Terms & privacy':'Brukervilkår & personvern'}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px">${en?'Read and accept to continue':'Les og godta for å fortsette'} · v${TERMS_VERSION}</div>
       </div>
-      <div id="terms-gate-scroll" style="padding:16px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0">${en?bodyEn:bodyNo}</div>
+      <div id="terms-gate-scroll" style="padding:16px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0">${en?bodyEn:bodyNo}<div id="terms-gate-end" style="height:1px"></div></div>
       <div style="padding:12px 18px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface)">
-        <div id="terms-gate-hint" style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px">↓ ${en?'Scroll to the bottom to continue':'Scroll til bunnen for å fortsette'}</div>
+        <div id="terms-gate-hint" style="font-size:13px;font-weight:600;color:var(--accent);text-align:center;margin-bottom:10px;transition:transform .2s">↓ ${en?'Scroll to the bottom to continue':'Scroll til bunnen for å fortsette'}</div>
         <label id="terms-gate-checkrow" style="display:flex;align-items:flex-start;gap:10px;cursor:not-allowed;opacity:.45;margin-bottom:12px;transition:opacity .2s">
           <input type="checkbox" id="terms-gate-check" disabled style="width:18px;height:18px;margin-top:1px;flex-shrink:0;accent-color:var(--accent);cursor:inherit" onchange="var b=document.getElementById('terms-gate-accept');b.disabled=!this.checked;b.style.opacity=this.checked?'1':'.5'">
           <span style="font-size:13px;color:var(--text);line-height:1.5">${en?'I have read and accept the Terms of Service and Privacy Policy.':'Jeg har lest og godtar brukervilkårene og personvernerklæringen.'}</span>
         </label>
-        <div style="display:flex;gap:10px">
+        <div id="terms-gate-btnrow" style="display:flex;gap:10px">
           <button onclick="closeTermsGate()" style="flex:0 0 auto;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">${en?'Cancel':'Avbryt'}</button>
           <button id="terms-gate-accept" onclick="(window._termsGateOnAccept||proceedRegister)()" disabled style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 14px rgba(168,85,247,0.3);opacity:.5;transition:opacity .2s" onmouseover="if(!this.disabled)this.style.opacity='1'">${acceptLabel || (en?'Accept and create account':'Godta og opprett konto')}</button>
         </div>
@@ -12151,11 +12151,45 @@ function openTermsGate(onAccept, acceptLabel) {
     hint.style.display = 'none';
   };
   const checkScrolled = () => {
-    if (scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 8) unlock();
+    // Romslig toleranse: brøkdels-piksler, zoom og innebygde nettlesere (f.eks. Facebook)
+    // kan gjøre at scrollTop+clientHeight aldri når nøyaktig scrollHeight.
+    if (scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 24) unlock();
   };
-  scrollEl.addEventListener('scroll', checkScrolled);
+  scrollEl.addEventListener('scroll', checkScrolled, { passive: true });
+  scrollEl.addEventListener('touchend', checkScrolled, { passive: true });
+  // Sekundær detektor: lås opp når sentinelen nederst faktisk blir synlig.
+  // Uavhengig av scroll-matematikken over – fanger tilfeller der scroll-eventen uteblir.
+  try {
+    if ('IntersectionObserver' in window) {
+      const endEl = document.getElementById('terms-gate-end');
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some(en => en.isIntersecting)) { unlock(); io.disconnect(); }
+      }, { root: scrollEl, threshold: 0 });
+      if (endEl) io.observe(endEl);
+    }
+  } catch (e) {}
   // Hvis innholdet får plass uten scroll (stor skjerm), lås opp med en gang
-  requestAnimationFrame(() => { if (scrollEl.scrollHeight <= scrollEl.clientHeight + 8) unlock(); });
+  requestAnimationFrame(() => { if (scrollEl.scrollHeight <= scrollEl.clientHeight + 24) unlock(); });
+  // Trykk på låst avkrysningsrad: ikke stille «ingenting skjer» – scroll til bunnen for brukeren
+  checkRow.addEventListener('click', (e) => {
+    if (!chk.disabled) return;
+    e.preventDefault();
+    scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
+    hint.style.transform = 'scale(1.06)';
+    setTimeout(() => { hint.style.transform = ''; checkScrolled(); }, 600);
+  });
+  // Trykk på deaktivert «Godta»-knapp (knappen selv fyrer ikke klikk når disabled)
+  const btnRow = document.getElementById('terms-gate-btnrow');
+  if (btnRow) btnRow.addEventListener('click', (e) => {
+    if (e.target !== btnRow && e.target !== acceptBtn) return;
+    if (!acceptBtn.disabled) return;
+    if (chk.disabled) {
+      scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
+      showToast(en ? 'Scroll to the bottom of the text first' : 'Scroll til bunnen av teksten først');
+    } else {
+      showToast(en ? 'Tick the box first' : 'Huk av boksen først');
+    }
+  });
 }
 
 function closeTermsGate() {
