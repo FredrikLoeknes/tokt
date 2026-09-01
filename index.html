@@ -2099,15 +2099,12 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
       <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
         <div style="position:relative">
           <div class="ww-avatar">JS</div>
-          <div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);background:var(--gold);color:#000;font-size:8px;font-weight:800;padding:1px 5px;border-radius:4px;white-space:nowrap">Legend</div>
+          <div id="ww-rank" style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);background:var(--gold);color:#000;font-size:8px;font-weight:800;padding:1px 5px;border-radius:4px;white-space:nowrap"></div>
         </div>
         <div class="ww-info">
           <div class="ww-name">Jonas S.</div>
           <div class="ww-stat">47 oppdrag · ★ 4.97</div>
-          <div style="margin-top:3px;display:flex;gap:3px">
-            <span style="font-size:9px;background:rgba(201,144,10,0.15);color:var(--gold);padding:1px 5px;border-radius:4px">🏆 Top</span>
-            <span style="font-size:9px;background:rgba(15,169,104,0.1);color:var(--green);padding:1px 5px;border-radius:4px">💚 5 veldedighet</span>
-          </div>
+          <div id="ww-badges" style="margin-top:3px;display:flex;gap:3px"></div>
         </div>
       </div>
     </div>
@@ -2168,7 +2165,7 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
     </div>
     <div class="form-group">
       <label class="form-label">Tittel på oppdraget</label>
-      <input id="quest-title-input" class="form-input" type="text" placeholder="E.g. «Mow the lawn in my garden»" oninput="updateQuestPreview()">
+      <input id="quest-title-input" class="form-input" type="text" placeholder="E.g. «Mow the lawn in my garden»" oninput="updateQuestPreview();checkServiceHint()">
     </div>
     <div class="form-group">
       <label class="form-label">📍 Adresse der oppdraget skal gjøres</label>
@@ -2215,7 +2212,20 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
 
     <div class="form-group">
       <label class="form-label">Beskrivelse</label>
-      <textarea id="quest-desc-input" class="form-textarea" placeholder="Beskriv hva som skal gjøres, hva som er tilgjengelig og andre detaljer…"></textarea>
+      <textarea id="quest-desc-input" class="form-textarea" placeholder="Beskriv hva som skal gjøres, hva som er tilgjengelig og andre detaljer…" oninput="checkServiceHint()"></textarea>
+    </div>
+    <div id="quest-svc-hint" style="display:none;background:rgba(168,85,247,0.07);border:1.5px solid rgba(168,85,247,0.35);border-radius:12px;padding:12px 14px;margin:-6px 0 14px">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:20px;line-height:1">💡</span>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:var(--text)" data-en="This sounds like something you offer">Dette høres ut som noe du tilbyr</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:2px" data-en="Tasks are for people who need help. Want to post this as a service instead?">Oppdrag er for deg som trenger hjelp. Vil du legge dette ut som en tjeneste i stedet?</div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button type="button" onclick="convertQuestToService()" style="font-family:inherit;font-size:13px;font-weight:700;padding:8px 12px;border-radius:9px;border:none;background:var(--purple,#a855f7);color:#fff;cursor:pointer" data-en="Yes, make it a service">Ja, gjør om til tjeneste</button>
+            <button type="button" onclick="dismissServiceHint()" style="font-family:inherit;font-size:13px;font-weight:600;padding:8px 12px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer" data-en="No, it's a task">Nei, det er et oppdrag</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">🧰 Utstyr til jobben</label>
@@ -5289,8 +5299,51 @@ async function applyJob() {
   openChat(conv.id, applyPanel?.dataset?.questTitle || 'Oppdrag');
 }
 
-function openModal() { if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å legge ut oppdrag','👋 Log in to post a task')); return; } const at = document.getElementById('adult-toggle'); if(at){ at.classList.remove('on'); at.dataset.locked = ''; } applyMinorUIRestrictions(); const catSel = document.getElementById('quest-category-input'); if(catSel) checkCategoryWarning(catSel.value); document.getElementById('modal-overlay').classList.add('open'); try { setScheduleType('any'); } catch(e){} updateQuestPreview(); }
+function openModal() { if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å legge ut oppdrag','👋 Log in to post a task')); return; } _svcHintDismissed = false; checkServiceHint(); const at = document.getElementById('adult-toggle'); if(at){ at.classList.remove('on'); at.dataset.locked = ''; } applyMinorUIRestrictions(); const catSel = document.getElementById('quest-category-input'); if(catSel) checkCategoryWarning(catSel.value); document.getElementById('modal-overlay').classList.add('open'); try { setScheduleType('any'); } catch(e){} updateQuestPreview(); }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// ── Tjeneste-hint i oppdragsskjemaet ──────────────────────────────────────────
+// Enkel ordliste (ingen AI): formuleringer som nesten bare brukes av folk som TILBYR noe.
+// Treff viser et spørsmål, aldri en sperre. «trenger hjelp»/«ønsker hjelp» overstyrer alltid.
+const SERVICE_HINT_RE = /\b(jeg tilbyr|vi tilbyr|tilbyr (jeg|vi)|jeg lager|jeg baker|jeg syr|jeg selger|p[åa] bestilling|jeg kan (hjelpe|komme|ta|passe|lufte|klippe|vaske|male|montere|kj[øo]re|reparere|fikse)|jeg er (utdannet|erfaren|flink|sertifisert|profesjonell)|(lang|mye|god|bred) erfaring (med|som|fra)|ta kontakt for|ring meg|send meg en melding|i offer|we offer|i can help|i provide|on order|years of experience)\b/i;
+const SERVICE_HINT_NEG_RE = /\b(trenger (hjelp|noen|en|et)|[øo]nsker (hjelp|noen)|s[øo]ker (hjelp|noen|en|et)|leter etter|need (help|someone)|looking for)\b/i;
+let _svcHintDismissed = false;
+function checkServiceHint() {
+  const box = document.getElementById('quest-svc-hint');
+  if(!box) return;
+  if(_svcHintDismissed) { box.style.display = 'none'; return; }
+  const text = ((document.getElementById('quest-title-input')?.value || '') + ' ' + (document.getElementById('quest-desc-input')?.value || ''));
+  const hit = SERVICE_HINT_RE.test(text) && !SERVICE_HINT_NEG_RE.test(text);
+  const was = box.style.display === 'block';
+  box.style.display = hit ? 'block' : 'none';
+  if(hit && !was) { try { logEvent('svc_hint_shown', {}); } catch(e) {} }
+}
+function dismissServiceHint() {
+  _svcHintDismissed = true;
+  const box = document.getElementById('quest-svc-hint'); if(box) box.style.display = 'none';
+  try { logEvent('svc_hint_dismissed', {}); } catch(e) {}
+}
+// Flytter tittel, beskrivelse, pris og kategori over til tjenesteskjemaet
+function convertQuestToService() {
+  const title = document.getElementById('quest-title-input')?.value || '';
+  const desc  = document.getElementById('quest-desc-input')?.value || '';
+  const price = document.getElementById('modal-price')?.value || '';
+  const qcat  = document.getElementById('quest-category-input')?.value || '';
+  closeModal();
+  openServiceModal();
+  const st = document.getElementById('svc-title'), sd = document.getElementById('svc-desc'), sp = document.getElementById('svc-price'), sc = document.getElementById('svc-category');
+  if(st) st.value = title;
+  if(sd) sd.value = desc;
+  if(sp && price) sp.value = price;
+  if(sc) {
+    const opts = Array.from(sc.options);
+    const match = opts.find(o => o.value === qcat) || opts.find(o => o.value.includes('Annet'));
+    if(match) sc.value = match.value;
+  }
+  try { updateSvcPreview(); } catch(e) {}
+  try { logEvent('svc_hint_converted', {}); } catch(e) {}
+  showToast(NE('Flyttet til tjenesteskjemaet – sjekk at alt stemmer','Moved to the service form – check that everything looks right'));
+}
 
 // Live marker preview in the "Legg ut" modal – mirrors how the marker will look to others
 function updateQuestPreview() {
@@ -5600,6 +5653,7 @@ async function _postJobInner() {
   const safeReset = id => { const el = document.getElementById(id); if(el) el.value = ''; };
   safeReset('quest-title-input');
   safeReset('quest-desc-input');
+  _svcHintDismissed = false; try { checkServiceHint(); } catch(e) {}
   safeReset('quest-address-input');
   safeReset('q-frist-date');
   safeReset('q-vindu-date');
@@ -6454,7 +6508,12 @@ function updateWeekWorker(top) {
       : () => viewOtherProfile(top.id);
   const a = ww.querySelector('.ww-avatar'); if(a) renderAvatar(a, top.anon ? null : top.avatar, top.anon ? '🕶️' : ini);
   const n = ww.querySelector('.ww-name'); if(n) n.textContent = top.name;
-  const s = ww.querySelector('.ww-stat'); if(s) s.textContent = `${top.quests} oppdrag · ★ ${top.rating ? Number(top.rating).toFixed(2) : '–'}`;
+  const s = ww.querySelector('.ww-stat'); if(s) s.textContent = `${top.quests} ${NE('oppdrag','tasks')} · ★ ${top.rating ? Number(top.rating).toFixed(2) : '–'}`;
+  // Kun ekte data: rang beregnes fra antall fullførte, «Topp» er sant per definisjon (nr. 1 på lista).
+  // Ingen veldedighets-/andre merker uten datagrunnlag.
+  const r = document.getElementById('ww-rank'); if(r) r.textContent = (getRank(top.quests) || {}).name || '';
+  const b = document.getElementById('ww-badges');
+  if(b) b.innerHTML = `<span style="font-size:9px;background:rgba(201,144,10,0.15);color:var(--gold);padding:1px 5px;border-radius:4px">🏆 ${NE('Topp','Top')}</span>`;
 }
 
 // Segment-bytte: Alle / Lokalt / Denne uka
@@ -11533,20 +11592,20 @@ function showPostChoice() {
   overlay.innerHTML = `
     <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:24px 20px 90px;box-sizing:border-box;animation:slideIn .2s ease">
       <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px"></div>
-      <div style="font-size:17px;font-weight:800;text-align:center;margin-bottom:18px">Hva vil du legge ut?</div>
-      <button onclick="document.getElementById('post-choice-overlay').remove();openModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(214,66,126,0.07);border:1.5px solid rgba(214,66,126,0.3);border-radius:12px;padding:16px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:10px">
-        <span style="font-size:28px">📋</span>
+      <div style="font-size:17px;font-weight:800;text-align:center;margin-bottom:18px">${NE('Hva vil du gjøre?','What do you want to do?')}</div>
+      <button onclick="document.getElementById('post-choice-overlay').remove();openModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(214,66,126,0.07);border:1.5px solid rgba(214,66,126,0.35);border-radius:12px;padding:16px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:10px">
+        <span style="font-size:28px">🙋</span>
         <span style="flex:1">
-          <span style="display:block;font-size:15px;font-weight:700;color:var(--text)">Oppdrag</span>
-          <span style="display:block;font-size:12px;color:var(--muted);margin-top:2px">Jeg trenger hjelp med noe</span>
+          <span style="display:block;font-size:16px;font-weight:800;color:var(--text)">${NE('Jeg trenger hjelp med noe','I need help with something')}</span>
+          <span style="display:block;font-size:12px;color:var(--muted);margin-top:3px">${NE('Legg ut et oppdrag – noen i nærheten gjør det','Post a task – someone nearby does it')}</span>
         </span>
         <span style="color:var(--muted)">›</span>
       </button>
-      <button onclick="document.getElementById('post-choice-overlay').remove();openServiceModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(168,85,247,0.07);border:1.5px solid rgba(168,85,247,0.3);border-radius:12px;padding:16px;cursor:pointer;font-family:inherit;text-align:left">
-        <span style="font-size:28px">🏪</span>
+      <button onclick="document.getElementById('post-choice-overlay').remove();openServiceModal()" style="display:flex;align-items:center;gap:14px;width:100%;background:rgba(168,85,247,0.07);border:1.5px solid rgba(168,85,247,0.35);border-radius:12px;padding:16px;cursor:pointer;font-family:inherit;text-align:left">
+        <span style="font-size:28px">🛠️</span>
         <span style="flex:1">
-          <span style="display:block;font-size:15px;font-weight:700;color:var(--text)">Tjeneste</span>
-          <span style="display:block;font-size:12px;color:var(--muted);margin-top:2px">Jeg tilbyr hjelp eller en tjeneste</span>
+          <span style="display:block;font-size:16px;font-weight:800;color:var(--text)">${NE('Jeg kan hjelpe med noe','I can help with something')}</span>
+          <span style="display:block;font-size:12px;color:var(--muted);margin-top:3px">${NE('Legg ut en tjeneste – folk bestiller fra deg','Post a service – people book you')}</span>
         </span>
         <span style="color:var(--muted)">›</span>
       </button>
