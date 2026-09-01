@@ -2040,9 +2040,9 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
     <button onclick="closeLeaderboard()" class="lb-close">×</button>
   </div>
   <div class="lb-seg">
-    <button class="lb-seg-btn on" id="lbseg-all"   onclick="switchLbScope('all')"><span data-en="All">Alle</span></button>
-    <button class="lb-seg-btn soon" id="lbseg-local" onclick="lbSegSoon('👋 Lokal toppliste kommer snart!','👋 Local leaderboard coming soon!')"><span data-en="Local">Lokalt</span></button>
-    <button class="lb-seg-btn soon" id="lbseg-week"  onclick="lbSegSoon('👋 Ukens toppliste kommer snart!','👋 Weekly leaderboard coming soon!')"><span data-en="This week">Denne uka</span></button>
+    <button class="lb-seg-btn on" id="lbseg-all"       onclick="switchLbScope('all')"><span data-en="Movers">Utførere</span></button>
+    <button class="lb-seg-btn"    id="lbseg-providers" onclick="switchLbScope('providers')"><span data-en="Providers">Tilbydere</span></button>
+    <button class="lb-seg-btn"    id="lbseg-week"      onclick="switchLbScope('week')"><span data-en="This week">Denne uka</span></button>
   </div>
   <div class="lb-listhead" id="lb-top-questers-title">Topp-utførere</div>
   <div class="lb-list" id="lb-list"></div>
@@ -6270,7 +6270,7 @@ async function loadLeaderboard() {
   const L = (no,en) => (typeof currentLang!=='undefined' && currentLang==='en') ? en : no;
 
   // Hold segment-knappene i synk med valgt scope
-  ['all','local','week'].forEach(s => {
+  ['all','providers','week'].forEach(s => {
     const b = document.getElementById('lbseg-' + s);
     if(b) b.classList.toggle('on', s === lbScope);
   });
@@ -6281,18 +6281,18 @@ async function loadLeaderboard() {
   if(lbScope==='week') {
     if(subEl)  subEl.textContent  = L('Fullført siste 7 dager','Completed in the last 7 days');
     if(headEl) headEl.textContent = L('Ukens utførere','This week’s top movers');
-  } else if(lbScope==='local') {
-    if(subEl)  subEl.textContent  = L('Utførere i dette kartområdet','Top movers in this map area');
-    if(headEl) headEl.textContent = L('Lokale utførere','Local top movers');
+  } else if(lbScope==='providers') {
+    if(subEl)  subEl.textContent  = L('Rangert etter fullførte tjenesteavtaler','Ranked by completed service bookings');
+    if(headEl) headEl.textContent = L('Topp-tilbydere','Top providers');
   } else {
     if(subEl)  subEl.textContent  = L('Rangert etter fullførte oppdrag','Ranked by completed tasks');
     if(headEl) headEl.textContent = L('Topp-utførere','Top movers');
   }
 
   // Hent rader for valgt scope (null => RPC ikke kjørt/feilet ennå)
-  let combined = lbScope==='week'  ? await buildWeekRows()
-               : lbScope==='local' ? await buildLocalRows()
-               :                      await buildAllRows();
+  let combined = lbScope==='week'      ? await buildWeekRows()
+               : lbScope==='providers' ? await buildProviderRows()
+               :                          await buildAllRows();
   if(combined === null) combined = [];
 
   const ww0 = document.getElementById('week-worker');
@@ -6301,8 +6301,8 @@ async function loadLeaderboard() {
   if(!combined.length) {
     const emptyMsg = lbScope==='week'
         ? L('Ingen fullførte oppdrag denne uka ennå.<br>Bli den første – fullfør et oppdrag! <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg>','No tasks completed this week yet.<br>Be the first – complete a task! <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg>')
-      : lbScope==='local'
-        ? L('Ingen utførere i dette kartområdet ennå.<br>Zoom ut eller flytt kartet.','No movers in this map area yet.<br>Zoom out or pan the map.')
+      : lbScope==='providers'
+        ? L('Ingen fullførte tjenesteavtaler ennå.<br>Legg ut en tjeneste og bli den første! 🛠️','No completed service bookings yet.<br>Post a service and be the first! 🛠️')
         : L('Ingen rangerte utførere ennå.<br>Fullfør et oppdrag og bli den første! <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg>','No ranked movers yet.<br>Complete a task and be the first! <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M17 5h2.5a2 2 0 0 1 0 4H17M7 5H4.5a2 2 0 0 0 0 4H7"/><path d="M12 13v3M9 20h6M10 20l.5-4h3l.5 4"/></svg>');
     if(listEl) listEl.innerHTML = '<div class="lb-empty">'+emptyMsg+'</div>';
     if(ww0 && lbScope==='all') ww0.style.display = 'none';
@@ -6402,15 +6402,13 @@ async function buildWeekRows() {
   } catch(e) { console.error('leaderboard_week RPC:', e?.message||e); return null; }
 }
 
-// Lokalt: fullføringer innen 15 km av kartsenter – via RPC (RLS-trygt).
-async function buildLocalRows() {
+// Tilbydere: fullførte tjeneste-bookinger totalt – via RPC (RLS-trygt).
+async function buildProviderRows() {
   try {
-    const c = (window.map && window.map.getCenter) ? window.map.getCenter() : null;
-    if(!c) return [];
-    const { data, error } = await sb.rpc('leaderboard_local', { clat: c.lat, clng: c.lng, radius_km: 15 });
+    const { data, error } = await sb.rpc('leaderboard_providers');
     if(error) throw error;
     return (data||[]).map(r => { const d = lbDisplay(r.full_name, r.avatar_url, r.lb_visibility); return { id:r.id, name:d.name, anon:d.anon, quests:Number(r.completed)||0, rating:r.rating!=null?Number(r.rating):null, avatar:d.avatar, demo:false }; });
-  } catch(e) { console.error('leaderboard_local RPC:', e?.message||e); return null; }
+  } catch(e) { console.error('leaderboard_providers RPC:', e?.message||e); return null; }
 }
 
 // «Din plass» festet nederst – alltid synlig
@@ -6462,7 +6460,7 @@ function updateWeekWorker(top) {
 // Segment-bytte: Alle / Lokalt / Denne uka
 function switchLbScope(scope) {
   window.lbScope = scope;
-  ['all','local','week'].forEach(s => {
+  ['all','providers','week'].forEach(s => {
     const b = document.getElementById('lbseg-' + s);
     if(b) b.classList.toggle('on', s === scope);
   });
