@@ -4906,6 +4906,7 @@ function closePanel() {
   document.getElementById('job-panel').style.display = 'none';
   document.getElementById('hero-tag').classList.remove('hidden');
   document.getElementById('panel-overlay').style.display = 'none';
+  (window.mapMarkers || []).forEach(x => x.el && x.el.classList.remove('marker-focus'));
 }
 
 // Drag-to-dismiss / drag-up-to-expand for the mobile bottom sheet
@@ -6026,6 +6027,28 @@ function highlightListCard(m, scroll) {
   const card = (m._lvIndex != null) ? document.getElementById('lv-card-' + m._lvIndex) : null;
   if(card) { card.classList.add('active'); if(scroll) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
 }
+// Fly kartet til et resultat i bakgrunnen mens detaljpanelet er åpent, og
+// marker pinnen. På mobil dekker bunnarket det meste av kartet, så pinnen
+// sentreres i den synlige stripen over panelet (offset = halve panelhøyden).
+function focusResultOnMap(m, panelId) {
+  if(!m || m.lng == null || m.lat == null) return;
+  (window.mapMarkers || []).forEach(x => x.el && x.el.classList.remove('marker-focus'));
+  if(m.el) m.el.classList.add('marker-focus');
+  if(!window.map || typeof window.map.flyTo !== 'function') return;
+  const doFly = () => {
+    let offY = 0;
+    if(window.innerWidth <= 768 && panelId) {
+      const p = document.getElementById(panelId);
+      const h = (p && p.style.display !== 'none') ? p.offsetHeight : 0;
+      // Hold offset innenfor viewporten – ellers havner pinnen utenfor skjermen
+      offY = -Math.min(h, window.innerHeight * 0.7) / 2;
+    }
+    const z = (typeof window.map.getZoom === 'function') ? Math.max(window.map.getZoom(), 15) : 15;
+    window.map.flyTo({ center: [m.lng, m.lat], zoom: z, offset: [0, offY], speed: 1.4, essential: true });
+  };
+  // Panelet må ha rukket å få display:block før vi kan måle høyden
+  requestAnimationFrame(doFly);
+}
 function openListResult(i) {
   const m = (window.lastResults || [])[i];
   if(!m) return;
@@ -6034,9 +6057,11 @@ function openListResult(i) {
   if(m.kind === 'service' && m.userId) {
     closeListView();
     viewOtherProfile(m.userId, { kind: 'service', lng: m.lng, lat: m.lat, open: m.open, contact: m.contact });
+    focusResultOnMap(m, null); // profilen dekker kartet, men kartet står klart når den lukkes
   } else if(typeof m.open === 'function') {
     closeListView();
     m.open();
+    focusResultOnMap(m, 'job-panel');
   }
 }
 // «Vis på kart» fra profil: lukk profil/liste, fly til markøren, åpne detaljer
@@ -9810,6 +9835,7 @@ function closeServicePanel() {
   p.style.transform = 'none';
   document.getElementById('hero-tag').classList.remove('hidden');
   activeService = null;
+  (window.mapMarkers || []).forEach(x => x.el && x.el.classList.remove('marker-focus'));
 }
 
 function editOwnService() {
