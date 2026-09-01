@@ -280,6 +280,13 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 .lb-seg-btn { flex:1; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-family:inherit; font-weight:700; font-size:11px; padding:7px 4px; border-radius:9px; cursor:pointer; line-height:1.15; transition:.15s; }
 .lb-seg-btn.on { background:var(--text); color:#fff; border-color:var(--text); }
 .lb-seg-btn.soon { opacity:.55; }
+.lb-av-anon { display:flex; align-items:center; justify-content:center; background:var(--surface2) !important; color:var(--muted); font-size:16px; }
+.lb-anon { opacity:.85; }
+/* Toplistesynlighet i profilredigering */
+.lbvis-seg { display:flex; gap:6px; }
+.lbvis-btn { flex:1; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-family:inherit; font-weight:700; font-size:11px; padding:8px 4px; border-radius:9px; cursor:pointer; line-height:1.2; transition:.15s; }
+.lbvis-btn.on { background:var(--text); color:#fff; border-color:var(--text); }
+.lbvis-preview { font-size:12px; color:var(--muted); margin-top:8px; line-height:1.5; }
 .lb-soon { display:block; font-size:8px; opacity:.7; font-weight:700; }
 .lb-listhead { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); padding:10px 16px 6px; border-top:1px solid var(--border); }
 .lb-list { }
@@ -6317,7 +6324,7 @@ async function loadLeaderboard() {
     const crown = i === 0 ? ' 👑' : '';
     return `
       <div class="lb-pos ${posCls[i]||''}">${i+1}</div>
-      ${avatarHTML('lb-av', p.name, p.avatar)}
+      ${p.anon ? '<div class="lb-av lb-av-anon">🕶️</div>' : avatarHTML('lb-av', p.name, p.avatar)}
       <div class="lb-who"><div class="lb-nm">${p.name}${crown}${isMe?(' <span class="lb-you">'+NE('DEG','YOU')+'</span>'):''}</div><div class="lb-meta">${rating}</div></div>
       ${medalHTML(ri,'xs')}
       <div class="lb-right"><div class="lb-cnt">${p.quests}</div><div class="lb-cntl">${NE('fullført','completed')}</div></div>`;
@@ -6328,11 +6335,16 @@ async function loadLeaderboard() {
     combined.forEach((p, i) => {
       const isMe = currentUser && p.id === currentUser.id;
       const row = document.createElement('div');
-      row.className = 'lb-row';
+      row.className = 'lb-row' + (p.anon ? ' lb-anon' : '');
       row.innerHTML = lbRowInner(p, i, isMe);
-      row.onclick = p.demo
-        ? () => showUserProfile(p.name, ini(p.name), '#f5c518', p.quests, p.rating, getRank(p.quests).name)
-        : () => { closeLeaderboard(); viewOtherProfile(p.id); };
+      if(p.anon && !isMe) {
+        // Anonym: ingen kobling til profilen – det er hele poenget med valget
+        row.onclick = () => showToast(NE('🕶️ Denne utføreren har valgt å være anonym','🕶️ This mover chose to stay anonymous'));
+      } else {
+        row.onclick = p.demo
+          ? () => showUserProfile(p.name, ini(p.name), '#f5c518', p.quests, p.rating, getRank(p.quests).name)
+          : () => { closeLeaderboard(); viewOtherProfile(p.id); };
+      }
       listEl.appendChild(row);
     });
   }
@@ -6342,10 +6354,25 @@ async function loadLeaderboard() {
 }
 
 // ─── Datakilder per scope ──────────────────────────────────────────
+// Personvern: hvordan en bruker vises på toplisten styres av profiles.lb_visibility
+//   full    → fullt navn + profilbilde (default)
+//   initial → fornavn + etternavn-initial + profilbilde
+//   anon    → «Anonym utfører», generisk avatar, ikke klikkbar
+function lbDisplay(fullName, avatarUrl, vis) {
+  const v = vis || 'full';
+  const name = (fullName || 'Bruker').trim();
+  if(v === 'anon') return { name: NE('Anonym utfører','Anonymous mover'), avatar: null, anon: true };
+  if(v === 'initial') {
+    const parts = name.split(/\s+/).filter(Boolean);
+    const short = parts.length > 1 ? `${parts[0]} ${parts[parts.length-1][0].toUpperCase()}.` : name;
+    return { name: short, avatar: avatarUrl || null, anon: false };
+  }
+  return { name, avatar: avatarUrl || null, anon: false };
+}
 // Alle: rangert etter total quests_completed (offentlig via profiles)
 async function buildAllRows() {
   const { data: profiles } = await sb.from('profiles')
-    .select('id, full_name, quests_completed, rating, avatar_url')
+    .select('id, full_name, quests_completed, rating, avatar_url, lb_visibility')
     .gte('quests_completed', 1)
     .order('quests_completed', { ascending: false })
     .order('rating', { ascending: false });
@@ -6356,18 +6383,22 @@ async function buildAllRows() {
     { name:'Tone H.', quests:11, rating:5.0, demo:true },
     { name:'Per L.', quests:4, rating:4.7, demo:true }
   ];
-  const realRows = (profiles||[]).map(p => ({ id:p.id, name:p.full_name||'Bruker', quests:p.quests_completed||0, rating:p.rating||null, avatar:p.avatar_url||null, demo:false }));
+  const realRows = (profiles||[]).map(p => {
+    const d = lbDisplay(p.full_name, p.avatar_url, p.lb_visibility);
+    return { id:p.id, name:d.name, anon:d.anon, quests:p.quests_completed||0, rating:p.rating||null, avatar:d.avatar, demo:false };
+  });
   const demoRows = window.SHOW_DEMO_LEADERBOARD ? DEMO_LB : [];
   return [...realRows, ...demoRows].sort((a,b) => (b.quests - a.quests) || ((b.rating||0) - (a.rating||0)));
 }
 
 // Denne uka: ekte fullføringer siste 7 dager – via RPC (RLS-trygt).
 // Returnerer null hvis RPC mangler/feiler, så UI viser tom-tilstand i stedet for å kræsje.
+// NB: RPC-en må returnere lb_visibility for at personvernvalget skal gjelde her også.
 async function buildWeekRows() {
   try {
     const { data, error } = await sb.rpc('leaderboard_week');
     if(error) throw error;
-    return (data||[]).map(r => ({ id:r.id, name:r.full_name||'Bruker', quests:Number(r.completed)||0, rating:r.rating!=null?Number(r.rating):null, avatar:r.avatar_url||null, demo:false }));
+    return (data||[]).map(r => { const d = lbDisplay(r.full_name, r.avatar_url, r.lb_visibility); return { id:r.id, name:d.name, anon:d.anon, quests:Number(r.completed)||0, rating:r.rating!=null?Number(r.rating):null, avatar:d.avatar, demo:false }; });
   } catch(e) { console.error('leaderboard_week RPC:', e?.message||e); return null; }
 }
 
@@ -6378,7 +6409,7 @@ async function buildLocalRows() {
     if(!c) return [];
     const { data, error } = await sb.rpc('leaderboard_local', { clat: c.lat, clng: c.lng, radius_km: 15 });
     if(error) throw error;
-    return (data||[]).map(r => ({ id:r.id, name:r.full_name||'Bruker', quests:Number(r.completed)||0, rating:r.rating!=null?Number(r.rating):null, avatar:r.avatar_url||null, demo:false }));
+    return (data||[]).map(r => { const d = lbDisplay(r.full_name, r.avatar_url, r.lb_visibility); return { id:r.id, name:d.name, anon:d.anon, quests:Number(r.completed)||0, rating:r.rating!=null?Number(r.rating):null, avatar:d.avatar, demo:false }; });
   } catch(e) { console.error('leaderboard_local RPC:', e?.message||e); return null; }
 }
 
@@ -6395,20 +6426,20 @@ async function renderMyLeaderboardRow(combined, mineEl) {
     mineEl.style.display = 'flex';
     mineEl.innerHTML = `
       <div class="lb-pos">#${myIdx+1}</div>
-      ${avatarHTML('lb-av', me.name, me.avatar)}
+      ${me.anon ? '<div class="lb-av lb-av-anon">🕶️</div>' : avatarHTML('lb-av', me.name, me.avatar)}
       <div class="lb-who"><div class="lb-nm">${me.name} <span class="lb-you">${NE('DEG','YOU')}</span></div><div class="lb-meta">${rankName(rank)}${rating}</div></div>
       <div class="lb-right"><div class="lb-cnt" style="color:var(--accent2)">${me.quests}</div><div class="lb-cntl">${NE('fullført','completed')}</div></div>`;
     mineEl.onclick = () => { closeLeaderboard(); openProfilePage(); };
     return;
   }
   // Ikke rangert ennå
-  const { data: me } = await sb.from('profiles').select('full_name, avatar_url').eq('id', currentUser.id).single();
-  const name = me?.full_name || 'Deg';
+  const { data: meP } = await sb.from('profiles').select('full_name, avatar_url, lb_visibility').eq('id', currentUser.id).single();
+  const d = lbDisplay(meP?.full_name || 'Deg', meP?.avatar_url, meP?.lb_visibility);
   mineEl.style.display = 'flex';
   mineEl.innerHTML = `
     <div class="lb-pos">–</div>
-    ${avatarHTML('lb-av', name, me?.avatar_url)}
-    <div class="lb-who"><div class="lb-nm">${name} <span class="lb-you">${NE('DEG','YOU')}</span></div><div class="lb-meta">${NE('Ikke på lista ennå','Not on the list yet')}</div></div>
+    ${d.anon ? '<div class="lb-av lb-av-anon">🕶️</div>' : avatarHTML('lb-av', d.name, d.avatar)}
+    <div class="lb-who"><div class="lb-nm">${d.name} <span class="lb-you">${NE('DEG','YOU')}</span></div><div class="lb-meta">${NE('Ikke på lista ennå','Not on the list yet')}</div></div>
     <div class="lb-right"><div class="lb-cnt" style="color:var(--muted);font-size:12px">${NE('Fullfør 1','Complete 1')}</div><div class="lb-cntl">${NE('for å bli med','to join')}</div></div>`;
   mineEl.onclick = () => { closeLeaderboard(); openProfilePage(); };
 }
@@ -6418,10 +6449,12 @@ function updateWeekWorker(top) {
   const ww = document.getElementById('week-worker');
   if(!ww || !top) return;
   const ini = (top.name||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
-  ww.onclick = top.demo
-    ? () => showUserProfile(top.name, ini, '#f5c518', top.quests, top.rating, getRank(top.quests).name)
-    : () => viewOtherProfile(top.id);
-  const a = ww.querySelector('.ww-avatar'); if(a) renderAvatar(a, top.avatar, ini);
+  ww.onclick = top.anon
+    ? () => showToast(NE('🕶️ Denne utføreren har valgt å være anonym','🕶️ This mover chose to stay anonymous'))
+    : top.demo
+      ? () => showUserProfile(top.name, ini, '#f5c518', top.quests, top.rating, getRank(top.quests).name)
+      : () => viewOtherProfile(top.id);
+  const a = ww.querySelector('.ww-avatar'); if(a) renderAvatar(a, top.anon ? null : top.avatar, top.anon ? '🕶️' : ini);
   const n = ww.querySelector('.ww-name'); if(n) n.textContent = top.name;
   const s = ww.querySelector('.ww-stat'); if(s) s.textContent = `${top.quests} oppdrag · ★ ${top.rating ? Number(top.rating).toFixed(2) : '–'}`;
 }
@@ -7267,6 +7300,7 @@ async function loadProfilePage(userId, isOwn) {
   if(isOwn) {
     document.getElementById('pp-edit-name').value = profile.full_name || '';
     document.getElementById('pp-edit-phone').value = profile.phone || '';
+    setLbVis(profile.lb_visibility || 'full', true);
     updateProfileNavBadges();
   }
 
@@ -7609,13 +7643,37 @@ async function saveContactPhone(phone) {
     .upsert({ user_id: currentUser.id, phone: phone || null, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
 }
 
+// Toplistesynlighet: oppdater segment-knapper + live forhåndsvisning basert på navnefeltet
+function setLbVis(vis, silent) {
+  const v = ['full','initial','anon'].includes(vis) ? vis : 'full';
+  window.ppLbVis = v;
+  document.querySelectorAll('#pp-lbvis .lbvis-btn').forEach(b => b.classList.toggle('on', b.dataset.vis === v));
+  const prev = document.getElementById('pp-lbvis-preview');
+  if(prev) {
+    const nm = document.getElementById('pp-edit-name')?.value?.trim() || 'Ola Nordmann';
+    const d = lbDisplay(nm, null, v);
+    const hint = v === 'anon'
+      ? NE('Rangeringen din vises, men uten navn, bilde eller lenke til profilen din.','Your rank is shown, but without name, photo or link to your profile.')
+      : v === 'initial'
+        ? NE('Profilbildet vises, men etternavnet forkortes.','Your photo is shown, but your surname is shortened.')
+        : NE('Fullt navn og profilbilde vises – slik det står på profilen din.','Full name and photo, as on your profile.');
+    prev.innerHTML = `${NE('Vises som','Shown as')}: <b style="color:var(--text)">${d.name}</b><br>${hint}`;
+  }
+  const nameEl = document.getElementById('pp-edit-name');
+  if(nameEl && !nameEl._lbvisBound) {
+    nameEl._lbvisBound = true;
+    nameEl.addEventListener('input', () => setLbVis(window.ppLbVis));
+  }
+}
+
 async function saveProfileEdits() {
   const name = document.getElementById('pp-edit-name')?.value?.trim();
   const phone = document.getElementById('pp-edit-phone')?.value?.trim();
   if(!name) { showToast(NE('⚠️ Navn kan ikke være tomt',"⚠️ Name can't be empty")); return; }
   if(phone && phone.length < 8) { showToast(NE('⚠️ Telefonnummer må være 8 siffer','⚠️ Phone number must be 8 digits')); return; }
 
-  const { error } = await sb.from('profiles').update({ full_name: name }).eq('id', currentUser.id);
+  const lbVis = ['full','initial','anon'].includes(window.ppLbVis) ? window.ppLbVis : 'full';
+  const { error } = await sb.from('profiles').update({ full_name: name, lb_visibility: lbVis }).eq('id', currentUser.id);
   if(error) { showToast('❌ ' + error.message); return; }
   const { error: cErr } = await saveContactPhone(phone || null);
   if(cErr) { showToast('❌ ' + cErr.message); return; }
@@ -12030,7 +12088,7 @@ function openTermsGate(onAccept, acceptLabel) {
     ${heading(3,'Konto')}${p('Du må være minst 15 år. Du er selv ansvarlig for at opplysningene du oppgir er riktige, og for å holde passordet ditt hemmelig.')}
     ${heading(4,'Bruk av plattformen')}${p('Du skal opptre redelig, ikke legge ut ulovlige, villedende eller støtende oppdrag, og ikke misbruke andre brukere. Betal aldri forskudd til ukjente.')}
     ${heading(5,'Betaling')}${p('Betaling avtales og gjennomføres direkte mellom partene. Tokt håndterer ingen penger. Oppdrag over 10 000 kr krever en signert kontrakt mellom partene.')}
-    ${heading(6,'Vurderinger og rang')}${p('Etter fullførte oppdrag kan partene vurdere hverandre. Rangsystemet bygger på antall fullførte oppdrag. Falske eller misbrukende vurderinger kan fjernes.')}
+    ${heading(6,'Vurderinger, rang og toppliste')}${p('Etter fullførte oppdrag kan partene vurdere hverandre. Rangsystemet bygger på antall fullførte oppdrag. Fullførte oppdrag, rang og vurdering vises på en offentlig toppliste sammen med navn og profilbilde. Du kan når som helst velge å vises med forkortet navn eller helt anonymt under «Rediger profil». Falske eller misbrukende vurderinger kan fjernes.')}
     ${heading(7,'Ansvarsbegrensning')}${p('Tokt er ikke ansvarlig for kvaliteten på arbeid, skader, tap, betalingsmislighold eller tvister som oppstår mellom brukere. Bruk av plattformen skjer på eget ansvar.')}
     ${heading(8,'Endringer og lov')}${p('Vilkårene kan oppdateres. Norsk lov gjelder, og eventuelle tvister løses etter norsk rett.')}
     <div style="font-weight:800;font-size:13px;letter-spacing:.5px;color:var(--accent);margin:14px 0 4px">DEL 2 – PERSONVERN</div>
@@ -12047,7 +12105,7 @@ function openTermsGate(onAccept, acceptLabel) {
     ${heading(3,'','Account')}${p('You must be at least 15 years old. You are responsible for providing correct information and keeping your password secret.')}
     ${heading(4,'','Use of the platform')}${p('Act honestly, do not post illegal, misleading or offensive tasks, and do not abuse other users. Never pay strangers in advance.')}
     ${heading(5,'','Payment')}${p('Payment is agreed and made directly between the parties. Tokt handles no money. Tasks over NOK 10,000 require a signed contract between the parties.')}
-    ${heading(6,'','Ratings and rank')}${p('After completed tasks, parties may rate each other. The rank system is based on completed tasks. Fake or abusive ratings may be removed.')}
+    ${heading(6,'','Ratings, rank and leaderboard')}${p('After completed tasks, parties may rate each other. The rank system is based on completed tasks. Completed tasks, rank and rating appear on a public leaderboard together with your name and photo. You can at any time choose to appear with a shortened name or fully anonymous under “Edit profile”. Fake or abusive ratings may be removed.')}
     ${heading(7,'','Limitation of liability')}${p('Tokt is not responsible for work quality, damage, loss, payment defaults or disputes between users. Use of the platform is at your own risk.')}
     ${heading(8,'','Changes and law')}${p('These terms may be updated. Norwegian law applies and any disputes are resolved under Norwegian law.')}
     <div style="font-weight:800;font-size:13px;letter-spacing:.5px;color:var(--accent);margin:14px 0 4px">PART 2 – PRIVACY</div>
@@ -13106,6 +13164,15 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div style="margin-bottom:12px">
       <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px" data-en="Phone (Vipps number)">Telefon (Vipps-nummer)</div>
       <input id="pp-edit-phone" class="form-input" type="tel" name="tel" autocomplete="tel" inputmode="numeric" placeholder="8 siffer" maxlength="8" style="width:100%;box-sizing:border-box">
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px" data-en="🏆 How you appear on the leaderboard">🏆 Slik vises du på toplisten</div>
+      <div class="lbvis-seg" id="pp-lbvis">
+        <button type="button" class="lbvis-btn on" data-vis="full" onclick="setLbVis('full')"><span data-en="Full name">Fullt navn</span></button>
+        <button type="button" class="lbvis-btn" data-vis="initial" onclick="setLbVis('initial')"><span data-en="First name + initial">Fornavn + initial</span></button>
+        <button type="button" class="lbvis-btn" data-vis="anon" onclick="setLbVis('anon')"><span data-en="Anonymous">Anonym</span></button>
+      </div>
+      <div class="lbvis-preview" id="pp-lbvis-preview"></div>
     </div>
     <button onclick="saveProfileEdits()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit"><span data-en="💾 Save changes">💾 Lagre endringer</span></button>
   </div>
