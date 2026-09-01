@@ -10017,19 +10017,14 @@ function formatDateShort(d) {
   catch(e) { return ''; }
 }
 
-// Oppdaterer profiles.quests_completed = utførte oppdrag (som taker) + fullførte tjeneste-avtaler
-// (som tilbyder). Kalles av den som fullfører (taker/tilbyder), som oppdaterer SIN egen rad (RLS-trygt).
+// Oppdaterer profiles.quests_completed for innlogget bruker via SECURITY DEFINER-RPC.
+// Klienten har ikke skriverett på kolonnen (kolonnerettigheter) – tallet regnes ut server-side
+// fra conversations/bookings, så det kan ikke manipuleres.
 async function recomputeQuestsCompleted(userId) {
   if(!userId) return;
   try {
-    const { count: questCount } = await sb.from('conversations')
-      .select('id', { count:'exact', head:true })
-      .eq('taker_id', userId).eq('status','completed').not('quest_id','is',null);
-    const { count: bookingCount } = await sb.from('bookings')
-      .select('id', { count:'exact', head:true })
-      .eq('provider_id', userId).eq('status','completed');
-    const total = (questCount || 0) + (bookingCount || 0);
-    await sb.from('profiles').update({ quests_completed: total }).eq('id', userId);
+    const { error } = await sb.rpc('recompute_quests_completed');
+    if(error) console.warn('recomputeQuestsCompleted:', error.message);
   } catch(e) { console.warn('recomputeQuestsCompleted failed:', e.message); }
 }
 
@@ -11849,11 +11844,8 @@ async function proceedRegister() {
       full_name: firstName + ' ' + lastName,
       phone: phone || null,
       birth_date: birthdate,
-      is_adult: isAdult,
-      level: 1,
-      xp_current: 0,
-      quests_completed: 0,
-      rating: null
+      is_adult: isAdult
+      // level/xp_current/quests_completed/rating/verified: kun database-triggere kan skrive disse
     }, { onConflict: 'id' }).then(({ error }) => {
       if(error) console.warn('Profile upsert failed:', error.message);
       // Logg samtykke til profiles separat så hovedprofilen aldri brytes om kolonnene mangler.
@@ -12027,12 +12019,12 @@ async function finishCompleteProfile() {
     // Profilraden finnes – oppdater bare det vi spurte om (ikke rør rang/oppdragstall)
     ({ data: rows, error } = await sb.from('profiles').update(fields).eq('id', user.id).select('id,birth_date,terms_accepted_at'));
   } else {
-    ({ data: rows, error } = await sb.from('profiles').upsert(Object.assign({ id: user.id, level: 1, xp_current: 0, quests_completed: 0, rating: null }, fields), { onConflict: 'id' }).select('id,birth_date,terms_accepted_at'));
+    ({ data: rows, error } = await sb.from('profiles').upsert(Object.assign({ id: user.id }, fields), { onConflict: 'id' }).select('id,birth_date,terms_accepted_at'));
   }
   // Supabase gir ikke feil når update treffer 0 rader (RLS/manglende rad) – sjekk selv
   if(!error && (!rows || rows.length === 0)) {
     // Fallback: prøv upsert (insert) hvis update ikke traff noe
-    ({ data: rows, error } = await sb.from('profiles').upsert(Object.assign({ id: user.id, level: 1, xp_current: 0, quests_completed: 0, rating: null }, fields), { onConflict: 'id' }).select('id,birth_date,terms_accepted_at'));
+    ({ data: rows, error } = await sb.from('profiles').upsert(Object.assign({ id: user.id }, fields), { onConflict: 'id' }).select('id,birth_date,terms_accepted_at'));
     if(!error && (!rows || rows.length === 0)) error = { message: NE('profilen ble ikke lagret (0 rader)','profile was not saved (0 rows)') };
   }
   logEvent('cp_debug', { hadProfile: !!window._cpProfile, rows: rows ? rows.length : null, err: error ? String(error.message || '').slice(0, 150) : null, saved: rows && rows[0] ? { bd: rows[0].birth_date, ta: !!rows[0].terms_accepted_at } : null });
