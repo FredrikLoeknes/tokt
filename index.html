@@ -12079,7 +12079,7 @@ function openTermsGate(onAccept, acceptLabel) {
   const p = (txt) => `<p style="font-size:13px;color:var(--muted);line-height:1.65;margin:0 0 8px">${txt}</p>`;
 
   const bodyNo = `
-    <p style="font-size:13px;color:var(--muted);line-height:1.65;margin:0 0 10px">Les gjennom hovedpunktene under. Du må scrolle helt til bunnen før du kan huke av og opprette konto. Fullstendige vilkår finner du <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">her</a>.</p>
+    <p style="font-size:13px;color:var(--muted);line-height:1.65;margin:0 0 10px">Les gjennom hovedpunktene under, huk av nederst og opprett konto. Fullstendige vilkår finner du <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">her</a>.</p>
     <div style="font-weight:800;font-size:13px;letter-spacing:.5px;color:var(--accent);margin:6px 0 4px">DEL 1 – BRUKERVILKÅR</div>
     ${heading(1,'Om Tokt')}${p('Tokt er en norsk formidlingsplattform for småoppdrag. Ved å opprette konto godtar du disse vilkårene.')}
     ${heading(2,'Kun en formidler')}${p('Tokt formidler kontakt mellom oppdragsgiver og utfører, men er ikke part i avtalen mellom dere. Vi tar ingen provisjon. Alt oppgjør skjer direkte mellom partene – for eksempel via Vipps eller annen avtalt metode.')}
@@ -12096,7 +12096,7 @@ function openTermsGate(onAccept, acceptLabel) {
     <p style="font-size:13px;color:var(--text);line-height:1.65;margin:14px 0 0;font-weight:600">Ved å huke av nedenfor bekrefter du at du har lest og forstått brukervilkårene og personvernerklæringen, og at du godtar dem.</p>
   `;
   const bodyEn = `
-    <p style="font-size:13px;color:var(--muted);line-height:1.65;margin:0 0 10px">Please read the key points below. You must scroll all the way to the bottom before you can tick the box and create your account. Full terms are available <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">here</a>.</p>
+    <p style="font-size:13px;color:var(--muted);line-height:1.65;margin:0 0 10px">Please read the key points below, tick the box at the bottom and create your account. Full terms are available <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">here</a>.</p>
     <div style="font-weight:800;font-size:13px;letter-spacing:.5px;color:var(--accent);margin:6px 0 4px">PART 1 – TERMS OF SERVICE</div>
     ${heading(1,'','About Tokt')}${p('Tokt is a Norwegian platform for small local tasks. By creating an account you agree to these terms.')}
     ${heading(2,'','Platform only')}${p('Tokt connects task givers and takers, but is not a party to the agreement between you. We take no commission. All settlement happens directly between the parties – for example via Vipps or another agreed method.')}
@@ -12121,9 +12121,8 @@ function openTermsGate(onAccept, acceptLabel) {
       </div>
       <div id="terms-gate-scroll" style="padding:16px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0">${en?bodyEn:bodyNo}<div id="terms-gate-end" style="height:1px"></div></div>
       <div style="padding:12px 18px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface)">
-        <div id="terms-gate-hint" style="font-size:13px;font-weight:600;color:var(--accent);text-align:center;margin-bottom:10px;transition:transform .2s">↓ ${en?'Scroll to the bottom to continue':'Scroll til bunnen for å fortsette'}</div>
-        <div id="terms-gate-checkrow" role="checkbox" aria-checked="false" tabindex="0" style="display:flex;align-items:flex-start;gap:10px;cursor:not-allowed;opacity:.45;margin-bottom:12px;transition:opacity .2s;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:4px 0">
-          <span id="terms-gate-box" aria-hidden="true" style="width:22px;height:22px;border-radius:6px;border:2px solid var(--muted);box-sizing:border-box;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;line-height:1;color:#fff;background:transparent;transition:all .15s"></span>
+                <div id="terms-gate-checkrow" role="checkbox" aria-checked="false" tabindex="0" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:12px;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding:4px 0">
+          <span id="terms-gate-box" aria-hidden="true" style="width:22px;height:22px;border-radius:6px;border:2px solid var(--accent);box-sizing:border-box;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;line-height:1;color:#fff;background:transparent;transition:all .15s"></span>
           <span style="font-size:13px;color:var(--text);line-height:1.5">${en?'I have read and accept the Terms of Service and Privacy Policy.':'Jeg har lest og godtar brukervilkårene og personvernerklæringen.'}</span>
         </div>
         <div id="terms-gate-btnrow" style="display:flex;gap:10px">
@@ -12140,9 +12139,7 @@ function openTermsGate(onAccept, acceptLabel) {
   const scrollEl = document.getElementById('terms-gate-scroll');
   const box = document.getElementById('terms-gate-box');
   const checkRow = document.getElementById('terms-gate-checkrow');
-  const hint = document.getElementById('terms-gate-hint');
   const acceptBtn = document.getElementById('terms-gate-accept');
-  let locked = true;
   let checked = false;
 
   // Diagnose-logging (anonym OK): hvert steg i gaten til events-tabellen, name='terms_gate'.
@@ -12162,7 +12159,7 @@ function openTermsGate(onAccept, acceptLabel) {
     checked = !!v;
     box.textContent = checked ? '✓' : '';
     box.style.background = checked ? 'linear-gradient(135deg,#f97316,#a855f7)' : 'transparent';
-    box.style.borderColor = checked ? 'transparent' : 'var(--muted)';
+    box.style.borderColor = checked ? 'transparent' : 'var(--accent)';
     checkRow.setAttribute('aria-checked', checked ? 'true' : 'false');
     acceptBtn.disabled = !checked;
     acceptBtn.style.opacity = checked ? '1' : '.5';
@@ -12170,65 +12167,28 @@ function openTermsGate(onAccept, acceptLabel) {
   window._termsGateSetChecked = setChecked;
   setChecked(false);
 
-  const unlock = () => {
-    if (!locked) return;
-    locked = false;
-    checkRow.style.cursor = 'pointer';
-    checkRow.style.opacity = '1';
-    box.style.borderColor = 'var(--accent)';
-    hint.style.display = 'none';
-    diag('unlock');
-  };
+  // Ingen scroll-lås: den bommet i enkelte nettlesere/zoom-oppsett og stoppet registreringer.
+  // Vi logger fortsatt om brukeren faktisk nådde bunnen (for statistikk, ikke som sperre).
+  let reachedBottom = false;
   const checkScrolled = () => {
-    // Romslig toleranse: brøkdels-piksler, zoom og innebygde nettlesere (f.eks. Facebook)
-    // kan gjøre at scrollTop+clientHeight aldri når nøyaktig scrollHeight.
-    if (scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 24) unlock();
+    if (reachedBottom) return;
+    if (scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 24) { reachedBottom = true; diag('reached_bottom'); }
   };
   scrollEl.addEventListener('scroll', checkScrolled, { passive: true });
-  scrollEl.addEventListener('touchend', checkScrolled, { passive: true });
-  // Sekundær detektor: lås opp når sentinelen nederst faktisk blir synlig.
-  // Uavhengig av scroll-matematikken over – fanger tilfeller der scroll-eventen uteblir.
-  try {
-    if ('IntersectionObserver' in window) {
-      const endEl = document.getElementById('terms-gate-end');
-      const io = new IntersectionObserver((entries) => {
-        if (entries.some(en => en.isIntersecting)) { unlock(); io.disconnect(); }
-      }, { root: scrollEl, threshold: 0 });
-      if (endEl) io.observe(endEl);
-    }
-  } catch (e) {}
-  // Hvis innholdet får plass uten scroll (stor skjerm), lås opp med en gang
-  requestAnimationFrame(() => { if (scrollEl.scrollHeight <= scrollEl.clientHeight + 24) unlock(); });
 
   // Egen-tegnet avkryssing: ingen <label>/<input>-særegenheter, ingen fokus-hopp.
-  const toggle = () => {
-    if (locked) {
-      diag('tap_locked');
-      scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
-      hint.style.transform = 'scale(1.06)';
-      setTimeout(() => { hint.style.transform = ''; checkScrolled(); }, 600);
-      return;
-    }
-    setChecked(!checked);
-    diag(checked ? 'check' : 'uncheck');
-  };
+  const toggle = () => { setChecked(!checked); diag(checked ? 'check' : 'uncheck', { rb: reachedBottom }); };
   checkRow.addEventListener('click', (e) => { e.preventDefault(); toggle(); });
   checkRow.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
-  acceptBtn.addEventListener('click', () => diag('accept'));
+  acceptBtn.addEventListener('click', () => diag('accept', { rb: reachedBottom }));
 
   // Trykk på deaktivert «Godta»-knapp (knappen selv fyrer ikke klikk når disabled)
   const btnRow = document.getElementById('terms-gate-btnrow');
   if (btnRow) btnRow.addEventListener('click', (e) => {
     if (e.target !== btnRow && e.target !== acceptBtn) return;
     if (!acceptBtn.disabled) return;
-    if (locked) {
-      diag('tap_disabled_btn_locked');
-      scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
-      showToast(en ? 'Scroll to the bottom of the text first' : 'Scroll til bunnen av teksten først');
-    } else {
-      diag('tap_disabled_btn_unchecked');
-      showToast(en ? 'Tick the box first' : 'Huk av boksen først');
-    }
+    diag('tap_disabled_btn');
+    showToast(en ? 'Tick the box first' : 'Huk av boksen først');
   });
   diag('open');
 }
