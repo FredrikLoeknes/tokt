@@ -8210,37 +8210,63 @@ async function checkUnreadNotifs() {
 // 3. Create Edge Function in Supabase with the 46elks API
 // 4. Set FORTYSIXELKS_API_KEY in Supabase secrets
 
-// ── PUSH NOTIFICATIONS ──
-async function registerPushNotifications() {
-  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  try {
-    // Register service worker
-    const reg = await navigator.serviceWorker.register('/sw.js');
-    console.log('SW registered');
+// ── PUSH NOTIFICATIONS (web/Android via FCM) ──────────────────────────────────
+// iOS-appen bruker den native brua (webkit.messageHandlers) og har ikke PushManager,
+// så denne funksjonen returnerer tidlig der. Web/Android får FCM-token via Firebase
+// og lagrer det med samme RPC som iOS (platform 'web') → samme send-push Edge Function.
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDrw845E81kyI2n6cc037GFBboRiX6DeS4",
+  authDomain: "tokt-b1952.firebaseapp.com",
+  projectId: "tokt-b1952",
+  storageBucket: "tokt-b1952.firebasestorage.app",
+  messagingSenderId: "83783443497",
+  appId: "1:83783443497:web:1582f74dc1a85d03892838"
+};
+const FCM_VAPID_KEY = 'BIthe85x2rirxKf8ogfxxOMeitXE7vXQ01wSLkTGetw8FcwUgsQVjVrGao2-EDQjtJG6fv-fnF6CV_Ep34tjQhg';
 
-    // Ask permission
+async function registerPushNotifications() {
+  if(!currentUser) return;
+  if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+
     const permission = await Notification.requestPermission();
     if(permission !== 'granted') return;
 
-    // Get push subscription
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(
-        // VAPID public key - generate at: https://vapidkeys.com
-        // Replace this with your own key after generating
-        'BGd226N5pUfrpp73oGZyk-uoU5R55RXY7jH_yFFBlPaIFFukjTYW_Zydjncj9dFeKwq957Gjs_pVv_ctZQwROi0'
-      )
-    });
+    // Rydd bort abonnement fra gammel versjon (ubrukelig VAPID-nøkkel).
+    // Uten dette feiler getToken med «applicationServerKey mismatch».
+    try {
+      const old = await reg.pushManager.getSubscription();
+      if(old) {
+        const cur = old.options && old.options.applicationServerKey
+          ? btoa(String.fromCharCode(...new Uint8Array(old.options.applicationServerKey))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')
+          : '';
+        if(cur !== FCM_VAPID_KEY) { await old.unsubscribe(); console.log('Gammelt push-abonnement fjernet'); }
+      }
+    } catch(e) { console.warn('push cleanup:', e.message); }
 
-    // Save subscription to Supabase
-    await sb.from('push_subscriptions').upsert({
-      user_id: currentUser.id,
-      subscription: JSON.stringify(sub)
-    }, { onConflict: 'user_id' });
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+    const { getMessaging, getToken, isSupported } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
+    if(!(await isSupported())) return;
 
-    console.log('Push subscription saved');
+    if(!window._fbApp) window._fbApp = initializeApp(FIREBASE_CONFIG);
+    const messaging = getMessaging(window._fbApp);
+    const token = await getToken(messaging, { vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg });
+    if(!token) return;
+    if(window._lastFcmToken === token) return;
+    window._lastFcmToken = token;
+
+    const { error } = await sb.rpc('register_push_token', { p_token: token, p_platform: 'web' });
+    if(error) {
+      console.warn('register_push_token:', error.message);
+      try { logEvent('push_web_saveerr', { msg: String(error.message).slice(0,80) }); } catch(e) {}
+    } else {
+      console.log('FCM web-token lagret');
+      try { logEvent('push_web_registered', {}); } catch(e) {}
+    }
   } catch(err) {
     console.log('Push setup failed:', err);
+    try { logEvent('push_web_err', { msg: String((err && err.message) || err).slice(0,100) }); } catch(e) {}
   }
 }
 
