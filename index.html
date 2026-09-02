@@ -8225,27 +8225,15 @@ const FIREBASE_CONFIG = {
 const FCM_VAPID_KEY = 'BIthe85x2rirxKf8ogfxxOMeitXE7vXQ01wSLkTGetw8FcwUgsQVjVrGao2-EDQjtJG6fv-fnF6CV_Ep34tjQhg';
 
 async function registerPushNotifications() {
-  // Diagnose: logg at funksjonen kalles + miljøtilstand, FØR noen tidlig-retur.
-  try { logEvent('push_web_call', {
-    hasSW: ('serviceWorker' in navigator), hasPM: ('PushManager' in window),
-    hasNotif: ('Notification' in window),
-    perm: (('Notification' in window) ? Notification.permission : 'n/a'),
-    isIOSBridge: !!(window.webkit && window.webkit.messageHandlers),
-    user: !!currentUser
-  }); } catch(e) {}
   if(!currentUser) return;
   // iOS-appen har egen native bru og mangler PushManager – hopp over der.
   if(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers['push-permission-request']) return;
-  if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-    try { logEvent('push_web_unsupported', {}); } catch(e) {}
-    return;
-  }
+  if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
   try {
     const reg = await navigator.serviceWorker.ready;
-    try { logEvent('push_web_swready', {}); } catch(e) {}
 
     const permission = await Notification.requestPermission();
-    if(permission !== 'granted') { try { logEvent('push_web_perm', { perm: permission }); } catch(e) {} return; }
+    if(permission !== 'granted') return;
 
     // Rydd bort abonnement fra gammel versjon (ubrukelig VAPID-nøkkel).
     // Uten dette feiler getToken med «applicationServerKey mismatch».
@@ -8273,14 +8261,11 @@ async function registerPushNotifications() {
     const { error } = await sb.rpc('register_push_token', { p_token: token, p_platform: 'web' });
     if(error) {
       console.warn('register_push_token:', error.message);
-      try { logEvent('push_web_saveerr', { msg: String(error.message).slice(0,80) }); } catch(e) {}
     } else {
       console.log('FCM web-token lagret');
-      try { logEvent('push_web_registered', {}); } catch(e) {}
     }
   } catch(err) {
     console.log('Push setup failed:', err);
-    try { logEvent('push_web_err', { msg: String((err && err.message) || err).slice(0,100) }); } catch(e) {}
   }
 }
 
