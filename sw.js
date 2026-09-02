@@ -2,7 +2,7 @@
 // Handles push notifications and offline caching
 
 // Bump ved endring her → gammel cache slettes automatisk i 'activate'.
-const CACHE_NAME = 'tokt-v85';
+const CACHE_NAME = 'tokt-v86';
 const STATIC_ASSETS = ['/', '/index.html', '/terms.html'];
 
 // Install
@@ -70,17 +70,21 @@ self.addEventListener('fetch', e => {
   }
 });
 
-// Push notification received
+// Push notification received.
+// Varsler kommer via FCM (web push): payloaden har formen
+// { notification: { title, body, icon, tag }, data: { type, link_id, badge } }.
+// Vi leser begge formatene (FCM-nestet og flatt) for sikkerhets skyld.
 self.addEventListener('push', e => {
-  const data = e.data ? e.data.json() : {};
-  const title = data.title || 'Tokt.app';
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; } catch(err) {}
+  const n = data.notification || data;
+  const title = n.title || 'Tokt';
   const options = {
-    body: data.body || 'Du har et nytt varsel',
-    icon: data.icon || '/icon192.png',
+    body: n.body || 'Du har et nytt varsel',
+    icon: n.icon || '/icon192.png',
     badge: '/icon192.png',
-    tag: data.tag || 'tokt-notification',
-    data: { url: data.url || '/' },
-    actions: data.actions || [],
+    tag: n.tag || 'tokt-notification',
+    data: { url: '/', type: (data.data && data.data.type) || '' },
     vibrate: [100, 50, 100],
     requireInteraction: false
   };
