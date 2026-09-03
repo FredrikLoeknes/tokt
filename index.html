@@ -4710,25 +4710,45 @@ function showPanel(job) {
   const applyBtnEl = document.querySelector('#job-panel .btn-apply');
   if(applyBtnEl) { applyBtnEl.onclick = applyJob; if(acceptLbl) acceptLbl.dataset.default = acceptLbl.textContent; }
   if(!isOwner && currentUser && job.id) {
-    sb.from('conversations').select('id,is_question,status').eq('quest_id', job.id).eq('taker_id', currentUser.id).maybeSingle().then(({ data: myConv }) => {
+    sb.from('conversations').select('id,is_question,status').eq('quest_id', job.id).eq('taker_id', currentUser.id).order('created_at',{ascending:false}).limit(1).then(({ data: rows }) => {
+      const myConv = rows && rows[0];
       // Panelet kan ha byttet oppdrag i mellomtiden – bekreft at vi fortsatt viser samme
       const stillSame = document.getElementById('job-panel')?.dataset?.questId === job.id;
       if(!stillSame || !myConv) return;
-      if(acceptLbl) acceptLbl.textContent = NE('💬 Åpne chatten','💬 Open the chat');
-      if(applyBtnEl) applyBtnEl.onclick = () => { const cid = myConv.id; closePanel(); openChat(cid, job.title || NE('Oppdrag','Task')); };
-      // Spørsmål-knappen gjenbrukes som «Trekk tilbake» når henvendelsen ennå ikke er besvart
-      if(qBtnEl) {
-        if(myConv.status === 'pending') {
-          qBtnEl.style.display = 'block';
-          qBtnEl.innerHTML = '↩️ <span>' + NE('Trekk tilbake søknaden','Withdraw application') + '</span>';
-          qBtnEl.onclick = () => withdrawApplication(myConv.id);
-          qBtnEl.style.borderColor = 'rgba(229,57,53,0.28)';
-          qBtnEl.style.color = 'var(--red,#e53935)';
-        } else {
-          qBtnEl.style.display = 'none';
+
+      // Skill EKTE søknad fra en «still spørsmål»-chat:
+      // - is_question=false  → du har faktisk søkt: bytt hovedknapp til «Åpne chatten»,
+      //   og tilby «Trekk tilbake» så lenge den er ubesvart (pending).
+      // - is_question=true   → du har bare en åpen spørsmåls-chat: du KAN fortsatt søke.
+      //   Hovedknappen forblir «Søk på oppdraget»; spørsmål-knappen blir «Åpne chatten».
+      const isRealApplication = myConv.is_question === false;
+
+      if(isRealApplication) {
+        if(acceptLbl) acceptLbl.textContent = NE('💬 Åpne chatten','💬 Open the chat');
+        if(applyBtnEl) applyBtnEl.onclick = () => { const cid = myConv.id; closePanel(); openChat(cid, job.title || NE('Oppdrag','Task')); };
+        if(qBtnEl) {
+          if(myConv.status === 'pending') {
+            qBtnEl.style.display = 'block';
+            qBtnEl.innerHTML = '↩️ <span>' + NE('Trekk tilbake søknaden','Withdraw application') + '</span>';
+            qBtnEl.onclick = () => withdrawApplication(myConv.id);
+            qBtnEl.style.borderColor = 'rgba(229,57,53,0.28)';
+            qBtnEl.style.color = 'var(--red,#e53935)';
+          } else {
+            qBtnEl.style.display = 'none';
+          }
         }
+        if(applyHintEl) { applyHintEl.textContent = NE('Du har allerede søkt – åpne chatten for å avtale detaljer.','You have already applied – open the chat to sort out details.'); applyHintEl.style.display = 'block'; }
+      } else {
+        // Kun en spørsmåls-chat: hovedknapp = søk (uendret), spørsmål-knapp = åpne chatten
+        if(qBtnEl) {
+          qBtnEl.style.display = 'block';
+          qBtnEl.innerHTML = '💬 <span>' + NE('Åpne chatten','Open the chat') + '</span>';
+          qBtnEl.onclick = () => { const cid = myConv.id; closePanel(); openChat(cid, job.title || NE('Oppdrag','Task')); };
+          qBtnEl.style.borderColor = 'var(--border)';
+          qBtnEl.style.color = 'var(--text)';
+        }
+        if(applyHintEl) { applyHintEl.textContent = NE('Du har en åpen chat om dette oppdraget. Du kan fortsatt søke.','You have an open chat about this task. You can still apply.'); applyHintEl.style.display = 'block'; }
       }
-      if(applyHintEl) { applyHintEl.textContent = NE('Du har allerede søkt – åpne chatten for å avtale detaljer.','You have already applied – open the chat to sort out details.'); applyHintEl.style.display = 'block'; }
     });
   }
 
