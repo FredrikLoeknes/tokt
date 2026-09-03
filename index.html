@@ -4671,6 +4671,9 @@ function showPanel(job) {
     const verifiedPill = verified
       ? ` <span style="font-size:9px;padding:2px 7px;border-radius:50px;background:rgba(214,66,126,0.12);color:var(--accent);border:1px solid var(--accent);font-weight:700;white-space:nowrap">${t('verifiedLabel')}</span>`
       : '';
+    // Idempotent: raden legges inn asynkront – fjern ev. rader som alt ligger der akkurat nå,
+    // så flere raske showPanel-kall aldri gir dupliserte oppdragsgiver-rader.
+    document.querySelectorAll('#panel-giver-row').forEach(e => e.remove());
     const row = document.createElement('div');
     row.id = 'panel-giver-row';
     row.style.cssText = 'margin:0 16px 12px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;gap:10px;cursor:pointer';
@@ -4687,6 +4690,7 @@ function showPanel(job) {
 
   if(job.raw?.user_id) {
     sb.from('profiles').select('full_name, rating, quests_completed, verified, created_at, avatar_url').eq('id', job.raw.user_id).single().then(({ data: gp }) => {
+      if(document.getElementById('job-panel')?.dataset?.questId !== job.id) return; // panelet byttet oppdrag
       const gname = gp?.full_name || 'Bruker';
       renderGiverRow(gname, gp?.rating, gp?.quests_completed, () => viewOtherProfile(job.raw.user_id), gp?.verified, gp?.created_at, gp?.avatar_url);
       // Oppdater rating-feltet i meta med giverens rating
@@ -11921,8 +11925,45 @@ async function showReturnEvents() {
   if(!currentUser || window._returnShown) return;
   window._returnShown = true;
   const key = 'tokt-return-seen-' + currentUser.id;
-  // Første gang noensinne: ikke dump uker gamle hendelser – start fra 3 dager tilbake
-  const lastSeen = localStorage.getItem(key) || new Date(Date.now() - 3*24*60*60*1000).toISOString();
+  const stored = localStorage.getItem(key);
+
+  // FØRSTE gang på denne enheten: se på faktisk TILSTAND (ikke varsler), så eksisterende
+  // brukere får én engangs-dytt om ventende søkere / tildelte oppdrag – uansett alder.
+  // Ferdige oppdrag utelates. Deretter (stored satt) brukes vanlig «nytt siden sist».
+  if(!stored) {
+    localStorage.setItem(key, new Date().toISOString());
+    const label = NE('Siden sist', 'Since last time');
+    // (a) Tildelt til meg, ikke ferdig
+    const { data: assigned } = await sb.from('conversations')
+      .select('id, quest_id, quest:quest_id(status)')
+      .eq('taker_id', currentUser.id).eq('status', 'accepted').eq('is_question', false);
+    const activeAssigned = (assigned || []).filter(c => c.quest && c.quest.status === 'taken');
+    // (b) Ventende søkere på mine åpne oppdrag
+    const { data: pend } = await sb.from('conversations')
+      .select('id, quest_id, quest:quest_id(status)')
+      .eq('giver_id', currentUser.id).eq('status', 'pending').eq('is_question', false);
+    const pendingApps = (pend || []).filter(c => c.quest && c.quest.status === 'open');
+    const pendQuestIds = [...new Set(pendingApps.map(c => c.quest_id))];
+
+    if(activeAssigned.length) {
+      const qid = activeAssigned[0].quest_id;
+      const extra = pendingApps.length ? ' ' + NE(`Du har også ${pendingApps.length} ${pendingApps.length===1?'søker som venter':'søkere som venter'} på svar.`, `You also have ${pendingApps.length} applicant${pendingApps.length===1?'':'s'} waiting.`) : '';
+      showAchievement('🎉', NE('Du har et tildelt oppdrag!', 'You have an assigned task!'),
+        NE('Trykk for å se oppdraget og avtale detaljer.', 'Tap to see the task and sort out details.') + extra,
+        { label, duration: 9000, onClick: () => openQuestOnMap(qid) });
+      return;
+    }
+    if(pendingApps.length) {
+      const n = pendingApps.length, q = pendQuestIds.length;
+      showAchievement('🙋', n === 1 ? NE('En søker venter på svar!', 'An applicant is waiting!') : NE(`${n} søkere venter på svar!`, `${n} applicants are waiting!`),
+        q <= 1 ? NE('Trykk for å se hvem – og velg den som får oppdraget.', 'Tap to see who – and choose who gets the task.')
+               : NE(`Fordelt på ${q} oppdrag. Trykk for å se og velge.`, `Across ${q} tasks. Tap to review and choose.`),
+        { label, duration: 9000, onClick: () => q === 1 ? openQuestOnMap(pendQuestIds[0]) : openMyQuests() });
+    }
+    return;
+  }
+
+  const lastSeen = stored;
   const { data: notifs } = await sb.from('notifications')
     .select('id, type, link_id, created_at')
     .eq('user_id', currentUser.id).in('type', ['application', 'accepted'])
