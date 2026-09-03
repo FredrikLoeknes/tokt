@@ -4693,13 +4693,33 @@ function showPanel(job) {
   jobPanelEl.dataset.firstCome = isFirstComeJob ? '1' : '';
   const qBtnEl = document.getElementById('panel-question-btn');
   const applyHintEl = document.getElementById('panel-apply-hint');
-  if(qBtnEl) qBtnEl.style.display = (!isOwner && isFirstComeJob) ? 'block' : 'none';
-  if(applyHintEl) applyHintEl.style.display = (!isOwner && !isFirstComeJob) ? 'block' : 'none';
+  // (synlighet settes lenger ned – etter at vi vet om brukeren alt har søkt)
   // Knappen skal si sannheten: vanlige oppdrag søkes (uforpliktende), førstemann tas (bindende)
   const acceptLbl = document.getElementById('panel-accept-btn');
   if(acceptLbl) acceptLbl.textContent = isFirstComeJob
     ? NE('⚡ Ta oppdraget nå','⚡ Take this task now')
     : NE('✦ Søk på oppdraget','✦ Apply for this task');
+
+  // FIKS 3: «Still et spørsmål»-knappen skal være tilgjengelig på ALLE oppdrag
+  // (før: kun førstemann-til-mølla). Gir alltid en tydelig «send melding»-vei.
+  if(qBtnEl) qBtnEl.style.display = isOwner ? 'none' : 'block';
+  if(applyHintEl) applyHintEl.style.display = (!isOwner && !isFirstComeJob) ? 'block' : 'none';
+
+  // FIKS 2: Har brukeren allerede søkt/stilt spørsmål? Da byttes hovedknappen til
+  // «Åpne chatten» så det er tydelig at søket gikk gjennom, og chatten er ett trykk unna.
+  const applyBtnEl = document.querySelector('#job-panel .btn-apply');
+  if(applyBtnEl) { applyBtnEl.onclick = applyJob; if(acceptLbl) acceptLbl.dataset.default = acceptLbl.textContent; }
+  if(!isOwner && currentUser && job.id) {
+    sb.from('conversations').select('id,is_question,status').eq('quest_id', job.id).eq('taker_id', currentUser.id).maybeSingle().then(({ data: myConv }) => {
+      // Panelet kan ha byttet oppdrag i mellomtiden – bekreft at vi fortsatt viser samme
+      const stillSame = document.getElementById('job-panel')?.dataset?.questId === job.id;
+      if(!stillSame || !myConv) return;
+      if(acceptLbl) acceptLbl.textContent = NE('💬 Åpne chatten','💬 Open the chat');
+      if(applyBtnEl) applyBtnEl.onclick = () => { const cid = myConv.id; closePanel(); openChat(cid, job.title || NE('Oppdrag','Task')); };
+      if(qBtnEl) qBtnEl.style.display = 'none';
+      if(applyHintEl) { applyHintEl.textContent = NE('Du har allerede søkt – åpne chatten for å avtale detaljer.','You have already applied – open the chat to sort out details.'); applyHintEl.style.display = 'block'; }
+    });
+  }
 
   // Show image if available
   const existingImg = document.getElementById('panel-image');
@@ -9016,7 +9036,7 @@ function questCard(q, type) {
       ${activeConv ? giverTakenBlock(q, activeConv) : `
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${applicants.length > 0 ? `<button onclick="openChat('${applicants[0]?.id||''}','${q.title}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>` : ''}
-        ${(q.status==='open'||q.status==='paused') ? `<button onclick="sb.from('quests').select('*').eq('id','${q.id}').single().then(r=>r.data&&showEditQuestModal(r.data))" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✏️ Endre</button>` : ''}
+        ${(q.status==='open'||q.status==='paused') ? `<button onclick="sb.from('quests').select('*').eq('id','${q.id}').single().then(r=>{ if(!r.data) return; if(r.data.status!=='open'){ showToast('🔒 '+NE('Kun åpne oppdrag kan endres','Only open tasks can be edited')); return; } openEditModal(r.data); })" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">✏️ Endre</button>` : ''}
         ${q.status==='open' ? `<button onclick="pauseQuest('${q.id}')" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⏸️ Pause</button>` : ''}
         ${q.status==='paused' ? `<button onclick="resumeQuest('${q.id}')" style="flex:1;background:rgba(15,169,104,0.1);border:1px solid rgba(15,169,104,0.3);color:var(--green);border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">▶️ Aktiver</button>` : ''}
         ${((q.status==='open'||q.status==='paused') && !activeConv) ? `<button onclick="closeQuest('${q.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:8px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Avslutt</button>` : ''}
