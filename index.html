@@ -8807,6 +8807,8 @@ function openServiceEditModal(s) {
   if(titleEl) titleEl.textContent = NE('✏️ Endre tjeneste','✏️ Edit service');
   const pubBtn = document.getElementById('svc-publish-btn');
   if(pubBtn) pubBtn.innerHTML = '<span>' + NE('💾 Lagre endringer','💾 Save changes') + '</span>';
+  const delBtn = document.getElementById('svc-delete-btn');
+  if(delBtn) delBtn.style.display = 'block';
   if(overlay) overlay.style.display = 'flex';
   updateSvcPreview();
 }
@@ -8853,6 +8855,16 @@ function prefillServiceForm(s) {
   const ph = document.getElementById('svc-upload-placeholder');
   if(s.image_url && prev && pimg) { pimg.src = s.image_url; prev.style.display = 'block'; if(ph) ph.style.display = 'none'; }
   else if(prev) { prev.style.display = 'none'; if(ph) ph.style.display = 'block'; }
+}
+
+function confirmDeleteService() {
+  const id = window._editingServiceId;
+  if(!id) return;
+  if(!confirm(NE('Slette denne tjenesten permanent? Den forsvinner fra kartet.','Delete this service permanently? It will disappear from the map.'))) return;
+  deleteService(id);
+  window._editingServiceId = null;
+  closeServiceModal();
+  resetServiceForm();
 }
 
 async function deleteService(serviceId) {
@@ -11186,6 +11198,8 @@ function openServiceModal() {
   if(titleEl) titleEl.textContent = NE('🏪 Tilby en tjeneste','🏪 Offer a service');
   const pubBtn = document.getElementById('svc-publish-btn');
   if(pubBtn) pubBtn.innerHTML = NE('🏪 Publiser tjeneste','🏪 Publish service');
+  const delBtn = document.getElementById('svc-delete-btn');
+  if(delBtn) delBtn.style.display = 'none';
   applyMinorUIRestrictions();
   overlay.style.display = 'flex';
   updateSvcPreview();
@@ -13321,6 +13335,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <button id="svc-publish-btn" onclick="postService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#7c5cfc);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)" data-en="🏪 Publish service">
       🏪 Publiser tjeneste
     </button>
+    <button id="svc-delete-btn" onclick="confirmDeleteService()" style="display:none;width:100%;background:rgba(229,57,53,0.08);color:var(--red,#e53935);border:1.5px solid rgba(229,57,53,0.3);border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px" data-en="🗑️ Delete service">🗑️ Slett tjeneste</button>
   </div>
 </div>
 
