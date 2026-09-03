@@ -2178,8 +2178,17 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
           onblur="setTimeout(()=>document.getElementById('address-suggestions').style.display='none',200)">
         <div id="address-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);z-index:999;overflow:hidden;margin-top:4px"></div>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;margin:8px 0 6px">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:11px;color:var(--muted)" data-en="or">eller</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <button type="button" id="quest-geo-btn" onclick="useMyLocationFor('quest')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(124,92,252,0.08);border:1.5px solid rgba(124,92,252,0.35);border-radius:10px;padding:11px;font-family:inherit;font-size:14px;font-weight:700;color:var(--accent2,#7c5cfc);cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+        <span data-en="Use my location">Bruk min posisjon</span>
+      </button>
       <div id="address-confirmed" style="display:none;margin-top:6px;font-size:12px;color:var(--green);font-weight:600">✅ <span id="address-confirmed-text"></span></div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">Brukes til å plassere oppdraget på kartet</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px" data-en="Fills in the address automatically – you can correct it afterwards">Fyller inn adressen automatisk – du kan rette den etterpå</div>
     </div>
     <div class="form-group">
       <label class="form-label">Kategori</label>
@@ -5299,7 +5308,27 @@ async function applyJob() {
   openChat(conv.id, applyPanel?.dataset?.questTitle || 'Oppdrag');
 }
 
-function openModal() { if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å legge ut oppdrag','👋 Log in to post a task')); return; } _svcHintDismissed = false; checkServiceHint(); const at = document.getElementById('adult-toggle'); if(at){ at.classList.remove('on'); at.dataset.locked = ''; } applyMinorUIRestrictions(); const catSel = document.getElementById('quest-category-input'); if(catSel) checkCategoryWarning(catSel.value); document.getElementById('modal-overlay').classList.add('open'); try { setScheduleType('any'); } catch(e){} updateQuestPreview(); }
+function resetQuestForm() {
+  const sr = id => { const el = document.getElementById(id); if(el) el.value=''; };
+  sr('quest-title-input'); sr('quest-desc-input'); sr('quest-address-input');
+  sr('q-frist-date'); sr('q-vindu-date'); sr('quest-equipment-note');
+  _svcHintDismissed=false; try{checkServiceHint();}catch(e){}
+  const ac=document.getElementById('address-confirmed'); if(ac) ac.style.display='none';
+  questLat=null; questLng=null; questAddress=null; questArea=null;
+  try{setTimePicker('q-frist-time','');setTimePicker('q-vindu-from','');setTimePicker('q-vindu-to','');}catch(e){}
+  document.querySelectorAll('#q-vindu-days .day-btn').forEach(d=>d.classList.remove('active'));
+  try{setScheduleType('any');}catch(e){}
+  const pe=document.getElementById('modal-price'); if(pe){pe.value='250';pe.disabled=false;pe.style.opacity='1';}
+  const pd=document.getElementById('modal-price-display'); if(pd) pd.textContent='250';
+  const ip=document.getElementById('image-preview'); if(ip) ip.style.display='none';
+  const up=document.getElementById('upload-placeholder'); if(up) up.style.display='block';
+  const ii=document.getElementById('quest-image-input'); if(ii) ii.value='';
+  const ch=document.getElementById('charity-toggle'); if(ch) ch.classList.remove('on');
+  const ut=document.querySelector('#modal .toggle'); if(ut) ut.classList.remove('on');
+  try{setEquipment('provided');}catch(e){}
+}
+
+function openModal() { if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å legge ut oppdrag','👋 Log in to post a task')); return; } window._editingQuestId = null; const _tt=document.getElementById('modal-title-text'); if(_tt) _tt.textContent = NE('✦ Legg ut oppdrag','✦ Post a quest'); const _pb=document.querySelector('.publish-btn'); if(_pb) _pb.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> '+NE('Publiser oppdrag','Publish quest'); _svcHintDismissed = false; checkServiceHint(); const at = document.getElementById('adult-toggle'); if(at){ at.classList.remove('on'); at.dataset.locked = ''; } applyMinorUIRestrictions(); const catSel = document.getElementById('quest-category-input'); if(catSel) checkCategoryWarning(catSel.value); document.getElementById('modal-overlay').classList.add('open'); try { setScheduleType('any'); } catch(e){} updateQuestPreview(); }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 
 // ── Tjeneste-hint i oppdragsskjemaet ──────────────────────────────────────────
@@ -5546,26 +5575,15 @@ async function _postJobInner() {
   // Posisjon er PÅKREVD: valgt adresse, eller ekte GPS-treff (da hentes
   // adresse/område via reverse geocoding). Den gamle stille fallbacken til
   // Oslo sentrum stablet alle uplasserte oppdrag på samme punkt og er fjernet.
+  // Adresse er OBLIGATORISK og må velges fra forslagene (setter questLat/questLng via
+  // selectAddress). GPS-fallbacken er fjernet – den stablet oppdrag oppå hverandre når
+  // folk hoppet over adressefeltet. Ett presist punkt per oppdrag.
   let lat = questLat, lng = questLng;
-  if(!lat || !lng) {
-    try {
-      await new Promise(resolve => {
-        navigator.geolocation.getCurrentPosition(
-          p => { lat = p.coords.latitude; lng = p.coords.longitude; resolve(); },
-          resolve, { timeout: 6000 }
-        );
-      });
-    } catch(e) {}
-    if(lat && lng) {
-      const rg = await reverseGeocode(lat, lng);
-      if(rg) { questAddress = rg.address; questArea = rg.area; }
-    }
-  }
-  if(!lat || !lng) {
-    showToast(NE('📍 Velg adresse fra forslagene (eller tillat posisjon) før du publiserer','📍 Pick an address from the suggestions (or allow location) before publishing'));
+  if(!lat || !lng || !questAddress) {
+    showToast(NE('📍 Velg en adresse fra forslagene før du publiserer','📍 Pick an address from the suggestions before publishing'));
     const ai = document.getElementById('quest-address-input');
     if(ai) { ai.focus(); ai.style.borderColor = 'var(--red)'; setTimeout(() => ai.style.borderColor = 'var(--border)', 2000); }
-    if(btn) { btn.disabled = false; btn.innerHTML = '<span>Publiser oppdrag</span>'; }
+    if(btn) { btn.disabled = false; btn.innerHTML = '<span>' + (window._editingQuestId ? NE('💾 Lagre endringer','💾 Save changes') : NE('Publiser oppdrag','Publish quest')) + '</span>'; }
     return;
   }
 
@@ -5573,6 +5591,54 @@ async function _postJobInner() {
   const authUser = await requireSession();
   if(!authUser) {
     if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Publiser oppdrag'; }
+    return;
+  }
+
+  // ── REDIGERINGSMODUS ─────────────────────────────────────────────────────
+  // Vi gjenbruker hele opprettelses-skjemaet; her oppdaterer vi eksisterende rad.
+  if(window._editingQuestId) {
+    const editId = window._editingQuestId;
+    const authUserE = await requireSession();
+    if(!authUserE) { if(btn){ btn.disabled=false; btn.innerHTML='<span>'+NE('💾 Lagre endringer','💾 Save changes')+'</span>'; } return; }
+    // Sikkerhet: bekreft at oppdraget fortsatt er åpent (kan ha blitt tatt mens skjemaet var åpent)
+    const { data: cur } = await sb.from('quests').select('status').eq('id', editId).single();
+    if(!cur || cur.status !== 'open') {
+      showToast('🔒 ' + NE('Oppdraget er ikke lenger åpent – endringer kan ikke lagres.','This task is no longer open – changes cannot be saved.'));
+      if(btn){ btn.disabled=false; btn.innerHTML='<span>'+NE('💾 Lagre endringer','💾 Save changes')+'</span>'; }
+      window._editingQuestId = null; closeModal(); return;
+    }
+    const { error: updErr } = await sb.from('quests').update({
+      title, description: fullDescription, category, duration, pay,
+      is_urgent: isUrgent, is_charity: isCharity, is_first_come: isFirstCome,
+      requires_adult: requiresAdult, scheduled_date: finalScheduledDate,
+      scheduled_time_from: finalTimeFrom, scheduled_time_to: finalTimeTo,
+      schedule_mode: scheduleMode, schedule_days: scheduleDays,
+      lat, lng, address: questAddress || null, area: questArea || null
+    }).eq('id', editId).select().single();
+    if(updErr) {
+      if(btn){ btn.disabled=false; btn.innerHTML='<span>'+NE('💾 Lagre endringer','💾 Save changes')+'</span>'; }
+      showToast('❌ ' + updErr.message); return;
+    }
+    // Nytt bilde valgt? Last opp og oppdater. (Uendret bilde beholdes.)
+    const imgInputE = document.getElementById('quest-image-input');
+    if(imgInputE?.files[0]) {
+      const file = imgInputE.files[0];
+      let upBlob = file, ext = file.name.split('.').pop().toLowerCase(), ctype = file.type;
+      try { upBlob = await compressUploadImage(file); ext='jpg'; ctype='image/jpeg'; } catch(e){}
+      const path = `${authUserE.id}/${editId}.${ext}`;
+      const { error: imgErr } = await sb.storage.from('quest-images').upload(path, upBlob, { upsert:true, contentType:ctype });
+      if(!imgErr) {
+        const { data: urlData } = sb.storage.from('quest-images').getPublicUrl(path);
+        if(urlData?.publicUrl) await sb.from('quests').update({ image_url: urlData.publicUrl }).eq('id', editId);
+      }
+    }
+    window._editingQuestId = null;
+    if(btn){ btn.disabled=false; btn.innerHTML='<span>'+NE('💾 Lagre endringer','💾 Save changes')+'</span>'; }
+    resetQuestForm();
+    closeModal();
+    showToast(NE('✅ Oppdrag oppdatert!','✅ Task updated!'));
+    await addMarkers();
+    try { loadMyQuests(); } catch(e){}
     return;
   }
 
@@ -7775,6 +7841,47 @@ function areaFromFeature(f) {
   return pick('neighborhood') || pick('locality') || pick('place') || null;
 }
 // GPS-posisjon -> adresse + område (brukes når oppdragsgiver står på stedet)
+// Henter GPS-posisjon på brukerens eget trykk, reverse-geocoder til adresse, og
+// fyller adressefeltet som et SYNLIG forslag (brukeren kan rette). Gjelder både
+// oppdrag ('quest') og tjeneste ('svc'). Ingen stille fallback – aktiv handling.
+async function useMyLocationFor(which) {
+  const btnId = which === 'svc' ? 'svc-geo-btn' : 'quest-geo-btn';
+  const btn = document.getElementById(btnId);
+  if(!navigator.geolocation) { showToast(NE('📍 Enheten støtter ikke posisjon – skriv adressen i stedet','📍 Location not supported – type the address instead')); return; }
+  const origHtml = btn ? btn.innerHTML : '';
+  if(btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.innerHTML = '<span>' + NE('📍 Henter posisjon…','📍 Getting location…') + '</span>'; }
+  const restore = () => { if(btn) { btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = origHtml; } };
+
+  let pos;
+  try {
+    pos = await new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+    });
+  } catch(e) {
+    restore();
+    const denied = e && e.code === 1;
+    showToast(denied
+      ? NE('📍 Posisjon avslått – skriv adressen i stedet','📍 Location denied – type the address instead')
+      : NE('📍 Fikk ikke tak i posisjonen – skriv adressen i stedet','📍 Couldn\'t get your location – type the address instead'));
+    const inp = document.getElementById(which === 'svc' ? 'svc-address-input' : 'quest-address-input');
+    if(inp) inp.focus();
+    return;
+  }
+
+  const lat = pos.coords.latitude, lng = pos.coords.longitude;
+  const rg = await reverseGeocode(lat, lng);
+  restore();
+  if(!rg || !rg.address) {
+    showToast(NE('📍 Fant ikke adressen – skriv den inn selv','📍 Address not found – type it in yourself'));
+    const inp = document.getElementById(which === 'svc' ? 'svc-address-input' : 'quest-address-input');
+    if(inp) inp.focus();
+    return;
+  }
+  if(which === 'svc') selectSvcAddress(rg.address, lat, lng, rg.area);
+  else selectAddress(rg.address, lat, lng, rg.area);
+  showToast(NE('📍 Fant posisjonen din – rett adressen om den ikke stemmer','📍 Found your location – correct the address if needed'));
+}
+
 async function reverseGeocode(lat, lng) {
   try {
     const token = mapboxgl.accessToken;
@@ -8557,49 +8664,126 @@ async function editQuestFromPanel() {
   if(!questId) { showToast(NE('⚠️ Demo-oppdrag kan ikke endres',"⚠️ Demo tasks can't be edited")); return; }
   const { data: q } = await sb.from('quests').select('*').eq('id', questId).single();
   if(!q) { showToast(NE('❌ Fant ikke oppdraget','❌ Task not found')); return; }
-  showEditQuestModal(q);
-}
-
-function showEditQuestModal(q) {
-  const existing = document.getElementById('edit-quest-overlay');
-  if(existing) existing.remove();
-  const cats = ['🏠 Hjem og hage','🚗 Kjøring og transport','🛒 Handel og ærend','🐕 Dyr','🔧 Håndverk og montering','👴 Eldre og selskap','📦 Bære og flytte','🧹 Rengjøring','🗑️ Dynga','🤝 Dugnad','💻 Teknologi og IT','🚘 Bil og kjøretøy','👶 Barn og familie','🎉 Fest og arrangement','🍕 Mat og matlaging','📸 Foto og video','💇 Hår og skjønnhet','🐾 Dyrepass','🌿 Hagearbeid','🔑 Nøkler og ærend','🛠️ Småfiks','🎓 Undervisning og leksehjelp','✨ Annet'];
-  const overlay = document.createElement('div');
-  overlay.id = 'edit-quest-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom));box-sizing:border-box';
-  overlay.innerHTML = `
-    <div style="background:var(--surface);border-radius:20px;width:100%;max-width:520px;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);max-height:calc(100svh - 40px);overflow-y:auto;padding:24px 20px;box-sizing:border-box">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-        <div style="font-size:18px;font-weight:800">✏️ Endre oppdrag</div>
-        <button onclick="document.getElementById('edit-quest-overlay').remove()" style="background:var(--surface2);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--muted)">✕</button>
-      </div>
-      <div class="form-group"><label class="form-label">Tittel</label>
-        <input id="eq-title" class="form-input" type="text" value="${(q.title||'').replace(/"/g,'&quot;')}"></div>
-      <div class="form-group"><label class="form-label">Beskrivelse</label>
-        <textarea id="eq-desc" class="form-textarea" rows="4">${q.description||''}</textarea></div>
-      <div class="form-group"><label class="form-label">Betaling (kr)</label>
-        <input id="eq-pay" class="form-input" type="number" value="${q.pay||250}" min="0" max="50000"></div>
-      <div class="form-group"><label class="form-label">Kategori</label>
-        <select id="eq-category" class="form-select">${cats.map(c=>`<option ${q.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
-      <button onclick="saveQuestEdits('${q.id}')" style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px"><span data-en="💾 Save changes">💾 Lagre endringer</span></button>
-    </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
-}
-
-async function saveQuestEdits(questId) {
-  const title = document.getElementById('eq-title')?.value?.trim();
-  const description = document.getElementById('eq-desc')?.value?.trim();
-  const pay = parseInt(document.getElementById('eq-pay')?.value) || 0;
-  const category = document.getElementById('eq-category')?.value;
-  if(!title) { showToast(NE('⚠️ Tittel kan ikke være tom',"⚠️ Title can't be empty")); return; }
-  const { error } = await sb.from('quests').update({ title, description, pay, category }).eq('id', questId);
-  if(error) { showToast('❌ ' + error.message); return; }
-  document.getElementById('edit-quest-overlay')?.remove();
+  // Kun åpne oppdrag kan endres. Tildelte/fullførte er låst (motparten har innrettet seg).
+  if(q.status !== 'open') {
+    const msg = q.status === 'completed'
+      ? NE('Dette oppdraget er fullført og kan ikke endres.','This task is completed and cannot be edited.')
+      : NE('Oppdraget er tildelt – det kan ikke endres nå. Avlys det om du må gjøre store endringer.','This task is assigned and cannot be edited. Cancel it if you need major changes.');
+    showToast('🔒 ' + msg);
+    return;
+  }
   closePanel();
-  showToast(NE('✅ Oppdrag oppdatert!','✅ Task updated!'));
-  await addMarkers();
-  loadMyQuests();
+  openEditModal(q);
+}
+
+// Åpner hovedskjemaet (samme som ved opprettelse) i redigeringsmodus, forhåndsutfylt.
+// Ett skjema for begge – kan aldri komme ut av sync med opprettelse.
+function openEditModal(q) {
+  window._editingQuestId = q.id;
+  _svcHintDismissed = true; // ikke vis tjeneste-hint ved redigering av et ekte oppdrag
+  applyMinorUIRestrictions();
+  prefillQuestForm(q);
+  // Tittel og knapp i redigeringsmodus
+  const tt = document.getElementById('modal-title-text');
+  if(tt) tt.textContent = NE('✏️ Endre oppdrag','✏️ Edit task');
+  const btn = document.querySelector('.publish-btn');
+  if(btn) btn.innerHTML = '<span>' + NE('💾 Lagre endringer','💾 Save changes') + '</span>';
+  document.getElementById('modal-overlay').classList.add('open');
+  updateQuestPreview();
+}
+
+// Fyller alle feltene i hovedskjemaet fra et lagret oppdrag.
+function prefillQuestForm(q) {
+  const setVal = (id,v) => { const el = document.getElementById(id); if(el) el.value = (v==null?'':v); };
+  setVal('quest-title-input', q.title);
+
+  // Beskrivelse: fjern det auto-tilføyde utstyr-suffikset så det ikke dobles
+  let desc = q.description || '';
+  let equipType = 'provided', equipNote = '';
+  const em = desc.match(/\n\n(🔧 Utstyr finnes|🎒 Ta med eget utstyr)(?:: (.*))?$/s);
+  if(em) {
+    equipType = em[1].indexOf('🎒') === 0 ? 'own' : 'provided';
+    equipNote = em[2] || '';
+    desc = desc.slice(0, em.index);
+  }
+  setVal('quest-desc-input', desc);
+  setEquipment(equipType);
+  setVal('quest-equipment-note', equipNote);
+
+  // Adresse (bekreftet-visning + interne koordinater)
+  questLat = q.lat; questLng = q.lng; questAddress = q.address || null; questArea = q.area || null;
+  setVal('quest-address-input', q.address || '');
+  const ac = document.getElementById('address-confirmed');
+  const act = document.getElementById('address-confirmed-text');
+  if(q.address && ac && act) { ac.style.display = 'block'; act.textContent = q.address; }
+  else if(ac) { ac.style.display = 'none'; }
+
+  // Kategori
+  const cat = document.getElementById('quest-category-input');
+  if(cat && q.category) { cat.value = q.category; checkCategoryWarning(q.category); }
+
+  // Varighet
+  setVal('quest-duration-input', q.duration);
+
+  // Tidsplan
+  const mode = q.schedule_mode || 'any';
+  setScheduleType(mode);
+  if(mode === 'frist') {
+    setVal('q-frist-date', q.scheduled_date);
+    setTimePicker('q-frist-time', q.scheduled_time_to || '');
+  } else if(mode === 'vindu') {
+    setVal('q-vindu-date', q.scheduled_date);
+    setTimePicker('q-vindu-from', q.scheduled_time_from || '');
+    setTimePicker('q-vindu-to', q.scheduled_time_to || '');
+    document.querySelectorAll('#q-vindu-days .day-btn').forEach(d => d.classList.remove('active'));
+    (q.schedule_days ? String(q.schedule_days).split(',') : []).forEach(day => {
+      const b = document.querySelector('#q-vindu-days .day-btn[data-day="'+day+'"]'); if(b) b.classList.add('active');
+    });
+  }
+
+  // Pris
+  const priceEl = document.getElementById('modal-price');
+  const priceDisp = document.getElementById('modal-price-display');
+  const basePay = q.is_urgent && !q.is_charity ? Math.max(0, (q.pay||0) - 100) : (q.pay||0);
+  if(priceEl) priceEl.value = String(basePay);
+  if(priceDisp) priceDisp.textContent = String(basePay);
+
+  // Modus (godkjenn / førstemann)
+  setMode(q.is_first_come ? 'firstcome' : 'approve');
+
+  // Haster-toggle
+  const urgentToggle = document.querySelector('#modal .toggle');
+  if(urgentToggle) urgentToggle.classList.toggle('on', !!q.is_urgent);
+
+  // Veldedighet
+  const charityToggle = document.getElementById('charity-toggle');
+  if(charityToggle) {
+    charityToggle.classList.toggle('on', !!q.is_charity);
+    const note = document.getElementById('charity-note');
+    if(note) note.style.display = q.is_charity ? 'block' : 'none';
+    if(q.is_charity && priceEl) { priceEl.value = '0'; priceEl.disabled = true; priceEl.style.opacity = '0.4'; }
+    else if(priceEl) { priceEl.disabled = false; priceEl.style.opacity = '1'; }
+  }
+
+  // 18+-flagg
+  const adultToggle = document.getElementById('adult-toggle');
+  if(adultToggle) adultToggle.classList.toggle('on', !!q.requires_adult);
+
+  // Bilde: vis eksisterende som forhåndsvisning (valgfritt å bytte)
+  const imgInput = document.getElementById('quest-image-input');
+  if(imgInput) imgInput.value = '';
+  const preview = document.getElementById('image-preview');
+  const previewImg = document.getElementById('preview-img');
+  const placeholder = document.getElementById('upload-placeholder');
+  if(q.image_url && preview && previewImg) {
+    previewImg.src = q.image_url;
+    preview.style.display = 'block';
+    if(placeholder) placeholder.style.display = 'none';
+    const ic = document.getElementById('image-confirmed'); if(ic) ic.style.display = 'none';
+  } else if(preview) {
+    preview.style.display = 'none';
+    if(placeholder) placeholder.style.display = 'block';
+  }
 }
 
 async function editServiceById(serviceId) {
@@ -13004,8 +13188,17 @@ sb.auth.onAuthStateChange(async (event, session) => {
           onblur="setTimeout(()=>document.getElementById('svc-address-suggestions').style.display='none',200)">
         <div id="svc-address-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);z-index:999;overflow:hidden;margin-top:4px"></div>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;margin:8px 0 6px">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:11px;color:var(--muted)" data-en="or">eller</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <button type="button" id="svc-geo-btn" onclick="useMyLocationFor('svc')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(124,92,252,0.08);border:1.5px solid rgba(124,92,252,0.35);border-radius:10px;padding:11px;font-family:inherit;font-size:14px;font-weight:700;color:var(--accent2,#7c5cfc);cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+        <span data-en="Use my location">Bruk min posisjon</span>
+      </button>
       <div id="svc-address-confirmed" style="display:none;margin-top:6px;font-size:12px;color:var(--green);font-weight:600">✅ <span id="svc-address-confirmed-text"></span></div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px" data-en="Choose from the suggestions – this places the service on the map">Velg fra forslagene – dette plasserer tjenesten på kartet</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px" data-en="Fills in the address automatically – you can correct it afterwards">Fyller inn adressen automatisk – du kan rette den etterpå</div>
     </div>
     <div class="form-group">
       <label class="form-label" data-en="🧰 Equipment">🧰 Utstyr</label>
