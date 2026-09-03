@@ -682,6 +682,10 @@ body.map-zoomed-out .mapbox-marker .qp-name { display:none; }
 .quest-pin.expired { opacity:.6; filter:grayscale(.6); }
 .quest-pin.expired .qp-shape { border-color:var(--muted); }
 .quest-pin.expired .qp-coin { background:var(--muted); }
+.quest-pin.taken { opacity:.5; filter:grayscale(.7); }
+.quest-pin.taken .qp-shape { border-color:var(--muted); }
+.quest-pin.taken .qp-coin { background:var(--muted); color:#fff; }
+.quest-pin.taken .qp-badge { background:var(--muted); color:#fff; }
 /* ── YOUR OWN / ACTIVE QUESTS (only the logged-in owner/taker sees these) ── */
 /* eget innlegg = gull (farge + glød + 👑-badge; formen følger typen) */
 .quest-pin.mine .qp-shape { border-color:#f0a500; box-shadow:0 0 0 3px rgba(240,165,0,.20), var(--shadow); }
@@ -3531,11 +3535,12 @@ function cleanName(str) {
   return String(str || '').replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim();
 }
 
-function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = '', imageUrl = null, expired = false, paused = false, ownership = null, onClick } = {}) {
+function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = '', imageUrl = null, expired = false, paused = false, taken = false, ownership = null, onClick } = {}) {
   const el = document.createElement('div');
   el.className = 'mapbox-marker';
 
   const typeClass = expired ? 'expired'
+    : taken ? 'taken'
     : type === 'haste' ? 'haste'
     : type === 'charity' ? 'charity'
     : type === 'service' ? 'service'
@@ -3551,14 +3556,15 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
   // Status (mitt/jobber/søkt/pauset) vises med farge + glød + badge – aldri form.
   const shape = type === 'service' ? 'square' : 'circle';
 
-  const badge = paused ? `<div class="qp-badge">⏸ ${NE('Pauset','Paused')}</div>`
+  const badge = taken ? `<div class="qp-badge">✓ ${NE('Tatt','Taken')}</div>`
+    : paused ? `<div class="qp-badge">⏸ ${NE('Pauset','Paused')}</div>`
     : ownership === 'applied' ? `<div class="qp-badge">✓ ${NE('Søkt','Applied')}</div>`
     : ownership === 'mine' ? `<div class="qp-badge">👑 ${NE('Mitt','Mine')}</div>`
     : ownership === 'working' ? `<div class="qp-badge">🔨 ${NE('Jobber','Working')}</div>`
     : '';
 
   // Haste får ⚡ i prisknappen som ekstra skille mot magenta-oppdrag
-  const coinText = priceText ? (typeClass === 'haste' ? '⚡ ' + priceText : priceText) : '';
+  const coinText = taken ? NE('Tatt','Taken') : (priceText ? (typeClass === 'haste' ? '⚡ ' + priceText : priceText) : '');
 
   el.innerHTML = `
     <div class="quest-pin ${typeClass} ${ownerClass} ${pausedClass} shape-${shape}">
@@ -3577,7 +3583,7 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
   // Spec for GL-pins (etappe 1): lar attachPin gjenskape utseendet i selve
   // kart-canvasen. HTML-elementet beholdes som tilstandsbærer (display/visibility
   // styres av filtre og klynging som før) og som fallback.
-  el._pinSpec = { shape, typeClass, ownerClass, paused, expired,
+  el._pinSpec = { shape, typeClass, ownerClass, paused, expired, taken,
                   catKey: _mkKey, emoji: displayIcon, coinText, imageUrl, name };
   return el;
 }
@@ -3636,6 +3642,7 @@ function addQuestMarker(q) {
   const job = questToJob(q);
   const expired = q.status === 'expired';
   const paused = q.status === 'paused';
+  const taken = q.status === 'taken';
   let ownership = null;
   if(currentUser) {
     if(q.user_id && q.user_id === currentUser.id) ownership = 'mine';
@@ -3650,6 +3657,7 @@ function addQuestMarker(q) {
     imageUrl: job.image || null,
     expired,
     paused,
+    taken,
     ownership,
     onClick: () => showPanel(job)
   });
@@ -3813,6 +3821,14 @@ async function addMarkers() {
   // Samle alt deduplisert på id (én markør per oppdrag uansett hvor mange spørringer det dukker opp i)
   const byId = new Map();
   if(!error && quests) quests.forEach(q => byId.set(q.id, q));
+
+  // Nylig TATTE oppdrag (siste 48t): vis for alle som nedtonet «Tatt»-markør, så kartet
+  // viser at ting faktisk matches i stedet for at oppdrag bare forsvinner.
+  const cutoff48 = new Date(Date.now() - 48*60*60*1000).toISOString();
+  const { data: recentlyTaken } = await sb.from('quests').select('*')
+    .eq('status', 'taken').gte('taken_at', cutoff48);
+  if(stale()) return;
+  (recentlyTaken || []).forEach(q => { if(!byId.has(q.id)) byId.set(q.id, q); });
 
   // I tillegg: oppdrag den innloggede er involvert i – uansett at de har blitt «taken»/«paused».
   // Uten dette forsvinner egne oppdrag og oppdrag man jobber på fra kartet i det de blir tatt.
@@ -4850,8 +4866,10 @@ function showPanel(job) {
             <div class="applicant-avatar" style="background:rgba(249,115,22,0.15);color:#f97316;cursor:pointer" onclick="viewOtherProfile('${c.taker_id}')">${init}</div>
             <div class="applicant-name" style="cursor:pointer" onclick="viewOtherProfile('${c.taker_id}')">${name}</div>
             ${c.status === 'pending'
-              ? `<button onclick="acceptApplicant('${c.id}','${job.raw.id}')" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✓ Godkjenn</button>`
-              : `<span style="font-size:11px;font-weight:700;color:var(--green)">✅ Godkjent</span>`}
+              ? `<button onclick="acceptApplicant('${c.id}','${job.raw.id}')" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✓ ${NE('Velg','Choose')}</button>`
+              : c.status === 'accepted'
+              ? `<button onclick="unassignQuest('${c.id}')" style="background:transparent;border:1px solid rgba(229,57,53,0.3);color:var(--red,#e53935);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">↩️ ${NE('Opphev','Undo')}</button>`
+              : `<span style="font-size:11px;font-weight:700;color:var(--green)">✅ ${NE('Godkjent','Approved')}</span>`}
           </div>`;
         }).join('');
     });
@@ -5240,6 +5258,25 @@ async function askQuestionOnQuest(){
 
 // Trekk tilbake en søknad/henvendelse som ennå ikke er besvart (status 'pending').
 // Går via SECURITY DEFINER-RPC (RLS har ingen DELETE-policy på conversations).
+// Opphev tildeling (giver) eller trekk deg (taker). RPC avgjør retning ut fra hvem
+// som kaller, og nekter hvis oppdraget er utført/betalt. Motparten varsles alltid.
+async function unassignQuest(convId) {
+  if(!currentUser) { openAuth('login'); return; }
+  if(!confirm(NE('Er du sikker? Oppdraget blir åpent igjen og den andre parten får beskjed.','Are you sure? The task reopens and the other party is notified.'))) return;
+  const authUser = await requireSession();
+  if(!authUser) return;
+  const { data, error } = await sb.rpc('unassign_quest', { p_conversation_id: convId });
+  if(error) { showToast('❌ ' + error.message); return; }
+  if(data === 'locked') { showToast(NE('🔒 Kan ikke oppheves – oppdraget er utført eller betalt','🔒 Cannot undo – the task is done or paid')); return; }
+  if(data === 'not_active') { showToast(NE('⚠️ Oppdraget er ikke i en tildelt tilstand','⚠️ The task is not in an assigned state')); return; }
+  if(data === 'not_found') { showToast(NE('⚠️ Fant ikke oppdraget','⚠️ Task not found')); return; }
+  showToast(data === 'taker_withdrew' ? NE('↩️ Du er trukket fra oppdraget','↩️ You have withdrawn from the task') : NE('↩️ Tildeling opphevet','↩️ Assignment undone'));
+  try { closePanel(); } catch(e){}
+  try { closeChat(); } catch(e){}
+  try { await addMarkers(); } catch(e){}
+  try { if(document.getElementById('myquests-panel')?.style.display === 'block') loadMyQuests(); } catch(e){}
+}
+
 async function withdrawApplication(convId, opts) {
   opts = opts || {};
   if(!currentUser) { openAuth('login'); return; }
@@ -5323,7 +5360,7 @@ async function applyJob() {
       const { data: mp } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
       const myName = mp?.full_name || 'En bruker';
       if(qMeta?.is_first_come && qMeta?.status === 'open') {
-        await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
+        await sb.from('quests').update({ status: 'taken', taken_at: new Date().toISOString() }).eq('id', questId);
         await sb.from('conversations').update({ status: 'accepted', is_question: false }).eq('id', existing.id);
         showToast(NE('⚡ Oppdrag tildelt! Du er førstemann til mølla!','⚡ Task assigned! You were first in line!'));
         await notifyUser({
@@ -5375,7 +5412,7 @@ async function applyJob() {
   if(questData?.is_first_come) {
     showToast(NE('⚡ Oppdrag tildelt! Du er førstemann til mølla!','⚡ Task assigned! You were first in line!'));
     setTimeout(() => showAchievement('⚡', NE('Første oppdrag!','First task!'), NE('Du fikk ditt første oppdrag – førstemann til mølla!','You got your first task – first in line!')), 1000);
-    await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
+    await sb.from('quests').update({ status: 'taken', taken_at: new Date().toISOString() }).eq('id', questId);
     await sb.from('conversations').update({ status: 'accepted' }).eq('id', conv.id);
     // Varsle at oppdraget ble TATT (kommer i tillegg til triggerens «ny søknad»-varsel)
     await notifyUser({
@@ -7323,6 +7360,7 @@ function openProfileEdit() {
   pg.classList.add('pp-editing');
   document.getElementById('pp-edit-section').style.display = 'block';
   document.getElementById('pp-logout-section').style.display = 'block';
+  loadEmailPref();
   const t = document.getElementById('pp-header-title');
   if(t) t.textContent = NE('Rediger profil','Edit profile');
   pg.scrollTop = 0;
@@ -8689,6 +8727,7 @@ async function loadMyQuests() {
               <button onclick="showChatPaymentInfoFor('${c.id}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💸 Betalingsinfo</button>
               <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
             </div>
+            ${(!c.work_done_at && !paid) ? `<button onclick="unassignQuest('${c.id}')" style="width:100%;background:transparent;border:1px solid rgba(229,57,53,0.3);color:var(--red,#e53935);border-radius:10px;padding:10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px">↩️ ${NE('Trekk deg fra oppdraget','Withdraw from task')}</button>` : ''}
           ` : `
             ${c.status === 'pending' ? `<div style="display:flex;align-items:center;gap:8px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.22);border-radius:8px;padding:11px 12px;margin-bottom:10px;font-size:12.5px;color:#d97a30;font-weight:700">⏳ Venter på svar fra oppdragsgiver</div>` : ''}
             <div style="display:flex;gap:8px">
@@ -9137,7 +9176,7 @@ async function acceptApplicant(convId, questId) {
   if(updConvErr) { showToast(NE('❌ Kunne ikke godkjenne: ','❌ Could not approve: ') + updConvErr.message); return; }
 
   // Update quest status
-  const { error: updQuestErr } = await sb.from('quests').update({ status: 'taken' }).eq('id', questId);
+  const { error: updQuestErr } = await sb.from('quests').update({ status: 'taken', taken_at: new Date().toISOString() }).eq('id', questId);
   if(updQuestErr) { showToast(NE('❌ Kunne ikke oppdatere oppdraget: ','❌ Could not update the task: ') + updQuestErr.message); return; }
 
   // Hent utførers navn + nummer (nå som matchen er godkjent kan vi lese nummeret)
@@ -11842,14 +11881,86 @@ function toastType(msg) {
   return 'info';
 }
 
-function showAchievement(icon, title, desc) {
+function showAchievement(icon, title, desc, opts) {
+  opts = opts || {};
   document.getElementById('ach-icon').textContent = icon;
   document.getElementById('ach-title').textContent = title;
   document.getElementById('ach-desc').textContent = desc;
   const el = document.getElementById('achievement-pop');
+  const lbl = el.querySelector('.achieve-label');
+  if(lbl) lbl.textContent = opts.label || 'Achievement unlocked!';
+  el.style.cursor = opts.onClick ? 'pointer' : '';
+  el.onclick = opts.onClick ? () => { el.style.display = 'none'; clearTimeout(el._t); opts.onClick(); } : null;
   el.style.display = 'flex';
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.style.display = 'none', 4000);
+  el._t = setTimeout(() => el.style.display = 'none', opts.duration || 4000);
+}
+
+// Åpner oppdragspanelet på kartet for et gitt oppdrag (fra «siden sist»-boksen).
+// Venter på at markørene er lastet (maks ~6 s), flyr dit og «klikker» markøren.
+async function openQuestOnMap(questId) {
+  try { closeMyQuests(); } catch(e){}
+  try { closeNotifications(); } catch(e){}
+  let m = null;
+  for(let i = 0; i < 30 && !m; i++) {
+    m = (window.mapMarkers || []).find(x => x.kind === 'quest' && x.id === questId);
+    if(!m) await new Promise(r => setTimeout(r, 200));
+  }
+  if(!m) { openMyQuests(); return; }
+  try {
+    const { data: q } = await sb.from('quests').select('lat,lng').eq('id', questId).single();
+    if(q && q.lat && q.lng && window.map) window.map.flyTo({ center: [q.lng, q.lat], zoom: 15, speed: 1.4 });
+  } catch(e){}
+  setTimeout(() => { try { m.el.click(); } catch(e){} }, 350);
+}
+
+// «Siden sist»-boks: første gang du åpner Tokt etter at (a) noen søkte på oppdraget ditt
+// eller (b) du fikk et oppdrag tildelt. Vises ÉN gang per hendelse (sporet per bruker på
+// enheten via localStorage – rører ikke varslenes lest-status, så bjella beholder badgen).
+async function showReturnEvents() {
+  if(!currentUser || window._returnShown) return;
+  window._returnShown = true;
+  const key = 'tokt-return-seen-' + currentUser.id;
+  // Første gang noensinne: ikke dump uker gamle hendelser – start fra 3 dager tilbake
+  const lastSeen = localStorage.getItem(key) || new Date(Date.now() - 3*24*60*60*1000).toISOString();
+  const { data: notifs } = await sb.from('notifications')
+    .select('id, type, link_id, created_at')
+    .eq('user_id', currentUser.id).in('type', ['application', 'accepted'])
+    .gt('created_at', lastSeen).order('created_at', { ascending: false }).limit(50);
+  if(!notifs || !notifs.length) return;
+
+  // Finn tilhørende oppdrag via samtalene (link_id = conversation-id)
+  const convIds = [...new Set(notifs.map(n => n.link_id).filter(Boolean))];
+  let convMap = {};
+  if(convIds.length) {
+    const { data: convs } = await sb.from('conversations').select('id, quest_id').in('id', convIds);
+    (convs || []).forEach(c => convMap[c.id] = c.quest_id);
+  }
+  const accepted = notifs.filter(n => n.type === 'accepted');
+  const applications = notifs.filter(n => n.type === 'application');
+  const appQuestIds = [...new Set(applications.map(n => convMap[n.link_id]).filter(Boolean))];
+
+  // Husk at disse er vist FØR vi viser (så ikke samme boks kommer igjen ved neste åpning)
+  localStorage.setItem(key, notifs[0].created_at);
+
+  const label = NE('Siden sist', 'Since last time');
+  if(accepted.length) {
+    const qid = convMap[accepted[0].link_id];
+    const extra = applications.length ? ' ' + NE(`Du har også ${applications.length} ${applications.length===1?'ny søker':'nye søkere'}.`, `You also have ${applications.length} new applicant${applications.length===1?'':'s'}.`) : '';
+    showAchievement('🎉', NE('Du fikk oppdraget!', 'You got the task!'),
+      NE('Trykk for å se oppdraget og avtale detaljer.', 'Tap to see the task and sort out details.') + extra,
+      { label, duration: 9000, onClick: () => qid ? openQuestOnMap(qid) : openMyQuests() });
+    return;
+  }
+  if(applications.length) {
+    const n = applications.length, q = appQuestIds.length;
+    const title = n === 1 ? NE('Ny søker på oppdraget ditt!', 'New applicant on your task!') : NE(`${n} nye søkere!`, `${n} new applicants!`);
+    const desc = q <= 1
+      ? NE('Trykk for å se hvem – og velg den som får oppdraget.', 'Tap to see who – and choose who gets the task.')
+      : NE(`Fordelt på ${q} oppdrag. Trykk for å se og velge.`, `Across ${q} tasks. Tap to review and choose.`);
+    showAchievement('🙋', title, desc,
+      { label, duration: 9000, onClick: () => appQuestIds.length === 1 ? openQuestOnMap(appQuestIds[0]) : openMyQuests() });
+  }
 }
 
 // ══════════════════════════════════════
@@ -12674,8 +12785,30 @@ async function doResetPassword() {
   showToast('📧 Nullstillingslenke sendt til ' + email);
 }
 
+// E-postvarsel-bryter (egen profil). Leser/skriver profiles.email_enabled direkte
+// (innlogget bruker, egen rad – RLS tillater det; kolonnen er ikke beskyttet av guard-trigger).
+async function loadEmailPref() {
+  const tog = document.getElementById('pp-email-toggle');
+  if(!tog || !currentUser) return;
+  try {
+    const { data } = await sb.from('profiles').select('email_enabled').eq('id', currentUser.id).maybeSingle();
+    tog.classList.toggle('on', !data || data.email_enabled !== false);
+  } catch(e) {}
+}
+async function toggleEmailPref(el) {
+  if(!currentUser) return;
+  const turnOn = !el.classList.contains('on');
+  el.classList.toggle('on', turnOn);
+  const authUser = await requireSession();
+  if(!authUser) { el.classList.toggle('on', !turnOn); return; }
+  const { error } = await sb.from('profiles').update({ email_enabled: turnOn }).eq('id', currentUser.id).select();
+  if(error) { el.classList.toggle('on', !turnOn); showToast('❌ ' + error.message); return; }
+  showToast(turnOn ? NE('📧 E-postvarsler på','📧 Email notifications on') : NE('🔕 E-postvarsler av','🔕 Email notifications off'));
+}
+
 async function doLogout() {
   await sb.auth.signOut();
+  window._returnShown = false;
   currentUser = null;
   updateUIForAuth(null);
   if(window.map) addMarkers();
@@ -12890,6 +13023,7 @@ async function loadUserProfile(user) {
   checkUnreadNotifs();
   subscribeToNotifications();
   registerPushNotifications();
+  setTimeout(() => { try { showReturnEvents(); } catch(e) {} }, 2500);
   // Re-render the map so the user's own and active quests get their colours
   if(window.map) addMarkers();
 }
@@ -13692,6 +13826,13 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
   <!-- Logg ut (kun egen profil) -->
   <div id="pp-logout-section" style="display:none;padding:8px 20px calc(90px + env(safe-area-inset-bottom,0px));background:var(--surface)">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:13px 15px;margin-bottom:12px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:700;color:var(--text)" data-en="📧 Email notifications">📧 E-postvarsler</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.4" data-en="Emails about applications, messages and completed tasks">E-post om søknader, meldinger og fullførte oppdrag</div>
+      </div>
+      <div class="toggle" id="pp-email-toggle" onclick="toggleEmailPref(this)"></div>
+    </div>
     <button onclick="doLogout()" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s"><span data-en="🚪 Log out">🚪 Logg ut</span></button>
     <button id="pp-delete-account-btn" onclick="deleteMyAccount()" style="width:100%;background:transparent;border:1px solid rgba(220,38,38,.35);color:#dc2626;border-radius:12px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s">🗑️ <span data-del-label>Slett konto</span></button>
   </div>
