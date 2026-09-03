@@ -4773,7 +4773,7 @@ function showPanel(job) {
     <div class="meta-stats">
       <div class="meta-item"><div class="meta-label">${L.distanceTitle||'Avstand'}</div><div class="meta-value">${formatDistance(distKm)}</div></div>
       <div class="meta-item"><div class="meta-label" id="panel-rating-label">${L.ratingLabel||'Vurdering'}</div><div class="meta-value yellow">${job.rating ? '★ ' + job.rating : '–'}</div></div>
-      <div class="meta-item"><div class="meta-label" id="panel-applicants-label">${L.applicantsLabel||'Søkere'}</div><div class="meta-value">${job.applicants ?? 0}</div></div>
+      <div class="meta-item"><div class="meta-label" id="panel-applicants-label">${L.applicantsLabel||'Søkere'}</div><div class="meta-value" id="panel-applicants-count">${job.applicants ?? 0}</div></div>
     </div>`;
 
   // Oppdragsalder – vises kun for ekte oppdrag med created_at (ikke demo)
@@ -4842,7 +4842,7 @@ function showPanel(job) {
       const { data: profs } = await sb.from('profiles').select('id, full_name').in('id', ids);
       const nm = {};
       (profs||[]).forEach(p => nm[p.id] = p.full_name);
-      appEl.innerHTML = `<div class="applicants-title">${L.applicantsLabel||'Søkere'} (${relevant.length})</div>` +
+      appEl.innerHTML = `<div style="font-size:13px;font-weight:800;color:var(--accent);padding:4px 0 8px">🙋 ${relevant.length} ${relevant.length === 1 ? NE('har søkt','applied') : NE('har søkt','applied')}</div>` +
         relevant.map(c => {
           const name = nm[c.taker_id] || 'Bruker';
           const init = name[0].toUpperCase();
@@ -4856,10 +4856,12 @@ function showPanel(job) {
         }).join('');
     });
   } else if(job.raw?.id) {
-    // Real quest, visitor viewing: show applicant count only
-    sb.from('conversations').select('id', { count:'exact', head:true }).eq('quest_id', job.raw.id).then(({ count }) => {
-      appEl.innerHTML = count > 0
-        ? `<div style="font-size:12px;color:var(--muted);padding:8px 0">👤 ${count} søker${count !== 1 ? 'e' : ''} på dette oppdraget</div>`
+    // Real quest, visitor viewing: kun ANTALL (aldri navn) via SECURITY DEFINER-RPC.
+    // Direkte count på conversations blokkeres av RLS for ikke-eiere → ga alltid 0.
+    sb.rpc('quest_applicant_count', { p_quest_id: job.raw.id }).then(({ data: cnt }) => {
+      const n = cnt || 0;
+      appEl.innerHTML = n > 0
+        ? `<div style="font-size:13px;font-weight:800;color:var(--accent);padding:8px 0">🙋 ${n} ${n === 1 ? NE('har søkt på dette oppdraget','has applied for this task') : NE('har søkt på dette oppdraget','have applied for this task')}</div>`
         : `<div style="font-size:12px;color:var(--muted);padding:8px 0">${LANGUAGES[currentLang]?.noApplicants || 'Ingen søkere ennå – vær den første!'}</div>`;
     });
   } else if(job.people?.length) {
@@ -4876,6 +4878,14 @@ function showPanel(job) {
       }).join('');
   } else {
     appEl.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0">${LANGUAGES[currentLang]?.noApplicants || 'Ingen søkere ennå – vær den første!'}</div>`;
+  }
+  // Ekte søkertall i meta-raden (samme trygge RPC – kun antall). Gjelder både eier og besøkende.
+  if(job.raw?.id) {
+    sb.rpc('quest_applicant_count', { p_quest_id: job.raw.id }).then(({ data: cnt }) => {
+      const el = document.getElementById('panel-applicants-count');
+      const stillSame = document.getElementById('job-panel')?.dataset?.questId === job.raw.id;
+      if(el && stillSame) el.textContent = cnt || 0;
+    });
   }
   // Quest type badge
   const badge = document.getElementById('quest-type-badge');
