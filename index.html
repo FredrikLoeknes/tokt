@@ -8789,43 +8789,70 @@ function prefillQuestForm(q) {
 async function editServiceById(serviceId) {
   const { data: s } = await sb.from('services').select('*').eq('id', serviceId).single();
   if(!s) { showToast(NE('❌ Fant ikke tjenesten','❌ Service not found')); return; }
-  const existing = document.getElementById('edit-svc-overlay');
-  if(existing) existing.remove();
-  const overlay = document.createElement('div');
-  overlay.id = 'edit-svc-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom));box-sizing:border-box';
-  overlay.innerHTML = `
-    <div style="background:var(--surface);border-radius:20px;width:100%;max-width:520px;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);max-height:calc(100svh - 40px);overflow-y:auto;padding:24px 20px;box-sizing:border-box">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-        <div style="font-size:18px;font-weight:800">✏️ Endre tjeneste</div>
-        <button onclick="document.getElementById('edit-svc-overlay').remove()" style="background:var(--surface2);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--muted)">✕</button>
-      </div>
-      <div class="form-group"><label class="form-label">Tittel</label>
-        <input id="es-title" class="form-input" type="text" value="${(s.title||'').replace(/"/g,'&quot;')}"></div>
-      <div class="form-group"><label class="form-label">Beskrivelse</label>
-        <textarea id="es-desc" class="form-textarea" rows="4">${s.description||''}</textarea></div>
-      <div class="form-group"><label class="form-label">Pris (kr)</label>
-        <input id="es-price" class="form-input" type="number" value="${s.price||350}" min="0" max="50000"></div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="saveServiceEdits('${s.id}')" style="flex:1;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">💾 Lagre</button>
-        <button onclick="if(confirm(NE('Slette tjenesten permanent?','Delete the service permanently?'))) deleteService('${s.id}')" style="background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.3);color:var(--red);border-radius:12px;padding:14px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">🗑️</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+  if(s.user_id !== currentUser?.id) { showToast(NE('⚠️ Du kan bare endre dine egne tjenester','⚠️ You can only edit your own services')); return; }
+  // Lukk evt. åpne paneler før vi åpner redigeringsskjemaet
+  try { closeServicePanel(); } catch(e) {}
+  try { closePanel(); } catch(e) {}
+  const mq = document.getElementById('myquests-panel'); if(mq) mq.style.display = 'none';
+  openServiceEditModal(s);
 }
 
-async function saveServiceEdits(serviceId) {
-  const title = document.getElementById('es-title')?.value?.trim();
-  const description = document.getElementById('es-desc')?.value?.trim();
-  const price = parseInt(document.getElementById('es-price')?.value) || 0;
-  if(!title) { showToast(NE('⚠️ Tittel kan ikke være tom',"⚠️ Title can't be empty")); return; }
-  const { error } = await sb.from('services').update({ title, description, price }).eq('id', serviceId);
-  if(error) { showToast('❌ ' + error.message); return; }
-  document.getElementById('edit-svc-overlay')?.remove();
-  showToast(NE('✅ Tjeneste oppdatert!','✅ Service updated!'));
-  await addMarkers();
-  if(document.getElementById('myquests-panel')?.style.display === 'block' && document.getElementById('act-side-tjenester')?.style.display !== 'none') renderTilbud();
+// Åpner hele «Tilby tjeneste»-skjemaet i redigeringsmodus, forhåndsutfylt.
+function openServiceEditModal(s) {
+  window._editingServiceId = s.id;
+  applyMinorUIRestrictions();
+  prefillServiceForm(s);
+  const overlay = document.getElementById('service-modal-overlay');
+  const titleEl = overlay ? overlay.querySelector('.modal-title, #service-modal-title') : null;
+  if(titleEl) titleEl.textContent = NE('✏️ Endre tjeneste','✏️ Edit service');
+  const pubBtn = document.getElementById('svc-publish-btn');
+  if(pubBtn) pubBtn.innerHTML = '<span>' + NE('💾 Lagre endringer','💾 Save changes') + '</span>';
+  if(overlay) overlay.style.display = 'flex';
+  updateSvcPreview();
+}
+
+function prefillServiceForm(s) {
+  const setVal = (id,v) => { const el = document.getElementById(id); if(el) el.value = (v==null?'':v); };
+  setVal('svc-title', s.title);
+
+  // Beskrivelse: fjern auto-tilføyd utstyr-suffiks så det ikke dobles
+  let desc = s.description || '';
+  let equip = 'own';
+  const em = desc.match(/\n\n(🔧 Har eget utstyr – tar med alt|🏠 Kunden skaffer utstyr)$/s);
+  if(em) { equip = em[1].indexOf('🏠') === 0 ? 'customer' : 'own'; desc = desc.slice(0, em.index); }
+  setVal('svc-desc', desc);
+  try { setSvcEquipment(equip); } catch(e) {}
+
+  const cat = document.getElementById('svc-category');
+  if(cat && s.category) cat.value = s.category;
+
+  // Adresse + koordinater
+  svcLat = s.lat; svcLng = s.lng; svcAddress = s.address || null; svcArea = s.area || null;
+  setVal('svc-address-input', s.address || '');
+  const ac = document.getElementById('svc-address-confirmed');
+  const act = document.getElementById('svc-address-confirmed-text');
+  if(s.address && ac && act) { ac.style.display = 'block'; act.textContent = s.address; }
+  else if(ac) { ac.style.display = 'none'; }
+
+  // Pris + pristype
+  setVal('svc-price', s.price);
+  const pd = document.getElementById('svc-price-display'); if(pd) pd.textContent = String(s.price ?? '');
+  const pt = document.getElementById('svc-price-type'); if(pt && s.price_type) pt.value = s.price_type;
+
+  // Fast avtale-toggle + info
+  const rt = document.getElementById('svc-recurring-toggle');
+  const rg = document.getElementById('svc-recurring-info-group');
+  if(rt) rt.classList.toggle('on', !!s.is_recurring);
+  if(rg) rg.style.display = s.is_recurring ? 'block' : 'none';
+  setVal('svc-recurring-info', s.recurring_info || '');
+
+  // Bilde: vis eksisterende
+  const ii = document.getElementById('svc-image-input'); if(ii) ii.value = '';
+  const prev = document.getElementById('svc-image-preview');
+  const pimg = document.getElementById('svc-preview-img');
+  const ph = document.getElementById('svc-upload-placeholder');
+  if(s.image_url && prev && pimg) { pimg.src = s.image_url; prev.style.display = 'block'; if(ph) ph.style.display = 'none'; }
+  else if(prev) { prev.style.display = 'none'; if(ph) ph.style.display = 'block'; }
 }
 
 async function deleteService(serviceId) {
@@ -11153,8 +11180,14 @@ async function bookingConfirmReceived(id) {
 
 function openServiceModal() {
   if(!currentUser) { openAuth('login'); return; }
+  window._editingServiceId = null;
+  const overlay = document.getElementById('service-modal-overlay');
+  const titleEl = overlay ? overlay.querySelector('.modal-title, #service-modal-title') : null;
+  if(titleEl) titleEl.textContent = NE('🏪 Tilby en tjeneste','🏪 Offer a service');
+  const pubBtn = document.getElementById('svc-publish-btn');
+  if(pubBtn) pubBtn.innerHTML = NE('🏪 Publiser tjeneste','🏪 Publish service');
   applyMinorUIRestrictions();
-  document.getElementById('service-modal-overlay').style.display = 'flex';
+  overlay.style.display = 'flex';
   updateSvcPreview();
 }
 function closeServiceModal() {
@@ -11274,6 +11307,36 @@ async function postService() {
 
   const authUser = await requireSession();
   if(!authUser) return;
+
+  // ── REDIGERINGSMODUS ──────────────────────────────────────────────────────
+  if(window._editingServiceId) {
+    const editId = window._editingServiceId;
+    const { error: updErr } = await sb.from('services').update({
+      title, description: svcFullDesc, category, price, price_type: priceType,
+      is_recurring: isRecurring, recurring_info: recurringInfo || null,
+      lat, lng, address: svcAddress || null, area: svcArea || null
+    }).eq('id', editId).select().single();
+    if(updErr) { showToast('❌ ' + updErr.message); return; }
+    // Nytt bilde valgt? Last opp.
+    const imgInputE = document.getElementById('svc-image-input');
+    if(imgInputE?.files[0]) {
+      const file = imgInputE.files[0];
+      let blob = file, ctype = file.type || 'image/jpeg', ext = (file.name.split('.').pop()||'jpg');
+      try { blob = await compressUploadImage(file); ext='jpg'; ctype='image/jpeg'; } catch(e){}
+      const { error: upErr } = await sb.storage.from('quest-images').upload(`svc-${editId}.${ext}`, blob, { upsert:true, contentType:ctype });
+      if(!upErr) {
+        const { data: urlData } = sb.storage.from('quest-images').getPublicUrl(`svc-${editId}.${ext}`);
+        if(urlData?.publicUrl) await sb.from('services').update({ image_url: urlData.publicUrl }).eq('id', editId);
+      }
+    }
+    window._editingServiceId = null;
+    closeServiceModal();
+    showToast(NE('✅ Tjeneste oppdatert!','✅ Service updated!'));
+    await addMarkers();
+    try { if(document.getElementById('myquests-panel')?.style.display === 'block') renderTilbud(); } catch(e){}
+    resetServiceForm();
+    return;
+  }
 
   // status settes eksplisitt: addMarkers() henter kun status='active', så en
   // annen DB-default ville gjort nye tjenester usynlige etter refresh
@@ -13129,7 +13192,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 <div id="service-modal-overlay" onclick="if(event.target===this)closeServiceModal()" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);align-items:center;justify-content:center">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;width:440px;max-width:95vw;max-height:90vh;max-height:90svh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:popIn .2s ease">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
-      <div style="font-size:18px;font-weight:700" data-en="🏪 Offer a service">🏪 Tilby en tjeneste</div>
+      <div id="service-modal-title" style="font-size:18px;font-weight:700" data-en="🏪 Offer a service">🏪 Tilby en tjeneste</div>
       <button onclick="closeServiceModal()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer">×</button>
     </div>
 
@@ -13255,7 +13318,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     <div class="disclaimer">
       <strong data-en="Important:">Viktig:</strong> <span data-en="As a provider you are responsible for the quality of the service. All payment happens directly between you and the customer (Vipps or another agreed method).">Som tilbyder er du selv ansvarlig for kvaliteten på tjenesten. All betaling skjer direkte mellom deg og kunden (Vipps eller annen avtalt metode).</span> <a href="/skatt.html" target="_blank" style="color:var(--muted);text-decoration:underline" data-en="Tax &amp; settlement">Skatt og oppgjør</a>
     </div>
-    <button onclick="postService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#7c5cfc);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)" data-en="🏪 Publish service">
+    <button id="svc-publish-btn" onclick="postService()" style="width:100%;background:linear-gradient(135deg,#a855f7,#7c5cfc);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;transition:all .15s;box-shadow:0 3px 14px rgba(168,85,247,0.3)" data-en="🏪 Publish service">
       🏪 Publiser tjeneste
     </button>
   </div>
