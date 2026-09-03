@@ -4716,7 +4716,18 @@ function showPanel(job) {
       if(!stillSame || !myConv) return;
       if(acceptLbl) acceptLbl.textContent = NE('💬 Åpne chatten','💬 Open the chat');
       if(applyBtnEl) applyBtnEl.onclick = () => { const cid = myConv.id; closePanel(); openChat(cid, job.title || NE('Oppdrag','Task')); };
-      if(qBtnEl) qBtnEl.style.display = 'none';
+      // Spørsmål-knappen gjenbrukes som «Trekk tilbake» når henvendelsen ennå ikke er besvart
+      if(qBtnEl) {
+        if(myConv.status === 'pending') {
+          qBtnEl.style.display = 'block';
+          qBtnEl.innerHTML = '↩️ <span>' + NE('Trekk tilbake søknaden','Withdraw application') + '</span>';
+          qBtnEl.onclick = () => withdrawApplication(myConv.id);
+          qBtnEl.style.borderColor = 'rgba(229,57,53,0.28)';
+          qBtnEl.style.color = 'var(--red,#e53935)';
+        } else {
+          qBtnEl.style.display = 'none';
+        }
+      }
       if(applyHintEl) { applyHintEl.textContent = NE('Du har allerede søkt – åpne chatten for å avtale detaljer.','You have already applied – open the chat to sort out details.'); applyHintEl.style.display = 'block'; }
     });
   }
@@ -5195,6 +5206,30 @@ async function askQuestionOnQuest(){
   closePanel();
   showToast(NE('💬 Chat åpnet – still spørsmålet ditt! Oppdraget er fortsatt åpent for andre.','💬 Chat opened – ask away! The task is still open to others.'));
   openChat(conv.id, p?.dataset?.questTitle || NE('Oppdrag','Task'));
+}
+
+// Trekk tilbake en søknad/henvendelse som ennå ikke er besvart (status 'pending').
+// Går via SECURITY DEFINER-RPC (RLS har ingen DELETE-policy på conversations).
+async function withdrawApplication(convId, opts) {
+  opts = opts || {};
+  if(!currentUser) { openAuth('login'); return; }
+  const msg = opts.isService
+    ? NE('Trekke tilbake henvendelsen til tilbyderen?','Withdraw your enquiry to the provider?')
+    : NE('Trekke tilbake søknaden på oppdraget?','Withdraw your application for this task?');
+  if(!confirm(msg)) return;
+  const authUser = await requireSession();
+  if(!authUser) return;
+  const { data, error } = await sb.rpc('withdraw_application', { p_conversation_id: convId });
+  if(error) { showToast('❌ ' + error.message); return; }
+  if(data === 'not_pending') { showToast(NE('⚠️ Kan ikke trekkes – henvendelsen er allerede besvart','⚠️ Cannot withdraw – it has already been answered')); return; }
+  if(data === 'not_found') { showToast(NE('⚠️ Fant ikke henvendelsen','⚠️ Enquiry not found')); return; }
+  showToast(NE('↩️ Trukket tilbake','↩️ Withdrawn'));
+  try { closePanel(); } catch(e){}
+  try { closeServicePanel(); } catch(e){}
+  try { closeChat(); } catch(e){}
+  try { await addMarkers(); } catch(e){}
+  try { if(document.getElementById('myquests-panel')?.style.display === 'block') loadMyQuests(); } catch(e){}
+  try { if(typeof renderTilbud === 'function' && document.getElementById('myquests-panel')?.style.display === 'block') renderTilbud(); } catch(e){}
 }
 
 async function applyJob() {
@@ -8628,6 +8663,7 @@ async function loadMyQuests() {
             ${c.status === 'pending' ? `<div style="display:flex;align-items:center;gap:8px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.22);border-radius:8px;padding:11px 12px;margin-bottom:10px;font-size:12.5px;color:#d97a30;font-weight:700">⏳ Venter på svar fra oppdragsgiver</div>` : ''}
             <div style="display:flex;gap:8px">
               <button onclick="window._chatOtherName='Oppdragsgiver';openChat('${c.id}','${safeTitle}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">💬 Chat</button>
+              ${c.status === 'pending' ? `<button onclick="withdrawApplication('${c.id}')" style="background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.28);border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--red,#e53935)">↩️ ${NE('Trekk','Withdraw')}</button>` : ''}
             </div>
           `}
         </div>
@@ -10189,6 +10225,35 @@ function showServicePanel(svc) {
   if(svcCtaGroup) svcCtaGroup.style.display = isOwnService ? 'none' : 'block';
   if(svcEditBtn) svcEditBtn.style.display = isOwnService ? 'block' : 'none';
 
+  // Rydd bort ev. «allerede kontaktet»-rad fra et tidligere åpnet panel
+  document.getElementById('service-existing-chat')?.remove();
+  // Har kunden allerede en samtale om denne tjenesten? Da vis «Åpne chat» + evt. trekk.
+  if(!isOwnService && currentUser && svc.raw?.id) {
+    sb.from('conversations').select('id,status').eq('service_id', svc.raw.id).eq('giver_id', currentUser.id).limit(1)
+      .then(({ data: rows }) => {
+        const myConv = rows && rows[0];
+        if(!myConv) return;
+        if(activeService?.raw?.id !== svc.raw.id) return; // panelet byttet i mellomtiden
+        if(svcCtaGroup) svcCtaGroup.style.display = 'none';
+        const box = document.createElement('div');
+        box.id = 'service-existing-chat';
+        box.style.cssText = 'padding:0 16px 12px';
+        const pending = myConv.status === 'pending';
+        const infoTxt = pending ? NE('Du har sendt en henvendelse','You have sent an enquiry') : NE('Du har en aktiv chat om denne tjenesten','You have an active chat about this service');
+        const withdrawBtnHtml = pending
+          ? '<button style="width:100%;margin-top:8px;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.28);color:var(--red,#e53935);border-radius:12px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">↩️ ' + NE('Trekk tilbake henvendelsen','Withdraw enquiry') + '</button>'
+          : '';
+        box.innerHTML =
+          '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-align:center">' + infoTxt + '</div>' +
+          '<button style="width:100%;background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">💬 ' + NE('Åpne chatten','Open the chat') + '</button>' +
+          withdrawBtnHtml;
+        const btns = box.querySelectorAll('button');
+        btns[0].onclick = () => { closeServicePanel(); window._chatOtherName = svc.provider?.name || 'Tilbyder'; openChat(myConv.id, svc.title); };
+        if(pending && btns[1]) btns[1].onclick = () => withdrawApplication(myConv.id, { isService:true });
+        if(svcCtaGroup && svcCtaGroup.parentNode) svcCtaGroup.parentNode.insertBefore(box, svcCtaGroup);
+      });
+  }
+
   // Tags
   document.getElementById('service-tags').innerHTML = [
     svc.category,
@@ -10775,7 +10840,7 @@ function bookingCard(b, nameMap, sessions) {
          <button onclick="confirmBooking('${b.id}')" style="width:100%;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px">✓ Bekreft avtale</button>
          <div style="display:flex;gap:8px;margin-top:8px">${chatBtn}<button onclick="declineBooking('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.1);border:1px solid rgba(229,57,53,0.2);color:var(--red);border-radius:8px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Avslå</button></div>`
       : `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.5"><span>⏳</span><div>Venter på at ${otherName} bekrefter tid og pris.</div></div>
-         <div style="display:flex;gap:8px;margin-top:12px">${chatBtn}</div>`;
+         <div style="display:flex;gap:8px;margin-top:12px">${chatBtn}<button onclick="withdrawBooking('${b.id}')" style="flex:0 0 auto;background:rgba(229,57,53,0.08);border:1px solid rgba(229,57,53,0.28);color:var(--red,#e53935);border-radius:8px;padding:11px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">↩️ ${NE('Trekk','Withdraw')}</button></div>`;
   } else if(b.status === 'confirmed') {
     const tracker = completionTracker(paid, false);
     if(isProvider) {
@@ -11153,6 +11218,18 @@ async function declineBooking(id) {
     link_id: id
   });
   showToast(NE('Forespørsel avslått','Request declined'));
+  loadBookings();
+}
+
+async function withdrawBooking(id) {
+  if(!confirm(NE('Trekke tilbake forespørselen?','Withdraw this request?'))) return;
+  const { data: b } = await sb.from('bookings').select('provider_id, customer_id, status, service:service_id(title)').eq('id', id).single();
+  if(!b || b.customer_id !== currentUser?.id) return;
+  if(b.status !== 'requested') { showToast(NE('⚠️ Kan ikke trekkes – allerede besvart','⚠️ Cannot withdraw – already answered')); return; }
+  const { error } = await sb.from('bookings').update({ status: 'cancelled' }).eq('id', id).select();
+  if(error) { showToast('❌ ' + error.message); return; }
+  try { await notifyUser({ user_id: b.provider_id, type: 'booking_cancelled', title: NE('Forespørsel trukket','Request withdrawn'), body: NE('Kunden trakk forespørselen om «','The customer withdrew the request for «') + (b.service?.title || '') + '».', link_id: id }); } catch(e){}
+  showToast(NE('↩️ Forespørsel trukket tilbake','↩️ Request withdrawn'));
   loadBookings();
 }
 
