@@ -1326,7 +1326,10 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
     margin: 0 !important;
     border: none !important;
     border-radius: 22px 22px 0 0 !important;
-    max-height: calc(100svh - 150px);
+    /* Toppen av arket må stoppe under mobil-søk (bunn ~118px) + chips-raden
+       (top:120px, ~45px høy → bunn ~165px). bottom:60px + denne max-height
+       gir arkets topp ≥ ~170px fra viewport-toppen. */
+    max-height: calc(100svh - 230px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
