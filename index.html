@@ -8486,7 +8486,13 @@ async function registerPushNotifications() {
 
     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
     const { getMessaging, getToken, isSupported } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
-    if(!(await isSupported())) return;
+    if(!(await isSupported())) {
+      // Måling: hvor mange Android-brukere kjører TWA-en i en nettleser uten
+      // FCM-støtte (typisk Samsung Internet som standard)? Avgjør om vi tar
+      // Bubblewrap-prosjektet for å tvinge Chrome.
+      try { logEvent('push_web_unsupported', { ua: String(navigator.userAgent).slice(0,120) }); } catch(e) {}
+      return;
+    }
 
     if(!window._fbApp) window._fbApp = initializeApp(FIREBASE_CONFIG);
     const messaging = getMessaging(window._fbApp);
