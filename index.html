@@ -8314,7 +8314,14 @@ async function toggleNotifications() {
   const isOpen = notifPanel.style.display !== 'none';
   closeInbox();   // lukk innboks-panelet hvis det er åpent
   notifPanel.style.display = isOpen ? 'none' : 'block';
-  if(!isOpen) await loadNotifications();
+  if(!isOpen) {
+    // Brukerhandling: riktig øyeblikk å be om push-tillatelse (kreves av
+    // Samsung Internet, som auto-blokkerer forespørsler uten klikk).
+    if('Notification' in window && Notification.permission === 'default') {
+      try { registerPushNotifications(true); } catch(e) {}
+    }
+    await loadNotifications();
+  }
 }
 function closeNotifications() {
   document.getElementById('notif-panel').style.display = 'none';
@@ -8471,7 +8478,7 @@ const FCM_VAPID_KEY = 'BIthe85x2rirxKf8ogfxxOMeitXE7vXQ01wSLkTGetw8FcwUgsQVjVrGa
 // (typisk Samsung Internet). Privat nøkkel ligger som secret i send-push.
 const WEBPUSH_VAPID_PUBLIC_KEY = 'BPFcXH6gQQDf-F3KBx9789c-SEqu-QXbk3lwhx35ZVz9vt7fdKho16wmUOYmE5BagBDUUNl4oUnjv7a66YjBoi4';
 
-async function registerPushNotifications() {
+async function registerPushNotifications(fromGesture = false) {
   if(!currentUser) return;
   // iOS-appen har egen native bru og mangler PushManager – hopp over der.
   if(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers['push-permission-request']) return;
@@ -8479,7 +8486,14 @@ async function registerPushNotifications() {
   try {
     const reg = await navigator.serviceWorker.ready;
 
-    const permission = await Notification.requestPermission();
+    // VIKTIG: requestPermission() uten brukerhandling blir auto-avvist og LÅST
+    // («Midlertidig blokkert») i Samsung Internet. Ved innlasting fortsetter vi
+    // derfor bare hvis tillatelsen alt er gitt; selve spørsmålet stilles først
+    // fra en ekte brukerhandling (bjella → toggleNotifications).
+    if(Notification.permission === 'default' && !fromGesture) return;
+    const permission = Notification.permission === 'granted'
+      ? 'granted'
+      : await Notification.requestPermission();
     if(permission !== 'granted') return;
 
     // Rydd bort abonnement fra gammel versjon (ubrukelig VAPID-nøkkel).
