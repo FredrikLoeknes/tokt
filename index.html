@@ -436,6 +436,7 @@ body.dark .lv-catrow::-webkit-scrollbar-track, body.dark .lv-sortrow::-webkit-sc
 .lv-tag-mine { background:rgba(168,85,247,.16); color:#a855f7; }
 .lv-tag-work { background:rgba(20,184,166,.16); color:#14b8a6; }
 .lv-tag-app { background:rgba(245,158,11,.16); color:var(--orange); }
+.lv-tag-chat { background:rgba(232,67,147,.14); color:var(--accent); }
 .lv-price { font-size:13.5px; font-weight:800; text-align:right; flex-shrink:0; }
 .lv-recbadge {
   position:absolute; top:10px; right:14px; font-size:9px; font-weight:800;
@@ -3549,7 +3550,7 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
     : type === 'service' ? 'service'
     : '';
 
-  const ownerClass = ownership === 'mine' ? 'mine' : ownership === 'working' ? 'working' : ownership === 'applied' ? 'applied' : '';
+  const ownerClass = ownership === 'mine' ? 'mine' : ownership === 'working' ? 'working' : ownership === 'applied' ? 'applied' : ownership === 'chatting' ? 'chatting' : '';
   const pausedClass = paused ? 'paused' : '';
   const displayIcon = expired ? '⏰' : icon;
   const _mkKey = expired ? null : catKeyFromEmoji(displayIcon);
@@ -3562,6 +3563,7 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
   const badge = taken ? `<div class="qp-badge">✓ ${NE('Tatt','Taken')}</div>`
     : paused ? `<div class="qp-badge">⏸ ${NE('Pauset','Paused')}</div>`
     : ownership === 'applied' ? `<div class="qp-badge">✓ ${NE('Søkt','Applied')}</div>`
+    : ownership === 'chatting' ? `<div class="qp-badge">💬 ${NE('Chat','Chat')}</div>`
     : ownership === 'mine' ? `<div class="qp-badge">👑 ${NE('Mitt','Mine')}</div>`
     : ownership === 'working' ? `<div class="qp-badge">🔨 ${NE('Jobber','Working')}</div>`
     : '';
@@ -3651,6 +3653,7 @@ function addQuestMarker(q) {
     if(q.user_id && q.user_id === currentUser.id) ownership = 'mine';
     else if(window._workingQuestIds && window._workingQuestIds.has(q.id)) ownership = 'working';
     else if(window._appliedQuestIds && window._appliedQuestIds.has(q.id)) ownership = 'applied';
+    else if(window._chattingQuestIds && window._chattingQuestIds.has(q.id)) ownership = 'chatting';
   }
   const el = createMarkerEl({
     type: job.type,
@@ -3797,16 +3800,18 @@ async function addMarkers() {
   // This only affects the logged-in user's own view of the map.
   window._workingQuestIds = new Set();
   window._appliedQuestIds = new Set();
+  window._chattingQuestIds = new Set(); // åpen spørsmåls-chat uten søknad → 💬-badge, IKKE «Søkt»
   const involvedIds = new Set(); // oppdrag brukeren er part i via samtale
   if(currentUser) {
     const { data: myConvs } = await sb.from('conversations')
-      .select('quest_id, status').eq('taker_id', currentUser.id).in('status', ['pending', 'accepted']);
+      .select('quest_id, status, is_question').eq('taker_id', currentUser.id).in('status', ['pending', 'accepted']);
     if(stale()) return;
     (myConvs || []).forEach(c => {
       if(!c.quest_id) return;
       involvedIds.add(c.quest_id);
       if(c.status === 'accepted') window._workingQuestIds.add(c.quest_id);
-      else if(c.status === 'pending') window._appliedQuestIds.add(c.quest_id);
+      else if(c.status === 'pending' && c.is_question === false) window._appliedQuestIds.add(c.quest_id);
+      else if(c.status === 'pending') window._chattingQuestIds.add(c.quest_id);
     });
   }
 
@@ -4143,6 +4148,7 @@ function glPinColors(typeClass, ownerClass) {
 function glPinBadge(spec) {
   if(spec.paused)                 return { txt: '⏸ ' + NE('Pauset','Paused'), bg: '#475569', fg: '#ffffff' };
   if(spec.ownerClass==='applied') return { txt: '✓ ' + NE('Søkt','Applied'), bg: _cssVar('--surface','#fff'), fg: _cssVar('--muted','#6f6e77') };
+  if(spec.ownerClass==='chatting') return { txt: '💬 ' + NE('Chat','Chat'), bg: _cssVar('--surface','#fff'), fg: _cssVar('--accent','#e84393') };
   if(spec.ownerClass==='mine')    return { txt: '👑 ' + NE('Mitt','Mine'), bg: '#f0a500', fg: '#241a00' };
   if(spec.ownerClass==='working') return { txt: '🔨 ' + NE('Jobber','Working'), bg: '#14a89b', fg: '#ffffff' };
   return null;
@@ -6243,6 +6249,7 @@ function renderListView() {
     else if(m.ownership === 'mine') tags.push('<span class="lv-tag lv-tag-mine">Mitt</span>');
     else if(m.ownership === 'working') tags.push('<span class="lv-tag lv-tag-work">Jobber på</span>');
     else if(m.ownership === 'applied') tags.push('<span class="lv-tag lv-tag-app">Søkt</span>');
+    else if(m.ownership === 'chatting') tags.push(`<span class="lv-tag lv-tag-chat">💬 ${NE('Chat','Chat')}</span>`);
     const tagsHtml = tags.length ? `<div class="lv-tags">${tags.join('')}</div>` : '';
     // Type-etikett PÅ thumben: HASTER > DUGNAD > TJENESTE > OPPDRAG
     const kindChip = isHaste ? `<span class="lv-kb haste">${NE('HASTER','URGENT')}</span>`
