@@ -8484,17 +8484,20 @@ async function registerPushNotifications(fromGesture = false) {
   if(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers['push-permission-request']) return;
   if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
   try {
-    const reg = await navigator.serviceWorker.ready;
-
     // VIKTIG: requestPermission() uten brukerhandling blir auto-avvist og LÅST
     // («Midlertidig blokkert») i Samsung Internet. Ved innlasting fortsetter vi
     // derfor bare hvis tillatelsen alt er gitt; selve spørsmålet stilles først
     // fra en ekte brukerhandling (bjella → toggleNotifications).
+    // Spørsmålet MÅ stilles før noen await-er – ellers er klikk-godkjenningen
+    // («user activation») brukt opp og forespørselen undertrykkes stille.
     if(Notification.permission === 'default' && !fromGesture) return;
     const permission = Notification.permission === 'granted'
       ? 'granted'
       : await Notification.requestPermission();
+    try { if(fromGesture) logEvent('push_perm_result', { p: permission }); } catch(e) {}
     if(permission !== 'granted') return;
+
+    const reg = await navigator.serviceWorker.ready;
 
     // Rydd bort abonnement fra gammel versjon (ubrukelig VAPID-nøkkel).
     // Uten dette feiler getToken med «applicationServerKey mismatch».
