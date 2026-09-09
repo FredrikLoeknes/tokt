@@ -5343,6 +5343,8 @@ async function withdrawApplication(convId, opts) {
 
 async function applyJob() {
   if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å søke på oppdrag','👋 Log in to apply for tasks')); return; }
+  // Gyldig sesjon FØR skriving – utløpt token gir ellers stille RLS-feil (jf. Linnea-saken)
+  if(!(await requireSession())) return;
 
   const applyPanel = document.getElementById('job-panel');
   const questId = applyPanel?.dataset?.questId;
@@ -5440,7 +5442,11 @@ async function applyJob() {
     status: 'pending'
   }).select().single();
 
-  if(error) { showToast(NE('❌ Feil: ','❌ Error: ') + error.message); return; }
+  if(error) {
+    logEvent('apply_error', { quest: questId, msg: String(error.message||'').slice(0,180) });
+    showToast(NE('❌ Søknaden ble ikke sendt: ','❌ Application not sent: ') + error.message);
+    return;
+  }
 
   logEvent('quest_applied');
   closePanel();
