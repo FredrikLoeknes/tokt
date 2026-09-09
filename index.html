@@ -762,6 +762,17 @@ body.map-zoomed-out .mapbox-marker .qp-name { display:none; }
 .tag { font-size:10px; font-weight:600; padding:2px 7px; border-radius:50px; background:var(--surface2); color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
 .tag.haste-tag { background:rgba(229,57,53,0.1); color:var(--red); }
 .tag.charity-tag { background:rgba(15,169,104,0.1); color:var(--green); }
+/* Pristype-velger (Fast pris / Avtales / God gjerning) */
+.ptype-row { display:flex; gap:8px; }
+.ptype-btn { flex:1; border:1.5px solid var(--border); background:var(--surface2); border-radius:11px; padding:9px 4px; font-family:inherit; font-size:11.5px; font-weight:700; color:var(--muted); cursor:pointer; line-height:1.3; transition:.15s; text-align:center; }
+.ptype-btn .pt-ic { display:block; font-size:16px; margin-bottom:2px; }
+.ptype-btn.active { border-color:var(--accent); background:var(--accent-glow); color:var(--text); }
+.ptype-btn.active.gd { border-color:var(--green); background:rgba(15,169,104,0.08); }
+.lowprice-guide { display:none; gap:9px; background:rgba(224,140,11,0.08); border:1px solid rgba(224,140,11,0.3); border-radius:10px; padding:11px 12px; font-size:12px; line-height:1.55; margin-top:10px; color:var(--t-warn); }
+.lowprice-guide .lg-btns { margin-top:7px; display:flex; gap:7px; flex-wrap:wrap; }
+.lowprice-guide .lg-btns button { border:none; border-radius:8px; padding:7px 11px; font-family:inherit; font-size:11.5px; font-weight:800; cursor:pointer; }
+.lg-neg { background:var(--surface); border:1px solid rgba(224,140,11,0.4) !important; color:var(--t-warn); }
+.lg-gd { background:rgba(15,169,104,0.12); color:var(--green); }
 
 .panel-body { padding:14px 16px; }
 .popup-desc { font-size:13.5px; color:var(--text); opacity:.85; line-height:1.6; margin-bottom:14px; }
@@ -1640,7 +1651,7 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
   <button style="pointer-events:auto" class="vt-btn" id="vt-quests" data-vm="quests" onclick="setViewMode('quests')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 10h6M9 14h6M9 18h4"/></svg><span data-en="Quests">Oppdrag</span><span class="vt-cnt" id="vt-cnt-quests" style="display:none"></span></button>
   <button style="pointer-events:auto" class="vt-btn" id="vt-services" data-vm="services" onclick="setViewMode('services')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-4h14l1 4"/><path d="M4 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 11v8h14v-8"/><path d="M9 19v-4h4v4"/></svg><span data-en="Offers">Tilbud</span><span class="vt-cnt" id="vt-cnt-services" style="display:none"></span></button>
   <button style="pointer-events:auto" class="vt-btn" id="vt-haste" data-vm="haste" onclick="setViewMode('haste')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg><span data-en="Urgent">Haster</span><span class="vt-cnt" id="vt-cnt-haste" style="display:none"></span></button>
-  <button style="pointer-events:auto" class="vt-btn" id="vt-dugnad" data-vm="dugnad" onclick="setViewMode('dugnad')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><span data-en="Volunteer">Dugnad</span><span class="vt-cnt" id="vt-cnt-dugnad" style="display:none"></span></button>
+  <button style="pointer-events:auto" class="vt-btn" id="vt-dugnad" data-vm="dugnad" onclick="setViewMode('dugnad')"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><span data-en="Good deed">God gjerning</span><span class="vt-cnt" id="vt-cnt-dugnad" style="display:none"></span></button>
   <button style="pointer-events:auto" class="vt-btn" id="vt-filter" onclick="openFilters()"><svg class="pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span data-en="Filter">Filter</span><span id="vt-filter-count" style="display:none;background:var(--accent);color:#fff;border-radius:50px;padding:1px 6px;font-size:9.5px;font-weight:800"></span></button>
 </div>
 
@@ -1870,8 +1881,8 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
         </div>
         <div class="ftoggle-row">
           <div class="ftoggle-info">
-            <div class="ftoggle-label" id="tog-charity-label">💚 Veldedighetsoppdrag</div>
-            <div class="ftoggle-sub" id="tog-charity-sub">Tjen achievements gratis</div>
+            <div class="ftoggle-label" id="tog-charity-label">💚 God gjerning</div>
+            <div class="ftoggle-sub" id="tog-charity-sub">Gratis hjelp – gir achievement</div>
           </div>
           <div class="toggle" id="tog-charity" onclick="this.classList.toggle('on');updateFilterCount()"></div>
         </div>
@@ -2354,14 +2365,30 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
 
     <div class="form-group">
       <label class="form-label">Betaling</label>
+      <div class="ptype-row" style="margin-bottom:10px">
+        <button type="button" class="ptype-btn active" id="ptype-fixed" onclick="setPriceType('fixed')"><span class="pt-ic">💰</span><span data-en="Fixed price">Fast pris</span></button>
+        <button type="button" class="ptype-btn" id="ptype-negotiable" onclick="setPriceType('negotiable')"><span class="pt-ic">🤝</span><span data-en="Negotiable">Pris avtales</span></button>
+        <button type="button" class="ptype-btn" id="ptype-gooddeed" onclick="setPriceType('gooddeed')"><span class="pt-ic">💚</span><span data-en="Good deed">God gjerning</span></button>
+      </div>
+      <div id="ptype-fixed-fields">
       <div class="cost-display"><span id="modal-price-display">250</span> <small>kr</small></div>
       <input id="modal-price" type="number" min="0" max="50000" value="250"
-        oninput="document.getElementById('modal-price-display').textContent=this.value||0;updateQuestPreview()"
+        oninput="document.getElementById('modal-price-display').textContent=this.value||0;checkLowPriceGuide();updateQuestPreview()"
         style="width:100%;margin-top:8px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:15px;font-weight:600;font-family:inherit;outline:none"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
         placeholder="Skriv inn beløp…">
       <div class="cost-note">Høyere betaling = større markør på kartet</div>
       <div id="minor-price-note" style="display:none;font-size:11px;color:var(--muted);margin-top:4px">🔞 Maks 2 000 kr for brukere under 18 år.</div>
+      <div class="lowprice-guide" id="lowprice-guide"><span>💡</span>
+        <div><b data-en="50 kr or less?">Under 50 kr?</b> <span data-en="Small amounts make fewer people take the task. Pick one of these instead:">Små beløp gjør at færre tar oppdraget. Velg heller ett av disse:</span>
+          <div class="lg-btns">
+            <button type="button" class="lg-neg" onclick="setPriceType('negotiable')">🤝 <span data-en="Negotiable">Pris avtales</span></button>
+            <button type="button" class="lg-gd" onclick="setPriceType('gooddeed')">💚 <span data-en="Good deed">God gjerning</span></button>
+          </div>
+        </div>
+      </div>
+      </div>
+      <div id="ptype-neg-note" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;color:var(--muted);line-height:1.6" data-en="🤝 You agree on the price in chat. The task shows «Negotiable» on the map.">🤝 Dere blir enige om pris i chatten. Oppdraget vises med «Avtales» på kartet.</div>
     </div>
 
     <div class="form-group">
@@ -2386,16 +2413,12 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
         <div class="toggle on" onclick="this.classList.toggle('on')"></div>
       </div>
       <div class="toggle-row">
-        <div class="toggle-info"><div class="toggle-label">💚 Veldedighetsoppdrag</div><div class="toggle-sub">Gratis oppdrag – gir utfører et achievement</div></div>
-        <div class="toggle" id="charity-toggle" onclick="toggleCharity(this)"></div>
-      </div>
-      <div class="toggle-row">
         <div class="toggle-info"><div class="toggle-label">🔞 Krever 18 år</div><div class="toggle-sub">Skjuler oppdraget for brukere under 18 år</div></div>
         <div class="toggle" id="adult-toggle" onclick="toggleAdultReq(this)"></div>
       </div>
     </div>
     <div id="charity-note" style="display:none;background:rgba(15,169,104,0.08);border:1px solid rgba(15,169,104,0.25);border-radius:8px;padding:12px;font-size:12px;color:var(--green);margin-bottom:12px;line-height:1.6">
-      💚 <strong>Veldedighetsoppdrag:</strong> Betaling settes til 0 kr. Utfører gjør dette frivillig og får et spesielt achievement. Perfekt for å hjelpe andre som trenger det.
+      💚 <strong data-en="Good deed:">God gjerning:</strong> <span data-en="No payment – someone helps out voluntarily and earns a special achievement. Perfect when you need a helping hand.">Uten betaling – noen stiller opp frivillig og får et eget achievement. Perfekt når du trenger en hjelpende hånd.</span>
     </div>
     <div style="text-align:center;margin:8px 0 4px;font-size:11px;color:var(--muted)">
       Ved å publisere godtar du <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:underline">brukervilkårene</a>. Betal aldri forskudd. <a href="/skatt.html" target="_blank" style="color:var(--muted);text-decoration:underline" data-en="Tax &amp; settlement">Skatt og oppgjør</a>
@@ -2473,7 +2496,7 @@ const LANGUAGES = {
     sortNewest: '🆕 Nyeste', sortRated: '⭐ Best vurdert',
     // Show only toggles
     urgentLabel: '🔴 Hasteoppdragt', urgentSub: 'Vis kun røde prioritetsoppdrag',
-    charityLabel: '💚 Veldedighetsoppdrag', charitySub: 'Tjen achievements gratis',
+    charityLabel: '💚 God gjerning', charitySub: 'Gratis hjelp – gir achievement',
     firstComeLabel: '⚡ Kun førstemann til mølla', firstComeSub: 'Ingen godkjenning nødvendig',
     openLabel: '🟢 Kun ledige oppdrag', openSub: 'Skjul oppdrag som er tatt',
     // Filter sheet titles
@@ -2484,7 +2507,7 @@ const LANGUAGES = {
     showQuests: 'Vis', questsLabel: 'oppdrag',
     // Toggles
     urgentLabel: '🔴 Haste-oppdrag', urgentSub: 'Vis kun røde prioritetsoppdrag',
-    charityLabel: '💚 Veldedighetsoppdrag', charitySub: 'Tjen achievements gratis',
+    charityLabel: '💚 God gjerning', charitySub: 'Gratis hjelp – gir achievement',
     firstComeLabel: '⚡ Kun førstemann til mølla', firstComeSub: 'Ingen godkjenning nødvendig',
     openLabel: '🟢 Kun ledige oppdrag', openSub: 'Skjul oppdrag som er tatt',
     // Sort
@@ -2516,7 +2539,7 @@ const LANGUAGES = {
     modeNoteFirst: '⚡ Første søker tildeles automatisk. Bra for små raske oppdrag.',
     urgentToggle: '🔴 Hastemarkering (+100 kr)', urgentToggleSub: 'Rød pulserende markør med prioritet',
     locationToggle: '📍 Del posisjon under arbeid', locationToggleSub: 'Utfører deler posisjon i sanntid',
-    charityToggle: '💚 Veldedighetsoppdrag', charityToggleSub: 'Gir achievement til utfører',
+    charityToggle: '💚 God gjerning', charityToggleSub: 'Gir achievement til utfører',
     disclaimer: '<strong>Viktig:</strong> Tokt er kun en formidlingsplattform. Alt økonomisk oppgjør skjer direkte mellom oppdragsgiver og utfører (Vipps eller annen avtalt metode). Tokt er ikke part i avtalen og er ikke ansvarlig for kvalitet, skader eller tvister. Ved å publisere godtar du våre <u>brukervilkår</u>. Betal aldri forskudd til ukjente. Oppdrag over 10 000 kr krever signert kontrakt. Se også <a href="/skatt.html" target="_blank" style="color:var(--accent)">skatt og oppgjør</a>.',
     publishQuest: 'Publiser oppdrag',
     // Leaderboard
@@ -2621,7 +2644,7 @@ const LANGUAGES = {
     sortNewest: '🆕 Newest', sortRated: '⭐ Top rated',
     // Show only toggles
     urgentLabel: '🔴 Urgent quests', urgentSub: 'Only show red priority quests',
-    charityLabel: '💚 Charity quests', charitySub: 'Earn achievements for free',
+    charityLabel: '💚 Good deeds', charitySub: 'Free help – earns an achievement',
     firstComeLabel: '⚡ First come only', firstComeSub: 'No approval needed',
     openLabel: '🟢 Open quests only', openSub: 'Hide quests already taken',
     // Filter sheet titles
@@ -2631,7 +2654,7 @@ const LANGUAGES = {
     showOnlyTitle: 'Show only', sortByTitle: 'Sort by',
     showQuests: 'Show', questsLabel: 'quests',
     urgentLabel: '🔴 Urgent quests', urgentSub: 'Only show red priority quests',
-    charityLabel: '💚 Charity quests', charitySub: 'Earn achievements for free',
+    charityLabel: '💚 Good deeds', charitySub: 'Free help – earns an achievement',
     firstComeLabel: '⚡ First come only', firstComeSub: 'No approval needed',
     openLabel: '🟢 Open quests only', openSub: 'Hide quests already taken',
     sortRecommended: '✨ Recommended', sortNearest: '📍 Nearest', sortPay: '💰 Highest pay',
@@ -2660,7 +2683,7 @@ const LANGUAGES = {
     modeNoteFirst: '⚡ First applicant is auto-assigned. Great for small quick tasks.',
     urgentToggle: '🔴 Urgent quest (+100 kr)', urgentToggleSub: 'Red pulsing marker with priority',
     locationToggle: '📍 Live location sharing', locationToggleSub: 'Taker shares live position',
-    charityToggle: '💚 Charity quest', charityToggleSub: 'Earns taker a special achievement',
+    charityToggle: '💚 Good deed', charityToggleSub: 'Earns taker a special achievement',
     disclaimer: '<strong>Important:</strong> Tokt is a platform-only service. All payments are made directly between quest giver and taker (Vipps or another agreed method). Tokt is not party to any agreement and accepts no responsibility for quality, damages or disputes. By publishing you agree to our <u>terms of service</u>. Never pay strangers in advance. Quests over 10,000 NOK require a signed contract. See also <a href="/skatt.html" target="_blank" style="color:var(--accent)">tax &amp; settlement</a>.',
     publishQuest: 'Publiser oppdrag',
     lbTitle: 'Leaderboard',
@@ -3433,18 +3456,21 @@ function initMap() {
 
 function questToJob(q) {
   // Convert Supabase quest row to job display object
-  const type = q.is_urgent ? 'haste' : q.is_charity ? 'charity' : 'normal';
-  const prefix = q.is_urgent ? '🔴 ' : q.is_charity ? '💚 ' : '';
+  const qpt = questPriceTypeOf(q);
+  const type = q.is_urgent ? 'haste' : qpt === 'gooddeed' ? 'charity' : 'normal';
+  const prefix = q.is_urgent ? '🔴 ' : qpt === 'gooddeed' ? '💚 ' : '';
   return {
     id: q.id,
     type,
+    priceType: qpt,
     title: q.title,
-    label: prefix + q.title + ' · ' + q.pay + ' kr',
+    label: prefix + q.title + ' · ' + questPriceText(qpt, q.pay),
     tags: [
       { t: q.category || 'Annet' },
       { t: q.duration || '' },
       ...(q.is_urgent ? [{ t: '🔴 Haste', cls: 'haste-tag' }] : []),
-      ...(q.is_charity ? [{ t: '💚 Veldedighet', cls: 'charity-tag' }] : [])
+      ...(qpt === 'gooddeed' ? [{ t: '💚 ' + NE('God gjerning','Good deed'), cls: 'charity-tag' }] : []),
+      ...(qpt === 'negotiable' ? [{ t: '🤝 ' + NE('Pris avtales','Negotiable') }] : [])
     ].filter(t => t.t),
     desc: q.description || '',
     image: q.image_url || null,
@@ -3659,7 +3685,7 @@ function addQuestMarker(q) {
     type: job.type,
     icon: markerIcon({ category: q.category, title: q.title }),
     name: cleanName(q.title),
-    priceText: (q.is_charity ? 'Gratis' : (q.pay != null ? q.pay + ' kr' : '')),
+    priceText: questPriceText(questPriceTypeOf(q), q.pay),
     imageUrl: job.image || null,
     expired,
     paused,
@@ -3675,7 +3701,8 @@ function addQuestMarker(q) {
     matchText: ((q.category||'') + ' ' + (q.title||'')).toLowerCase(),
     pay: q.pay || 0,
     isUrgent: !!q.is_urgent,
-    isCharity: !!q.is_charity,
+    isCharity: questPriceTypeOf(q) === 'gooddeed',
+    priceType: questPriceTypeOf(q),
     isFirstCome: !!q.is_first_come,
     userId: q.user_id || null,
     createdAt: q.created_at || null,
@@ -3928,7 +3955,7 @@ function loadDemoMarkers() {
       type: job.type,
       icon: markerIcon({ category: job.category, title: job.title }),
       name: cleanName(job.title),
-      priceText: (job.type === 'charity' ? 'Gratis' : (job.pay != null ? job.pay + ' kr' : '')),
+      priceText: (job.type === 'charity' ? '💚 ' + NE('Gjerning','Good deed') : (job.pay != null ? job.pay + ' kr' : '')),
       imageUrl: job.image || null,
       onClick: () => showPanel(job)
     });
@@ -3941,6 +3968,7 @@ function loadDemoMarkers() {
       pay: job.pay || 0,
       isUrgent: job.type === 'haste',
       isCharity: job.type === 'charity',
+      priceType: job.type === 'charity' ? 'gooddeed' : 'fixed',
       isFirstCome: !!job.firstCome,
       userId: null,
       createdAt: null,
@@ -4792,12 +4820,13 @@ function showPanel(job) {
     document.getElementById('panel-desc').before(imgEl);
   }
   const L = LANGUAGES[currentLang];
-  const isCharityJob = job.type === 'charity' || job.pay === 0;
+  const jobPt = job.priceType || (job.type === 'charity' || job.pay === 0 ? 'gooddeed' : 'fixed');
+  const isCharityJob = jobPt === 'gooddeed';
   const distKm = getDistanceKm(window.userLngLat, job.coords);
   document.getElementById('panel-meta').innerHTML = `
     <div class="meta-price">
-      <span class="meta-price-val">${isCharityJob ? '💚 Gratis' : job.pay + ' kr'}</span>
-      <span class="meta-price-lbl">${isCharityJob ? 'veldedighet' : (L.rewardLabel||'Betaling').toLowerCase()}</span>
+      <span class="meta-price-val">${isCharityJob ? '💚 ' + NE('God gjerning','Good deed') : jobPt === 'negotiable' ? NE('Avtales','Negotiable') : job.pay + ' kr'}</span>
+      <span class="meta-price-lbl">${isCharityJob ? NE('uten betaling','no payment') : jobPt === 'negotiable' ? NE('pris avtales i chat','agreed in chat') : (L.rewardLabel||'Betaling').toLowerCase()}</span>
     </div>
     <div class="meta-stats">
       <div class="meta-item"><div class="meta-label">${L.distanceTitle||'Avstand'}</div><div class="meta-value">${formatDistance(distKm)}</div></div>
@@ -5458,7 +5487,8 @@ function resetQuestForm() {
   const ip=document.getElementById('image-preview'); if(ip) ip.style.display='none';
   const up=document.getElementById('upload-placeholder'); if(up) up.style.display='block';
   const ii=document.getElementById('quest-image-input'); if(ii) ii.value='';
-  const ch=document.getElementById('charity-toggle'); if(ch) ch.classList.remove('on');
+  try{setPriceType('fixed');}catch(e){}
+  const lg=document.getElementById('lowprice-guide'); if(lg) lg.style.display='none';
   const ut=document.querySelector('#modal .toggle'); if(ut) ut.classList.remove('on');
   try{setEquipment('provided');}catch(e){}
 }
@@ -5518,9 +5548,9 @@ function updateQuestPreview() {
   let price = parseInt(document.getElementById('modal-price')?.value, 10);
   if(isNaN(price)) price = 0;
   const urgentOn  = !!document.querySelector('#modal .toggle')?.classList.contains('on');
-  const charityOn = !!document.getElementById('charity-toggle')?.classList.contains('on');
+  const charityOn = questPriceType === 'gooddeed';
 
-  // colour mirrors questToJob: urgent → haste, else charity → charity
+  // colour mirrors questToJob: urgent → haste, else god gjerning → charity(grønn)
   const type = urgentOn ? 'haste' : charityOn ? 'charity' : 'normal';
   pin.className = 'quest-pin shape-circle' + (type === 'haste' ? ' haste' : type === 'charity' ? ' charity' : '');
 
@@ -5528,9 +5558,9 @@ function updateQuestPreview() {
   const iconEl = document.getElementById('qpreview-icon');
   if(iconEl) { const _k = catKeyFromString(cat); iconEl.innerHTML = _k ? catIconSvg(_k,{size:18,stroke:2}) : (firstEmoji(cat) || '✨'); }
 
-  // price mirrors postJob: charity → free, urgent → +100
+  // price mirrors postJob: gjerning/avtales → tekst, urgent → +100 på fast pris
   let payText;
-  if(charityOn) payText = 'Gratis';
+  if(questPriceType !== 'fixed') payText = questPriceText(questPriceType, 0);
   else { let pay = price; if(urgentOn) pay = Math.min(2000, pay + 100); payText = pay + ' kr'; }
   const coinEl = document.getElementById('qpreview-coin');
   if(coinEl) coinEl.textContent = payText;
@@ -5659,7 +5689,8 @@ async function _postJobInner() {
     : '🎒 Ta med eget utstyr' + (equipNote ? ': ' + equipNote : '');
   const fullDescription = description + (description ? '\n\n' : '') + equipText;
   const duration = document.getElementById('quest-duration-input')?.value || '';
-  const isCharity = document.getElementById('charity-toggle')?.classList.contains('on') || false;
+  const priceType = questPriceType;
+  const isCharity = priceType === 'gooddeed';
   const scheduleMode = document.getElementById('schedule-frist')?.classList.contains('active') ? 'frist'
     : document.getElementById('schedule-vindu')?.classList.contains('active') ? 'vindu'
     : 'any';
@@ -5694,9 +5725,16 @@ async function _postJobInner() {
   const isUrgent = document.querySelector('#modal .toggle')?.classList.contains('on') || false;
 
   let pay = parseInt(document.getElementById('modal-price')?.value) || 250;
-  if(isCharity) pay = 0;
-  if(isUrgent && !isCharity) pay = Math.min(2000, pay + 100);
-  if(isCurrentUserMinor()) pay = Math.min(pay, MINOR_MAX_PAY);
+  if(priceType !== 'fixed') pay = 0;
+  if(priceType === 'fixed' && pay <= 50) {
+    // Fast pris under 50 kr: vis veiviseren og la brukeren velge riktig type i stedet
+    checkLowPriceGuide();
+    document.getElementById('lowprice-guide')?.scrollIntoView({ behavior:'smooth', block:'center' });
+    showToast(NE('💡 Under 50 kr? Velg «Pris avtales» eller «God gjerning».','💡 50 kr or less? Pick «Negotiable» or «Good deed».'));
+    return;
+  }
+  if(isUrgent && priceType === 'fixed') pay = Math.min(2000, pay + 100);
+  if(isCurrentUserMinor() && priceType === 'fixed') pay = Math.min(pay, MINOR_MAX_PAY);
 
   // 18+-flagg: manuell avhuking, eller auto for tunge/sperrede kategorier
   const adultToggleEl = document.getElementById('adult-toggle');
@@ -5743,7 +5781,7 @@ async function _postJobInner() {
       window._editingQuestId = null; closeModal(); return;
     }
     const { error: updErr } = await sb.from('quests').update({
-      title, description: fullDescription, category, duration, pay,
+      title, description: fullDescription, category, duration, pay, price_type: priceType,
       is_urgent: isUrgent, is_charity: isCharity, is_first_come: isFirstCome,
       requires_adult: requiresAdult, scheduled_date: finalScheduledDate,
       scheduled_time_from: finalTimeFrom, scheduled_time_to: finalTimeTo,
@@ -5788,6 +5826,7 @@ async function _postJobInner() {
     category,
     duration,
     pay,
+    price_type: priceType,
     is_urgent: isUrgent,
     is_charity: isCharity,
     is_first_come: isFirstCome,
@@ -6236,11 +6275,13 @@ function renderListView() {
     const ver = m.verified ? ' ' + vchk : '';
     const rec = (sort === 'rec' && i === 0);
     const spec = m.el && m.el._pinSpec || {};
-    const isCharity = spec.typeClass === 'charity' || (!isSvc && !m.pay);
+    const isCharity = spec.typeClass === 'charity' || (!isSvc && m.priceType === 'gooddeed');
     const isHaste = spec.typeClass === 'haste';
-    const price = m.pay
-      ? `<span class="lv-pval">${m.pay} kr</span>`
-      : (isSvc ? '' : `<span class="lv-pval lv-pfree">Gratis</span>`);
+    const price = isSvc
+      ? (m.pay ? `<span class="lv-pval">${m.pay} kr</span>` : '')
+      : m.priceType === 'gooddeed' ? `<span class="lv-pval lv-pfree">💚 ${NE('God gjerning','Good deed')}</span>`
+      : m.priceType === 'negotiable' ? `<span class="lv-pval">🤝 ${NE('Avtales','Negotiable')}</span>`
+      : (m.pay ? `<span class="lv-pval">${m.pay} kr</span>` : '');
     const seeLabel = isSvc ? NE('Se tilbyder →','See provider →') : NE('Se oppdrag →','See task →');
     const tags = [];
     if(m.isDemo) tags.push('<span class="lv-tag" style="background:rgba(240,165,0,0.12);color:var(--gold);border:1px solid rgba(240,165,0,0.3)">🧪 ' + NE('Eksempel','Example') + '</span>');
@@ -6253,7 +6294,7 @@ function renderListView() {
     const tagsHtml = tags.length ? `<div class="lv-tags">${tags.join('')}</div>` : '';
     // Type-etikett PÅ thumben: HASTER > DUGNAD > TJENESTE > OPPDRAG
     const kindChip = isHaste ? `<span class="lv-kb haste">${NE('HASTER','URGENT')}</span>`
-                  : isCharity ? `<span class="lv-kb dugnad">${NE('DUGNAD','VOLUNTEER')}</span>`
+                  : isCharity ? `<span class="lv-kb dugnad">${NE('GJERNING','GOOD DEED')}</span>`
                   : isSvc ? `<span class="lv-kb svc">${NE('TJENESTE','SERVICE')}</span>`
                   : `<span class="lv-kb">${NE('OPPDRAG','TASK')}</span>`;
     // Foto som thumb når oppdraget/tjenesten har bilde (fallback: kategori-ikon)
@@ -6802,8 +6843,8 @@ const ACHIEVEMENTS = [
   { id:'vary', icon:'grid',      cat:'trust', title:'Allsidig',           desc:'Fullfør oppdrag i 3 ulike kategorier', check: s => s.categoriesCompleted >= 3, prog: s => ({cur:s.categoriesCompleted, max:3}) },
   { id:'urg',  icon:'flame',     cat:'trust', title:'Brannmann',          desc:'Fullfør et hasteoppdrag',              check: s => s.urgentDone >= 1 },
   { id:'fc',   icon:'zap',       cat:'trust', title:'Førstemann',         desc:'Fullfør et «førstemann til mølla»-oppdrag', check: s => s.firstComeDone >= 1 },
-  { id:'char', icon:'heart',     cat:'trust', title:'Hjertegod',          desc:'Fullfør et veldedighetsoppdrag',       check: s => s.charity >= 1 },
-  { id:'cpost',icon:'gift',      cat:'trust', title:'Initiativtaker',     desc:'Legg ut et veldedighetsoppdrag',       check: s => s.charityPosted >= 1 },
+  { id:'char', icon:'heart',     cat:'trust', title:'Hjertegod',          desc:'Fullfør en god gjerning',       check: s => s.charity >= 1 },
+  { id:'cpost',icon:'gift',      cat:'trust', title:'Initiativtaker',     desc:'Legg ut en god gjerning',       check: s => s.charityPosted >= 1 },
   { id:'both', icon:'handshake', cat:'trust', title:'Dugnadsånd',         desc:'Både legg ut og fullfør oppdrag',      check: s => s.posted >= 1 && s.completed >= 1 },
   { id:'star', icon:'star',      cat:'trust', title:'Stjerneutfører',     desc:'20 oppdrag eller tjenester (gjort/gitt) + 4,5★ — gir en gullstjerne på profilbildet ditt', check: s => (s.completed + s.given) >= 20 && s.rating >= 4.5, prog: s => ({cur:s.completed + s.given, max:20}) }
 ];
@@ -8099,25 +8140,47 @@ function setSvcEquipment(type) {
   document.getElementById('svc-equip-customer')?.classList.toggle('active', type === 'customer');
 }
 
-function toggleCharity(el) {
-  el.classList.toggle('on');
-  const isOn = el.classList.contains('on');
+// ── Pristype: 'fixed' | 'negotiable' | 'gooddeed' ────────────────────────────
+let questPriceType = 'fixed';
 
-  // Show/hide charity note
-  const note = document.getElementById('charity-note');
-  if(note) note.style.display = isOn ? 'block' : 'none';
-
-  // Lock/unlock price field
-  const priceInput = document.getElementById('modal-price');
-  const priceDisplay = document.getElementById('modal-price-display');
-  if(isOn) {
-    if(priceInput) { priceInput.value = '0'; priceInput.disabled = true; priceInput.style.opacity = '0.4'; priceInput.style.cursor = 'not-allowed'; }
-    if(priceDisplay) priceDisplay.textContent = '0';
-  } else {
-    if(priceInput) { priceInput.value = '250'; priceInput.disabled = false; priceInput.style.opacity = '1'; priceInput.style.cursor = 'text'; }
-    if(priceDisplay) priceDisplay.textContent = '250';
-  }
+function setPriceType(t) {
+  questPriceType = t;
+  const btns = { fixed:'ptype-fixed', negotiable:'ptype-negotiable', gooddeed:'ptype-gooddeed' };
+  Object.keys(btns).forEach(k => {
+    const b = document.getElementById(btns[k]);
+    if(b) { b.classList.toggle('active', k === t); b.classList.toggle('gd', k === t && t === 'gooddeed'); }
+  });
+  const ff = document.getElementById('ptype-fixed-fields');
+  if(ff) ff.style.display = t === 'fixed' ? 'block' : 'none';
+  const nn = document.getElementById('ptype-neg-note');
+  if(nn) nn.style.display = t === 'negotiable' ? 'block' : 'none';
+  const gn = document.getElementById('charity-note');
+  if(gn) gn.style.display = t === 'gooddeed' ? 'block' : 'none';
+  if(t === 'fixed') checkLowPriceGuide(); else { const g = document.getElementById('lowprice-guide'); if(g) g.style.display = 'none'; }
   updateQuestPreview();
+}
+
+// Vennlig veiviser når fast pris er 0–50 kr (blokkerer ikke skriving)
+function checkLowPriceGuide() {
+  const g = document.getElementById('lowprice-guide');
+  if(!g) return false;
+  const v = parseInt(document.getElementById('modal-price')?.value, 10);
+  const low = questPriceType === 'fixed' && !isNaN(v) && v <= 50;
+  g.style.display = low ? 'flex' : 'none';
+  return low;
+}
+
+// Avled pristype fra en lagret rad (også rader fra før price_type fantes)
+function questPriceTypeOf(q) {
+  if(q.price_type === 'negotiable' || q.price_type === 'gooddeed') return q.price_type;
+  if(q.is_charity || q.pay === 0) return 'gooddeed';
+  if(q.pay != null && q.pay <= 50) return 'negotiable';
+  return 'fixed';
+}
+function questPriceText(pt, pay) {
+  return pt === 'gooddeed' ? '💚 ' + NE('Gjerning','Good deed')
+       : pt === 'negotiable' ? NE('Avtales','Negotiable')
+       : (pay != null ? pay + ' kr' : '');
 }
 
 function toggleKeepOpen(el) {
@@ -8645,6 +8708,48 @@ function switchMqTab(tab) {
   document.getElementById('mq-tab-applied').style.cssText += tab==='applied' ? activeStyle : inactiveStyle;
 }
 
+// ── Påminnelse: åpne oppdrag som har ligget 5+ dager uten henvendelser ───────
+const REMIND_AFTER_DAYS = 5;
+function _remindSnoozes() { try { return JSON.parse(localStorage.getItem('toktQremind') || '{}'); } catch(e) { return {}; } }
+function buildQuestReminderHtml(activeQuests) {
+  const now = Date.now(), snz = _remindSnoozes();
+  const cand = (activeQuests || []).find(q =>
+    q.status === 'open' &&
+    q.created_at && (now - new Date(q.created_at).getTime()) > REMIND_AFTER_DAYS * 86400000 &&
+    (q.conversations || []).length === 0 &&
+    (!snz[q.id] || (now - snz[q.id]) > REMIND_AFTER_DAYS * 86400000)
+  );
+  if(!cand) return '';
+  const days = Math.floor((now - new Date(cand.created_at).getTime()) / 86400000);
+  const safeTitle = String(cand.title || '').replace(/</g,'&lt;');
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:var(--shadow-sm)">
+    <div style="font-weight:800;font-size:13.5px;margin-bottom:3px">${NE('Oppdraget ditt har ligget en stund','Your task has been up a while')} 👀</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:11px">«${safeTitle}» ${NE('har vært ute i','has been up for')} ${days} ${NE('dager uten henvendelser. Allerede ordnet – eller vil du gi det et løft?','days with no applicants. Already handled – or want to give it a boost?')}</div>
+    <div style="display:flex;gap:7px">
+      <button onclick="remindQuestDone('${cand.id}')" style="flex:1;background:var(--grad);color:#fff;border:none;border-radius:10px;padding:9px 4px;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer">✓ ${NE('Ordnet','Done')}</button>
+      <button onclick="remindQuestRaise('${cand.id}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 4px;font-family:inherit;font-size:11.5px;font-weight:800;color:var(--text);cursor:pointer">↑ ${NE('Øk prisen','Raise price')}</button>
+      <button onclick="remindQuestSnooze('${cand.id}')" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:9px 4px;font-family:inherit;font-size:11.5px;font-weight:800;color:var(--muted);cursor:pointer">${NE('La stå','Leave it')}</button>
+    </div>
+  </div>`;
+}
+async function remindQuestDone(questId) {
+  if(!(await requireSession())) return;
+  await sb.from('quests').update({ status: 'closed' }).eq('id', questId).eq('user_id', currentUser.id);
+  showToast(NE('✓ Merket som ordnet – fjernet fra kartet','✓ Marked as done – removed from the map'));
+  loadMyQuests(); addMarkers(); updateMyQuestsBadge(); updateProfileNavBadges();
+}
+async function remindQuestRaise(questId) {
+  const { data: q } = await sb.from('quests').select('*').eq('id', questId).single();
+  if(!q) { showToast(NE('❌ Fant ikke oppdraget','❌ Task not found')); return; }
+  try { closeMyQuests(); } catch(e) {}
+  openEditModal(q);
+}
+function remindQuestSnooze(questId) {
+  const snz = _remindSnoozes(); snz[questId] = Date.now();
+  try { localStorage.setItem('toktQremind', JSON.stringify(snz)); } catch(e) {}
+  loadMyQuests();
+}
+
 async function loadMyQuests() {
   if(!currentUser) return;
 
@@ -8707,7 +8812,7 @@ async function loadMyQuests() {
       const group = (arr) =>
         `<div style="display:flex;flex-direction:column;gap:11px;margin-bottom:20px">` + arr.map(q => questCard(q, 'posted')).join('') + `</div>`;
 
-      let html = '';
+      let html = buildQuestReminderHtml(grp.aktive);
 
       // Tellestripe – raskt overblikk
       html += `<div style="display:flex;gap:6px;margin-bottom:16px">
@@ -8922,12 +9027,20 @@ function prefillQuestForm(q) {
     });
   }
 
-  // Pris
+  // Pristype + pris
   const priceEl = document.getElementById('modal-price');
   const priceDisp = document.getElementById('modal-price-display');
-  const basePay = q.is_urgent && !q.is_charity ? Math.max(0, (q.pay||0) - 100) : (q.pay||0);
-  if(priceEl) priceEl.value = String(basePay);
-  if(priceDisp) priceDisp.textContent = String(basePay);
+  const qpt = questPriceTypeOf(q);
+  setPriceType(qpt);
+  if(qpt === 'fixed') {
+    const basePay = q.is_urgent ? Math.max(0, (q.pay||0) - 100) : (q.pay||0);
+    if(priceEl) priceEl.value = String(basePay);
+    if(priceDisp) priceDisp.textContent = String(basePay);
+    checkLowPriceGuide();
+  } else {
+    if(priceEl) priceEl.value = '250';
+    if(priceDisp) priceDisp.textContent = '250';
+  }
 
   // Modus (godkjenn / førstemann)
   setMode(q.is_first_come ? 'firstcome' : 'approve');
@@ -8936,15 +9049,6 @@ function prefillQuestForm(q) {
   const urgentToggle = document.querySelector('#modal .toggle');
   if(urgentToggle) urgentToggle.classList.toggle('on', !!q.is_urgent);
 
-  // Veldedighet
-  const charityToggle = document.getElementById('charity-toggle');
-  if(charityToggle) {
-    charityToggle.classList.toggle('on', !!q.is_charity);
-    const note = document.getElementById('charity-note');
-    if(note) note.style.display = q.is_charity ? 'block' : 'none';
-    if(q.is_charity && priceEl) { priceEl.value = '0'; priceEl.disabled = true; priceEl.style.opacity = '0.4'; }
-    else if(priceEl) { priceEl.disabled = false; priceEl.style.opacity = '1'; }
-  }
 
   // 18+-flagg
   const adultToggle = document.getElementById('adult-toggle');
