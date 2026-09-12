@@ -13544,11 +13544,78 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 
 // Keep session in sync (login, initial restore, token refresh, logout)
+// ── VENTENDE HANDLINGER: popup ved app-åpning ────────────────────────────────
+// 1) Utfører med betaling markert sendt → bekreft mottatt (+ vurdering etterpå)
+// 2) Part i fullført samtale uten egen vurdering → vurderingsmodal direkte
+// Maks én popup per åpning. «Senere» utsetter 24 t per samtale (localStorage).
+function _paSnoozed() { try { return JSON.parse(localStorage.getItem('toktPendSnooze') || '{}'); } catch(e) { return {}; } }
+function _paSnooze(id) {
+  const s = _paSnoozed(); s[id] = Date.now();
+  try { localStorage.setItem('toktPendSnooze', JSON.stringify(s)); } catch(e) {}
+  closePendingAction();
+}
+function closePendingAction() { document.getElementById('pending-action-overlay')?.remove(); }
+function _paShow(html) {
+  closePendingAction();
+  const ov = document.createElement('div');
+  ov.id = 'pending-action-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:590;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))';
+  ov.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px;width:360px;max-width:100%;box-shadow:var(--shadow-lg);animation:popIn .2s ease;text-align:center">${html}</div>`;
+  document.body.appendChild(ov);
+}
+async function checkPendingActions() {
+  if(!currentUser) return;
+  try {
+    const snz = _paSnoozed(), now = Date.now(), DAY = 86400000;
+    // 1) Betaling markert sendt – jeg er utfører og har ikke bekreftet
+    const { data: paid } = await sb.from('conversations')
+      .select('id, quest_id, giver_id, quest:quest_id(title), service:service_id(title)')
+      .eq('taker_id', currentUser.id).eq('status', 'accepted')
+      .not('giver_paid_at', 'is', null)
+      .order('giver_paid_at', { ascending: false }).limit(5);
+    const p = (paid || []).find(c => !snz[c.id] || now - snz[c.id] > DAY);
+    if(p) {
+      const title = p.quest?.title || p.service?.title || NE('avtalen deres','your agreement');
+      _paShow(`
+        <div style="font-size:34px;margin-bottom:8px">💸</div>
+        <div style="font-weight:800;font-size:15px;margin-bottom:6px">${NE('Betaling markert som sendt','Payment marked as sent')}</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:16px">«${escapeHtml(title)}» – ${NE('oppdragsgiver sier betalingen er sendt. Har du mottatt den? Da fullføres oppdraget og dere kan vurdere hverandre ⭐','the poster says payment was sent. Received it? Confirming completes the task so you can rate each other ⭐')}</div>
+        <button onclick="closePendingAction();confirmPaymentReceived('${p.id}','${p.quest_id || ''}')" style="width:100%;background:var(--grad);color:#fff;border:none;border-radius:12px;padding:13px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:8px">✅ ${NE('Bekreft mottatt og fullfør','Confirm received & complete')}</button>
+        <button onclick="_paSnooze('${p.id}')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:11px;font-family:inherit;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer">${NE('Senere','Later')}</button>`);
+      return;
+    }
+    // 2) Fullført samtale der jeg ikke har vurdert ennå
+    const { data: done } = await sb.from('conversations')
+      .select('id, quest_id, giver_id, taker_id, quest:quest_id(title), service:service_id(title)')
+      .eq('status', 'completed')
+      .or(`giver_id.eq.${currentUser.id},taker_id.eq.${currentUser.id}`)
+      .order('created_at', { ascending: false }).limit(10);
+    if(!done || !done.length) return;
+    const { data: mine } = await sb.from('ratings')
+      .select('conversation_id').eq('rater_id', currentUser.id)
+      .in('conversation_id', done.map(c => c.id));
+    const rated = new Set((mine || []).map(r => r.conversation_id));
+    const d = done.find(c => !rated.has(c.id) && (!snz['r' + c.id] || now - snz['r' + c.id] > DAY));
+    if(!d) return;
+    const otherId = d.giver_id === currentUser.id ? d.taker_id : d.giver_id;
+    if(!otherId) return;
+    const { data: op } = await sb.from('profiles').select('full_name').eq('id', otherId).single();
+    const title = d.quest?.title || d.service?.title || '';
+    _paShow(`
+      <div style="font-size:34px;margin-bottom:8px">⭐</div>
+      <div style="font-weight:800;font-size:15px;margin-bottom:6px">${NE('Hvordan gikk det?','How did it go?')}</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:16px">${title ? '«' + escapeHtml(title) + '» – ' : ''}${NE('gi','give')} ${escapeHtml(op?.full_name || NE('motparten','the other party'))} ${NE('en vurdering. Det bygger tillit for hele nabolaget 💚','a rating. It builds trust for the whole neighborhood 💚')}</div>
+      <button onclick="closePendingAction();showRating('${escapeHtml(op?.full_name || '')}','${d.id}','${otherId}','${d.quest_id || ''}')" style="width:100%;background:var(--grad);color:#fff;border:none;border-radius:12px;padding:13px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:8px">⭐ ${NE('Gi vurdering','Give rating')}</button>
+      <button onclick="_paSnooze('r${d.id}')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:11px;font-family:inherit;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer">${NE('Senere','Later')}</button>`);
+  } catch(e) { /* popup er aldri kritisk */ }
+}
+
 sb.auth.onAuthStateChange(async (event, session) => {
   if((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && session?.user) {
     // Unngå dobbel-lasting hvis IIFE-en over allerede har lastet samme bruker
     if(!currentUser || currentUser.id !== session.user.id) {
       await loadUserProfile(session.user);
+      setTimeout(checkPendingActions, 2500);
     }
   } else if(event === 'SIGNED_OUT') {
     currentUser = null;
