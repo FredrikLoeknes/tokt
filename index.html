@@ -13584,6 +13584,26 @@ async function checkPendingActions() {
         <button onclick="_paSnooze('${p.id}')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:11px;font-family:inherit;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer">${NE('Senere','Later')}</button>`);
       return;
     }
+    // 1b) Motparten har markert jobben fullført – jeg må bekrefte
+    const { data: marked } = await sb.from('conversations')
+      .select('id, completed_marked_by, giver_id, taker_id, quest:quest_id(title), service:service_id(title)')
+      .eq('status', 'accepted')
+      .or(`giver_id.eq.${currentUser.id},taker_id.eq.${currentUser.id}`)
+      .not('completed_marked_by', 'is', null)
+      .limit(5);
+    const mk = (marked || []).find(c => c.completed_marked_by !== currentUser.id && (!snz['m' + c.id] || now - snz['m' + c.id] > DAY));
+    if(mk) {
+      const title = mk.quest?.title || mk.service?.title || NE('avtalen deres','your agreement');
+      const { data: mp } = await sb.from('profiles').select('full_name').eq('id', mk.completed_marked_by).single();
+      const safeT = String(title).replace(/'/g, "\\'");
+      _paShow(`
+        <div style="font-size:34px;margin-bottom:8px">✔️</div>
+        <div style="font-weight:800;font-size:15px;margin-bottom:6px">${NE('Jobben er markert som fullført','The job was marked as completed')}</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:16px">${escapeHtml(mp?.full_name || NE('Motparten','The other party'))} ${NE('har markert','marked')} «${escapeHtml(title)}» ${NE('som fullført. Stemmer det? Bekreft i chatten – da kan dere gi hverandre en vurdering ⭐','as completed. Correct? Confirm in the chat – then you can rate each other ⭐')}</div>
+        <button onclick="closePendingAction();window._chatOtherName='${escapeHtml((mp?.full_name || '')).replace(/'/g, "\\'")}';openChat('${mk.id}','${safeT}')" style="width:100%;background:var(--grad);color:#fff;border:none;border-radius:12px;padding:13px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:8px">✔️ ${NE('Åpne chatten og bekreft','Open the chat & confirm')}</button>
+        <button onclick="_paSnooze('m${mk.id}')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:11px;font-family:inherit;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer">${NE('Senere','Later')}</button>`);
+      return;
+    }
     // 2) Fullført samtale der jeg ikke har vurdert ennå
     const { data: done } = await sb.from('conversations')
       .select('id, quest_id, giver_id, taker_id, quest:quest_id(title), service:service_id(title)')
