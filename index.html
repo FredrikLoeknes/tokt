@@ -817,6 +817,12 @@ body:has(#leaderboard.open) #corner-widgets,
 body:has(#list-view.open) #corner-widgets,
 body:has(#filter-sheet.open) #corner-widgets,
 body.lb-open #corner-widgets { opacity:0; pointer-events:none; transform:translateY(8px); }
+/* Info-knappen (ℹ️) skjules også – den kolliderte med toppliste-krysset på mobil */
+body:has(#leaderboard.open) #legend-toggle,
+body:has(#list-view.open) #legend-toggle,
+body:has(#filter-sheet.open) #legend-toggle,
+body:has(#feed-panel.open) #legend-toggle,
+body.lb-open #legend-toggle { opacity:0; pointer-events:none; }
 /* Skjul også Liste-knappen når et bunn-ark dekker kartet (samme som zoom) */
 body:has(#leaderboard.open) #list-toggle-btn,
 body:has(#filter-sheet.open) #list-toggle-btn,
@@ -852,7 +858,7 @@ body:has(#feed-panel.open) #list-toggle-btn { opacity:0; pointer-events:none; }
 }
 #feed-scrim.open{opacity:1; pointer-events:auto}
 #feed-panel{
-  position:fixed; top:0; bottom:0; right:0; width:min(86vw,400px); z-index:130;
+  position:fixed; top:0; bottom:0; right:0; width:min(100vw,480px); z-index:130;
   background:var(--bg); box-shadow:-8px 0 32px rgba(0,0,0,.18);
   transform:translateX(105%); transition:transform .28s cubic-bezier(.22,.9,.34,1);
   display:flex; flex-direction:column;
