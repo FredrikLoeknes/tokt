@@ -9847,7 +9847,9 @@ function renderCommunityFeed() {
       const hasText = lines.length > 1 && lines[1];
       const tagLine = hasText ? `<span style="font-size:11px">${escapeHtml(lines[0])}</span><br>` : '';
       const quote = hasText ? lines.slice(1).join(' ') : (lines[0] || '');
-      return `<div class="cf-sys"><span class="si">${stars.slice(0,2)}</span><div><b>${NE('Ny vurdering','New review')} ${stars}</b><br>${tagLine}«${escapeHtml(quote)}»<br><span style="font-size:10.5px">${where}${timeAgo(e.ts)}</span></div></div>`;
+      const ctx = [e.rated_name ? `${NE('til','to')} ${escapeHtml(e.rated_name)}` : null,
+                   e.title ? `${NE('for','for')} «${escapeHtml(e.title)}»` : null].filter(Boolean).join(' ');
+      return `<div class="cf-sys"><span class="si">${stars.slice(0,2)}</span><div><b>${NE('Ny vurdering','New review')} ${stars}</b>${ctx ? ' <span style="font-weight:600;font-size:11.5px">' + ctx + '</span>' : ''}<br>${tagLine}«${escapeHtml(quote)}»<br><span style="font-size:10.5px">${where}${timeAgo(e.ts)}</span></div></div>`;
     }
     if(it.kind === 'milestone') {
       return `<div class="cf-mile">🎉 ${NE('Tokt passerte','Tokt passed')} <b>${it.n}</b> ${NE('naboer!','neighbors!')} ${NE('Takk til alle som er med.','Thanks to everyone on board.')}</div>`;
