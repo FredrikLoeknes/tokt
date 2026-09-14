@@ -869,43 +869,43 @@ body:has(#feed-panel.open) #list-toggle-btn { opacity:0; pointer-events:none; }
   padding:calc(12px + env(safe-area-inset-top,0px)) 14px 10px;
   background:var(--surface); border-bottom:1px solid var(--border);
 }
-.cf-head .cf-title{flex:1; font-weight:900; font-size:15px}
+.cf-head .cf-title{flex:1; font-weight:900; font-size:17px}
 .cf-close{background:var(--surface2); border:1px solid var(--border); border-radius:50%;
   width:32px; height:32px; font-size:14px; cursor:pointer; color:var(--text); font-family:inherit}
 .cf-stats{display:flex; gap:8px; padding:10px 12px 2px}
 .cf-stat{flex:1; background:var(--surface); border:1px solid var(--border); border-radius:11px; padding:8px 4px; text-align:center}
-.cf-stat .n{font-size:16px; font-weight:900; background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent}
-.cf-stat .l{font-size:9.5px; color:var(--muted); font-weight:700}
+.cf-stat .n{font-size:21px; font-weight:900; background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent}
+.cf-stat .l{font-size:11px; color:var(--muted); font-weight:700}
 .cf-scroll{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
   padding:10px 12px calc(24px + env(safe-area-inset-bottom,0px))}
 .cf-card{background:var(--surface); border:1px solid var(--border); border-radius:14px;
-  padding:13px; margin-bottom:10px; box-shadow:var(--shadow-sm); overflow:hidden; cursor:pointer}
+  padding:15px; margin-bottom:12px; box-shadow:var(--shadow-sm); overflow:hidden; cursor:pointer}
 .cf-top{display:flex; align-items:center; gap:9px; margin-bottom:8px}
-.cf-avatar{width:36px; height:36px; border-radius:50%; background:var(--grad); color:#fff;
+.cf-avatar{width:44px; height:44px; border-radius:50%; background:var(--grad); color:#fff;
   display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px;
-  flex-shrink:0; overflow:hidden}
+  flex-shrink:0; overflow:hidden; font-size:16px}
 .cf-avatar img{width:100%; height:100%; object-fit:cover}
 .cf-who{flex:1; min-width:0}
-.cf-name{font-size:12.5px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.cf-meta{font-size:10.5px; color:var(--muted); margin-top:1px}
-.cf-badge{font-size:10.5px; font-weight:800; border-radius:20px; padding:4px 9px; white-space:nowrap;
+.cf-name{font-size:15px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.cf-meta{font-size:12.5px; color:var(--muted); margin-top:1px}
+.cf-badge{font-size:12.5px; font-weight:800; border-radius:20px; padding:5px 11px; white-space:nowrap;
   background:rgba(124,92,252,.1); color:var(--accent2)}
 .cf-badge.gd{background:rgba(15,169,104,.1); color:var(--green)}
 .cf-badge.haste{background:rgba(229,72,77,.1); color:#e5484d}
-.cf-img{margin:0 -13px 10px; max-height:210px; overflow:hidden}
+.cf-img{margin:0 -15px 12px; max-height:210px; overflow:hidden}
 .cf-img img{width:100%; height:210px; object-fit:cover; display:block}
-.cf-title2{font-size:14px; font-weight:800; line-height:1.35; margin-bottom:3px}
-.cf-desc{font-size:12px; color:var(--muted); line-height:1.5; margin-bottom:9px;
+.cf-title2{font-size:17px; font-weight:800; line-height:1.35; margin-bottom:3px}
+.cf-desc{font-size:14px; color:var(--muted); line-height:1.55; margin-bottom:11px;
   display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
-.cf-open{width:100%; background:var(--grad); color:#fff; border:none; border-radius:10px;
-  padding:10px; font-family:inherit; font-size:12.5px; font-weight:800; cursor:pointer}
-.cf-sys{display:flex; align-items:center; gap:9px; background:var(--surface2); border-radius:12px;
-  padding:10px 12px; margin-bottom:10px; font-size:12px; color:var(--muted); line-height:1.45}
+.cf-open{width:100%; background:var(--grad); color:#fff; border:none; border-radius:11px;
+  padding:12px; font-family:inherit; font-size:14.5px; font-weight:800; cursor:pointer}
+.cf-sys{display:flex; align-items:center; gap:10px; background:var(--surface2); border-radius:12px;
+  padding:12px 14px; margin-bottom:12px; font-size:14px; color:var(--muted); line-height:1.5}
 .cf-sys b{color:var(--text)}
-.cf-sys .si{font-size:16px; flex-shrink:0}
+.cf-sys .si{font-size:20px; flex-shrink:0}
 .cf-mile{background:linear-gradient(135deg,rgba(243,110,55,.1),rgba(179,89,213,.1));
-  border:1px solid rgba(214,66,126,.2); border-radius:13px; padding:12px 14px; margin-bottom:10px;
-  font-size:12.5px; font-weight:700; line-height:1.4}
+  border:1px solid rgba(214,66,126,.2); border-radius:13px; padding:14px 16px; margin-bottom:12px;
+  font-size:14.5px; font-weight:700; line-height:1.45}
 .cf-empty{text-align:center; color:var(--muted); font-size:12.5px; padding:30px 10px; line-height:1.6}
 
 /* ── APP-INSTALL BANNER (A) ── */
@@ -9874,11 +9874,11 @@ function renderCommunityFeed() {
       // Vis både emoji-tags (linje 1) og fritekst (linje 2+) når begge finnes
       const lines = String(e.comment || '').split('\n').map(s => s.trim()).filter(Boolean);
       const hasText = lines.length > 1 && lines[1];
-      const tagLine = hasText ? `<span style="font-size:11px">${escapeHtml(lines[0])}</span><br>` : '';
+      const tagLine = hasText ? `<span style="font-size:12.5px">${escapeHtml(lines[0])}</span><br>` : '';
       const quote = hasText ? lines.slice(1).join(' ') : (lines[0] || '');
       const ctx = [e.rated_name ? `${NE('til','to')} ${escapeHtml(e.rated_name)}` : null,
                    e.title ? `${NE('for','for')} «${escapeHtml(e.title)}»` : null].filter(Boolean).join(' ');
-      return `<div class="cf-sys"><span class="si">${stars.slice(0,2)}</span><div><b>${NE('Ny vurdering','New review')} ${stars}</b>${ctx ? ' <span style="font-weight:600;font-size:11.5px">' + ctx + '</span>' : ''}<br>${tagLine}«${escapeHtml(quote)}»<br><span style="font-size:10.5px">${where}${timeAgo(e.ts)}</span></div></div>`;
+      return `<div class="cf-sys"><span class="si">${stars.slice(0,2)}</span><div><b>${NE('Ny vurdering','New review')} ${stars}</b>${ctx ? ' <span style="font-weight:600;font-size:13px">' + ctx + '</span>' : ''}<br>${tagLine}«${escapeHtml(quote)}»<br><span style="font-size:12px">${where}${timeAgo(e.ts)}</span></div></div>`;
     }
     if(it.kind === 'milestone') {
       return `<div class="cf-mile">🎉 ${NE('Tokt passerte','Tokt passed')} <b>${it.n}</b> ${NE('naboer!','neighbors!')} ${NE('Takk til alle som er med.','Thanks to everyone on board.')}</div>`;
