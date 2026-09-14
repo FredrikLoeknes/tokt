@@ -5860,9 +5860,19 @@ async function _postJobInner() {
   // folk hoppet over adressefeltet. Ett presist punkt per oppdrag.
   let lat = questLat, lng = questLng;
   if(!lat || !lng || !questAddress) {
-    showToast(NE('📍 Velg en adresse fra forslagene før du publiserer','📍 Pick an address from the suggestions before publishing'));
+    // Brukeren har skrevet, men ikke valgt fra listen → slå opp og bruk beste treff
+    const typed = document.getElementById('quest-address-input')?.value || '';
+    const hit = await geocodeTyped(typed);
+    if(hit) {
+      selectAddress(hit.name, hit.lat, hit.lng, hit.area);
+      lat = questLat; lng = questLng;
+      showToast('📍 ' + NE('Bruker adressen','Using address') + ': ' + questAddress);
+    }
+  }
+  if(!lat || !lng || !questAddress) {
+    showToast(NE('📍 Skriv inn adresse eller sted, eller trykk «Bruk min posisjon»','📍 Type an address or place, or tap «Use my location»'));
     const ai = document.getElementById('quest-address-input');
-    if(ai) { ai.focus(); ai.style.borderColor = 'var(--red)'; setTimeout(() => ai.style.borderColor = 'var(--border)', 2000); }
+    if(ai) { ai.focus(); ai.scrollIntoView({behavior:'smooth', block:'center'}); ai.style.borderColor = 'var(--red)'; setTimeout(() => ai.style.borderColor = 'var(--border)', 2500); }
     if(btn) { btn.disabled = false; btn.innerHTML = '<span>' + (window._editingQuestId ? NE('💾 Lagre endringer','💾 Save changes') : NE('Publiser oppdrag','Publish quest')) + '</span>'; }
     return;
   }
@@ -8207,7 +8217,26 @@ function selectSvcAddress(name, lat, lng, area) {
   if(window.map) window.map.flyTo({ center: [lng, lat], zoom: 15, speed: 1.4 });
 }
 
+// Skrevet-men-ikke-valgt adresse: slå opp teksten og bruk beste treff.
+// Fjerner «du må velge fra listen»-friksjonen som stoppet folk fra å publisere.
+async function geocodeTyped(typed) {
+  if(!typed || typed.trim().length < 3) return null;
+  try {
+    const token = 'pk.eyJ1IjoiZnJlZHJpa2xvZWtuZXMiLCJhIjoiY21xNjl6c25kMDFodjJxcXprcXc0NHYzMyJ9.e3IAYTrRQ6053w-zO-4fvw';
+    const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(typed.trim())}.json?access_token=${token}&country=NO&language=no&limit=1&proximity=10.757933,59.911491`);
+    const data = await res.json();
+    const f = data.features && data.features[0];
+    if(!f) return null;
+    return { name: f.place_name, lat: f.center[1], lng: f.center[0], area: areaFromFeature(f) || '' };
+  } catch(e) { return null; }
+}
+
 async function searchAddress(query) {
+  // Endret tekst = gammelt valg gjelder ikke lenger
+  if(questAddress && query !== questAddress) {
+    questLat = null; questLng = null; questAddress = null; questArea = null;
+    const ac = document.getElementById('address-confirmed'); if(ac) ac.style.display = 'none';
+  }
   if(query.length < 3) { document.getElementById('address-suggestions').style.display = 'none'; return; }
   const token = 'pk.eyJ1IjoiZnJlZHJpa2xvZWtuZXMiLCJhIjoiY21xNjl6c25kMDFodjJxcXprcXc0NHYzMyJ9.e3IAYTrRQ6053w-zO-4fvw';
   const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&country=NO&language=no&limit=5&proximity=10.757933,59.911491`);
@@ -11868,9 +11897,18 @@ async function postService() {
   // Adresse er PÅKREVD: uten valgt punkt havnet tjenester før stille på en
   // fallback-posisjon (Oslo sentrum) og ble i praksis usynlige for eieren.
   if(!svcLat || !svcLng) {
-    showToast(NE('📍 Velg adresse/område fra forslagene før du publiserer','📍 Pick an address/area from the suggestions before publishing'));
+    const typed = document.getElementById('svc-address-input')?.value || '';
+    const hit = await geocodeTyped(typed);
+    if(hit) {
+      svcLat = hit.lat; svcLng = hit.lng; svcAddress = String(hit.name||'').replace(/,?\s*Norge$/,''); svcArea = hit.area || null;
+      const inp = document.getElementById('svc-address-input'); if(inp) inp.value = hit.name;
+      showToast('📍 ' + NE('Bruker adressen','Using address') + ': ' + svcAddress);
+    }
+  }
+  if(!svcLat || !svcLng) {
+    showToast(NE('📍 Skriv inn adresse eller område, eller trykk «Bruk min posisjon»','📍 Type an address or area, or tap «Use my location»'));
     const ai = document.getElementById('svc-address-input');
-    if(ai) { ai.focus(); ai.style.borderColor = 'var(--red)'; setTimeout(() => ai.style.borderColor = 'var(--border)', 2000); }
+    if(ai) { ai.focus(); ai.scrollIntoView({behavior:'smooth', block:'center'}); ai.style.borderColor = 'var(--red)'; setTimeout(() => ai.style.borderColor = 'var(--border)', 2500); }
     return;
   }
   const lat = svcLat, lng = svcLng;
