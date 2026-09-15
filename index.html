@@ -7576,7 +7576,8 @@ async function loadProfilePage(userId, isOwn) {
   if(ctxBar) ctxBar.style.display = (!isOwn && window.profileContext) ? 'flex' : 'none';
 
   // Hent profildata
-  const { data: profile } = await sb.from('profiles').select('*').eq('id', userId).single();
+  const PUBLIC_PROFILE_COLS = 'id, full_name, level, xp_current, quests_completed, rating, created_at, is_adult, verified, avatar_url, lb_visibility';
+  const { data: profile } = await sb.from('profiles').select(PUBLIC_PROFILE_COLS).eq('id', userId).single();
   if(!profile) { showToast(NE('❌ Fant ikke profilen','❌ Profile not found')); return; }
   // Telefon hentes fra user_contacts for egen profil (profiles.phone droppes i Fase 3)
   if(isOwn) profile.phone = await getContactPhone(userId);
