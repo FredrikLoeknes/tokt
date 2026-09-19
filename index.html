@@ -8676,7 +8676,37 @@ const FIREBASE_CONFIG = {
 const FCM_VAPID_KEY = 'BIthe85x2rirxKf8ogfxxOMeitXE7vXQ01wSLkTGetw8FcwUgsQVjVrGao2-EDQjtJG6fv-fnF6CV_Ep34tjQhg';
 // Egen VAPID-nøkkel for rå Web Push – fallback der Firebase ikke støttes
 // (typisk Samsung Internet). Privat nøkkel ligger som secret i send-push.
-const WEBPUSH_VAPID_PUBLIC_KEY = 'BPFcXH6gQQDf-F3KBx9789c-SEqu-QXbk3lwhx35ZVz9vt7fdKho16wmUOYmE5BagBDUUNl4oUnjv7a66YjBoi4';
+const WEBPUSH_VAPID_PUBLIC_KEY = 'BDZHXBHHTdHSubjqHc60u6RT5M2iQ82kZ41LSrmfgUH8RAwvb23PVGzHKm2hl834rhOivFIkA9qvKvY1gLxwKGk';
+
+// Standard Web Push (VAPID) – brukes av Samsung Internet og andre uten FCM.
+// Abonnementet lagres som JSON; send-push ruter det til webpush-grenen.
+async function subscribeRawWebPush(reg) {
+  try {
+    // Gammelt abonnement med annen nøkkel må vekk, ellers feiler subscribe
+    try {
+      const old = await reg.pushManager.getSubscription();
+      if(old) {
+        const cur = old.options && old.options.applicationServerKey
+          ? btoa(String.fromCharCode(...new Uint8Array(old.options.applicationServerKey))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')
+          : '';
+        if(cur !== WEBPUSH_VAPID_PUBLIC_KEY) await old.unsubscribe();
+      }
+    } catch(e) {}
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(WEBPUSH_VAPID_PUBLIC_KEY)
+    });
+    const subStr = JSON.stringify(sub);
+    if(window._lastWebPushSub === subStr) return;
+    window._lastWebPushSub = subStr;
+    const { error: wpErr } = await sb.rpc('register_push_token', { p_token: subStr, p_platform: 'webpush' });
+    if(wpErr) console.warn('register_push_token (webpush):', wpErr.message);
+    else { console.log('Web Push-abonnement lagret'); try { logEvent('push_webpush_registered', {}); } catch(e) {} }
+  } catch(e) {
+    console.warn('webpush:', e && e.message);
+    try { logEvent('push_webpush_err', { msg: String(e && e.message).slice(0,120) }); } catch(e2) {}
+  }
+}
 
 async function registerPushNotifications(fromGesture = false) {
   if(!currentUser) return;
@@ -8711,29 +8741,21 @@ async function registerPushNotifications(fromGesture = false) {
       }
     } catch(e) { console.warn('push cleanup:', e.message); }
 
+    // Samsung Internet: FCM later som den støttes (isSupported() = true), men
+    // leverer i praksis ikke varsler der. Gå derfor RETT på standard Web Push.
+    // Empiri: 13 tillatelser gitt, 0 fungerende Samsung-varsler, 0 unsupported-
+    // hendelser logget – fallbacken kjørte aldri via isSupported()-sjekken.
+    if(/SamsungBrowser/i.test(navigator.userAgent)) {
+      try { logEvent('push_samsung_webpush', {}); } catch(e) {}
+      await subscribeRawWebPush(reg);
+      return;
+    }
+
     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
     const { getMessaging, getToken, isSupported } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
     if(!(await isSupported())) {
-      // Måling: hvor mange Android-brukere kjører TWA-en i en nettleser uten
-      // FCM-støtte (typisk Samsung Internet som standard)?
       try { logEvent('push_web_unsupported', { ua: String(navigator.userAgent).slice(0,120) }); } catch(e) {}
-      // Fallback: standard Web Push (VAPID) – virker i Samsung Internet m.fl.
-      // Abonnementet lagres som JSON; send-push ruter det til webpush-grenen.
-      try {
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(WEBPUSH_VAPID_PUBLIC_KEY)
-        });
-        const subStr = JSON.stringify(sub);
-        if(window._lastWebPushSub === subStr) return;
-        window._lastWebPushSub = subStr;
-        const { error: wpErr } = await sb.rpc('register_push_token', { p_token: subStr, p_platform: 'webpush' });
-        if(wpErr) console.warn('register_push_token (webpush):', wpErr.message);
-        else { console.log('Web Push-abonnement lagret (fallback)'); try { logEvent('push_webpush_registered', {}); } catch(e) {} }
-      } catch(e) {
-        console.warn('webpush fallback:', e && e.message);
-        try { logEvent('push_webpush_err', { msg: String(e && e.message).slice(0,120) }); } catch(e2) {}
-      }
+      await subscribeRawWebPush(reg);
       return;
     }
 
