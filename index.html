@@ -8708,6 +8708,37 @@ async function subscribeRawWebPush(reg) {
   }
 }
 
+// ── NATIVE ANDROID-PUSH (TWA-wrapper) ───────────────────────────────────────
+// Wrapperen legger FCM-tokenet sitt på start-URL-en som ?ntoken=. Vi gjemmer
+// det og registrerer det på innlogget bruker (platform 'android'). Native
+// push erstatter nettleser-push i appen – Samsung Internet-problemet forsvinner.
+(function(){
+  try {
+    const p = new URLSearchParams(location.search);
+    const t = p.get('ntoken');
+    if(t) {
+      localStorage.setItem('toktNativeToken', t);
+      p.delete('ntoken');
+      const q = p.toString();
+      history.replaceState(null, '', location.pathname + (q ? '?' + q : '') + location.hash);
+    }
+  } catch(e) {}
+})();
+
+async function registerNativeAndroidToken() {
+  try {
+    if(!currentUser) return;
+    const t = localStorage.getItem('toktNativeToken');
+    if(!t) return;
+    if(localStorage.getItem('toktNativeTokenReg') === t) return;
+    const { error } = await sb.rpc('register_push_token', { p_token: t, p_platform: 'android' });
+    if(!error) {
+      localStorage.setItem('toktNativeTokenReg', t);
+      try { logEvent('push_native_registered', {}); } catch(e) {}
+    }
+  } catch(e) {}
+}
+
 // ── VARSEL-DYTT ──────────────────────────────────────────────────────────────
 // Mål: hente inn brukere som aldri har blitt spurt om push (permission 'default').
 // Viser aldri noe for 'granted' (alt ok) eller 'denied' (kan ikke fikses herfra).
@@ -8716,6 +8747,7 @@ function maybeShowPushNudge() {
     if(!currentUser) return;
     if(!('Notification' in window) || !('PushManager' in window)) return;
     if(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers['push-permission-request']) return; // iOS-appen har egen flyt
+    if(localStorage.getItem('toktNativeToken')) return; // native Android-push aktiv
     if(Notification.permission !== 'default') return;
     const snz = parseInt(localStorage.getItem('toktPushNudgeSnooze') || '0', 10);
     if(snz && Date.now() - snz < 7 * 86400000) return;
@@ -8749,6 +8781,9 @@ function maybeShowPushNudge() {
 
 async function registerPushNotifications(fromGesture = false) {
   if(!currentUser) return;
+  // Native Android-push registrert? Da skal appen IKKE også ha nettleser-push
+  // (to tokens = to varsler for samme hendelse).
+  if(localStorage.getItem('toktNativeTokenReg')) return;
   // iOS-appen har egen native bru og mangler PushManager – hopp over der.
   if(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers['push-permission-request']) return;
   if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
@@ -13557,6 +13592,7 @@ async function loadUserProfile(user) {
   const _wo = document.getElementById('welcome-overlay'); if(_wo) _wo.style.display = 'none';
   checkUnreadNotifs();
   subscribeToNotifications();
+  registerNativeAndroidToken();
   registerPushNotifications();
   setTimeout(() => { try { maybeShowPushNudge(); } catch(e) {} }, 6000);
   setTimeout(() => { try { showReturnEvents(); } catch(e) {} }, 2500);
