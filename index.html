@@ -24,9 +24,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Tokt">
 <link rel="manifest" href="/manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="icon192.png">
-<link rel="icon" type="image/png" sizes="32x32" href="icon192.png">
-<link rel="apple-touch-icon" href="icon192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon192-v2.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon192-v2.png">
+<link rel="apple-touch-icon" href="icon192-v2.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Skranji:wght@400;700&display=swap" rel="stylesheet">
@@ -8708,6 +8708,45 @@ async function subscribeRawWebPush(reg) {
   }
 }
 
+// ── VARSEL-DYTT ──────────────────────────────────────────────────────────────
+// Mål: hente inn brukere som aldri har blitt spurt om push (permission 'default').
+// Viser aldri noe for 'granted' (alt ok) eller 'denied' (kan ikke fikses herfra).
+function maybeShowPushNudge() {
+  try {
+    if(!currentUser) return;
+    if(!('Notification' in window) || !('PushManager' in window)) return;
+    if(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers['push-permission-request']) return; // iOS-appen har egen flyt
+    if(Notification.permission !== 'default') return;
+    const snz = parseInt(localStorage.getItem('toktPushNudgeSnooze') || '0', 10);
+    if(snz && Date.now() - snz < 7 * 86400000) return;
+    if(document.getElementById('push-nudge')) return;
+    const el = document.createElement('div');
+    el.id = 'push-nudge';
+    el.style.cssText = 'position:fixed;left:10px;right:10px;bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:95;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;animation:popIn .25s ease';
+    el.innerHTML = `
+      <span style="font-size:22px;flex-shrink:0">🔔</span>
+      <div style="flex:1;min-width:0;font-size:13px;line-height:1.4;color:var(--text)">
+        <b>${NE('Få beskjed når noen svarer deg','Get notified when someone replies')}</b><br>
+        <span style="color:var(--muted);font-size:12px">${NE('Varsler når noen tar oppdraget ditt eller sender melding','Alerts when someone takes your task or messages you')}</span>
+      </div>
+      <button id="push-nudge-on" style="background:var(--grad);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;white-space:nowrap">${NE('Slå på','Turn on')}</button>
+      <button id="push-nudge-x" aria-label="Lukk" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px">✕</button>`;
+    document.body.appendChild(el);
+    try { logEvent('push_nudge_shown', {}); } catch(e) {}
+    document.getElementById('push-nudge-on').onclick = () => {
+      // Selve klikket er brukerhandlingen Samsung krever – ingen await før spørsmålet
+      try { logEvent('push_nudge_click', {}); } catch(e) {}
+      registerPushNotifications(true);
+      el.remove();
+    };
+    document.getElementById('push-nudge-x').onclick = () => {
+      try { localStorage.setItem('toktPushNudgeSnooze', String(Date.now())); } catch(e) {}
+      try { logEvent('push_nudge_dismiss', {}); } catch(e) {}
+      el.remove();
+    };
+  } catch(e) {}
+}
+
 async function registerPushNotifications(fromGesture = false) {
   if(!currentUser) return;
   // iOS-appen har egen native bru og mangler PushManager – hopp over der.
@@ -8790,8 +8829,8 @@ function showBrowserNotification(title, body, url='/') {
   if(Notification.permission === 'granted') {
     const n = new Notification(title, {
       body,
-      icon: '/icon192.png',
-      badge: '/icon192.png',
+      icon: '/icon192-v2.png',
+      badge: '/icon192-v2.png',
       tag: 'tokt-' + Date.now()
     });
     n.onclick = () => { window.focus(); n.close(); };
@@ -13519,6 +13558,7 @@ async function loadUserProfile(user) {
   checkUnreadNotifs();
   subscribeToNotifications();
   registerPushNotifications();
+  setTimeout(() => { try { maybeShowPushNudge(); } catch(e) {} }, 6000);
   setTimeout(() => { try { showReturnEvents(); } catch(e) {} }, 2500);
   // Re-render the map so the user's own and active quests get their colours
   if(window.map) addMarkers();
@@ -14546,7 +14586,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
 <div id="get-app-overlay" onclick="if(event.target===this)closeGetAppSheet()">
   <div id="get-app-sheet">
     <div class="iis-grab"></div>
-    <img src="/icon192.png" alt="Tokt" class="gas-icon">
+    <img src="/icon192-v2.png" alt="Tokt" class="gas-icon">
     <h3 id="gas-title" style="font-size:16px;font-weight:800;text-align:center;margin-bottom:4px">Hent Tokt-appen</h3>
     <div class="iis-sub" id="gas-sub" style="margin-bottom:0">Gratis på App Store og Google Play</div>
     <div class="gas-badges">
