@@ -2,7 +2,7 @@
 // Handles push notifications and offline caching
 
 // Bump ved endring her → gammel cache slettes automatisk i 'activate'.
-const CACHE_NAME = 'tokt-v126';
+const CACHE_NAME = 'tokt-v109';
 const STATIC_ASSETS = ['/', '/index.html', '/terms.html'];
 
 // Install
@@ -81,8 +81,8 @@ self.addEventListener('push', e => {
   const title = n.title || 'Tokt';
   const options = {
     body: n.body || 'Du har et nytt varsel',
-    icon: n.icon || '/icon192.png',
-    badge: '/icon192.png',
+    icon: n.icon || '/icon192-v2.png',
+    badge: '/icon192-v2.png',
     tag: n.tag || 'tokt-notification',
     data: { url: '/', type: (data.data && data.data.type) || '' },
     vibrate: [100, 50, 100],
