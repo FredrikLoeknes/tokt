@@ -6473,16 +6473,12 @@ function focusResultOnMap(m, panelId) {
 function openListResult(i) {
   const m = (window.lastResults || [])[i];
   if(!m) return;
-  // Alternativ 3: tjenester åpner tilbyderens profil først (vurder → handle).
-  // Oppdrag går rett til detaljer (der skal man bare dit).
-  if(m.kind === 'service' && m.userId) {
-    closeListView();
-    viewOtherProfile(m.userId, { kind: 'service', lng: m.lng, lat: m.lat, open: m.open, contact: m.contact });
-    focusResultOnMap(m, null); // profilen dekker kartet, men kartet står klart når den lukkes
-  } else if(typeof m.open === 'function') {
+  // Både oppdrag og tjenester går rett til detaljpanelet (tilbyderens profil
+  // nås via tilbyder-raden i tjenestepanelet). Profil-først ble opplevd som blindvei.
+  if(typeof m.open === 'function') {
     closeListView();
     m.open();
-    focusResultOnMap(m, 'job-panel');
+    focusResultOnMap(m, m.kind === 'service' ? 'service-panel' : 'job-panel');
   }
 }
 // «Vis på kart» fra profil: lukk profil/liste, fly til markøren, åpne detaljer
