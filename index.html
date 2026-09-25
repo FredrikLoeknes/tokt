@@ -2283,8 +2283,8 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Tittel på oppdraget</label>
-      <input id="quest-title-input" class="form-input" type="text" placeholder="E.g. «Mow the lawn in my garden»" oninput="updateQuestPreview();checkServiceHint()">
+      <label class="form-label" id="modal-label-title">Hva trenger du hjelp til?</label>
+      <input id="quest-title-input" class="form-input" type="text" placeholder="F.eks. «Klipp gresset i hagen»" oninput="updateQuestPreview();checkServiceHint()">
     </div>
     <div class="form-group">
       <label class="form-label">📍 Adresse der oppdraget skal gjøres</label>
@@ -2625,7 +2625,7 @@ const LANGUAGES = {
     noApplicants: 'Ingen søkere ennå – vær den første!',
     // Modal
     postQuestTitle: '✦ Legg ut oppdrag',
-    questTitleLabel: 'Tittel på oppdraget',
+    questTitleLabel: 'Hva trenger du hjelp til?',
     questTitlePlaceholder: 'F.eks. «Klipp gresset i hagen»',
     categoryLabel: 'Kategori',
     descLabel: 'Beskrivelse',
@@ -2769,7 +2769,7 @@ const LANGUAGES = {
     firstComeServed: '⚡ First come, first served',
     noApplicants: 'Ingen søkere ennå – vær den første!',
     postQuestTitle: '✦ Post a quest',
-    questTitleLabel: 'Quest title',
+    questTitleLabel: 'What do you need help with?',
     questTitlePlaceholder: 'E.g. «Mow the lawn in my garden»',
     categoryLabel: 'Category',
     descLabel: 'Description',
@@ -2961,7 +2961,7 @@ function applyLanguage() {
   // Modal
   safeHTML('modal-title-text', L.postQuestTitle);
   safeText('modal-label-title', L.questTitleLabel);
-  safeAttr('modal-input-title', 'placeholder', L.questTitlePlaceholder);
+  safeAttr('quest-title-input', 'placeholder', L.questTitlePlaceholder);
   safeText('modal-label-category', L.categoryLabel);
   safeText('modal-label-desc', L.descLabel);
   safeAttr('modal-textarea-desc', 'placeholder', L.descPlaceholder);
@@ -5600,14 +5600,14 @@ function resetQuestForm() {
   try{setEquipment('provided');}catch(e){}
 }
 
-function openModal() { if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å legge ut oppdrag','👋 Log in to post a task')); return; } window._editingQuestId = null; const _tt=document.getElementById('modal-title-text'); if(_tt) _tt.textContent = NE('✦ Legg ut oppdrag','✦ Post a quest'); const _pb=document.querySelector('.publish-btn'); if(_pb) _pb.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> '+NE('Publiser oppdrag','Publish quest'); _svcHintDismissed = false; checkServiceHint(); const at = document.getElementById('adult-toggle'); if(at){ at.classList.remove('on'); at.dataset.locked = ''; } applyMinorUIRestrictions(); const catSel = document.getElementById('quest-category-input'); if(catSel) checkCategoryWarning(catSel.value); document.getElementById('modal-overlay').classList.add('open'); try { setScheduleType('any'); } catch(e){} updateQuestPreview(); }
+function openModal() { if(!currentUser) { openAuth('login'); showToast(NE('👋 Logg inn for å legge ut oppdrag','👋 Log in to post a task')); return; } window._editingQuestId = null; const _tt=document.getElementById('modal-title-text'); if(_tt) _tt.textContent = NE('✦ Legg ut oppdrag','✦ Post a quest'); const _pb=document.querySelector('.publish-btn'); if(_pb) _pb.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> '+NE('Publiser oppdrag','Publish quest'); _svcHintDismissed = false; window._svcHintPublishWarned = false; checkServiceHint(); const at = document.getElementById('adult-toggle'); if(at){ at.classList.remove('on'); at.dataset.locked = ''; } applyMinorUIRestrictions(); const catSel = document.getElementById('quest-category-input'); if(catSel) checkCategoryWarning(catSel.value); document.getElementById('modal-overlay').classList.add('open'); try { setScheduleType('any'); } catch(e){} updateQuestPreview(); }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 
 // ── Tjeneste-hint i oppdragsskjemaet ──────────────────────────────────────────
 // Enkel ordliste (ingen AI): formuleringer som nesten bare brukes av folk som TILBYR noe.
 // Treff viser et spørsmål, aldri en sperre. «trenger hjelp»/«ønsker hjelp» overstyrer alltid.
-const SERVICE_HINT_RE = /\b(jeg tilbyr|vi tilbyr|tilbyr (jeg|vi)|jeg lager|jeg baker|jeg syr|jeg selger|p[åa] bestilling|jeg kan (hjelpe|komme|ta|passe|lufte|klippe|vaske|male|montere|kj[øo]re|reparere|fikse)|jeg er (utdannet|erfaren|flink|sertifisert|profesjonell)|(lang|mye|god|bred) erfaring (med|som|fra)|ta kontakt for|ring meg|send meg en melding|i offer|we offer|i can help|i provide|on order|years of experience)\b/i;
-const SERVICE_HINT_NEG_RE = /\b(trenger (hjelp|noen|en|et)|[øo]nsker (hjelp|noen)|s[øo]ker (hjelp|noen|en|et)|leter etter|need (help|someone)|looking for)\b/i;
+const SERVICE_HINT_RE = /\b(jeg tilbyr|vi tilbyr|tilbyr (jeg|vi)|jeg lager|jeg baker|jeg syr|jeg selger|p[åa] bestilling|(jeg |vi )?kan (hjelpe|komme|ta|passe|lufte|klippe|vaske|male|montere|kj[øo]re|reparere|fikse|lage|levere|hente|bringe|frakte|flytte|bygge|snekre|sy|bake|utf[øo]re)|jeg er (utdannet|erfaren|flink|sertifisert|profesjonell)|(lang|mye|god|bred|[0-9]+ [åa]rs?) erfaring|[0-9]+ [åa]rs? erfaring|(bare |s[åa] )?ta(r)? kontakt|ta gjerne kontakt|kontakt meg|ring meg|send meg en melding|tar (p[åa] meg|imot|oppdrag|jobber)|ledig for (oppdrag|jobb)|(trenger|[øo]nsker|vil|skal|har) du\b|har (egen |eget |en |ei |[0-9]+[ -]?)?(seters? |seater )?(bil|varebil|henger|tilhenger|utstyr|verkt[øo]y|f[øo]rerkort|fagbrev)|(alle|alt) typer?|rimelig pris|fast pris|i offer|we offer|i can help|i provide|on order|years of experience|contact me|do you need)\b/i;
+const SERVICE_HINT_NEG_RE = /\b(trenger (hjelp|noen|en|et|ei|[åa] f[åa])|[øo]nsker (hjelp|noen|[åa] f[åa])|s[øo]ker (hjelp|noen|en|et|ei|etter)|leter etter|(jeg|vi) (ser etter|trenger|m[åa] ha)|hvem kan|er det noen|noen som kan|need (help|someone)|looking for)\b/i;
 let _svcHintDismissed = false;
 function checkServiceHint() {
   const box = document.getElementById('quest-svc-hint');
@@ -5786,6 +5786,21 @@ async function _postJobInner() {
 
   const title = document.getElementById('quest-title-input')?.value?.trim();
   if(!title) { showToast(NE('⚠️ Legg til en tittel på oppdraget','⚠️ Add a title for the task')); return; }
+
+  // Tjeneste-hint ved publisering: ser teksten ut som et tilbud, stopp ÉN gang og vis
+  // hintet (folk scroller forbi det mens de skriver). Andre trykk publiserer uansett.
+  if(!window._editingQuestId && !_svcHintDismissed && !window._svcHintPublishWarned) {
+    try { checkServiceHint(); } catch(e) {}
+    const hintBox = document.getElementById('quest-svc-hint');
+    if(hintBox && hintBox.style.display === 'block') {
+      window._svcHintPublishWarned = true;
+      hintBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      hintBox.style.animation = 'none'; void hintBox.offsetWidth; hintBox.style.animation = 'popIn .3s ease';
+      showToast(NE('💡 Sjekk: er dette noe du tilbyr? Trykk igjen for å publisere som oppdrag.','💡 Check: is this something you offer? Tap again to publish as a task.'));
+      try { logEvent('svc_hint_publish_stop', {}); } catch(e) {}
+      return;
+    }
+  }
 
   const category = document.getElementById('quest-category-input')?.value || 'Annet';
   const description = document.getElementById('quest-desc-input')?.value?.trim() || '';
