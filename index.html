@@ -9464,6 +9464,7 @@ function giverTakenBlock(q, conv) {
         <button onclick="markGiverPaid('${conv.id}','${q.id}')" style="flex:1;background:linear-gradient(135deg,#0fa968,#0c9d7f);color:#fff;border:none;border-radius:8px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">✅ Jeg har betalt</button>
         ${chatBtn}
       </div>
+      ${!workDone ? `<button onclick="unassignQuest('${conv.id}')" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(229,57,53,0.3);color:var(--red,#e53935);border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">↩️ ${NE('Opphev tildeling / avlys','Undo assignment / cancel')}</button>` : ''}
     </div>`;
 }
 
@@ -9556,6 +9557,16 @@ function questCard(q, type) {
 }
 
 async function acceptApplicant(convId, questId) {
+  // Bekreftelse: godkjenning deler telefonnummer og lukker oppdraget for andre –
+  // ett feiltrykk skal ikke være nok (tilbakemelding fra bruker sept. 2026).
+  let takerName = '';
+  try {
+    const { data: cRow } = await sb.from('conversations').select('taker_id').eq('id', convId).single();
+    if(cRow?.taker_id) takerName = (window.takerNameMap || {})[cRow.taker_id] || '';
+  } catch(e) {}
+  const who = takerName ? takerName : NE('denne søkeren','this applicant');
+  if(!confirm(NE('Godkjenne ' + who + '? Dere får hverandres telefonnummer, og oppdraget lukkes for andre søkere. Du kan oppheve tildelingen senere under Mine oppdrag.',
+                 'Approve ' + who + '? You will get each other\'s phone numbers and the task closes for other applicants. You can undo the assignment later under My tasks.'))) return;
   // Sjekk at oppdragsgiver har telefonnummer (eget – fra user_contacts)
   const { data: giverNameRow } = await sb.from('profiles').select('full_name').eq('id', currentUser.id).single();
   const giverPhone = await getContactPhone(currentUser.id);
