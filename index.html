@@ -3067,9 +3067,9 @@ if('serviceWorker' in navigator) {
   });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then(reg => {
-      reg.update();
+      reg.update().catch(() => {});
       document.addEventListener('visibilitychange', () => {
-        if(document.visibilityState === 'visible') reg.update();
+        if(document.visibilityState === 'visible') reg.update().catch(() => {});
       });
     }).catch(() => {});
   });
@@ -3767,7 +3767,7 @@ function setViewMode(mode) {
       || (mode === 'services' && m.kind === 'service')
       || (mode === 'haste' && m.kind === 'quest' && m.isUrgent)
       || (mode === 'dugnad' && m.kind === 'quest' && m.isCharity);
-    m._listPass = kindOk;                                  // lista: inkluderer utløpte
+    m._listPass = kindOk && !m.mapOnly;                    // lista: inkluderer utløpte, aldri «utført»
     m.el.style.display = (kindOk && !m.listOnly) ? '' : 'none'; // kartet: utløpte skjult
   });
   clusterMarkers();
@@ -3929,7 +3929,7 @@ async function refreshMapData() {
     if('serviceWorker' in navigator) {
       try {
         const reg = await navigator.serviceWorker.getRegistration();
-        if(reg) reg.update();
+        if(reg) reg.update().catch(() => {});
       } catch(e) {}
     }
     showToast(NE('🔄 Oppdatert!','🔄 Refreshed!'));
@@ -4229,7 +4229,7 @@ function clusterMarkers() {
   // Eligible = not filtered out, with coordinates
   const eligible = window.mapMarkers.filter(m =>
     m.el && m.el.style.display !== 'none' && m.lng != null && m.lat != null);
-  updateMapEmptyState(eligible.filter(m => !m.isDemo).length);   // demo teller ikke – vises kun når ingen EKTE oppdrag finnes
+  updateMapEmptyState(eligible.filter(m => !m.isDemo && !m.mapOnly).length);   // demo teller ikke – vises kun når ingen EKTE oppdrag finnes
   // Reset any previous clustering hide
   eligible.forEach(m => { m.el.style.visibility = ''; m.el.style.pointerEvents = ''; });
 
@@ -6333,7 +6333,8 @@ function recScore(m, origin) {
 function computeResults() {
   const origin = getOriginCoords();
   const vis = (window.mapMarkers || []).filter(m =>
-    (m._listPass !== undefined ? m._listPass : (m.el && m.el.style.display !== 'none'))
+    !m.mapOnly
+    && (m._listPass !== undefined ? m._listPass : (m.el && m.el.style.display !== 'none'))
     && m.lng != null);
   vis.forEach(m => { m.distKm = origin ? getDistanceKm(origin, [m.lng, m.lat]) : null; });
   const sort = document.querySelector('.sort-pill.active')?.dataset.sort || 'new';
@@ -6592,7 +6593,8 @@ function updateListToggleCount() {
   const c = document.getElementById('list-toggle-count');
   if(!c) return;
   const n = (window.mapMarkers || []).filter(m =>
-    (m._listPass !== undefined ? m._listPass : (m.el && m.el.style.display !== 'none'))
+    !m.mapOnly
+    && (m._listPass !== undefined ? m._listPass : (m.el && m.el.style.display !== 'none'))
     && m.lng != null).length;
   c.textContent = n;
   // Chips-antall (som Finn: du ser hva som finnes før du velger)
@@ -10764,7 +10766,7 @@ function selectSearchPlace(idx) {
   setTimeout(() => {
     const nearKm = t === 'address' ? 3 : 8;
     const real = (window.mapMarkers || []).filter(mk =>
-      !mk.isDemo && mk.lng != null && mk.lat != null && mk.el && mk.el.style.display !== 'none');
+      !mk.isDemo && !mk.mapOnly && mk.lng != null && mk.lat != null && mk.el && mk.el.style.display !== 'none');
     const any = real.some(mk => haversineKm(lat, lng, mk.lat, mk.lng) <= nearKm);
     if(!any) { window._mapEmptyPlacePin = true; showMapEmptyCard(f.text || ''); }
   }, 900);
