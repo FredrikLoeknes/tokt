@@ -687,6 +687,11 @@ body.map-zoomed-out .mapbox-marker .qp-name { display:none; }
 .quest-pin.taken .qp-shape { border-color:var(--muted); }
 .quest-pin.taken .qp-coin { background:var(--muted); color:#fff; }
 .quest-pin.taken .qp-badge { background:var(--muted); color:#fff; }
+/* Nylig utført: helgrønn skive med hvit hake – skal skille seg tydelig ut */
+.quest-pin.done .qp-shape { background:#16a34a; border-color:#16a34a; box-shadow:0 0 0 4px rgba(22,163,74,.22); }
+.quest-pin.done .qp-icon { color:#fff; font-weight:900; font-size:18px; }
+.quest-pin.done .qp-coin { background:#16a34a; color:#fff; }
+.quest-pin.done .qp-name { color:#15803d; font-weight:700; }
 /* ── YOUR OWN / ACTIVE QUESTS (only the logged-in owner/taker sees these) ── */
 /* eget innlegg = gull (farge + glød + 👑-badge; formen følger typen) */
 .quest-pin.mine .qp-shape { border-color:#f0a500; box-shadow:0 0 0 3px rgba(240,165,0,.20), var(--shadow); }
@@ -2489,7 +2494,7 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
       </div>
       </div>
       <div id="ptype-neg-note" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;color:var(--muted);line-height:1.6" data-en="🤝 You agree on the price in chat. The task shows «Negotiable» on the map.">🤝 Dere blir enige om pris i chatten. Oppdraget vises med «Avtales» på kartet.</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5">⏳ <span data-en="Tasks stay on the map for 14 days. Still relevant after that? Repost with one tap from My tasks.">Oppdrag ligger på kartet i 14 dager. Fortsatt aktuelt etterpå? Legg ut på nytt med ett trykk fra Mine oppdrag.</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5">⏳ <span data-en="Tasks stay on the map for 30 days. Still relevant after that? Repost with one tap from My tasks.">Oppdrag ligger på kartet i 30 dager. Fortsatt aktuelt etterpå? Legg ut på nytt med ett trykk fra Mine oppdrag.</span></div>
     </div>
 
     <div class="form-group">
@@ -3666,11 +3671,12 @@ function cleanName(str) {
   return String(str || '').replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim();
 }
 
-function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = '', imageUrl = null, expired = false, paused = false, taken = false, ownership = null, onClick } = {}) {
+function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = '', imageUrl = null, expired = false, paused = false, taken = false, done = false, ownership = null, onClick } = {}) {
   const el = document.createElement('div');
   el.className = 'mapbox-marker';
 
-  const typeClass = expired ? 'expired'
+  const typeClass = done ? 'done'
+    : expired ? 'expired'
     : taken ? 'taken'
     : type === 'haste' ? 'haste'
     : type === 'charity' ? 'charity'
@@ -3679,8 +3685,8 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
 
   const ownerClass = ownership === 'mine' ? 'mine' : ownership === 'working' ? 'working' : ownership === 'applied' ? 'applied' : ownership === 'chatting' ? 'chatting' : '';
   const pausedClass = paused ? 'paused' : '';
-  const displayIcon = expired ? '⏰' : icon;
-  const _mkKey = expired ? null : catKeyFromEmoji(displayIcon);
+  const displayIcon = done ? '✓' : expired ? '⏰' : icon;
+  const _mkKey = (expired || done) ? null : catKeyFromEmoji(displayIcon);
   const _mkIcon = _mkKey ? catIconSvg(_mkKey, {size:18, stroke:2}) : displayIcon;
 
   // Form følger ALLTID type: sirkel = oppdrag, firkant = tjeneste.
@@ -3696,7 +3702,7 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
     : '';
 
   // Haste får ⚡ i prisknappen som ekstra skille mot magenta-oppdrag
-  const coinText = taken ? NE('Tatt','Taken') : (priceText ? (typeClass === 'haste' ? '⚡ ' + priceText : priceText) : '');
+  const coinText = done ? '✓ ' + NE('Utført','Done') : taken ? NE('Tatt','Taken') : (priceText ? (typeClass === 'haste' ? '⚡ ' + priceText : priceText) : '');
 
   el.innerHTML = `
     <div class="quest-pin ${typeClass} ${ownerClass} ${pausedClass} shape-${shape}">
@@ -3715,7 +3721,7 @@ function createMarkerEl({ type = 'normal', icon = '✨', name = '', priceText = 
   // Spec for GL-pins (etappe 1): lar attachPin gjenskape utseendet i selve
   // kart-canvasen. HTML-elementet beholdes som tilstandsbærer (display/visibility
   // styres av filtre og klynging som før) og som fallback.
-  el._pinSpec = { shape, typeClass, ownerClass, paused, expired, taken,
+  el._pinSpec = { shape, typeClass, ownerClass, paused, expired, taken, done,
                   catKey: _mkKey, emoji: displayIcon, coinText, imageUrl, name };
   return el;
 }
@@ -3813,6 +3819,50 @@ function addQuestMarker(q) {
     listOnly: expired,          // utløpte: kun i lista, aldri på kartet
     ownership,                  // mine / working / applied
     open: () => showPanel(job),
+    lng: coords && coords[0], lat: coords && coords[1]
+  });
+  attachPin(el, coords);
+}
+
+// Lett markør for nylig utførte/tatte oppdrag (fra recent_activity_quests-RPC).
+// Vises på kartet for å vise at ting faktisk skjer – aldri i lista, filtre eller tellere.
+function addActivityMarker(a) {
+  if(a.lat == null || a.lng == null) return;
+  const done = a.status === 'completed';
+  // Fullført oppdrag kan også ligge som vanlig markør (egne/involverte) – fjern den
+  if(done) {
+    (window.mapMarkers || []).filter(m => m.kind === 'quest' && m.id === a.id).forEach(m => {
+      m.el.style.display = 'none'; m.listOnly = true; m.mapOnly = true;
+    });
+  }
+  const daysAgo = a.event_at ? Math.max(0, Math.floor((Date.now() - new Date(a.event_at).getTime()) / 86400000)) : null;
+  const whenTxt = daysAgo == null ? '' : daysAgo === 0 ? NE('i dag','today') : daysAgo === 1 ? NE('i går','yesterday')
+    : NE('for ' + daysAgo + ' dager siden', daysAgo + ' days ago');
+  const onClick = () => showToast(done
+    ? '✅ ' + NE('«' + cleanName(a.title) + '» ble utført ' + whenTxt + '. Har du noe du trenger hjelp til? Legg det ut!',
+                 '«' + cleanName(a.title) + '» was done ' + whenTxt + '. Need help with something? Post it!')
+    : '🤝 ' + NE('«' + cleanName(a.title) + '» fant en hjelper ' + whenTxt + '.',
+                 '«' + cleanName(a.title) + '» found a helper ' + whenTxt + '.'));
+  const el = createMarkerEl({
+    type: 'normal',
+    icon: markerIcon({ category: a.category, title: a.title }),
+    name: cleanName(a.title),
+    taken: !done,
+    done,
+    onClick
+  });
+  const coords = spreadCoords([a.lng, a.lat]);
+  registerMarker(el, {
+    kind: 'quest',
+    id: 'act-' + a.id,
+    category: a.category || '',
+    matchText: ((a.category||'') + ' ' + (a.title||'')).toLowerCase(),
+    pay: 0,
+    isUrgent: false, isCharity: false, isFirstCome: false,
+    userId: null, createdAt: a.event_at || null,
+    title: cleanName(a.title),
+    mapOnly: true,              // aldri i lista/tellere/søk
+    open: onClick,
     lng: coords && coords[0], lat: coords && coords[1]
   });
   attachPin(el, coords);
@@ -3966,6 +4016,15 @@ async function addMarkers() {
   if(stale()) return;
   (recentlyTaken || []).forEach(q => { if(!byId.has(q.id)) byId.set(q.id, q); });
 
+  // Nylig UTFØRTE (14d) og TATTE (48t) oppdrag for alle – via RPC fordi RLS bare
+  // slipper anonyme til open/expired. Kun minimalt med felt (tittel, kategori, posisjon).
+  let activity = [];
+  try {
+    const { data: act } = await sb.rpc('recent_activity_quests');
+    if(stale()) return;
+    activity = act || [];
+  } catch(e) {}
+
   // I tillegg: oppdrag den innloggede er involvert i – uansett at de har blitt «taken»/«paused».
   // Uten dette forsvinner egne oppdrag og oppdrag man jobber på fra kartet i det de blir tatt.
   if(currentUser) {
@@ -3986,6 +4045,13 @@ async function addMarkers() {
   [...byId.values()]
     .filter(q => !isQuestHidden(q) && !isQuestHiddenForMinor(q)) // skjul gamle utløpte + 18+ for mindreårige
     .forEach(q => addQuestMarker(q));
+
+  // Aktivitet: utført vises alltid som grønn markør (også for egne/involverte),
+  // tatt vises kun hvis vi ikke allerede har full rad for oppdraget.
+  activity.forEach(a => {
+    if(a.status === 'completed') addActivityMarker(a);
+    else if(a.status === 'taken' && !byId.has(a.id)) addActivityMarker(a);
+  });
 
   // Load real services
   const { data: services } = await sb.from('services')
@@ -4264,6 +4330,7 @@ function _cssVar(name, fb) {
 function glPinColors(typeClass, ownerClass) {
   const accent = _cssVar('--accent', '#d6427e');
   // Eier-status overstyrer type-farge, som i CSS-en (.mine/.working)
+  if(typeClass === 'done') return { border: '#16a34a', coin: '#16a34a', surface: '#16a34a', text: '#ffffff' };
   let border = ownerClass === 'mine' ? '#f0a500'
             : ownerClass === 'working' ? '#14a89b'
             : typeClass === 'haste' ? _cssVar('--red', '#e5484d')
@@ -4292,7 +4359,7 @@ function glMakePinImage(spec, photoImg, ringOnly) {
   const dpr = Math.min(Math.max(window.devicePixelRatio || 1, 1), 3);
   const col = glPinColors(spec.typeClass, spec.ownerClass);
   const badge = glPinBadge(spec);
-  const glow = spec.ownerClass === 'mine' || spec.ownerClass === 'working';
+  const glow = spec.ownerClass === 'mine' || spec.ownerClass === 'working' || spec.done;
   const pulse = spec.typeClass === 'haste' || spec.ownerClass === 'working';
   const D = 35;                                  // skivediameter (som .qp-emblem)
   const ctx0 = document.createElement('canvas').getContext('2d');
@@ -4333,7 +4400,7 @@ function glMakePinImage(spec, photoImg, ringOnly) {
     if(spec.shape === 'square') ctx.roundRect(cx - D/2 - 2, top - 2, D + 4, D + 4, 10.5);
     else ctx.arc(cx, top + D/2, D/2 + 1.2, 0, Math.PI * 2);
     ctx.lineWidth = 5;
-    ctx.strokeStyle = spec.ownerClass === 'mine' ? 'rgba(240,165,0,.20)' : 'rgba(20,168,155,.22)';
+    ctx.strokeStyle = spec.done ? 'rgba(22,163,74,.28)' : spec.ownerClass === 'mine' ? 'rgba(240,165,0,.20)' : 'rgba(20,168,155,.22)';
     ctx.stroke();
   }
 
@@ -4385,6 +4452,15 @@ function glMakePinImage(spec, photoImg, ringOnly) {
       ctx.beginPath(); ctx.arc(+x, +y, +r, 0, Math.PI*2); ctx.stroke();
       return _;
     });
+    ctx.restore();
+  } else if(spec.done) {
+    // Hvit hake på grønn skive
+    ctx.save();
+    ctx.translate(cx - 9, top + D/2 - 9);
+    ctx.scale(18/24, 18/24);
+    ctx.lineWidth = 3.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke(new Path2D('M20 6 9 17 4 12'));
     ctx.restore();
   } else if(!photoImg && spec.emoji) {
     ctx.font = (15.5) + 'px sans-serif';
@@ -4644,8 +4720,10 @@ function showClusterSheet(mids, center) {
     const _ck = catKeyFromString(m.category || '');
     const icon = _ck ? catIconSvg(_ck, {size:24, stroke:1.9})
                      : uiIconSvg(isSvc ? 'store' : 'clipboard', {size:23, stroke:1.9, color:'var(--muted)'});
-    const price = m.pay ? m.pay + ' kr' : (isSvc ? '' : 'Gratis');
-    const kindChip = `<span class="lv-kb${isSvc?' svc':''}">${isSvc ? NE('TJENESTE','SERVICE') : NE('OPPDRAG','TASK')}</span>`;
+    const price = m.mapOnly ? '' : (m.pay ? m.pay + ' kr' : (isSvc ? '' : 'Gratis'));
+    const kindChip = m.mapOnly
+      ? `<span class="lv-kb" style="background:rgba(22,163,74,.12);color:#15803d;border-color:rgba(22,163,74,.35)">✓ ${NE('UTFØRT','DONE')}</span>`
+      : `<span class="lv-kb${isSvc?' svc':''}">${isSvc ? NE('TJENESTE','SERVICE') : NE('OPPDRAG','TASK')}</span>`;
     return `<div class="lv-card" onclick="_openClusterItem(${i})">
       <div class="lv-thumb">${icon}</div>
       <div class="lv-info" style="min-width:0">
@@ -6184,11 +6262,11 @@ function computeMarkerVisibility() {
       m.distKm = d;
       if(d != null && d > maxDist) pass = false;
     }
-    m._listPass = pass;                    // lista: inkluderer utløpte
+    m._listPass = pass && !m.mapOnly;      // lista: inkluderer utløpte, aldri «utført»-markører
     const onMap = pass && !m.listOnly;     // kartet: utløpte/list-only skjules
     m.el.style.display = onMap ? '' : 'none';
-    if(onMap) mapVisible++;
-    if(pass) listVisible++;
+    if(onMap && !m.mapOnly) mapVisible++;  // «utført» teller ikke som noe man kan ta
+    if(pass && !m.mapOnly) listVisible++;
   });
 
   clusterMarkers();
@@ -6518,7 +6596,7 @@ function updateListToggleCount() {
     && m.lng != null).length;
   c.textContent = n;
   // Chips-antall (som Finn: du ser hva som finnes før du velger)
-  const ms = (window.mapMarkers || []).filter(m => !m.listOnly && m.lng != null);
+  const ms = (window.mapMarkers || []).filter(m => !m.listOnly && !m.mapOnly && m.lng != null);
   const chipCounts = {
     'vt-cnt-quests':   ms.filter(m => m.kind === 'quest').length,
     'vt-cnt-services': ms.filter(m => m.kind === 'service').length,
