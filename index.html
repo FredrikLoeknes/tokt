@@ -5585,7 +5585,7 @@ async function applyJob() {
       if(qMeta?.is_first_come && qMeta?.status === 'open') {
         await sb.from('quests').update({ status: 'taken', taken_at: new Date().toISOString() }).eq('id', questId);
         await sb.from('conversations').update({ status: 'accepted', is_question: false }).eq('id', existing.id);
-        showToast(NE('⚡ Oppdrag tildelt! Du er førstemann til mølla!','⚡ Task assigned! You were first in line!'));
+        showToast(NE('⚡ Oppdrag tildelt! Du er førstemann til mølla!','⚡ Task assigned! You were first in line!')); setTimeout(() => maybeAskPushContext('apply'), 2500);
         await notifyUser({
           user_id: effectiveGiverId,
           type: 'application',
@@ -5595,7 +5595,7 @@ async function applyJob() {
         });
       } else if(qMeta?.status === 'open') {
         await sb.from('conversations').update({ is_question: false }).eq('id', existing.id);
-        showToast(NE('✦ Søknad sendt! Venter på godkjenning fra oppdragsgiver.',"✦ Application sent! Waiting for the poster's approval."));
+        showToast(NE('✦ Søknad sendt! Venter på godkjenning fra oppdragsgiver.',"✦ Application sent! Waiting for the poster's approval.")); setTimeout(() => maybeAskPushContext('apply'), 2500);
         // Trigger fyrer kun ved insert – varsle manuelt ved konvertering
         await notifyUser({
           user_id: effectiveGiverId,
@@ -5637,7 +5637,7 @@ async function applyJob() {
   // Check if first-come quest - give achievement immediately
   const { data: questData } = await sb.from('quests').select('is_first_come, title').eq('id', questId).single();
   if(questData?.is_first_come) {
-    showToast(NE('⚡ Oppdrag tildelt! Du er førstemann til mølla!','⚡ Task assigned! You were first in line!'));
+    showToast(NE('⚡ Oppdrag tildelt! Du er førstemann til mølla!','⚡ Task assigned! You were first in line!')); setTimeout(() => maybeAskPushContext('apply'), 2500);
     setTimeout(() => showAchievement('⚡', NE('Første oppdrag!','First task!'), NE('Du fikk ditt første oppdrag – førstemann til mølla!','You got your first task – first in line!')), 1000);
     await sb.from('quests').update({ status: 'taken', taken_at: new Date().toISOString() }).eq('id', questId);
     await sb.from('conversations').update({ status: 'accepted' }).eq('id', conv.id);
@@ -5650,7 +5650,7 @@ async function applyJob() {
       link_id: conv.id
     });
   } else {
-    showToast(NE('✦ Søknad sendt! Venter på godkjenning fra oppdragsgiver.',"✦ Application sent! Waiting for the poster's approval."));
+    showToast(NE('✦ Søknad sendt! Venter på godkjenning fra oppdragsgiver.',"✦ Application sent! Waiting for the poster's approval.")); setTimeout(() => maybeAskPushContext('apply'), 2500);
     setTimeout(() => showAchievement('📨', NE('Første søknad!','First application!'), NE('Du har søkt på ditt første oppdrag. Venter på godkjenning!','You applied to your first task. Waiting for approval!')), 1800);
     // Varsel til oppdragsgiver lages av databasetriggeren on_new_application
   }
@@ -6180,6 +6180,7 @@ function showQuestPostedPopup(title) {
   const existing = document.getElementById('quest-posted-popup');
   if(existing) existing.remove();
 
+  const _pushSt = pushCapability();
   const popup = document.createElement('div');
   popup.id = 'quest-posted-popup';
   popup.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease';
@@ -6188,15 +6189,22 @@ function showQuestPostedPopup(title) {
       <div style="font-size:56px;margin-bottom:16px">🎉</div>
       <div style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px">Oppdrag lagt ut!</div>
       <div style="font-size:14px;color:var(--muted);margin-bottom:6px">«${title}»</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.5">er nå synlig på kartet. Du vil bli varslet når noen søker!</div>
-      <div style="background:linear-gradient(135deg,rgba(214,66,126,0.08),rgba(124,92,252,0.08));border:1px solid rgba(214,66,126,0.15);border-radius:12px;padding:12px 16px;margin-bottom:24px;font-size:12px;color:var(--muted);line-height:1.6">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:${_pushSt === 'ok' ? 24 : 16}px;line-height:1.5">${_pushSt === 'ok' ? 'er nå synlig på kartet. Du blir varslet når noen søker!' : 'er nå synlig på kartet.'}</div>
+      ${_pushSt === 'ok' ? '' : '<div style="margin-bottom:16px">' + pushAskHtml('post', _pushSt) + '</div>'}
+      <div style="display:${_pushSt === 'ok' ? 'block' : 'none'};background:linear-gradient(135deg,rgba(214,66,126,0.08),rgba(124,92,252,0.08));border:1px solid rgba(214,66,126,0.15);border-radius:12px;padding:12px 16px;margin-bottom:24px;font-size:12px;color:var(--muted);line-height:1.6">
         💡 Tips: Del oppdraget med venner for å finne utfører raskere!
       </div>
-      <button onclick="document.getElementById('quest-posted-popup').remove()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
+      ${_pushSt === 'ok' ? `<button onclick="document.getElementById('quest-posted-popup').remove()" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
         Supert! 🚀
-      </button>
+      </button>` : `<button onclick="document.getElementById('quest-posted-popup').remove()" style="width:100%;background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;padding:6px 0 0;cursor:pointer;font-family:inherit">${_pushSt === 'blocked' ? 'Ok' : 'Ikke nå'}</button>`}
     </div>`;
   document.body.appendChild(popup);
+  if(_pushSt !== 'ok') {
+    wirePushAsk(popup, 'post', _pushSt, () => popup.remove());
+    return; // ingen auto-lukking når vi ber om noe viktig
+  } else {
+    try { if(typeof Notification !== 'undefined' && Notification.permission === 'granted') registerPushNotifications(false); } catch(e) {}
+  }
 
   // Auto-close after 8 seconds
   setTimeout(() => { if(document.getElementById('quest-posted-popup')) popup.remove(); }, 8000);
@@ -7579,6 +7587,7 @@ window.addEventListener('push-firebase-state', e => {
   try { logEvent('push_firebase_state', { state: String(e.detail).slice(0, 20) }); } catch(err) {}
 });
 window.addEventListener('push-permission-request', e => {
+  window._iosPushState = e.detail === 'granted' ? 'granted' : 'denied';
   if(e.detail === 'granted') {
     logEvent('push_granted', {});
     // Hent token også her: dekker enheter der tillatelsen alt var gitt
@@ -8827,6 +8836,95 @@ async function registerNativeAndroidToken() {
       localStorage.setItem('toktNativeTokenReg', t);
       try { logEvent('push_native_registered', {}); } catch(e) {}
     }
+  } catch(e) {}
+}
+
+// ── KONTEKSTUELL VARSEL-FORESPØRSEL ─────────────────────────────────────────
+// Spør om push i øyeblikket det gir mening: rett etter at man har lagt ut et oppdrag,
+// søkt, eller tatt kontakt med en tilbyder. Tilpasser seg hva enheten faktisk kan:
+//   'ok'      – push er på (eller håndteres av appen)
+//   'ask'     – nettleser som kan spørre
+//   'blocked' – brukeren har sagt nei tidligere (må slås på i innstillinger)
+//   'app'     – nettleseren støtter ikke push (typisk iPhone i Safari) → hent appen
+function pushCapability() {
+  try {
+    const isIOSWrap = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers['push-permission-request']);
+    if(isIOSWrap) return window._iosPushState === 'denied' ? 'blocked' : 'ok';
+    if(localStorage.getItem('toktNativeToken')) return 'ok';          // Android-appen
+    if(!('Notification' in window) || !('PushManager' in window) || !('serviceWorker' in navigator)) return 'app';
+    if(Notification.permission === 'granted') return 'ok';
+    if(Notification.permission === 'denied') return 'blocked';
+    return 'ask';
+  } catch(e) { return 'ok'; }
+}
+// HTML-blokk som kan settes inn i en popup. ctx: 'post' | 'apply' | 'service'
+function pushAskHtml(ctx, st) {
+  const why = ctx === 'post'
+    ? NE('Få beskjed med en gang noen vil hjelpe deg – ellers ser du det først neste gang du åpner appen.',
+         'Get notified as soon as someone wants to help – otherwise you only see it next time you open the app.')
+    : NE('Få beskjed med en gang du får svar – ellers ser du det først neste gang du åpner appen.',
+         'Get notified as soon as you get a reply – otherwise you only see it next time you open the app.');
+  const isIPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  let title, body, btn = '';
+  if(st === 'ask') {
+    title = NE('🔔 Slå på varsler','🔔 Turn on notifications');
+    body = why;
+    btn = `<button data-push-ask="on" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:12px">🔔 ${NE('Slå på varsler','Turn on notifications')}</button>`;
+  } else if(st === 'app') {
+    title = NE('🔔 Vil du få varsel?','🔔 Want notifications?');
+    body = isIPhone
+      ? NE('På iPhone kan du bare få varsler i Tokt-appen. Samme konto, gratis.','On iPhone you can only get notifications in the Tokt app. Same account, free.')
+      : NE('Nettleseren din støtter ikke varsler. Tokt-appen gjør det.','Your browser doesn\'t support notifications. The Tokt app does.');
+    btn = `<a data-push-ask="app" href="${isIPhone ? TOKT_APPSTORE_URL : TOKT_PLAY_URL}" target="_blank" rel="noopener" style="display:block;text-decoration:none;text-align:center;width:100%;box-sizing:border-box;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-radius:12px;padding:13px;font-size:14px;font-weight:800;margin-top:12px">📲 ${NE('Hent appen','Get the app')}</a>`;
+  } else if(st === 'blocked') {
+    title = NE('🔕 Varsler er slått av','🔕 Notifications are off');
+    body = isIPhone || (window.webkit && window.webkit.messageHandlers)
+      ? NE('Slå dem på i Innstillinger → Tokt → Varslinger, så får du beskjed når noen svarer.','Turn them on in Settings → Tokt → Notifications to get notified when someone replies.')
+      : NE('Trykk på hengelåsen ved adressefeltet → Varsler → Tillat, så får du beskjed når noen svarer.','Tap the lock icon by the address bar → Notifications → Allow to get notified when someone replies.');
+  } else return '';
+  return `<div data-push-ask-box style="background:linear-gradient(135deg,rgba(214,66,126,0.08),rgba(124,92,252,0.08));border:1.5px solid rgba(214,66,126,0.25);border-radius:14px;padding:14px 16px;text-align:left">
+      <div style="font-size:14px;font-weight:800;color:var(--text)">${title}</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:4px">${body}</div>
+      ${btn}
+    </div>`;
+}
+// Kobler knappene i en innsatt pushAskHtml-blokk. onDone kalles etter valg.
+function wirePushAsk(root, ctx, st, onDone) {
+  try { logEvent('push_ask_shown', { ctx, st }); } catch(e) {}
+  const on = root.querySelector('[data-push-ask="on"]');
+  if(on) on.onclick = () => {
+    // Klikket er brukerhandlingen nettleseren krever – ingen await før spørsmålet
+    try { logEvent('push_ask_click', { ctx }); } catch(e) {}
+    registerPushNotifications(true);
+    const box = root.querySelector('[data-push-ask-box]');
+    if(box) box.innerHTML = `<div style="font-size:13px;font-weight:700;color:var(--green,#16a34a);text-align:center">✓ ${NE('Takk! Du får beskjed når noe skjer.','Thanks! You\'ll be notified when something happens.')}</div>`;
+    if(onDone) setTimeout(onDone, 1400);
+  };
+  const app = root.querySelector('[data-push-ask="app"]');
+  if(app) app.addEventListener('click', () => { try { logEvent('push_ask_app', { ctx }); } catch(e) {} });
+}
+// Egen liten popup etter søknad / kontakt med tilbyder. Maks én gang per 3 døgn.
+function maybeAskPushContext(ctx) {
+  try {
+    if(!currentUser) return;
+    const st = pushCapability();
+    if(st === 'ok') { if(typeof Notification !== 'undefined' && Notification.permission === 'granted') registerPushNotifications(false); return; }
+    const last = parseInt(localStorage.getItem('toktPushAskTs') || '0', 10);
+    if(last && Date.now() - last < 3 * 86400000) return;
+    try { localStorage.setItem('toktPushAskTs', String(Date.now())); } catch(e) {}
+    document.getElementById('push-ask-pop')?.remove();
+    const pop = document.createElement('div');
+    pop.id = 'push-ask-pop';
+    pop.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))';
+    pop.innerHTML = `<div style="background:var(--surface);border-radius:18px;padding:16px;max-width:420px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.3);animation:popIn .25s ease">
+        ${pushAskHtml(ctx, st)}
+        <button data-push-ask="close" style="width:100%;background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;padding:12px 0 2px;cursor:pointer;font-family:inherit">${st === 'blocked' ? NE('Ok','Ok') : NE('Ikke nå','Not now')}</button>
+      </div>`;
+    document.body.appendChild(pop);
+    const close = () => pop.remove();
+    pop.addEventListener('click', e => { if(e.target === pop) close(); });
+    pop.querySelector('[data-push-ask="close"]').onclick = close;
+    wirePushAsk(pop, ctx, st, close);
   } catch(e) {}
 }
 
@@ -11043,6 +11141,7 @@ async function contactService() {
   // Varsel til tilbyder lages av databasetriggeren on_new_application (tjeneste-gren)
 
   showToast(NE('💬 Chat åpnet! Avtal tid med tilbyderen.','💬 Chat opened! Arrange a time with the provider.'));
+  setTimeout(() => maybeAskPushContext('service'), 2500);
   openChat(conv.id, svc.title);
 }
 
