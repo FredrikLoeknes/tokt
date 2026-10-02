@@ -2141,6 +2141,7 @@ body.dark #toast { box-shadow:0 8px 24px rgba(0,0,0,.5); }
       </div>
 
       <a class="hiw-terms" href="/terms.html" target="_blank">Les fullstendige brukervilkår og personvern →</a>
+      <a class="hiw-terms" href="/skatt.html" target="_blank" style="margin-top:-8px">Skatt og oppgjør →</a>
       <div id="hiw-tips"></div>
       <button class="hiw-cta" onclick="document.getElementById('how-it-works-overlay').style.display='none'">Forstått! 👍</button>
     </div>
@@ -7665,6 +7666,8 @@ async function loadProfilePage(userId, isOwn) {
   if(ppDelLabel) ppDelLabel.textContent = currentLang === 'en' ? 'Delete account' : 'Slett konto';
   const ppInstall = document.getElementById('pp-install-section');
   if(ppInstall) ppInstall.style.display = (isOwn && canInstallApp()) ? 'block' : 'none';
+  const ppLegal = document.getElementById('pp-legal');
+  if(ppLegal) ppLegal.style.display = isOwn ? 'block' : 'none';
   document.getElementById('pp-header-title').textContent = isOwn ? NE('Min profil','My profile') : NE('Profil','Profile');
   const ppReport = document.getElementById('pp-report-btn');
   if(ppReport) ppReport.style.display = isOwn ? 'none' : 'inline-block';
@@ -14544,6 +14547,9 @@ sb.auth.onAuthStateChange(async (event, session) => {
           <div style="font-size:10px;color:var(--muted)" data-en="Build your rank">Bygg din rang</div>
         </div>
       </div>
+      <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:12px;line-height:1.7">
+        <a href="/terms.html#del1" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline" data-en="Terms">Vilkår</a> · <a href="/terms.html#del2" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline" data-en="Privacy">Personvern</a> · <a href="/skatt.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline" data-en="Tax &amp; settlement">Skatt og oppgjør</a>
+      </div>
 
     </div>
   </div>
@@ -14655,6 +14661,11 @@ sb.auth.onAuthStateChange(async (event, session) => {
       </div>
       <button onclick="event.stopPropagation();triggerInstall()" id="pp-install-btn" style="background:linear-gradient(135deg,#f97316,#a855f7);color:#fff;border:none;border-radius:12px;padding:10px 15px;font-size:12.5px;font-weight:800;font-family:inherit;flex-shrink:0;box-shadow:0 4px 12px rgba(168,85,247,.28);cursor:pointer">Hent appen</button>
     </div>
+  </div>
+
+  <!-- Vilkår / personvern / skatt – lett å finne fra egen profil -->
+  <div id="pp-legal" class="pp-viewsec" style="display:none;padding:6px 16px 10px;text-align:center;font-size:12px;color:var(--muted);line-height:1.8">
+    <a href="/terms.html#del1" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline" data-en="Terms">Vilkår</a> · <a href="/terms.html#del2" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline" data-en="Privacy">Personvern</a> · <a href="/skatt.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline" data-en="Tax &amp; settlement">Skatt og oppgjør</a>
   </div>
 
   <!-- Rediger profil (kun egen profil) -->
