@@ -13554,9 +13554,26 @@ function closeTermsGate() {
 
 async function doResetPassword() {
   const email = document.getElementById('login-email').value.trim();
-  if(!email) { showAuthError('login','Skriv inn e-posten din først'); return; }
+  if(!email) { showAuthError('login', NE('Skriv inn e-posten din først','Enter your email first')); return; }
   await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://tokt.app' });
-  showToast('📧 Nullstillingslenke sendt til ' + email);
+  // Vi kan ikke (og skal ikke) si om e-posten har konto. Men mange som «ikke får
+  // e-post» har rett og slett ikke registrert seg – pek dem dit, uten å avsløre noe.
+  const el = document.getElementById('login-error');
+  if(el) {
+    el.innerHTML = '<b>📧 ' + NE('Sendt til ' + escapeHtml(email), 'Sent to ' + escapeHtml(email)) + '</b><br>'
+      + '<span style="font-weight:400">' + NE('Har du konto, kommer lenken i løpet av et minutt (sjekk søppelpost). Får du ingenting, har du trolig ikke registrert deg ennå – eller du brukte Apple/Google.',
+                                              'If you have an account, the link arrives within a minute (check spam). Nothing? You probably haven\'t signed up yet – or you used Apple/Google.') + '</span><br>'
+      + '<span onclick="switchTab(\'register\')" style="display:inline-block;margin-top:6px;color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline">' + NE('Registrer deg her →','Sign up here →') + '</span>';
+    el.style.display = 'block';
+    el.style.background = 'rgba(15,169,104,0.08)';
+    el.style.borderColor = 'rgba(15,169,104,0.3)';
+    el.style.color = 'var(--text)';
+    if(el._hideTimer) clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(() => el.style.display = 'none', 20000);
+  } else {
+    showToast('📧 ' + NE('Nullstillingslenke sendt til ','Reset link sent to ') + email);
+  }
+  try { logEvent('pw_reset_requested', {}); } catch(e) {}
 }
 
 // E-postvarsel-bryter (egen profil). Leser/skriver profiles.email_enabled direkte
