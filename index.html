@@ -3779,7 +3779,9 @@ function setViewMode(mode) {
 
 function addQuestMarker(q) {
   const job = questToJob(q);
-  const expired = q.status === 'expired';
+  // Passert frist regnes som utløpt med en gang (DB-jobben setter status hver time,
+  // men appen kan ha fått raden før den kjørte – markøren skal uansett ikke se aktiv ut)
+  const expired = q.status === 'expired' || (q.status === 'open' && isQuestExpired(q));
   const paused = q.status === 'paused';
   const taken = q.status === 'taken';
   let ownership = null;
@@ -5143,7 +5145,7 @@ function showPanel(job) {
   const existingExpired = document.getElementById('panel-expired-banner');
   if(existingExpired) existingExpired.remove();
   const applyBtn = document.querySelector('.btn-apply');
-  const isExpired = job.raw?.status === 'expired';
+  const isExpired = job.raw?.status === 'expired' || (job.raw?.status === 'open' && isQuestExpired(job.raw));
   if(isExpired) {
     const banner = document.createElement('div');
     banner.id = 'panel-expired-banner';
