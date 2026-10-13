@@ -12864,6 +12864,25 @@ window.map = null;
       logJsError('error', 'Testfeil fra #test-feillogg', 'index.html', 0, 0, 'manuell test av feillogging');
     }, 1500);
   }
+  // Landingssider (tokt.app/hundelufting-oslo.html o.l.) lenker til /?post=1:
+  // åpne «Legg ut»-valget rett etter innlasting. Ikke innlogget → showPostChoice
+  // viser innlogging selv. Parameteren fjernes så den ikke henger igjen.
+  try {
+    if(new URLSearchParams(window.location.search).get('post') === '1'){
+      history.replaceState(null, '', window.location.pathname + window.location.hash);
+      // Hopp over velkomstskjermen – personen kom fra en side som alt har forklart appen
+      try { localStorage.setItem('tokt-welcome-seen', '1'); } catch(e) {}
+      var _tries = 0;
+      (function go(){
+        if(window._authChecked && typeof showPostChoice === 'function'){
+          try { logEvent('landing_post_click', { ref: (document.referrer || '').replace(/^https?:\/\/[^/]+/, '').slice(0, 60) }); } catch(e) {}
+          setTimeout(function(){ try { showPostChoice(); } catch(e) {} }, 600);
+          return;
+        }
+        if(++_tries < 80) setTimeout(go, 250);
+      })();
+    }
+  } catch(e) {}
 })();
 
 let currentUser = null;
